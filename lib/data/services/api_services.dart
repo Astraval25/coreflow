@@ -16,14 +16,14 @@ class ApiService {
           )
           .timeout(const Duration(seconds: 10));
 
-      print('✅ Response status: ${response.statusCode}');
-      print('✅ Response body: ${response.body}');
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
       return response;
     } on SocketException catch (e) {
-      print('💥 SocketException: $e');
+      print(' SocketException: $e');
       rethrow;
     } catch (e) {
-      print('💥 Other error: $e');
+      print(' Other error: $e');
       rethrow;
     }
   }

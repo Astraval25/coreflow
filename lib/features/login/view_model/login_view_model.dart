@@ -1,4 +1,4 @@
-import 'package:coreflow/domain/model/login_request.dart';
+import 'package:coreflow/domain/model/login/login_request.dart';
 import 'package:flutter/material.dart';
 import '../../../data/repositories/auth_repository.dart'; 
 import 'package:go_router/go_router.dart';

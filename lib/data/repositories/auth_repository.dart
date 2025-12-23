@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:coreflow/data/services/api_services.dart';
-import 'package:coreflow/domain/model/login_request.dart';
+import 'package:coreflow/domain/model/login/login_request.dart';
 import 'package:coreflow/domain/repositories/login_response.dart';
 
 import '../../core/config/app_config.dart';
