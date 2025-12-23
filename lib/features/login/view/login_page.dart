@@ -26,7 +26,6 @@ class LoginScreen extends StatelessWidget {
                   children: [
                     const Spacer(flex: 3),
 
-                    // Logo (replace with your actual logo or icon)
                     Container(
                       width: 100,
                       height: 100,
@@ -93,7 +92,6 @@ class LoginScreen extends StatelessWidget {
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {
-                          // TODO: Forgot password logic
                         },
                         child: Text(
                           'Forgot password?',
