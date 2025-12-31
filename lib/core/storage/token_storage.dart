@@ -1,52 +1,89 @@
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TokenStorage {
-  static const String _tokenKey = 'auth_token';
-  static const String _refreshTokenKey = 'refresh_token';
-  static const String _userIdKey = 'user_id';
-  static const String _companyIdKey = 'company_id';
+  static const _tokenKey = 'auth_token';
+  static const _refreshTokenKey = 'refresh_token';
+  static const _userIdKey = 'user_id';
+  static const _companyIdKey = 'company_id';
+  static const _landingUrlKey = 'landing_url';
+  static const _companyIdsKey = 'company_ids';
+  static const _companyNameKey = 'company_name';
+  static const _roleCodeKey = 'role_code';
+  static const _userEmailKey = 'user_email';
+  static const _userNameKey = 'user_name';
 
-  static Future<void> saveTokens({
-    required String token,
-    required String refreshToken,
+  static Future<void> saveFullAuthData({
     required int userId,
-    required int companyId,
+    int? companyId,
+    List<int>? companyIds,
+    String? companyName,
+    String? token,
+    String? refreshToken,
+    String? roleCode,
+    required String landingUrl,
+    required String email,
+    required String userName,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
-    await prefs.setString(_refreshTokenKey, refreshToken);
+
+    await prefs.setString(_tokenKey, token ?? '');
+    await prefs.setString(_refreshTokenKey, refreshToken ?? '');
     await prefs.setInt(_userIdKey, userId);
-    await prefs.setInt(_companyIdKey, companyId);
+    await prefs.setString(_landingUrlKey, landingUrl);
+    await prefs.setString(_userEmailKey, email);
+    await prefs.setString(_userNameKey, userName);
+
+    if (companyId != null) {
+      await prefs.setInt(_companyIdKey, companyId);
+    }
+
+    if (companyIds != null) {
+      await prefs.setString(_companyIdsKey, jsonEncode(companyIds));
+    }
+
+    if (companyName != null) {
+      await prefs.setString(_companyNameKey, companyName);
+    }
+
+    if (roleCode != null) {
+      await prefs.setString(_roleCodeKey, roleCode);
+    }
   }
 
-  static Future<Map<String, dynamic>?> getTokens() async {
+  static Future<Map<String, dynamic>?> getFullAuthData() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(_tokenKey);
-    final refreshToken = prefs.getString(_refreshTokenKey);
-    final userId = prefs.getInt(_userIdKey);
-    final companyId = prefs.getInt(_companyIdKey);
+    if (token == null || token.isEmpty) return null;
 
-    if (token != null && refreshToken != null && userId != null && companyId != null) {
-      return {
-        'token': token,
-        'refreshToken': refreshToken,
-        'userId': userId,
-        'companyId': companyId,
-      };
-    }
-    return null;
+    return {
+      'token': token,
+      'refreshToken': prefs.getString(_refreshTokenKey),
+      'userId': prefs.getInt(_userIdKey),
+      'companyId': prefs.getInt(_companyIdKey),
+      'companyIds': prefs.getString(_companyIdsKey),
+      'companyName': prefs.getString(_companyNameKey),
+      'roleCode': prefs.getString(_roleCodeKey),
+      'landingUrl': prefs.getString(_landingUrlKey),
+      'email': prefs.getString(_userEmailKey),
+      'userName': prefs.getString(_userNameKey),
+    };
   }
 
-  static Future<void> clearTokens() async {
+  static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-    await prefs.remove(_refreshTokenKey);
-    await prefs.remove(_userIdKey);
-    await prefs.remove(_companyIdKey);
+    final token = prefs.getString(_tokenKey);
+    return token?.isNotEmpty == true ? token : null;
   }
 
   static Future<bool> hasValidToken() async {
-    final tokens = await getTokens();
-    return tokens != null;
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(_tokenKey);
+    return token != null && token.isNotEmpty;
+  }
+
+  static Future<void> clearAllData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
   }
 }

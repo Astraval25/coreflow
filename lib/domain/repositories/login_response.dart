@@ -33,6 +33,8 @@ class LoginData {
   final String token;
   final int userId;
 
+  var userName;
+
   LoginData({
     required this.companyId,
     required this.companyIds,
