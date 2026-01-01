@@ -21,9 +21,7 @@ class AppDrawer extends StatelessWidget {
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
-              children: [
-                ManageExpansion(vm: vm),
-              ],
+              children: [ManageExpansion(vm: vm)],
             ),
           ),
           ProfileRow(vm: vm),

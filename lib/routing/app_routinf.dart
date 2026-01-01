@@ -1,8 +1,14 @@
+import 'package:coreflow/features/add/customers_add/view/add_customer_page.dart';
+import 'package:coreflow/features/add/items_add/view/add_items_page.dart';
+import 'package:coreflow/features/add/vender_add/view/add_vender_page.dart';
+import 'package:coreflow/features/customers/view/customers_page.dart';
 import 'package:coreflow/features/dashboard/dashboard_view/dashboard_page.dart';
+import 'package:coreflow/features/items/view/vender_page.dart';
 import 'package:coreflow/features/login/view/login_page.dart';
 import 'package:coreflow/features/profile/view_page/profile_page.dart';
 import 'package:coreflow/features/registration/view/register_screen.dart';
 import 'package:coreflow/features/resend_otp/view/resend_otp_sreen.dart';
+import 'package:coreflow/features/vender/view/items_page.dart';
 import 'package:coreflow/features/verify_otp/view/verify_otp_screen.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -42,6 +48,26 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const DashboardPage(),
     ),
     GoRoute(path: '/profile', builder: (context, state) => const ProfilePage()),
+
+    GoRoute(
+      path: '/customers',
+      builder: (context, state) => const CustomersPage(),
+    ),
+    GoRoute(path: '/vender', builder: (context, state) => const VenderPage()),
+    GoRoute(path: '/items', builder: (context, state) => const ItemsPage()),
+
+    GoRoute(
+      path: '/customersadd',
+      builder: (context, state) => const AddCustomerPage(),
+    ),
+    GoRoute(
+      path: '/venderadd',
+      builder: (context, state) => const AddVenderPage(),
+    ),
+    GoRoute(
+      path: '/itemsadd',
+      builder: (context, state) => const AddItemsPage(),
+    ),
   ],
 
   redirect: (context, state) async {

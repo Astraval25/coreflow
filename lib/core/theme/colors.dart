@@ -52,4 +52,6 @@ class DashboardColors {
   static const Color sidebarBg = Color(0xFFFFFFFF);      // White
   static const Color headerGradientStart = Color(0xFF6366F1); // Indigo 500
   static const Color headerGradientEnd = Color(0xFF4F46E5);   // Indigo 600
+
+   static const Color addIcon = Color.fromARGB(255, 218, 217, 226); 
 }
