@@ -1,6 +1,6 @@
 import 'package:coreflow/features/customers/view/add/add_customer_page.dart';
+import 'package:coreflow/features/items/view/add/add_items_page.dart';
 import 'package:coreflow/features/items/view/items_page.dart';
-import 'package:coreflow/features/vender/view/add/add_items_page.dart';
 import 'package:coreflow/features/vender/view/add/add_vender_page.dart';
 import 'package:coreflow/features/customers/view/customers_page.dart';
 import 'package:coreflow/features/dashboard/dashboard_view/dashboard_page.dart';
