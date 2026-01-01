@@ -21,7 +21,6 @@ class VerifyOtpScreen extends StatefulWidget {
 
 class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   int _resendTimer = 30;
-  bool _canResend = false;
   Timer? _timer;
   bool _emailSet = false;
 
@@ -33,14 +32,12 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
 
   void _startResendTimer() {
     _resendTimer = 30;
-    _canResend = false;
     _timer?.cancel();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_resendTimer > 0) {
         setState(() => _resendTimer--);
       } else {
-        setState(() => _canResend = true);
         timer.cancel();
       }
     });

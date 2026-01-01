@@ -1,7 +1,7 @@
 import 'package:coreflow/routing/app_routinf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:provider/provider.dart';
+
 
 Future<void> main() async {
    WidgetsFlutterBinding.ensureInitialized();

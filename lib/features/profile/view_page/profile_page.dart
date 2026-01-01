@@ -23,7 +23,7 @@ class ProfilePage extends StatelessWidget {
 }
 
 class _ProfileBody extends StatelessWidget {
-  const _ProfileBody({super.key});
+  const _ProfileBody();
 
   @override
   Widget build(BuildContext context) {

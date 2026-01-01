@@ -71,7 +71,7 @@ class LoginViewModel extends ChangeNotifier {
           response.responseData!,
           emailController.text.trim(),
         );
-        _landingUrl = response.responseData!.landingUrl ?? '/dashboard';
+        _landingUrl = response.responseData!.landingUrl;
         _successMessage = response.responseMessage;
         _isLoading = false;
         notifyListeners();

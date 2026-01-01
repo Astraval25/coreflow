@@ -73,7 +73,7 @@ class VerifyOtpViewModel extends ChangeNotifier {
       final response = await _authRepository.verifyOtp(request);
 
       if (response != null && response.responseStatus) {
-        _successMessage = response.responseMessage ?? '$_successMessage';
+        _successMessage = response.responseMessage;
         notifyListeners();
         await Future.delayed(const Duration(milliseconds: 100));
         if (context.mounted) {
