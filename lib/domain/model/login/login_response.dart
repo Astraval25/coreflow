@@ -1,13 +1,13 @@
 class LoginResponse {
   final bool responseStatus;
   final int responseCode;
-  final String responseMessage;
+  final String? responseMessage;
   final LoginData? responseData;
 
   LoginResponse({
     required this.responseStatus,
     required this.responseCode,
-    required this.responseMessage,
+    this.responseMessage,
     this.responseData,
   });
 
@@ -15,7 +15,7 @@ class LoginResponse {
     return LoginResponse(
       responseStatus: json['responseStatus'] ?? false,
       responseCode: json['responseCode'] ?? 0,
-      responseMessage: json['responseMessage'] ?? '',
+      responseMessage: json['responseMessage'],
       responseData: json['responseData'] != null
           ? LoginData.fromJson(json['responseData'])
           : null,
@@ -24,36 +24,37 @@ class LoginResponse {
 }
 
 class LoginData {
-  final int companyId;
-  final List<int> companyIds;
-  final String companyName;
+  final int? companyId;
+  final List<int>? companyIds;
+  final String? companyName;
   final String landingUrl;
-  final String refreshToken;
-  final String roleCode;
-  final String token;
+  final String? refreshToken;
+  final String? roleCode;
+  final String? token;
   final int userId;
 
-  var userName;
-
   LoginData({
-    required this.companyId,
-    required this.companyIds,
-    required this.companyName,
+    this.companyId,
+    this.companyIds,
+    this.companyName,
     required this.landingUrl,
-    required this.refreshToken,
-    required this.roleCode,
-    required this.token,
+    this.refreshToken,
+    this.roleCode,
+    this.token,
     required this.userId,
   });
+
   factory LoginData.fromJson(Map<String, dynamic> json) {
     return LoginData(
-      companyId: json['companyId'] ?? 0,
-      companyIds: List<int>.from(json['companyIds'] ?? []),
-      companyName: json['companyName'] ?? '',
+      companyId: json['companyId'],
+      companyIds: json['companyIds'] != null
+          ? List<int>.from(json['companyIds'])
+          : null,
+      companyName: json['companyName'],
       landingUrl: json['landingUrl'] ?? '',
-      refreshToken: json['refreshToken'] ?? '',
-      roleCode: json['roleCode'] ?? '',
-      token: json['token'] ?? '',
+      refreshToken: json['refreshToken'],
+      roleCode: json['roleCode'],
+      token: json['token'],
       userId: json['userId'] ?? 0,
     );
   }
