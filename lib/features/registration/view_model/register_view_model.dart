@@ -82,8 +82,9 @@ class RegisterViewModel extends ChangeNotifier {
 
   String? validatePassword(String? value) {
     if (value?.trim().isEmpty ?? true) return 'Password required';
-    if (value!.trim().length < 8)
+    if (value!.trim().length < 8){
       return 'Password must be at least 8 characters';
+    }
     if (!RegExp(
       r'(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])',
     ).hasMatch(value.trim())) {
