@@ -14,8 +14,6 @@ class DashboardViewModel extends ChangeNotifier {
   bool _isCompaniesLoading = false;
 
   bool _isCustomersExpanded = false;
-  bool _isVendorsExpanded = false;
-  bool _isSalesExpanded = false;
 
   String _selectedMenu = 'badges';
 
@@ -31,9 +29,7 @@ class DashboardViewModel extends ChangeNotifier {
   String get selectedMenu => _selectedMenu;
 
   DashboardViewModel() {
-    loadUserData().then(
-      (_) => loadCompanies(),
-    ); 
+    loadUserData().then((_) => loadCompanies());
   }
 
   Future<void> loadUserData() async {
@@ -71,7 +67,7 @@ class DashboardViewModel extends ChangeNotifier {
         _availableCompanies.insert(0, _companyName!);
       }
     } catch (e) {
-      print('Error loading companies: $e');
+      debugPrint('Error loading companies: $e');
 
       if (_companyName != null) {
         _availableCompanies = [_companyName!];

@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class RegisterRequest {
   final String companyName;
   final String industry;

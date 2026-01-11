@@ -1,3 +1,6 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:coreflow/core/storage/token_storage.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -46,6 +49,16 @@ class ManageExpansion extends StatelessWidget {
                 title: 'Customers',
                 menuKey: '/customers',
                 menuKeys: "/customersadd",
+                onTap: () async {
+                  final authData = await TokenStorage.getFullAuthData();
+                  final companyId = authData?['companyId']?.toString() ?? '6';
+
+                  context.read<DashboardViewModel>().setSelectedMenu(
+                    '/customers',
+                  );
+                  Navigator.pop(context);
+                  context.go('/customers/$companyId');
+                },
               ),
               SubMenuItem(
                 title: 'Vender',
@@ -108,10 +121,15 @@ class SubMenuItem extends StatelessWidget {
           ),
         ),
         trailing: GestureDetector(
-          onTap: () {
+          onTap: () async {
+            final authData = await TokenStorage.getFullAuthData();
+            final companyId = authData?['companyId']?.toString() ?? '6';
+
             context.read<DashboardViewModel>().setSelectedMenu(menuKeys);
             Navigator.pop(context);
-            context.go(menuKeys);
+            Future.delayed(const Duration(milliseconds: 50), () {
+              context.push('/customers/$companyId/add');
+            });
           },
           child: Container(
             padding: const EdgeInsets.all(4.0),

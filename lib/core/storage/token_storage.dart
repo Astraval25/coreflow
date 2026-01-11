@@ -14,11 +14,11 @@ class TokenStorage {
   static const _userNameKey = 'user_name';
 
   static Future<void> saveFullAuthData({
-    required int userId,
+    required String userId,        // ✅ FIXED: String not int
     int? companyId,
     List<int>? companyIds,
     String? companyName,
-    String? token,
+    required String token,         // ✅ FIXED: required not nullable
     String? refreshToken,
     String? roleCode,
     required String landingUrl,
@@ -27,9 +27,10 @@ class TokenStorage {
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.setString(_tokenKey, token ?? '');
+    // ✅ FIXED: Always save non-null values
+    await prefs.setString(_tokenKey, token);
     await prefs.setString(_refreshTokenKey, refreshToken ?? '');
-    await prefs.setInt(_userIdKey, userId);
+    await prefs.setString(_userIdKey, userId);        // ✅ String storage
     await prefs.setString(_landingUrlKey, landingUrl);
     await prefs.setString(_userEmailKey, email);
     await prefs.setString(_userNameKey, userName);
@@ -54,12 +55,14 @@ class TokenStorage {
   static Future<Map<String, dynamic>?> getFullAuthData() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(_tokenKey);
+    
+    // ✅ FIXED: Check token validity
     if (token == null || token.isEmpty) return null;
 
     return {
       'token': token,
       'refreshToken': prefs.getString(_refreshTokenKey),
-      'userId': prefs.getInt(_userIdKey),
+      'userId': prefs.getString(_userIdKey),           // ✅ String return
       'companyId': prefs.getInt(_companyIdKey),
       'companyIds': prefs.getString(_companyIdsKey),
       'companyName': prefs.getString(_companyNameKey),
