@@ -1,7 +1,7 @@
 import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
 
-class CreateCustomerRequest {
-  final String customerName;
+class CreateVendorsRequest {
+  final String vendorsName;
   final String displayName;
   final String? email;
   final String? phone;
@@ -13,8 +13,8 @@ class CreateCustomerRequest {
   final BillingAddress? billingAddress;
   final ShippingAddress shippingAddress;
 
-  CreateCustomerRequest({
-    required this.customerName,
+  CreateVendorsRequest({
+    required this.vendorsName,
     required this.displayName,
     this.email,
     this.phone,
@@ -28,7 +28,7 @@ class CreateCustomerRequest {
   });
 
   Map<String, dynamic> toJson() => {
-    'customerName': customerName,
+    'customerName': vendorsName,
     'displayName': displayName,
     'email': email,
     'phone': phone,

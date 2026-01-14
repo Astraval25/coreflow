@@ -1,4 +1,4 @@
-class CustomerEditRequest {
+class VendorsEditRequest {
   final String customerName;
   final String displayName;
   final String? email;
@@ -11,7 +11,7 @@ class CustomerEditRequest {
   final BillingAddress? billingAddress;
   final ShippingAddress? shippingAddress;
 
-  CustomerEditRequest({
+  VendorsEditRequest({
     required this.customerName,
     required this.displayName,
     this.email,

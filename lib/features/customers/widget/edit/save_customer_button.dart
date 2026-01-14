@@ -2,11 +2,15 @@ import 'package:coreflow/features/customers/view_model/customer_edit_view_model.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-
 class SaveCustomerButton extends StatelessWidget {
   final VoidCallback onPressed;
+  final bool isSaving;
 
-  const SaveCustomerButton({super.key, required this.onPressed, required bool isSaving});
+  const SaveCustomerButton({
+    super.key,
+    required this.onPressed,
+    required this.isSaving,
+  });
 
   @override
   Widget build(BuildContext context) {

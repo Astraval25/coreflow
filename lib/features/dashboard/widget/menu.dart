@@ -5,7 +5,7 @@ import 'manage_expansion.dart';
 import 'profile_row.dart';
 
 class AppDrawer extends StatelessWidget {
-  final DashboardViewModel vm; 
+  final DashboardViewModel vm;
 
   const AppDrawer({super.key, required this.vm});
 
@@ -16,12 +16,22 @@ class AppDrawer extends StatelessWidget {
       child: Column(
         children: [
           CompanyHeader(vm: vm),
+
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
-              children: [ManageExpansion(vm: vm)],
+              children: [
+                DashboardMenuItem(vm: vm),
+
+                const Divider(height: 1),
+
+                ManageExpansion(vm: vm),
+
+                const Divider(height: 1, thickness: 1),
+              ],
             ),
           ),
+
           ProfileRow(vm: vm),
         ],
       ),

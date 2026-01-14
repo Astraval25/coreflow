@@ -6,6 +6,52 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+class DashboardMenuItem extends StatelessWidget {
+  final DashboardViewModel vm;
+
+  const DashboardMenuItem({super.key, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = vm.selectedMenu == '/dashboard';
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 0.5),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? Theme.of(context).colorScheme.primaryContainer
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: Icon(
+          Icons.dashboard_rounded,
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.onSurface,
+        ),
+        title: Text(
+          'Dashboard',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 1),
+        dense: true,
+        onTap: () {
+          vm.setSelectedMenu('/dashboard');
+          Navigator.pop(context);
+          context.go('/dashboard');
+        },
+      ),
+    );
+  }
+}
+
 class ManageExpansion extends StatelessWidget {
   final DashboardViewModel vm;
 
@@ -49,21 +95,11 @@ class ManageExpansion extends StatelessWidget {
                 title: 'Customers',
                 menuKey: '/customers',
                 menuKeys: "/customersadd",
-                onTap: () async {
-                  final authData = await TokenStorage.getFullAuthData();
-                  final companyId = authData?['companyId']?.toString() ?? '6';
-
-                  context.read<DashboardViewModel>().setSelectedMenu(
-                    '/customers',
-                  );
-                  Navigator.pop(context);
-                  context.go('/customers/$companyId');
-                },
               ),
               SubMenuItem(
-                title: 'Vender',
-                menuKey: '/vender',
-                menuKeys: "/venderadd",
+                title: 'Vendors',
+                menuKey: '/vendors',
+                menuKeys: "/vendorsadd",
               ),
               SubMenuItem(
                 title: 'Items',
@@ -82,21 +118,19 @@ class SubMenuItem extends StatelessWidget {
   final String title;
   final String menuKey;
   final String menuKeys;
-  final VoidCallback? onTap;
 
   const SubMenuItem({
     super.key,
     required this.title,
     required this.menuKey,
     required this.menuKeys,
-    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
     final isSelectedMain = vm.selectedMenu == menuKey;
-    final isSelectedAdd = vm.selectedMenu == menuKeys;
+    final isSelectedAdd = menuKeys.isNotEmpty && vm.selectedMenu == menuKeys;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 0.5),
@@ -120,49 +154,58 @@ class SubMenuItem extends StatelessWidget {
                 : FontWeight.normal,
           ),
         ),
-        trailing: GestureDetector(
-          onTap: () async {
-            final authData = await TokenStorage.getFullAuthData();
-            final companyId = authData?['companyId']?.toString() ?? '6';
-
-            context.read<DashboardViewModel>().setSelectedMenu(menuKeys);
-            Navigator.pop(context);
-            Future.delayed(const Duration(milliseconds: 50), () {
-              context.push('/customers/$companyId/add');
-            });
-          },
-          child: Container(
-            padding: const EdgeInsets.all(4.0),
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.surfaceVariant.withOpacity(0.1),
-              border: Border.all(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withOpacity(0.05),
-                width: 1.5,
-              ),
-              borderRadius: BorderRadius.circular(4.0),
-            ),
-            child: Icon(
-              Icons.add,
-              size: 16,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-          ),
-        ),
-
+        trailing: menuKeys.isNotEmpty
+            ? GestureDetector(
+                onTap: () => _handleAddTap(context),
+                child: Container(
+                  padding: const EdgeInsets.all(4.0),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceVariant.withOpacity(0.1),
+                    border: Border.all(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.05),
+                      width: 1.5,
+                    ),
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                  child: Icon(
+                    Icons.add,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+              )
+            : null,
         contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
         minVerticalPadding: 2,
-        onTap:
-            onTap ??
-            () {
-              context.read<DashboardViewModel>().setSelectedMenu(menuKey);
-              Navigator.pop(context);
-              context.go(menuKey);
-            },
+        onTap: () => _handleMainTap(context),
       ),
     );
+  }
+
+  Future<void> _handleMainTap(BuildContext context) async {
+    final authData = await TokenStorage.getFullAuthData();
+    final companyId = authData?['companyId']?.toString() ?? '6';
+
+    context.read<DashboardViewModel>().setSelectedMenu(menuKey);
+    if (context.mounted) {
+      Navigator.pop(context);
+      context.go('/${menuKey.replaceFirst('/', '')}/$companyId');
+    }
+  }
+
+  Future<void> _handleAddTap(BuildContext context) async {
+    final authData = await TokenStorage.getFullAuthData();
+    final companyId = authData?['companyId']?.toString() ?? '6';
+
+    context.read<DashboardViewModel>().setSelectedMenu(menuKeys);
+    if (context.mounted) {
+      Navigator.pop(context);
+      await Future.delayed(const Duration(milliseconds: 100));
+      context.push('/customers/$companyId/add');
+    }
   }
 }

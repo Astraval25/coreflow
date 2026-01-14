@@ -1,17 +1,16 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
-
 import 'package:coreflow/features/customers/widget/edit/billing_address_card.dart';
 import 'package:coreflow/features/customers/widget/edit/customer_info_section.dart';
 import 'package:coreflow/features/customers/widget/edit/save_customer_button.dart';
 import 'package:coreflow/features/customers/widget/edit/shipping_address_card.dart';
-
+import 'package:coreflow/features/dashboard/widget/menu.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/features/customers/view_model/customer_edit_view_model.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/domain/model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
+import 'package:go_router/go_router.dart';
 
 class CustomerEditPage extends StatelessWidget {
   final int companyId;
@@ -57,160 +56,192 @@ class CustomerEditScreen extends StatefulWidget {
 
 class _CustomerEditScreenState extends State<CustomerEditScreen> {
   final _formKey = GlobalKey<FormState>();
-  bool _sameAsBilling = false;
+  bool _sameAsBillingAddress = false;
   bool _isFormPopulated = false;
 
-  // ── Controllers ─────────────────────────────────────────────────────────────
-  final _controllers = _CustomerControllers();
+  final _languageController = TextEditingController(text: 'en');
+
+  // Customer info controllers
+  final _customerNameController = TextEditingController();
+  final _displayNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _panController = TextEditingController();
+  final _gstController = TextEditingController();
+  final _advanceController = TextEditingController();
+
+  // Billing controllers
+  final _billingAttentionController = TextEditingController();
+  final _billingLine1Controller = TextEditingController();
+  final _billingLine2Controller = TextEditingController();
+  final _billingCityController = TextEditingController();
+  final _billingStateController = TextEditingController();
+  final _billingPincodeController = TextEditingController();
+  final _billingPhoneController = TextEditingController();
+  final _billingEmailController = TextEditingController();
+
+  // Shipping controllers
+  final _shippingAttentionController = TextEditingController();
+  final _shippingLine1Controller = TextEditingController();
+  final _shippingLine2Controller = TextEditingController();
+  final _shippingCityController = TextEditingController();
+  final _shippingStateController = TextEditingController();
+  final _shippingPincodeController = TextEditingController();
+  final _shippingPhoneController = TextEditingController();
+  final _shippingEmailController = TextEditingController();
 
   @override
   void dispose() {
-    _controllers.dispose();
+    _languageController.dispose();
+    _customerNameController.dispose();
+    _displayNameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _panController.dispose();
+    _gstController.dispose();
+    _advanceController.dispose();
+
+    _billingAttentionController.dispose();
+    _billingLine1Controller.dispose();
+    _billingLine2Controller.dispose();
+    _billingCityController.dispose();
+    _billingStateController.dispose();
+    _billingPincodeController.dispose();
+    _billingPhoneController.dispose();
+    _billingEmailController.dispose();
+
+    _shippingAttentionController.dispose();
+    _shippingLine1Controller.dispose();
+    _shippingLine2Controller.dispose();
+    _shippingCityController.dispose();
+    _shippingStateController.dispose();
+    _shippingPincodeController.dispose();
+    _shippingPhoneController.dispose();
+    _shippingEmailController.dispose();
+
     super.dispose();
   }
 
   void _populateForm(CustomerDetailData? data) {
     if (data == null || _isFormPopulated) return;
+
     _isFormPopulated = true;
 
-    final c = _controllers;
-    c.customerName.text = data.customerName;
-    c.displayName.text = data.displayName;
-    c.email.text = data.email ?? '';
-    c.phone.text = data.phone ?? '';
-    c.pan.text = data.pan ?? '';
-    c.gst.text = data.gst ?? '';
-    c.advance.text = data.advanceAmount?.toStringAsFixed(2) ?? '';
+    // Customer info
+    _customerNameController.text = data.customerName;
+    _displayNameController.text = data.displayName;
+    _emailController.text = data.email ?? '';
+    _phoneController.text = data.phone ?? '';
+    _panController.text = data.pan ?? '';
+    _gstController.text = data.gst ?? '';
+    _advanceController.text = data.advanceAmount?.toString() ?? '';
 
-    _sameAsBilling = data.sameAsBillingAddress;
+    _languageController.text = data.lang ?? 'en';
 
+    _sameAsBillingAddress = data.sameAsBillingAddress;
+
+    // Billing address
     final billing = data.billingAddress;
     if (billing != null) {
-      c.billingAttention.text = billing.attentionName ?? '';
-      c.billingLine1.text = billing.line1 ?? '';
-      c.billingLine2.text = billing.line2 ?? '';
-      c.billingCity.text = billing.city ?? '';
-      c.billingState.text = billing.state ?? '';
-      c.billingPincode.text = billing.pincode.toString();
-      c.billingPhone.text = billing.phone ?? '';
-      c.billingEmail.text = billing.email ?? '';
+      _billingAttentionController.text = billing.attentionName ?? '';
+      _billingLine1Controller.text = billing.line1 ?? '';
+      _billingLine2Controller.text = billing.line2 ?? '';
+      _billingCityController.text = billing.city ?? '';
+      _billingStateController.text = billing.state ?? '';
+      _billingPincodeController.text = billing.pincode.toString();
+      _billingPhoneController.text = billing.phone ?? '';
+      _billingEmailController.text = billing.email ?? '';
     }
 
+    // Shipping address
     final shipping = data.shippingAddress;
     if (shipping != null) {
-      c.shippingAttention.text = shipping.attentionName ?? '';
-      c.shippingLine1.text = shipping.line1 ?? '';
-      c.shippingLine2.text = shipping.line2 ?? '';
-      c.shippingCity.text = shipping.city ?? '';
-      c.shippingState.text = shipping.state ?? '';
-      c.shippingPincode.text = shipping.pincode.toString();
-      c.shippingPhone.text = shipping.phone ?? '';
-      c.shippingEmail.text = shipping.email ?? '';
+      _shippingAttentionController.text = shipping.attentionName ?? '';
+      _shippingLine1Controller.text = shipping.line1 ?? '';
+      _shippingLine2Controller.text = shipping.line2 ?? '';
+      _shippingCityController.text = shipping.city ?? '';
+      _shippingStateController.text = shipping.state ?? '';
+      _shippingPincodeController.text = shipping.pincode.toString();
+      _shippingPhoneController.text = shipping.phone ?? '';
+      _shippingEmailController.text = shipping.email ?? '';
     }
 
-    if (mounted) setState(() {});
+    setState(() {});
   }
 
-  Future<void> _saveCustomer(CustomerEditViewModel vm) async {
+  Future<void> _saveCustomer(CustomerEditViewModel viewModel) async {
     if (!_formKey.currentState!.validate()) return;
 
-    final req = CustomerEditRequest(
-      customerName: _controllers.customerName.text.trim(),
-      displayName: _controllers.displayName.text.trim(),
-      email: _controllers.email.text.trim().isNotEmpty
-          ? _controllers.email.text.trim()
-          : null,
-      phone: _controllers.phone.text.trim().isNotEmpty
-          ? _controllers.phone.text.trim()
-          : null,
-      lang: 'en',
-      pan: _controllers.pan.text.trim().isNotEmpty
-          ? _controllers.pan.text.trim()
-          : null,
-      gst: _controllers.gst.text.trim().isNotEmpty
-          ? _controllers.gst.text.trim()
-          : null,
-      advanceAmount: double.tryParse(_controllers.advance.text) ?? 0.0,
-      sameAsBillingAddress: _sameAsBilling,
-      billingAddress: _sameAsBilling
-          ? null
-          : BillingAddress(
-              attentionName:
-                  _controllers.billingAttention.text.trim().isNotEmpty
-                  ? _controllers.billingAttention.text.trim()
+    final request = CustomerEditRequest(
+      customerName: _customerNameController.text,
+      displayName: _displayNameController.text,
+      email: _emailController.text.isNotEmpty ? _emailController.text : null,
+      phone: _phoneController.text.isNotEmpty ? _phoneController.text : null,
+      lang: _languageController.text.isNotEmpty
+          ? _languageController.text
+          : 'en',
+      pan: _panController.text.isNotEmpty ? _panController.text : null,
+      gst: _gstController.text.isNotEmpty ? _gstController.text : null,
+      advanceAmount: double.tryParse(_advanceController.text) ?? 0.0,
+      sameAsBillingAddress: _sameAsBillingAddress,
+      billingAddress: !_sameAsBillingAddress
+          ? BillingAddress(
+              attentionName: _billingAttentionController.text.isNotEmpty
+                  ? _billingAttentionController.text
                   : null,
               country: 'India',
-              line1: _controllers.billingLine1.text.trim(),
-              line2: _controllers.billingLine2.text.trim().isNotEmpty
-                  ? _controllers.billingLine2.text.trim()
+              line1: _billingLine1Controller.text,
+              line2: _billingLine2Controller.text.isNotEmpty
+                  ? _billingLine2Controller.text
                   : null,
-              city: _controllers.billingCity.text.trim(),
-              state: _controllers.billingState.text.trim(),
-              pincode: int.tryParse(_controllers.billingPincode.text) ?? 0,
-              phone: _controllers.billingPhone.text.trim().isNotEmpty
-                  ? _controllers.billingPhone.text.trim()
+              city: _billingCityController.text,
+              state: _billingStateController.text,
+              pincode: int.tryParse(_billingPincodeController.text) ?? 0,
+              phone: _billingPhoneController.text.isNotEmpty
+                  ? _billingPhoneController.text
                   : null,
-              email: _controllers.billingEmail.text.trim().isNotEmpty
-                  ? _controllers.billingEmail.text.trim()
+              email: _billingEmailController.text.isNotEmpty
+                  ? _billingEmailController.text
                   : null,
-            ),
+            )
+          : null,
       shippingAddress: ShippingAddress(
-        attentionName: _controllers.shippingAttention.text.trim().isNotEmpty
-            ? _controllers.shippingAttention.text.trim()
+        attentionName: _shippingAttentionController.text.isNotEmpty
+            ? _shippingAttentionController.text
             : null,
         country: 'India',
-        line1: _controllers.shippingLine1.text.trim(),
-        line2: _controllers.shippingLine2.text.trim().isNotEmpty
-            ? _controllers.shippingLine2.text.trim()
+        line1: _shippingLine1Controller.text,
+        line2: _shippingLine2Controller.text.isNotEmpty
+            ? _shippingLine2Controller.text
             : null,
-        city: _controllers.shippingCity.text.trim(),
-        state: _controllers.shippingState.text.trim(),
-        pincode: int.tryParse(_controllers.shippingPincode.text) ?? 0,
-        phone: _controllers.shippingPhone.text.trim().isNotEmpty
-            ? _controllers.shippingPhone.text.trim()
+        city: _shippingCityController.text,
+        state: _shippingStateController.text,
+        pincode: int.tryParse(_shippingPincodeController.text) ?? 0,
+        phone: _shippingPhoneController.text.isNotEmpty
+            ? _shippingPhoneController.text
             : null,
-        email: _controllers.shippingEmail.text.trim().isNotEmpty
-            ? _controllers.shippingEmail.text.trim()
+        email: _shippingEmailController.text.isNotEmpty
+            ? _shippingEmailController.text
             : null,
       ),
     );
 
-    final success = await vm.updateCustomer(
+    final success = await viewModel.updateCustomer(
       widget.companyId,
       widget.customerId,
-      req,
+      request,
     );
 
-    if (!mounted) return;
-
-    if (success) {
+    if (success && mounted && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Customer updated successfully'),
-          backgroundColor: Colors.green[800],
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
+        const SnackBar(content: Text('Customer updated successfully')),
       );
       context.pop();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(vm.error ?? 'Failed to update customer'),
-          backgroundColor: Colors.red[800],
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Consumer2<CustomerEditViewModel, DashboardViewModel>(
       builder: (context, editVM, dashboardVM, _) {
         if (editVM.customerDetails != null && !_isFormPopulated) {
@@ -220,237 +251,109 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
         }
 
         return Scaffold(
-          backgroundColor: colorScheme.surfaceContainerLowest,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            title: const Text('Edit Customer'),
+            title: const Text('Edit customer'),
             elevation: 0,
-            backgroundColor: colorScheme.surface,
-            surfaceTintColor: Colors.transparent,
-            scrolledUnderElevation: 0,
+            backgroundColor: Colors.transparent,
           ),
+          drawer: AppDrawer(vm: dashboardVM),
           body: editVM.isLoading
               ? const Center(child: CircularProgressIndicator())
               : Form(
                   key: _formKey,
-                  child: CustomScrollView(
-                    slivers: [
-                      SliverSafeArea(
-                        sliver: SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
-                          sliver: SliverList(
-                            delegate: SliverChildListDelegate([
-                              // ── Header Hint ──
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primaryContainer
-                                      .withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.info_outline_rounded,
-                                      color: colorScheme.primary,
-                                      size: 22,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        "Update customer details & addresses",
-                                        style: TextStyle(
-                                          color: colorScheme.onPrimaryContainer,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              const SizedBox(height: 28),
-
-                              // Customer Info
-                              Card(
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  side: BorderSide(
-                                    color: colorScheme.outlineVariant,
-                                  ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(20),
-                                  child: CustomerInfoSection(
-                                    customerName: _controllers.customerName,
-                                    displayName: _controllers.displayName,
-                                    email: _controllers.email,
-                                    phone: _controllers.phone,
-                                    pan: _controllers.pan,
-                                    gst: _controllers.gst,
-                                    advance: _controllers.advance,
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 24),
-
-                              // Shipping Address
-                              Card(
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  side: BorderSide(
-                                    color: colorScheme.outlineVariant,
-                                  ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(20),
-                                  child: ShippingAddressCard(
-                                    attention: _controllers.shippingAttention,
-                                    line1: _controllers.shippingLine1,
-                                    line2: _controllers.shippingLine2,
-                                    city: _controllers.shippingCity,
-                                    state: _controllers.shippingState,
-                                    pincode: _controllers.shippingPincode,
-                                    phone: _controllers.shippingPhone,
-                                    email: _controllers.shippingEmail,
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 24),
-
-                              // Billing Address + Checkbox
-                              Card(
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  side: BorderSide(
-                                    color: colorScheme.outlineVariant,
-                                  ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(20),
-                                  child: BillingAddressCard(
-                                    sameAsBillingAddress: _sameAsBilling,
-                                    onSameChanged: (v) => setState(
-                                      () => _sameAsBilling = v ?? false,
-                                    ),
-                                    attention: _controllers.billingAttention,
-                                    line1: _controllers.billingLine1,
-                                    line2: _controllers.billingLine2,
-                                    city: _controllers.billingCity,
-                                    state: _controllers.billingState,
-                                    pincode: _controllers.billingPincode,
-                                    phone: _controllers.billingPhone,
-                                    email: _controllers.billingEmail,
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 40),
-
-                              // Save Button
-                              SaveCustomerButton(
-                                onPressed: () => _saveCustomer(editVM),
-                                isSaving: editVM.isSaving,
-                              ),
-
-                              const SizedBox(height: 24),
-
-                              // Error
-                              if (editVM.error != null)
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.errorContainer,
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.error_outline_rounded,
-                                        color: colorScheme.error,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          editVM.error!,
-                                          style: TextStyle(
-                                            color: colorScheme.onErrorContainer,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ]),
-                          ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        CustomerInfoSection(
+                          formKey: _formKey,
+                          customerName: _customerNameController,
+                          displayName: _displayNameController,
+                          email: _emailController,
+                          phone: _phoneController,
+                          pan: _panController,
+                          gst: _gstController,
+                          advance: _advanceController,
+                          language: _languageController,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 32),
+
+                        ShippingAddressCard(
+                          attention: _shippingAttentionController,
+                          line1: _shippingLine1Controller,
+                          line2: _shippingLine2Controller,
+                          city: _shippingCityController,
+                          state: _shippingStateController,
+                          pincode: _shippingPincodeController,
+                          phone: _shippingPhoneController,
+                          email: _shippingEmailController,
+                        ),
+                        const SizedBox(height: 32),
+
+                        BillingAddressCard(
+                          sameAsBillingAddress: _sameAsBillingAddress,
+                          onSameChanged: (value) {
+                            setState(() {
+                              _sameAsBillingAddress = value ?? false;
+                            });
+                          },
+                          attention: _billingAttentionController,
+                          line1: _billingLine1Controller,
+                          line2: _billingLine2Controller,
+                          city: _billingCityController,
+                          state: _billingStateController,
+                          pincode: _billingPincodeController,
+                          phone: _billingPhoneController,
+                          email: _billingEmailController,
+                        ),
+                        const SizedBox(height: 40),
+
+                        SaveCustomerButton(
+                          onPressed: () => _saveCustomer(editVM),
+                          isSaving: editVM.isSaving,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // ✅ Error Display
+                        if (editVM.error != null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.red.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red[700],
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    editVM.error!,
+                                    style: TextStyle(
+                                      color: Colors.red[700],
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
         );
       },
     );
-  }
-}
-
-// ── Helper class to group controllers (cleaner code) ────────────────────────────
-class _CustomerControllers {
-  final customerName = TextEditingController();
-  final displayName = TextEditingController();
-  final email = TextEditingController();
-  final phone = TextEditingController();
-  final pan = TextEditingController();
-  final gst = TextEditingController();
-  final advance = TextEditingController();
-
-  final billingAttention = TextEditingController();
-  final billingLine1 = TextEditingController();
-  final billingLine2 = TextEditingController();
-  final billingCity = TextEditingController();
-  final billingState = TextEditingController();
-  final billingPincode = TextEditingController();
-  final billingPhone = TextEditingController();
-  final billingEmail = TextEditingController();
-
-  final shippingAttention = TextEditingController();
-  final shippingLine1 = TextEditingController();
-  final shippingLine2 = TextEditingController();
-  final shippingCity = TextEditingController();
-  final shippingState = TextEditingController();
-  final shippingPincode = TextEditingController();
-  final shippingPhone = TextEditingController();
-  final shippingEmail = TextEditingController();
-
-  void dispose() {
-    customerName.dispose();
-    displayName.dispose();
-    email.dispose();
-    phone.dispose();
-    pan.dispose();
-    gst.dispose();
-    advance.dispose();
-
-    billingAttention.dispose();
-    billingLine1.dispose();
-    billingLine2.dispose();
-    billingCity.dispose();
-    billingState.dispose();
-    billingPincode.dispose();
-    billingPhone.dispose();
-    billingEmail.dispose();
-
-    shippingAttention.dispose();
-    shippingLine1.dispose();
-    shippingLine2.dispose();
-    shippingCity.dispose();
-    shippingState.dispose();
-    shippingPincode.dispose();
-    shippingPhone.dispose();
-    shippingEmail.dispose();
   }
 }

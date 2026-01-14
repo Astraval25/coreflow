@@ -1,22 +1,20 @@
-class RefreshTokenResponse {
-  final String token;
-  final String refreshToken;
-  final String? roleCode;
-  final int? expiresIn; 
+import 'package:flutter/material.dart';
 
-  RefreshTokenResponse({
-    required this.token,
-    required this.refreshToken,
-    this.roleCode,
-    this.expiresIn, 
-  });
+class RefreshTokenResponse {
+  final String? token;
+  final String? refreshToken;
+  final String? roleCode;
+
+
+  RefreshTokenResponse({this.token, this.refreshToken, this.roleCode});
 
   factory RefreshTokenResponse.fromJson(Map<String, dynamic> json) {
+    debugPrint('Parsing refresh response: ${json.keys.toList()}');
     return RefreshTokenResponse(
-      token: json['token'] ?? '',
-      refreshToken: json['refreshToken'] ?? '',
+      token: json['token'] ?? json['accessToken'] ?? json['access_token'],
+      refreshToken: json['refreshToken'] ?? json['refresh_token'],
       roleCode: json['roleCode'],
-      expiresIn: json['expiresIn'], 
+      
     );
   }
 }

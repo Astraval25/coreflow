@@ -28,87 +28,214 @@ class AddressFields extends StatelessWidget {
       children: [
         TextFormField(
           controller: attention,
-          decoration: const InputDecoration(
+          style: const TextStyle(fontSize: 16),
+          decoration: InputDecoration(
             labelText: 'Attention name',
-            border: OutlineInputBorder(),
+            labelStyle: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).hintColor,
+            ),
+            border: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(
+                color: Theme.of(context).primaryColor,
+                width: 2,
+              ),
+            ),
+            enabledBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey),
+            ),
+            errorBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.red),
+            ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         TextFormField(
           controller: line1,
-          decoration: const InputDecoration(
-            labelText: 'Address line 1 *',
-            border: OutlineInputBorder(),
+          style: const TextStyle(fontSize: 16),
+          decoration: InputDecoration(
+            labelText: 'Address line 1',
+            labelStyle: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).hintColor,
+            ),
+            border: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(
+                color: Theme.of(context).primaryColor,
+                width: 2,
+              ),
+            ),
+            enabledBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey),
+            ),
           ),
-          validator: (value) => (value?.isEmpty ?? true) ? 'Address line 1 is required' : null,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         TextFormField(
           controller: line2,
-          decoration: const InputDecoration(
+          style: const TextStyle(fontSize: 16),
+          decoration: InputDecoration(
             labelText: 'Address line 2',
-            border: OutlineInputBorder(),
+            labelStyle: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).hintColor,
+            ),
+            border: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(
+                color: Theme.of(context).primaryColor,
+                width: 2,
+              ),
+            ),
+            enabledBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey),
+            ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
               child: TextFormField(
                 controller: city,
-                decoration: const InputDecoration(
-                  labelText: 'City *',
-                  border: OutlineInputBorder(),
+                style: const TextStyle(fontSize: 16),
+                decoration: InputDecoration(
+                  labelText: 'City',
+                  labelStyle: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).hintColor,
+                  ),
+                  border: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                      width: 2,
+                    ),
+                  ),
+                  enabledBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
                 ),
-                validator: (value) => (value?.isEmpty ?? true) ? 'City is required' : null,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: TextFormField(
                 controller: state,
-                decoration: const InputDecoration(
-                  labelText: 'State *',
-                  border: OutlineInputBorder(),
+                style: const TextStyle(fontSize: 16),
+                decoration: InputDecoration(
+                  labelText: 'State',
+                  labelStyle: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).hintColor,
+                  ),
+                  border: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                      width: 2,
+                    ),
+                  ),
+                  enabledBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
                 ),
-                validator: (value) => (value?.isEmpty ?? true) ? 'State is required' : null,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
               child: TextFormField(
                 controller: pincode,
-                decoration: const InputDecoration(
-                  labelText: 'Pincode *',
-                  border: OutlineInputBorder(),
+                style: const TextStyle(fontSize: 16),
+                decoration: InputDecoration(
+                  labelText: 'Pincode',
+                  labelStyle: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).hintColor,
+                  ),
+                  border: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                      width: 2,
+                    ),
+                  ),
+                  enabledBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
                 ),
                 keyboardType: TextInputType.number,
-                validator: (value) => (value?.isEmpty ?? true) ? 'Pincode is required' : null,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: TextFormField(
                 controller: phone,
-                decoration: const InputDecoration(
+                style: const TextStyle(fontSize: 16),
+                decoration: InputDecoration(
                   labelText: 'Phone',
-                  border: OutlineInputBorder(),
+                  labelStyle: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).hintColor,
+                  ),
+                  border: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                      width: 2,
+                    ),
+                  ),
+                  enabledBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
                 ),
                 keyboardType: TextInputType.phone,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         TextFormField(
           controller: email,
-          decoration: const InputDecoration(
+          style: const TextStyle(fontSize: 16),
+          decoration: InputDecoration(
             labelText: 'Email',
-            border: OutlineInputBorder(),
+            labelStyle: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).hintColor,
+            ),
+            border: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(
+                color: Theme.of(context).primaryColor,
+                width: 2,
+              ),
+            ),
+            enabledBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey),
+            ),
           ),
           keyboardType: TextInputType.emailAddress,
         ),

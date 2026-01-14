@@ -25,33 +25,34 @@ class ShippingAddressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
-            const Text(
+            const SizedBox(width: 12),
+            Text(
               'Shipping address',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            AddressFields(
-              attention: attention,
-              line1: line1,
-              line2: line2,
-              city: city,
-              state: state,
-              pincode: pincode,
-              phone: phone,
-              email: email,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 20),
+
+        AddressFields(
+          attention: attention,
+          line1: line1,
+          line2: line2,
+          city: city,
+          state: state,
+          pincode: pincode,
+          phone: phone,
+          email: email,
+        ),
+      ],
     );
   }
 }

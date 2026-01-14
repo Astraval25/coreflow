@@ -3,8 +3,13 @@ import 'package:flutter/material.dart';
 
 class CustomerHeader extends StatelessWidget {
   final CustomerDetailData customer;
+  final VoidCallback onToggleStatus; 
 
-  const CustomerHeader({super.key, required this.customer});
+  const CustomerHeader({
+    super.key,
+    required this.customer,
+    required this.onToggleStatus,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +33,8 @@ class CustomerHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
+
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,6 +75,22 @@ class CustomerHeader extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
+          ),
+
+
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: onToggleStatus,
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  isActive ? colorScheme.error : colorScheme.tertiary,
+              foregroundColor: colorScheme.onPrimary,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+            child: Text(
+              isActive ? 'Deactivate' : 'Activate',
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ],

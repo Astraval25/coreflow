@@ -1,89 +1,93 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/storage/token_storage.dart';
 
 class ApiService {
   static const Duration timeout = Duration(seconds: 30);
   static bool _isRefreshing = false;
-  static Completer<http.Response>? _refreshCompleter;
+  static Completer<String?>?
+  _tokenRefreshCompleter;
 
-  //  Always use stored token
-  static Future<String?> _getValidToken() async {
-    return await TokenStorage.getToken();
+  static Future<Map<String?, String?>> _getTokens() async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      'token': prefs.getString('auth_token'),
+      'refreshToken': prefs.getString('refresh_token'),
+    };
   }
 
   static Future<String?> _performTokenRefresh() async {
     if (_isRefreshing) {
-      await _refreshCompleter?.future;
-      return await TokenStorage.getToken();
+      return await _tokenRefreshCompleter?.future;
     }
 
     _isRefreshing = true;
-    _refreshCompleter = Completer<http.Response>();
+    _tokenRefreshCompleter = Completer<String?>();
 
     try {
       final authRepo = AuthRepository();
       final refreshed = await authRepo.refreshToken();
 
-      _refreshCompleter?.complete();
-      return refreshed ? await TokenStorage.getToken() : null;
+      await Future.delayed(Duration(milliseconds: 50));
+      String? newToken = await TokenStorage.getToken();
+
+      if (newToken == null || newToken.isEmpty) {
+        final fullData = await TokenStorage.getFullAuthData();
+        newToken = fullData?['token'];
+      }
+
+      debugPrint('Refresh: $refreshed, Token: ${newToken?.isNotEmpty == true}');
+      _tokenRefreshCompleter?.complete(newToken);
+      return newToken;
     } catch (e) {
-      _refreshCompleter?.completeError(e);
+      _tokenRefreshCompleter?.complete(null);
       return null;
     } finally {
       _isRefreshing = false;
-      _refreshCompleter = null;
+      _tokenRefreshCompleter = null;
     }
   }
 
-  //  SINGLE unified method - ALL HTTP calls use this
   Future<http.Response> _makeRequest(
-    Future<http.Response> Function() request,
+    Future<http.Response> Function(String?) request,
   ) async {
     http.Response response;
 
-    try {
-      response = await request();
-    } on SocketException catch (e) {
-      debugPrint('Network error: $e');
-      rethrow;
-    }
+    final initialTokens = await _getTokens();
+    response = await request(initialTokens['token']);
 
-    // ONLY 401 triggers refresh + retry
     if (response.statusCode == 401 && !_isRefreshing) {
-      debugPrint('401 detected → Token refresh');
+      debugPrint('401 → Refresh token');
+
       final newToken = await _performTokenRefresh();
 
-      if (newToken != null) {
-        try {
-          response = await request();
-          debugPrint('Retry success: ${response.statusCode}');
-        } catch (e) {
-          debugPrint('Retry failed: $e');
-        }
+      if (newToken != null && newToken.isNotEmpty) {
+        debugPrint('Retrying with new token');
+        response = await request(newToken);
+        debugPrint('Retry: ${response.statusCode}');
+        return response;
       } else {
-        debugPrint('Refresh failed → Return 401');
+        debugPrint('Refresh failed - no new token');
       }
     }
 
     return response;
   }
 
-  // post() ONLY calls _makeRequest
   Future<http.Response> post(String url, Map<String, dynamic> data) async {
     debugPrint('POST to: $url');
-    return _makeRequest(() async {
-      final token = await _getValidToken();
+    return _makeRequest((token) async {
       return http
           .post(
             Uri.parse(url),
             headers: {
               'Content-Type': 'application/json',
-              if (token != null) 'Authorization': 'Bearer $token',
+              if (token != null && token.isNotEmpty)
+                'Authorization': 'Bearer $token',
             },
             body: jsonEncode(data),
           )
@@ -91,34 +95,49 @@ class ApiService {
     });
   }
 
-  // get() ONLY calls _makeRequest
   Future<http.Response> get(Uri url) async {
     debugPrint('GET to: ${url.path}');
-    return _makeRequest(() async {
-      final token = await _getValidToken();
+    return _makeRequest((token) async {
       return http
           .get(
             url,
             headers: {
               'Content-Type': 'application/json',
-              if (token != null) 'Authorization': 'Bearer $token',
+              if (token != null && token.isNotEmpty)
+                'Authorization': 'Bearer $token',
             },
           )
           .timeout(timeout);
     });
   }
 
-  // put() ONLY calls _makeRequest
   Future<http.Response> put(String url, Map<String, dynamic> data) async {
     debugPrint('PUT to: $url');
-    return _makeRequest(() async {
-      final token = await _getValidToken();
+    return _makeRequest((token) async {
       return http
           .put(
             Uri.parse(url),
             headers: {
               'Content-Type': 'application/json',
-              if (token != null) 'Authorization': 'Bearer $token',
+              if (token != null && token.isNotEmpty)
+                'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(data),
+          )
+          .timeout(timeout);
+    });
+  }
+
+  Future<http.Response> patch(String url, Map<String, dynamic> data) async {
+    debugPrint('PATCH to: $url');
+    return _makeRequest((token) async {
+      return http
+          .patch(
+            Uri.parse(url),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null && token.isNotEmpty)
+                'Authorization': 'Bearer $token',
             },
             body: jsonEncode(data),
           )

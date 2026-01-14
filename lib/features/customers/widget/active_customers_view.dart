@@ -44,7 +44,6 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
   Widget build(BuildContext context) {
     final authRepository = AuthRepository();
 
-   
     final dashboardVm = DashboardViewModel()..loadUserData();
 
     return MultiProvider(
@@ -54,9 +53,7 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
               ActiveCustomersViewModel(authRepository)
                 ..loadActiveCustomers(widget.companyId),
         ),
-        ChangeNotifierProvider<DashboardViewModel>(
-          create: (_) => dashboardVm,
-        ),
+        ChangeNotifierProvider<DashboardViewModel>(create: (_) => dashboardVm),
       ],
       child: Consumer2<ActiveCustomersViewModel, DashboardViewModel>(
         builder: (context, viewModel, dashboardVm, child) {

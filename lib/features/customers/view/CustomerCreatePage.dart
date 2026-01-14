@@ -4,6 +4,7 @@ import 'package:coreflow/features/customers/widget/edit/billing_address_card.dar
 import 'package:coreflow/features/customers/widget/edit/customer_info_section.dart';
 import 'package:coreflow/features/customers/widget/edit/save_customer_button.dart';
 import 'package:coreflow/features/customers/widget/edit/shipping_address_card.dart';
+import 'package:coreflow/features/dashboard/widget/menu.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
@@ -45,6 +46,8 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _sameAsBillingAddress = false;
 
+  final _languageController = TextEditingController(text: 'en');
+
   // Customer info controllers
   final _customerNameController = TextEditingController();
   final _displayNameController = TextEditingController();
@@ -76,7 +79,9 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
 
   @override
   void dispose() {
-    // Dispose all controllers
+    _languageController.dispose();
+
+    // Dispose all other controllers
     _customerNameController.dispose();
     _displayNameController.dispose();
     _emailController.dispose();
@@ -84,6 +89,7 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
     _panController.dispose();
     _gstController.dispose();
     _advanceController.dispose();
+
     _billingAttentionController.dispose();
     _billingLine1Controller.dispose();
     _billingLine2Controller.dispose();
@@ -92,6 +98,7 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
     _billingPincodeController.dispose();
     _billingPhoneController.dispose();
     _billingEmailController.dispose();
+
     _shippingAttentionController.dispose();
     _shippingLine1Controller.dispose();
     _shippingLine2Controller.dispose();
@@ -100,11 +107,12 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
     _shippingPincodeController.dispose();
     _shippingPhoneController.dispose();
     _shippingEmailController.dispose();
+
     super.dispose();
   }
 
   Future<void> _saveCustomer(CustomerEditViewModel viewModel) async {
-    viewModel.clearError(); // ✅ Clear previous error before saving
+    viewModel.clearError();
 
     if (!_formKey.currentState!.validate()) return;
 
@@ -113,7 +121,9 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
       displayName: _displayNameController.text,
       email: _emailController.text.isNotEmpty ? _emailController.text : null,
       phone: _phoneController.text.isNotEmpty ? _phoneController.text : null,
-      lang: 'en',
+      lang: _languageController.text.isNotEmpty
+          ? _languageController.text
+          : 'en',
       pan: _panController.text.isNotEmpty ? _panController.text : null,
       gst: _gstController.text.isNotEmpty ? _gstController.text : null,
       advanceAmount: double.tryParse(_advanceController.text) ?? 0.0,
@@ -178,15 +188,19 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
     return Consumer2<CustomerEditViewModel, DashboardViewModel>(
       builder: (context, editVM, dashboardVM, _) {
         return Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          appBar: AppBar(title: const Text('Create customer')),
-          drawer: const Drawer(),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            title: const Text('Create customer'),
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+          ),
+          drawer: AppDrawer(vm: dashboardVM),
           body: editVM.isSaving
               ? const Center(child: CircularProgressIndicator())
               : Form(
                   key: _formKey,
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -199,8 +213,10 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
                           pan: _panController,
                           gst: _gstController,
                           advance: _advanceController,
+                          language: _languageController,
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 32),
+
                         ShippingAddressCard(
                           attention: _shippingAttentionController,
                           line1: _shippingLine1Controller,
@@ -211,7 +227,8 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
                           phone: _shippingPhoneController,
                           email: _shippingEmailController,
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 32),
+
                         BillingAddressCard(
                           sameAsBillingAddress: _sameAsBillingAddress,
                           onSameChanged: (value) {
@@ -228,29 +245,41 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
                           phone: _billingPhoneController,
                           email: _billingEmailController,
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 40),
+
                         SaveCustomerButton(
                           onPressed: () => _saveCustomer(editVM),
                           isSaving: editVM.isSaving,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
+
                         if (editVM.error != null) ...[
                           Container(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.red.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.red.shade200),
+                              color: Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.red.withOpacity(0.3),
+                              ),
                             ),
                             child: Row(
                               children: [
                                 Icon(
                                   Icons.error_outline,
-                                  color: Colors.red.shade700,
+                                  color: Colors.red[700],
+                                  size: 20,
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(child: Text(editVM.error!)),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    editVM.error!,
+                                    style: TextStyle(
+                                      color: Colors.red[700],
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
