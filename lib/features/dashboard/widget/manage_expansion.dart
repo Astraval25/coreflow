@@ -206,9 +206,9 @@ class SubMenuItem extends StatelessWidget {
 
       if (menuKeys == '/vendoradd') {
         context.push('/vendors/$companyId/add');
-        // } else if (menuKeys == '/customersadd') {
-        //   context.push('/customers/$companyId/add');
-        // } else {
+      } else if (menuKeys == '/customersadd') {
+        context.push('/customers/$companyId/add');
+      } else {
         context.push('/$menuKeys');
       }
     }

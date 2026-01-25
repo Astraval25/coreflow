@@ -127,7 +127,7 @@ class CustomerEditViewModel extends ChangeNotifier {
           'Customer created successfully: ${response.responseMessage}',
         );
         _customerDetails = null;
-        return true; // UI will handle auto-refresh
+        return true; 
       } else {
         _error = response?.responseMessage ?? 'Failed to create customer';
         return false;

@@ -9,10 +9,10 @@ import 'package:coreflow/features/dashboard/dashboard_view/dashboard_page.dart';
 import 'package:coreflow/features/login/view/login_page.dart';
 import 'package:coreflow/features/profile/view_page/profile_page.dart';
 import 'package:coreflow/features/resend_otp/view/resend_otp_sreen.dart';
-// import 'package:coreflow/features/vendors/view/CustomerCreatePage.dart';
-// import 'package:coreflow/features/vendors/view/customer_detail_page.dart';
-// import 'package:coreflow/features/vendors/view/customer_edit_page.dart';
-// import 'package:coreflow/features/vendors/view/customers_page.dart';
+import 'package:coreflow/features/vendor/view/vendor_create_page.dart';
+import 'package:coreflow/features/vendor/view/vendor_detail_page.dart';
+import 'package:coreflow/features/vendor/view/vendor_edit_page.dart';
+import 'package:coreflow/features/vendor/view/vendor_page.dart';
 import 'package:coreflow/features/verify_otp/view/verify_otp_screen.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -99,41 +99,41 @@ final GoRouter router = GoRouter(
         ),
       ],
     ),
-    // GoRoute(
-    //   path: '/vendors/:companyId',
-    //   builder: (context, state) {
-    //     final companyId = int.parse(state.pathParameters['companyId']!);
-    //     return ActiveVendorPage(companyId: companyId);
-    //   },
-    //   routes: [
-    //     // Add vendor page (nested)
-    //     GoRoute(
-    //       path: 'add',
-    //       builder: (context, state) {
-    //         final companyId = int.parse(state.pathParameters['companyId']!);
-    //         return VendorCreatePage(companyId: companyId);
-    //       },
-    //     ),
-    //     GoRoute(
-    //       path: ':vendorId',
-    //       builder: (context, state) {
-    //         final companyId = int.parse(state.pathParameters['companyId']!);
-    //         final vendorId = int.parse(state.pathParameters['vendorId']!);
-    //         return VendorDetailView(companyId: companyId, vendorId: vendorId);
-    //       },
-    //       routes: [
-    //         GoRoute(
-    //           path: 'edit',
-    //           builder: (context, state) {
-    //             final companyId = int.parse(state.pathParameters['companyId']!);
-    //             final vendorId = int.parse(state.pathParameters['vendorId']!);
-    //             return VendorEditPage(companyId: companyId, vendorId: vendorId);
-    //           },
-    //         ),
-    //       ],
-    //     ),
-    //   ],
-    // ),
+    GoRoute(
+      path: '/vendors/:companyId',
+      builder: (context, state) {
+        final companyId = int.parse(state.pathParameters['companyId']!);
+        return ActiveVendorsPage(companyId: companyId);
+      },
+      routes: [
+        // Add vendor page (nested)
+        GoRoute(
+          path: 'add',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            return VendorCreatePage(companyId: companyId);
+          },
+        ),
+        GoRoute(
+          path: ':vendorId',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            final vendorId = int.parse(state.pathParameters['vendorId']!);
+            return VendorDetailView(companyId: companyId, vendorId: vendorId);
+          },
+          routes: [
+            GoRoute(
+              path: 'edit',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                final vendorId = int.parse(state.pathParameters['vendorId']!);
+                return VendorEditPage(companyId: companyId, vendorId: vendorId);
+              },
+            ),
+          ],
+        ),
+      ],
+    ),
 
     GoRoute(path: '/items', builder: (context, state) => const ItemsPage()),
 

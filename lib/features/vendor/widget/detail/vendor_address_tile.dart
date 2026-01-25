@@ -1,12 +1,12 @@
-import 'package:coreflow/core/theme/colors.dart'; // assuming this is where LoginColors lives
-import 'package:coreflow/domain/model/customer/customer_detail.dart';
+import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
 import 'package:flutter/material.dart';
 
-class CustomerAddressTile extends StatelessWidget {
+class VendorAddressTile extends StatelessWidget {
   final String title;
   final Address? address;
 
-  const CustomerAddressTile({
+  const VendorAddressTile({
     super.key,
     required this.title,
     required this.address,
@@ -34,35 +34,17 @@ class CustomerAddressTile extends StatelessWidget {
     ].where((p) => p.isNotEmpty).join(', ');
     if (cityState.isNotEmpty) parts.add(cityState);
 
-    final fullAddress = parts.isEmpty
-        ? 'No address provided'
-        : parts.join('\n');
+    final fullAddress =
+        parts.isEmpty ? 'No address provided' : parts.join('\n');
 
-    final attention = (address!.attentionName?.trim().isNotEmpty ?? false)
-        ? address!.attentionName!.trim()
-        : '—';
-
-    final hasAttention = attention != '—';
+    const String vendorName = 'Vendor';
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(16),
-      // decoration: BoxDecoration(
-      //   color: Colors.white,
-      //   borderRadius: BorderRadius.circular(12),
-      //   border: Border.all(color: LoginColors.border),
-      //   boxShadow: [
-      //     BoxShadow(
-      //       color: LoginColors.shadowLight.withOpacity(0.05),
-      //       blurRadius: 6,
-      //       offset: const Offset(0, 2),
-      //     ),
-      //   ],
-      // ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title
           Text(
             title,
             style: const TextStyle(
@@ -83,16 +65,14 @@ class CustomerAddressTile extends StatelessWidget {
                 color: LoginColors.textPrimary.withOpacity(0.75),
               ),
               const SizedBox(width: 12),
-              Expanded(
+              const Expanded(
                 child: Text(
-                  attention,
+                  vendorName,
                   style: TextStyle(
                     fontSize: 15,
                     height: 1.3,
                     fontWeight: FontWeight.w500,
-                    color: hasAttention
-                        ? LoginColors.textPrimary
-                        : LoginColors.textTertiary,
+                    color: LoginColors.textPrimary,
                   ),
                 ),
               ),
@@ -100,7 +80,6 @@ class CustomerAddressTile extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Address lines
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -1,17 +1,18 @@
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/features/vendor/widget/detail/vendor_detail_body.dart';
+import 'package:coreflow/features/vendor/widget/detail/vendor_empty_state.dart';
+import 'package:coreflow/features/vendor/widget/detail/vendor_error_state.dart';
+import 'package:coreflow/features/vendor/widget/detail/vendor_header.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:coreflow/features/customers/widget/detail/customer_header.dart';
-import 'package:coreflow/features/customers/widget/detail/customer_detail_body.dart';
-import 'package:coreflow/features/customers/widget/detail/customer_empty_state.dart';
-import 'package:coreflow/features/customers/widget/detail/customer_error_state.dart';
-import '../view_model/customer_detail_view_model.dart';
+
+import '../view_model/vendor_detail_view_model.dart';
 import '../../dashboard/dashboard_view_model/dashboard_view_model.dart';
 import '../../dashboard/widget/menu.dart';
 
-class CustomerDetailContent extends StatelessWidget {
-  const CustomerDetailContent({super.key});
+class VendorDetailContent extends StatelessWidget {
+  const VendorDetailContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -39,11 +40,11 @@ class CustomerDetailContent extends StatelessWidget {
             );
           },
         ),
-        title: Consumer<CustomerDetailViewModel>(
+        title: Consumer<VendorDetailViewModel>(
           builder: (context, vm, child) {
-            if (vm.isLoading || vm.customer == null) {
+            if (vm.isLoading || vm.vendor == null) {
               return const Text(
-                'Customer Details',
+                'Vendor Details',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
@@ -52,7 +53,7 @@ class CustomerDetailContent extends StatelessWidget {
               );
             }
             return Text(
-              vm.customer!.customerName,
+              vm.vendor!.vendorName,
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -62,9 +63,9 @@ class CustomerDetailContent extends StatelessWidget {
           },
         ),
         actions: [
-          Consumer<CustomerDetailViewModel>(
+          Consumer<VendorDetailViewModel>(
             builder: (context, vm, child) {
-              if (vm.customer == null || vm.isLoading) {
+              if (vm.vendor == null || vm.isLoading) {
                 return const SizedBox(width: 10);
               }
 
@@ -79,15 +80,16 @@ class CustomerDetailContent extends StatelessWidget {
                   switch (value) {
                     case 'edit':
                       await context.push(
-                        '/customers/${vm.companyId}/${vm.customerId}/edit',
+                        '/vendors/${vm.companyId}/${vm.vendorId}/edit',
                       );
-                      vm.loadCustomerDetail();
+
+                      vm.loadVendorDetail();
                       break;
                     case 'otherAction':
-                      if (vm.customer != null) {
+                      if (vm.vendor != null) {
                         vm.isActive
-                            ? vm.deactivateCustomer(context)
-                            : vm.activateCustomer(context);
+                            ? vm.deactivateVendor(context)
+                            : vm.activateVendor(context);
                       }
                       break;
                   }
@@ -128,34 +130,38 @@ class CustomerDetailContent extends StatelessWidget {
       ),
       drawerEnableOpenDragGesture: false,
       drawer: AppDrawer(vm: dashboardVM),
-      body: Consumer<CustomerDetailViewModel>(
+      body: Consumer<VendorDetailViewModel>(
         builder: (context, vm, child) {
-          if (vm.isLoading && vm.customer == null) {
+          if (vm.isLoading && vm.vendor == null) {
             return const Center(
               child: CircularProgressIndicator(color: LoginColors.primary),
             );
           }
 
           if (vm.isError) {
-            return CustomerErrorState(
-              message: vm.errorMessage ?? 'Failed to load customer data',
-              onRetry: vm.loadCustomerDetail,
+            return VendorErrorState(
+              message: vm.errorMessage ?? 'Failed to load vendor data',
+              onRetry: vm.loadVendorDetail,
             );
           }
 
-          if (!vm.hasData || vm.customer == null) {
-            return const CustomerEmptyState();
+          if (!vm.hasData || vm.vendor == null) {
+            return const VendorEmptyState();
           }
 
           return Column(
             children: [
-              CustomerHeader(
-                customer: vm.customer!,
-                onToggleStatus: () => vm.isActive
-                    ? vm.deactivateCustomer(context)
-                    : vm.activateCustomer(context),
+              VendorHeader(
+                vendor: vm.vendor!,
+                onToggleStatus: () async {
+                  if (vm.isActive) {
+                    await vm.deactivateVendor(context);
+                  } else {
+                    await vm.activateVendor(context);
+                  }
+                },
               ),
-              Expanded(child: CustomerDetailBody(customer: vm.customer!)),
+              Expanded(child: VendorDetailBody(vendor: vm.vendor!)),
             ],
           );
         },
@@ -163,3 +169,4 @@ class CustomerDetailContent extends StatelessWidget {
     );
   }
 }
+

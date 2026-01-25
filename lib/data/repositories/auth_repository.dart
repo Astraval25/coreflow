@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/company/companies_response.dart';
 import 'package:coreflow/domain/model/company/company.dart';
-import 'package:coreflow/domain/model/customer/customers_response.dart';
 import 'package:coreflow/domain/model/customer/create_customer_request.dart';
 import 'package:coreflow/domain/model/customer/customer.dart';
 import 'package:coreflow/domain/model/customer/customer_detail.dart';
@@ -14,7 +13,6 @@ import 'package:coreflow/domain/model/register/register_request.dart';
 import 'package:coreflow/domain/model/register/register_response.dart';
 import 'package:coreflow/domain/model/resend_otp/resend_otp_request.dart';
 import 'package:coreflow/domain/model/resend_otp/resend_otp_response.dart';
-import 'package:coreflow/domain/model/vendors/active_vendors_response.dart';
 import 'package:coreflow/domain/model/vendors/create_vendors_request.dart';
 import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
@@ -289,7 +287,6 @@ class AuthRepository {
 
       final Map<String, dynamic> decodedBody = jsonDecode(response.body);
 
-      // Check if responseStatus is true
       if (decodedBody['responseStatus'] != true) return [];
 
       // Parse list of customers
@@ -312,14 +309,11 @@ class AuthRepository {
         Uri.parse(AppConfig.getCustomerDetailUrl(companyId, customerId)),
       );
 
-      // Handle 420 "Customer not found" for inactive customers
       if (response.statusCode == 420) {
         debugPrint('Customer inactive (420): ID $customerId');
-        // Return null or stub data - frontend will handle gracefully
-        return null; // Or create stub data from list
+        return null;
       }
 
-      // Only 200 is full success
       if (response.statusCode != 200) {
         debugPrint('Customer detail failed: ${response.statusCode}');
         return null;
@@ -436,34 +430,45 @@ class AuthRepository {
 
   Future<List<Vendor>> getActiveVendors(int companyId) async {
     try {
-      final response = await _apiService.get(
-        Uri.parse(AppConfig.getActiVevendorssUrl(companyId)),
-      );
+      final url = AppConfig.getActiveVendorsUrl(companyId);
+      final response = await _apiService.get(Uri.parse(url));
 
       if (response.statusCode != 200) return [];
 
-      final decodedBody = jsonDecode(response.body);
-      final activeVendorsResponse = ActiveVendorsResponse.fromJson(decodedBody);
+      final Map<String, dynamic> decodedBody = jsonDecode(response.body);
 
-      return activeVendorsResponse.responseStatus
-          ? activeVendorsResponse.responseData
-          : [];
+      // Check if responseStatus is true
+      if (decodedBody['responseStatus'] != true) return [];
+
+      // Parse list of vendors
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      final vendors = data.map((json) => Vendor.fromJson(json)).toList();
+
+      return vendors;
     } catch (e) {
       debugPrint('Get active vendors error: $e');
       return [];
     }
   }
 
-  Future<VendorsDetailData?> getVendorsDetail(
+  Future<VendorsDetailData?> getVendorDetail(
     int companyId,
     int vendorId,
   ) async {
     try {
       final response = await _apiService.get(
-        Uri.parse(AppConfig.getVendorsDetailUrl(companyId, vendorId)),
+        Uri.parse(AppConfig.getVendorDetailUrl(companyId, vendorId)),
       );
 
-      if (response.statusCode != 200) return null;
+      if (response.statusCode == 420) {
+        debugPrint('Vendor inactive (420): ID $vendorId');
+        return null;
+      }
+
+      if (response.statusCode != 200) {
+        debugPrint('Vendor detail failed: ${response.statusCode}');
+        return null;
+      }
 
       final data = jsonDecode(response.body);
       final vendorResponse = VendorsDetailResponse.fromJson(data);
@@ -475,89 +480,99 @@ class AuthRepository {
     }
   }
 
-  Future<VendorsEditResponse?> updateVendors(
+  Future<VendorsEditResponse?> updateVendor(
     int companyId,
     int vendorId,
     VendorsEditRequest request,
   ) async {
     try {
       final response = await _apiService.put(
-        AppConfig.getVendorsEditUrl(companyId, vendorId),
+        AppConfig.getVendorEditUrl(companyId, vendorId),
         request.toJson(),
       );
 
       if (response.statusCode != 200) return null;
 
       final data = jsonDecode(response.body);
-      return VendorsEditResponse.fromJson(data);
+      return VendorsEditResponse(
+        responseStatus: data['responseStatus'] ?? false,
+        responseCode: data['responseCode'],
+        responseMessage: data['responseMessage'] ?? '',
+        responseData: data['responseData'],
+      );
     } catch (e) {
       debugPrint('Update vendor error: $e');
       return null;
     }
   }
 
-  Future<VendorsEditResponse?> createVendors(
+  Future<VendorsEditResponse?> createVendor(
     int companyId,
     CreateVendorsRequest request,
   ) async {
     try {
       final response = await _apiService.post(
-        AppConfig.getCreateVendorsUrl(companyId),
+        AppConfig.getCreateVendorUrl(companyId),
         request.toJson(),
       );
 
       if (response.statusCode != 200 && response.statusCode != 201) return null;
 
       final data = jsonDecode(response.body);
-      return VendorsEditResponse.fromJson(data);
+      return VendorsEditResponse(
+        responseStatus: data['responseStatus'] ?? false,
+        responseCode: data['responseCode'],
+        responseMessage: data['responseMessage'] ?? '',
+        responseData: data['responseData'],
+      );
     } catch (e) {
       debugPrint('Create vendor error: $e');
       return null;
     }
   }
 
-  Future<VendorsStatusResponse?> activateVendors(
+  Future<VendorsStatusResponse?> activateVendor(
     int companyId,
     int vendorId,
   ) async {
     try {
       final response = await _apiService.patch(
-        AppConfig.getVendorsActivateUrl(companyId, vendorId),
+        AppConfig.getVendorActivateUrl(companyId, vendorId),
         {},
       );
 
       if (response.statusCode != 200 && response.statusCode != 203) {
-        debugPrint('Activate failed: ${response.statusCode}');
+        debugPrint('Activate vendor failed: ${response.statusCode}');
         return null;
       }
 
       final data = jsonDecode(response.body);
       return VendorsStatusResponse.fromJson(data);
     } catch (e) {
-      debugPrint('Activate error: $e');
+      debugPrint('Activate vendor error: $e');
       return null;
     }
   }
 
-  Future<VendorsStatusResponse?> deactivateVendors(
+  Future<VendorsStatusResponse?> deactivateVendor(
     int companyId,
     int vendorId,
   ) async {
     try {
       final response = await _apiService.patch(
-        AppConfig.getVendorsDeactivateUrl(companyId, vendorId),
+        AppConfig.getVendorDeactivateUrl(companyId, vendorId),
         {},
       );
 
       if (response.statusCode != 200 && response.statusCode != 203) {
-        debugPrint('Deactivate failed: ${response.statusCode}');
+        debugPrint('Deactivate vendor failed: ${response.statusCode}');
         return null;
       }
 
       final data = jsonDecode(response.body);
       return VendorsStatusResponse.fromJson(data);
     } catch (e) {
-      debugPrint('Deactivate error: $e');
+      debugPrint('Deactivate vendor error: $e');
       return null;
     }
   }
