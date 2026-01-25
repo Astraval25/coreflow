@@ -13,7 +13,7 @@ class LoginColors {
   // NEUTRAL BACKGROUND
   static const Color background = Color(0xFFFAFAFA);     // Gray 50
   static const Color surface = Color(0xFFFFFFFF);        // White
-  static const Color surfaceSecondary = Color(0xFFF8FAFC); // Slate 50
+  static const Color surfaceSecondary = Color(0xFFF8FAFC); // Slate 50Click
   
   // FIELD & CARD COLORS
   static const Color fieldFill = Color(0xFFF8FAFC);      // Slate 50

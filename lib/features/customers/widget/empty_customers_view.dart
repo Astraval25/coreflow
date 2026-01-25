@@ -14,8 +14,12 @@ class EmptyCustomersView extends StatelessWidget {
           Icon(Icons.people_outline, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            searchQuery.isEmpty ? 'No customers yet' : 'No customers match your search',
-            style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
+            searchQuery.isEmpty
+                ? 'No customers yet'
+                : 'No customers match your search',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: Colors.grey[600],
+            ),
           ),
           const SizedBox(height: 8),
           if (searchQuery.isEmpty)

@@ -74,7 +74,7 @@ class VendorsDetailResponse {
       responseStatus: json['responseStatus'] ?? false,
       responseCode: json['responseCode'] ?? 0,
       responseMessage: json['responseMessage'] ?? '',
-      responseData: json['responseData'] != null 
+      responseData: json['responseData'] != null
           ? VendorsDetailData.fromJson(json['responseData'])
           : null,
     );
@@ -82,21 +82,21 @@ class VendorsDetailResponse {
 }
 
 class VendorsDetailData {
-  final int customerId;
+  final int vendorId;
   final Company company;
-  final CustomerCompany? customerCompany;
+  final VendorCompany? vendorCompany;
   final int? acceptedInvitationId;
-  final String customerName;
+  final String vendorName;
   final String displayName;
   final String? email;
   final String? phone;
   final String? lang;
   final String? pan;
   final String? gst;
-  final double? advanceAmount;
+  final double? dueAmount;
   final bool sameAsBillingAddress;
-  final Address? billingAddress;    
-  final Address? shippingAddress;     
+  final Address? billingAddress;
+  final Address? shippingAddress;
   final bool isActive;
   final int createdBy;
   final String createdDt;
@@ -104,21 +104,21 @@ class VendorsDetailData {
   final String lastModifiedDt;
 
   VendorsDetailData({
-    required this.customerId,
+    required this.vendorId,
     required this.company,
-    this.customerCompany,
+    this.vendorCompany,
     this.acceptedInvitationId,
-    required this.customerName,
+    required this.vendorName,
     required this.displayName,
     this.email,
     this.phone,
     this.lang,
     this.pan,
     this.gst,
-    this.advanceAmount,
+    this.dueAmount,
     required this.sameAsBillingAddress,
-    this.billingAddress,             
-    this.shippingAddress,            
+    this.billingAddress,
+    this.shippingAddress,
     required this.isActive,
     required this.createdBy,
     required this.createdDt,
@@ -128,22 +128,22 @@ class VendorsDetailData {
 
   factory VendorsDetailData.fromJson(Map<String, dynamic> json) {
     return VendorsDetailData(
-      customerId: json['customerId'] ?? 0,
+      vendorId: json['vendorId'] ?? 0,
       company: Company.fromJson(json['company'] ?? {}),
-      customerCompany: json['customerCompany'] != null
-          ? CustomerCompany.fromJson(json['customerCompany'])
+      vendorCompany: json['vendorCompany'] != null
+          ? VendorCompany.fromJson(json['vendorCompany'])
           : null,
       acceptedInvitationId: json['acceptedInvitationId'],
-      customerName: json['customerName'] ?? '',
+      vendorName: json['vendorName'] ?? '',
       displayName: json['displayName'] ?? '',
       email: json['email'],
       phone: json['phone'],
       lang: json['lang'],
       pan: json['pan'],
       gst: json['gst'],
-      advanceAmount: _parseDouble(json['advanceAmount']),
+      dueAmount: _parseDouble(json['dueAmount']),
       sameAsBillingAddress: json['sameAsBillingAddress'] ?? false,
-  
+
       billingAddress: json['billingAddrId'] != null
           ? Address.fromJson(json['billingAddrId'])
           : null,
@@ -167,14 +167,14 @@ class VendorsDetailData {
   }
 }
 
-class CustomerCompany {
+class VendorCompany {
   final int? companyId;
   final String? companyName;
 
-  CustomerCompany({this.companyId, this.companyName});
+  VendorCompany({this.companyId, this.companyName});
 
-  factory CustomerCompany.fromJson(Map<String, dynamic> json) {
-    return CustomerCompany(
+  factory VendorCompany.fromJson(Map<String, dynamic> json) {
+    return VendorCompany(
       companyId: json['companyId'],
       companyName: json['companyName'],
     );

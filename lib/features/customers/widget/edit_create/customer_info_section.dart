@@ -2,25 +2,21 @@ import 'package:flutter/material.dart';
 
 class CustomerInfoSection extends StatelessWidget {
   final GlobalKey<FormState>? formKey;
-  final TextEditingController customerName;
-  final TextEditingController displayName;
   final TextEditingController email;
   final TextEditingController phone;
   final TextEditingController pan;
   final TextEditingController gst;
-  final TextEditingController advance;
+  final TextEditingController dueAmount;
   final TextEditingController language;
 
   CustomerInfoSection({
     super.key,
     this.formKey,
-    required this.customerName,
-    required this.displayName,
     required this.email,
     required this.phone,
     required this.pan,
     required this.gst,
-    required this.advance,
+    required this.dueAmount,
     required this.language,
   });
 
@@ -31,82 +27,6 @@ class CustomerInfoSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Customer information',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-
-        TextFormField(
-          controller: customerName,
-          style: const TextStyle(fontSize: 16),
-          decoration: InputDecoration(
-            labelText: 'Customer name *',
-            labelStyle: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).hintColor,
-            ),
-            border: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: Theme.of(context).primaryColor,
-                width: 2,
-              ),
-            ),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            errorBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.red),
-            ),
-          ),
-          validator: (value) =>
-              (value?.isEmpty ?? true) ? 'Customer name is required' : null,
-        ),
-        const SizedBox(height: 20),
-
-        TextFormField(
-          controller: displayName,
-          style: const TextStyle(fontSize: 16),
-          decoration: InputDecoration(
-            labelText: 'Display name *',
-            labelStyle: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).hintColor,
-            ),
-            border: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: Theme.of(context).primaryColor,
-                width: 2,
-              ),
-            ),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            errorBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.red),
-            ),
-          ),
-          validator: (value) =>
-              (value?.isEmpty ?? true) ? 'Display name is required' : null,
-        ),
-        const SizedBox(height: 20),
-
         DropdownButtonFormField<String>(
           value: _languages.contains(language.text) ? language.text : null,
           decoration: InputDecoration(
@@ -253,7 +173,7 @@ class CustomerInfoSection extends StatelessWidget {
         const SizedBox(height: 20),
 
         TextFormField(
-          controller: advance,
+          controller: dueAmount,
           style: const TextStyle(fontSize: 16),
           decoration: InputDecoration(
             labelText: 'Advance amount',

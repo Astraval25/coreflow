@@ -74,7 +74,7 @@ class CustomerDetailResponse {
       responseStatus: json['responseStatus'] ?? false,
       responseCode: json['responseCode'] ?? 0,
       responseMessage: json['responseMessage'] ?? '',
-      responseData: json['responseData'] != null 
+      responseData: json['responseData'] != null
           ? CustomerDetailData.fromJson(json['responseData'])
           : null,
     );
@@ -93,10 +93,10 @@ class CustomerDetailData {
   final String? lang;
   final String? pan;
   final String? gst;
-  final double? advanceAmount;
+  final double? dueAmount;
   final bool sameAsBillingAddress;
-  final Address? billingAddress;    
-  final Address? shippingAddress;     
+  final Address? billingAddress;
+  final Address? shippingAddress;
   final bool isActive;
   final int createdBy;
   final String createdDt;
@@ -115,10 +115,10 @@ class CustomerDetailData {
     this.lang,
     this.pan,
     this.gst,
-    this.advanceAmount,
+    this.dueAmount,
     required this.sameAsBillingAddress,
-    this.billingAddress,             
-    this.shippingAddress,            
+    this.billingAddress,
+    this.shippingAddress,
     required this.isActive,
     required this.createdBy,
     required this.createdDt,
@@ -141,9 +141,9 @@ class CustomerDetailData {
       lang: json['lang'],
       pan: json['pan'],
       gst: json['gst'],
-      advanceAmount: _parseDouble(json['advanceAmount']),
+      dueAmount: _parseDouble(json['dueAmount']),
       sameAsBillingAddress: json['sameAsBillingAddress'] ?? false,
-  
+
       billingAddress: json['billingAddrId'] != null
           ? Address.fromJson(json['billingAddrId'])
           : null,

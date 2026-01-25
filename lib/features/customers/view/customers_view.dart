@@ -1,14 +1,14 @@
-import 'package:coreflow/features/customers/view_model/active_customers_view_model.dart';
+import 'package:coreflow/features/customers/view_model/customers_view_model.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/dashboard/widget/menu.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'custom_app_bar.dart';
-import 'customers_list.dart';
-import 'empty_customers_view.dart';
-import 'error_view.dart';
-import 'loading_view.dart';
+import '../widget/custom_app_bar.dart';
+import '../widget/customers_list.dart';
+import '../widget/empty_customers_view.dart';
+import '../widget/error_view.dart';
+import '../widget/loading_view.dart';
 
 class ActiveCustomersView extends StatefulWidget {
   final int companyId;
@@ -23,6 +23,14 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String _searchQuery = '';
   bool _isSearchOpen = false;
+  late final AuthRepository _authRepository;
+  bool _hasLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _authRepository = AuthRepository();
+  }
 
   void _toggleSearch() {
     setState(() {
@@ -42,23 +50,31 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
 
   @override
   Widget build(BuildContext context) {
-    final authRepository = AuthRepository();
-
-    final dashboardVm = DashboardViewModel()..loadUserData();
-
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) =>
-              ActiveCustomersViewModel(authRepository)
-                ..loadActiveCustomers(widget.companyId),
+          create: (_) => ActiveCustomersViewModel(_authRepository),
         ),
-        ChangeNotifierProvider<DashboardViewModel>(create: (_) => dashboardVm),
+        ChangeNotifierProvider<DashboardViewModel>(
+          create: (_) => DashboardViewModel()..loadUserData(),
+        ),
       ],
-      child: Consumer2<ActiveCustomersViewModel, DashboardViewModel>(
-        builder: (context, viewModel, dashboardVm, child) {
+      child: Builder(
+        builder: (context) {
+          final viewModel = Provider.of<ActiveCustomersViewModel>(context);
+          final dashboardVm = Provider.of<DashboardViewModel>(context);
+
+          if (!_hasLoaded && !viewModel.hasData && !viewModel.isLoading) {
+            _hasLoaded = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              viewModel.loadCustomers(widget.companyId);
+            });
+          }
+
           return Scaffold(
             key: _scaffoldKey,
+            drawerEnableOpenDragGesture: false,
+            drawer: AppDrawer(vm: dashboardVm),
             appBar: CustomAppBar(
               companyId: widget.companyId,
               isSearchOpen: _isSearchOpen,
@@ -72,7 +88,6 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
               },
               scaffoldKey: _scaffoldKey,
             ),
-            drawer: AppDrawer(vm: dashboardVm),
             body: _buildBody(viewModel, _searchQuery),
           );
         },
@@ -88,7 +103,10 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
     if (viewModel.hasError) {
       return ErrorView(
         error: viewModel.error ?? 'Something went wrong',
-        onRetry: viewModel.refresh,
+        onRetry: () {
+          setState(() => _hasLoaded = false);
+          viewModel.loadCustomers(widget.companyId);
+        },
       );
     }
 

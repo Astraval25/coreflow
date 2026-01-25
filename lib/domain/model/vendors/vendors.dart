@@ -1,30 +1,31 @@
-class Vendors {
-  final int customerId;
+
+class Vendor {
+  final int vendorId;
   final String displayName;
-  final String customerCompanyName;
+  final String vendorCompanyName;
   final String? email;
 
-  Vendors({
-    required this.customerId,
+  Vendor({
+    required this.vendorId,
     required this.displayName,
-    required this.customerCompanyName,
-    required this.email,
+    required this.vendorCompanyName,
+    this.email,
   });
 
-  factory Vendors.fromJson(Map<String, dynamic> json) {
-    return Vendors(
-      customerId: json['customerId'] ?? 0,
+  factory Vendor.fromJson(Map<String, dynamic> json) {
+    return Vendor(
+      vendorId: json['vendorId'] ?? 0,
       displayName: json['displayName'] ?? '',
-      customerCompanyName: json['customerCompanyName'] ?? '',
+      vendorCompanyName: json['vendorCompanyName'] ?? '',
       email: json['email'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'customerId': customerId,
+      'vendorId': vendorId,
       'displayName': displayName,
-      'customerCompanyName': customerCompanyName,
+      'vendorCompanyName': vendorCompanyName,
       'email': email,
     };
   }

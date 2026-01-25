@@ -23,11 +23,8 @@ class AppDrawer extends StatelessWidget {
               children: [
                 DashboardMenuItem(vm: vm),
 
-                const Divider(height: 1),
 
                 ManageExpansion(vm: vm),
-
-                const Divider(height: 1, thickness: 1),
               ],
             ),
           ),

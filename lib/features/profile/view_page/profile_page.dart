@@ -16,7 +16,6 @@ class ProfilePage extends StatelessWidget {
           elevation: 0,
           backgroundColor: Theme.of(context).colorScheme.surface,
           actions: [
-            // ✅ PERF: Refresh button - minimal rebuild
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: () =>
@@ -35,7 +34,6 @@ class _ProfileBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ PERF: Consumer instead of watch() - only rebuilds body
     return Consumer<ProfileViewModel>(
       builder: (context, vm, child) {
         if (vm.isLoading) {
@@ -64,7 +62,7 @@ class _ProfileContent extends StatelessWidget {
     final userId = vm.userId?.toString() ?? 'Not available';
     final email = vm.email ?? 'Not provided';
     final companyName = vm.companyName ?? 'No company';
-    final userRole = vm.displayRole; // ✅ Now shows "Administrator"
+    final userRole = vm.displayRole;
     final userName = vm.userName ?? 'User';
 
     return SingleChildScrollView(
@@ -107,7 +105,7 @@ class _ProfileContent extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Role: $userRole', // ✅ Shows "Administrator" not "ADM"
+                      'Role: $userRole',
                       style: theme.textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w500,
                         color: colorScheme.primary,
@@ -157,12 +155,6 @@ class _ProfileContent extends StatelessWidget {
                       label: 'Company IDs',
                       value: vm.companyIds!.join(', '),
                     ),
-                  if (vm.landingUrl != null && vm.landingUrl!.isNotEmpty)
-                    _DetailTile(
-                      icon: Icons.link_outlined,
-                      label: 'Landing URL',
-                      value: vm.landingUrl!,
-                    ),
                 ],
               ),
             ),
@@ -207,7 +199,6 @@ class _ProfileContent extends StatelessWidget {
     );
   }
 }
-
 
 class _ErrorContent extends StatelessWidget {
   final String error;

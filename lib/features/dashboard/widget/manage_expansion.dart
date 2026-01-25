@@ -82,14 +82,12 @@ class ManageExpansion extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       backgroundColor: Colors.transparent,
       collapsedBackgroundColor: Colors.transparent,
-      initiallyExpanded: vm.isCustomersExpanded,
+      initiallyExpanded: false, // ← keep collapsed when drawer opens
       onExpansionChanged: vm.toggleCustomersExpanded,
       children: [
         SizedBox(
-          height: 147,
           child: Column(
             mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               SubMenuItem(
                 title: 'Customers',
@@ -99,7 +97,7 @@ class ManageExpansion extends StatelessWidget {
               SubMenuItem(
                 title: 'Vendors',
                 menuKey: '/vendors',
-                menuKeys: "/vendorsadd",
+                menuKeys: "/vendoradd",
               ),
               SubMenuItem(
                 title: 'Items',
@@ -188,24 +186,31 @@ class SubMenuItem extends StatelessWidget {
 
   Future<void> _handleMainTap(BuildContext context) async {
     final authData = await TokenStorage.getFullAuthData();
-    final companyId = authData?['companyId']?.toString() ?? '6';
+    final companyId = authData?['companyId']?.toString();
 
     context.read<DashboardViewModel>().setSelectedMenu(menuKey);
     if (context.mounted) {
       Navigator.pop(context);
-      context.go('/${menuKey.replaceFirst('/', '')}/$companyId');
+      context.push('/${menuKey.replaceFirst('/', '')}/$companyId');
     }
   }
 
   Future<void> _handleAddTap(BuildContext context) async {
     final authData = await TokenStorage.getFullAuthData();
-    final companyId = authData?['companyId']?.toString() ?? '6';
+    final companyId = authData?['companyId']?.toString();
 
     context.read<DashboardViewModel>().setSelectedMenu(menuKeys);
     if (context.mounted) {
       Navigator.pop(context);
-      await Future.delayed(const Duration(milliseconds: 100));
-      context.push('/customers/$companyId/add');
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      if (menuKeys == '/vendoradd') {
+        context.push('/vendors/$companyId/add');
+        // } else if (menuKeys == '/customersadd') {
+        //   context.push('/customers/$companyId/add');
+        // } else {
+        context.push('/$menuKeys');
+      }
     }
   }
 }

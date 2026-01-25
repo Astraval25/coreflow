@@ -107,40 +107,39 @@ class CustomerEditViewModel extends ChangeNotifier {
   }
 
   Future<bool> createNewCustomer(
-  int companyId,
-  CreateCustomerRequest request,
-) async {
-  try {
-    _isSaving = true;
-    _error = null;
-    _editResponse = null;
-    notifyListeners();
+    int companyId,
+    CreateCustomerRequest request,
+  ) async {
+    try {
+      _isSaving = true;
+      _error = null;
+      _editResponse = null;
+      notifyListeners();
 
-    debugPrint('Creating customer for companyId: $companyId');
-    debugPrint('Request: ${request.toJson()}');
+      debugPrint('Creating customer for companyId: $companyId');
 
-    final response = await _authRepository.createCustomer(companyId, request);
+      final response = await _authRepository.createCustomer(companyId, request);
 
-    _editResponse = response;
-    
-    if (response != null && response.responseStatus) {
-      debugPrint(' Customer created successfully: ${response.responseMessage}');
-      _customerDetails = null; 
-      return true;
-    } else {
-      _error = response?.responseMessage ?? 'Failed to create customer';
-      debugPrint('Create failed: $_error');
+      _editResponse = response;
+
+      if (response != null && response.responseStatus) {
+        debugPrint(
+          'Customer created successfully: ${response.responseMessage}',
+        );
+        _customerDetails = null;
+        return true; // UI will handle auto-refresh
+      } else {
+        _error = response?.responseMessage ?? 'Failed to create customer';
+        return false;
+      }
+    } catch (e) {
+      _error = 'Error creating customer: ${e.toString()}';
       return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
     }
-  } catch (e) {
-    _error = 'Error creating customer: ${e.toString()}';
-    debugPrint(' Create customer error: $e');
-    return false;
-  } finally {
-    _isSaving = false;
-    notifyListeners();
   }
-}
 
   void clearError() {
     _error = null;

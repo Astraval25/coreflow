@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/company/companies_response.dart';
 import 'package:coreflow/domain/model/company/company.dart';
-import 'package:coreflow/domain/model/customer/active_customers_response.dart';
+import 'package:coreflow/domain/model/customer/customers_response.dart';
 import 'package:coreflow/domain/model/customer/create_customer_request.dart';
 import 'package:coreflow/domain/model/customer/customer.dart';
 import 'package:coreflow/domain/model/customer/customer_detail.dart';
@@ -14,6 +14,13 @@ import 'package:coreflow/domain/model/register/register_request.dart';
 import 'package:coreflow/domain/model/register/register_response.dart';
 import 'package:coreflow/domain/model/resend_otp/resend_otp_request.dart';
 import 'package:coreflow/domain/model/resend_otp/resend_otp_response.dart';
+import 'package:coreflow/domain/model/vendors/active_vendors_response.dart';
+import 'package:coreflow/domain/model/vendors/create_vendors_request.dart';
+import 'package:coreflow/domain/model/vendors/vendors.dart';
+import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
+import 'package:coreflow/domain/model/vendors/vendors_edit_request.dart';
+import 'package:coreflow/domain/model/vendors/vendors_edit_response.dart';
+import 'package:coreflow/domain/model/vendors/vendors_status_response.dart';
 import 'package:coreflow/domain/model/verify_otp/verify_otp_request.dart';
 import 'package:coreflow/domain/model/verify_otp/verify_otp_response.dart';
 import 'package:coreflow/domain/repositories/login_response.dart';
@@ -273,24 +280,25 @@ class AuthRepository {
     }
   }
 
-  Future<List<Customer>> getActiveCustomers(int companyId) async {
+  Future<List<Customer>> getCustomers(int companyId) async {
     try {
-      final response = await _apiService.get(
-        Uri.parse(AppConfig.getActiveCustomersUrl(companyId)),
-      );
+      final url = AppConfig.getCustomersUrl(companyId);
+      final response = await _apiService.get(Uri.parse(url));
 
       if (response.statusCode != 200) return [];
 
-      final decodedBody = jsonDecode(response.body);
-      final activeCustomersResponse = ActiveCustomersResponse.fromJson(
-        decodedBody,
-      );
+      final Map<String, dynamic> decodedBody = jsonDecode(response.body);
 
-      return activeCustomersResponse.responseStatus
-          ? activeCustomersResponse.responseData
-          : [];
+      // Check if responseStatus is true
+      if (decodedBody['responseStatus'] != true) return [];
+
+      // Parse list of customers
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      final customers = data.map((json) => Customer.fromJson(json)).toList();
+
+      return customers;
     } catch (e) {
-      debugPrint('Get active customers error: $e');
+      debugPrint('Get customers error: $e');
       return [];
     }
   }
@@ -304,7 +312,18 @@ class AuthRepository {
         Uri.parse(AppConfig.getCustomerDetailUrl(companyId, customerId)),
       );
 
-      if (response.statusCode != 200) return null;
+      // Handle 420 "Customer not found" for inactive customers
+      if (response.statusCode == 420) {
+        debugPrint('Customer inactive (420): ID $customerId');
+        // Return null or stub data - frontend will handle gracefully
+        return null; // Or create stub data from list
+      }
+
+      // Only 200 is full success
+      if (response.statusCode != 200) {
+        debugPrint('Customer detail failed: ${response.statusCode}');
+        return null;
+      }
 
       final data = jsonDecode(response.body);
       final customerResponse = CustomerDetailResponse.fromJson(data);
@@ -415,109 +434,95 @@ class AuthRepository {
     }
   }
 
-  Future<List<Customer>> getActiveVendors(int companyId) async {
+  Future<List<Vendor>> getActiveVendors(int companyId) async {
     try {
       final response = await _apiService.get(
-        Uri.parse(AppConfig.getActiveCustomersUrl(companyId)),
+        Uri.parse(AppConfig.getActiVevendorssUrl(companyId)),
       );
 
       if (response.statusCode != 200) return [];
 
       final decodedBody = jsonDecode(response.body);
-      final activeCustomersResponse = ActiveCustomersResponse.fromJson(
-        decodedBody,
-      );
+      final activeVendorsResponse = ActiveVendorsResponse.fromJson(decodedBody);
 
-      return activeCustomersResponse.responseStatus
-          ? activeCustomersResponse.responseData
+      return activeVendorsResponse.responseStatus
+          ? activeVendorsResponse.responseData
           : [];
     } catch (e) {
-      debugPrint('Get active customers error: $e');
+      debugPrint('Get active vendors error: $e');
       return [];
     }
   }
 
-  Future<CustomerDetailData?> getVendorsDetail(
+  Future<VendorsDetailData?> getVendorsDetail(
     int companyId,
-    int customerId,
+    int vendorId,
   ) async {
     try {
       final response = await _apiService.get(
-        Uri.parse(AppConfig.getCustomerDetailUrl(companyId, customerId)),
+        Uri.parse(AppConfig.getVendorsDetailUrl(companyId, vendorId)),
       );
 
       if (response.statusCode != 200) return null;
 
       final data = jsonDecode(response.body);
-      final customerResponse = CustomerDetailResponse.fromJson(data);
+      final vendorResponse = VendorsDetailResponse.fromJson(data);
 
-      return customerResponse.responseStatus
-          ? customerResponse.responseData
-          : null;
+      return vendorResponse.responseStatus ? vendorResponse.responseData : null;
     } catch (e) {
-      debugPrint('Get customer detail error: $e');
+      debugPrint('Get vendor detail error: $e');
       return null;
     }
   }
 
-  Future<CustomerEditResponse?> updateVendors(
+  Future<VendorsEditResponse?> updateVendors(
     int companyId,
-    int customerId,
-    CustomerEditRequest request,
+    int vendorId,
+    VendorsEditRequest request,
   ) async {
     try {
       final response = await _apiService.put(
-        AppConfig.getCustomerEditUrl(companyId, customerId),
+        AppConfig.getVendorsEditUrl(companyId, vendorId),
         request.toJson(),
       );
 
       if (response.statusCode != 200) return null;
 
       final data = jsonDecode(response.body);
-      return CustomerEditResponse(
-        responseStatus: data['responseStatus'] ?? false,
-        responseCode: data['responseCode'],
-        responseMessage: data['responseMessage'] ?? '',
-        responseData: data['responseData'],
-      );
+      return VendorsEditResponse.fromJson(data);
     } catch (e) {
-      debugPrint('Update customer error: $e');
+      debugPrint('Update vendor error: $e');
       return null;
     }
   }
 
-  Future<CustomerEditResponse?> createVendors(
+  Future<VendorsEditResponse?> createVendors(
     int companyId,
-    CreateCustomerRequest request,
+    CreateVendorsRequest request,
   ) async {
     try {
       final response = await _apiService.post(
-        AppConfig.getCreateCustomerUrl(companyId),
+        AppConfig.getCreateVendorsUrl(companyId),
         request.toJson(),
       );
 
       if (response.statusCode != 200 && response.statusCode != 201) return null;
 
       final data = jsonDecode(response.body);
-      return CustomerEditResponse(
-        responseStatus: data['responseStatus'] ?? false,
-        responseCode: data['responseCode'],
-        responseMessage: data['responseMessage'] ?? '',
-        responseData: data['responseData'],
-      );
+      return VendorsEditResponse.fromJson(data);
     } catch (e) {
-      debugPrint('Create customer error: $e');
+      debugPrint('Create vendor error: $e');
       return null;
     }
   }
 
-  Future<CustomerStatusResponse?> activateVendors(
+  Future<VendorsStatusResponse?> activateVendors(
     int companyId,
-    int customerId,
+    int vendorId,
   ) async {
     try {
       final response = await _apiService.patch(
-        AppConfig.getCustomerActivateUrl(companyId, customerId),
+        AppConfig.getVendorsActivateUrl(companyId, vendorId),
         {},
       );
 
@@ -527,20 +532,20 @@ class AuthRepository {
       }
 
       final data = jsonDecode(response.body);
-      return CustomerStatusResponse.fromJson(data);
+      return VendorsStatusResponse.fromJson(data);
     } catch (e) {
       debugPrint('Activate error: $e');
       return null;
     }
   }
 
-  Future<CustomerStatusResponse?> deactivateVendors(
+  Future<VendorsStatusResponse?> deactivateVendors(
     int companyId,
-    int customerId,
+    int vendorId,
   ) async {
     try {
       final response = await _apiService.patch(
-        AppConfig.getCustomerDeactivateUrl(companyId, customerId),
+        AppConfig.getVendorsDeactivateUrl(companyId, vendorId),
         {},
       );
 
@@ -550,7 +555,7 @@ class AuthRepository {
       }
 
       final data = jsonDecode(response.body);
-      return CustomerStatusResponse.fromJson(data);
+      return VendorsStatusResponse.fromJson(data);
     } catch (e) {
       debugPrint('Deactivate error: $e');
       return null;

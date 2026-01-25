@@ -8,8 +8,8 @@ class AppConfig {
   static const String resendOtpEndpoint = ' /api/auth/send-otp';
   static const String companyEndpoint = '/api/companies/my-companies';
   static const String refreshTokenEndpoint = '/api/auth/refresh-token';
-  static const String activeCustomersEndpoint =
-      '/api/companies/{companyId}/customers/active';
+  static const String customersEndpoint =
+      '/api/companies/{companyId}/customers';
   static const String customerDetailEndpoint =
       '/api/companies/{companyId}/customers/{customerId}';
   static const String customerEditEndpoint =
@@ -40,8 +40,8 @@ class AppConfig {
   static String get resendOtpUrl => '$baseUrl$resendOtpEndpoint';
   static String get companyUrl => '$baseUrl$companyEndpoint';
   static String get refreshTokenUrl => '$baseUrl$refreshTokenEndpoint';
-  static String getActiveCustomersUrl(int companyId) =>
-      '$baseUrl${activeCustomersEndpoint.replaceAll('{companyId}', companyId.toString())}';
+  static String getCustomersUrl(int companyId) =>
+      '$baseUrl${customersEndpoint.replaceAll('{companyId}', companyId.toString())}';
 
   static String getCustomerDetailUrl(int companyId, int customerId) =>
       '$baseUrl${customerDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';

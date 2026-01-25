@@ -9,7 +9,7 @@ class CustomerFinancialStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final amount = customer.advanceAmount ?? 0.0;
+    final amount = customer.dueAmount ?? 0.0;
     final isPositive = amount >= 0;
     final balanceColor =
         isPositive ? Colors.green.shade700 : Colors.red.shade700;

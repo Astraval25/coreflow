@@ -93,7 +93,7 @@ class _DashboardView extends StatelessWidget {
                 context.push('/customers/$companyId/add');
                 break;
               case 'vendor':
-                context.go('/venderadd');
+                context.push('/vendors/$companyId/add');
                 break;
               case 'item':
                 context.go('/itemsadd');

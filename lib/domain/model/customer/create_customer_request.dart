@@ -8,7 +8,7 @@ class CreateCustomerRequest {
   final String? lang;
   final String? pan;
   final String? gst;
-  final double advanceAmount;
+  final double dueAmount;
   final bool sameAsBillingAddress;
   final BillingAddress? billingAddress;
   final ShippingAddress shippingAddress;
@@ -21,7 +21,7 @@ class CreateCustomerRequest {
     this.lang,
     this.pan,
     this.gst,
-    this.advanceAmount = 0.0,
+    this.dueAmount = 0.0,
     this.sameAsBillingAddress = false,
     this.billingAddress,
     required this.shippingAddress,
@@ -35,7 +35,7 @@ class CreateCustomerRequest {
     'lang': lang,
     'pan': pan,
     'gst': gst,
-    'advanceAmount': advanceAmount,
+    'dueAmount': dueAmount,
     'sameAsBillingAddress': sameAsBillingAddress,
     if (billingAddress != null) 'billingAddress': billingAddress!.toJson(),
     'shippingAddress': shippingAddress.toJson(),

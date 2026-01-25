@@ -22,7 +22,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.scaffoldKey,
   });
 
-
   static const double _searchBarHeight = 56.0;
 
   @override

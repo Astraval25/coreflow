@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:coreflow/features/customers/view_model/customers_view_model.dart';
 
 class CustomerListItem extends StatelessWidget {
   final dynamic customer;
@@ -49,8 +51,21 @@ class CustomerListItem extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
         ),
         subtitle: _buildSubtitle(),
-        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-        onTap: () => context.go('/customers/$companyId/${customer.customerId}'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
+        onTap: () async {
+          await context.push('/customers/$companyId/${customer.customerId}');
+          final viewModel = Provider.of<ActiveCustomersViewModel>(
+            context,
+            listen: false,
+          );
+          await viewModel.refresh();
+        },
       ),
     );
   }
@@ -70,7 +85,7 @@ class CustomerListItem extends StatelessWidget {
       );
     }
 
-    if (customer.email != null) {
+    if (customer.email != null && customer.email!.isNotEmpty) {
       subtitleChildren.add(
         Padding(
           padding: const EdgeInsets.only(top: 4),
@@ -78,6 +93,15 @@ class CustomerListItem extends StatelessWidget {
             customer.email!,
             style: TextStyle(color: Colors.grey[600], fontSize: 13),
           ),
+        ),
+      );
+    }
+
+    if (subtitleChildren.isEmpty) {
+      subtitleChildren.add(
+        Text(
+          'No details available',
+          style: TextStyle(color: Colors.grey[500], fontSize: 13),
         ),
       );
     }

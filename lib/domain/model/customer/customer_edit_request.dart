@@ -6,7 +6,7 @@ class CustomerEditRequest {
   final String lang;
   final String? pan;
   final String? gst;
-  final double? advanceAmount;
+  final double? dueAmount;
   final bool sameAsBillingAddress;
   final BillingAddress? billingAddress;
   final ShippingAddress? shippingAddress;
@@ -19,7 +19,7 @@ class CustomerEditRequest {
     required this.lang,
     this.pan,
     this.gst,
-    this.advanceAmount,
+    this.dueAmount,
     this.sameAsBillingAddress = true,
     this.billingAddress,
     this.shippingAddress,
@@ -33,7 +33,7 @@ class CustomerEditRequest {
     'lang': lang,
     'pan': pan,
     'gst': gst,
-    'advanceAmount': advanceAmount,
+    'dueAmount': dueAmount,
     'sameAsBillingAddress': sameAsBillingAddress,
     if (billingAddress != null) 'billingAddress': billingAddress!.toJson(),
     if (shippingAddress != null) 'shippingAddress': shippingAddress!.toJson(),

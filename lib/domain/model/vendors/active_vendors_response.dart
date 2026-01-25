@@ -1,10 +1,10 @@
-import 'package:coreflow/domain/model/customer/customer.dart';
+import 'package:coreflow/domain/model/vendors/vendors.dart';
 
 class ActiveVendorsResponse {
   final bool responseStatus;
   final int responseCode;
   final String responseMessage;
-  final List<Customer> responseData;
+  final List<Vendor> responseData;
 
   ActiveVendorsResponse({
     required this.responseStatus,
@@ -15,15 +15,15 @@ class ActiveVendorsResponse {
 
   factory ActiveVendorsResponse.fromJson(Map<String, dynamic> json) {
     var dataList = json['responseData'] as List<dynamic>? ?? [];
-    List<Customer> customers = dataList
-        .map((item) => Customer.fromJson(item as Map<String, dynamic>))
+    List<Vendor> vendors = dataList
+        .map((item) => Vendor.fromJson(item as Map<String, dynamic>))
         .toList();
 
     return ActiveVendorsResponse(
       responseStatus: json['responseStatus'] ?? false,
       responseCode: json['responseCode'] ?? 0,
       responseMessage: json['responseMessage'] ?? '',
-      responseData: customers,
+      responseData: vendors,
     );
   }
 }

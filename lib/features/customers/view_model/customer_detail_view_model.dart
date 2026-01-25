@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/customer/customer_detail.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; 
 
 enum CustomerViewState { initial, loading, loaded, error, noData }
 
@@ -58,7 +60,8 @@ class CustomerDetailViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> activateCustomer() async {
+  Future<void> activateCustomer(BuildContext context) async {
+
     _updateState(CustomerViewState.loading);
 
     try {
@@ -68,7 +71,10 @@ class CustomerDetailViewModel extends ChangeNotifier {
       );
 
       if (response != null && response.responseStatus == true) {
-        await loadCustomerDetail(); 
+        await loadCustomerDetail();
+        if (context.mounted) {
+          context.pop(true); 
+        }
       } else {
         _updateState(
           CustomerViewState.error,
@@ -80,7 +86,7 @@ class CustomerDetailViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> deactivateCustomer() async {
+  Future<void> deactivateCustomer(BuildContext context) async {
     _updateState(CustomerViewState.loading);
 
     try {
@@ -90,7 +96,10 @@ class CustomerDetailViewModel extends ChangeNotifier {
       );
 
       if (response != null && response.responseStatus == true) {
-        await loadCustomerDetail(); 
+        await loadCustomerDetail();
+        if (context.mounted) {
+          context.pop(true); 
+        }
       } else {
         _updateState(
           CustomerViewState.error,
