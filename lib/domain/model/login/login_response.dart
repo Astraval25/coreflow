@@ -32,6 +32,7 @@ class LoginData {
   final String? roleCode;
   final String? token;
   final int userId;
+  final String? userName;
 
   LoginData({
     this.companyId,
@@ -42,6 +43,7 @@ class LoginData {
     this.roleCode,
     this.token,
     required this.userId,
+    this.userName,
   });
 
   factory LoginData.fromJson(Map<String, dynamic> json) {
@@ -56,6 +58,7 @@ class LoginData {
       roleCode: json['roleCode'],
       token: json['token'],
       userId: json['userId'] ?? 0,
+      userName: json['userName'],
     );
   }
 }

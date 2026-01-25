@@ -15,6 +15,13 @@ class ProfilePage extends StatelessWidget {
           centerTitle: true,
           elevation: 0,
           backgroundColor: Theme.of(context).colorScheme.surface,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () =>
+                  context.read<ProfileViewModel>().refreshProfile(),
+            ),
+          ],
         ),
         body: const _ProfileBody(),
       ),
@@ -27,19 +34,36 @@ class _ProfileBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<ProfileViewModel>();
+    return Consumer<ProfileViewModel>(
+      builder: (context, vm, child) {
+        if (vm.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    if (vm.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+        if (vm.hasError) {
+          return _ErrorContent(error: vm.errorMessage ?? 'Unknown error');
+        }
 
+        return _ProfileContent(vm: vm);
+      },
+    );
+  }
+}
+
+class _ProfileContent extends StatelessWidget {
+  final ProfileViewModel vm;
+  const _ProfileContent({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     final userId = vm.userId?.toString() ?? 'Not available';
     final email = vm.email ?? 'Not provided';
     final companyName = vm.companyName ?? 'No company';
-    final userRole = vm.userRole ?? 'User';
+    final userRole = vm.displayRole;
+    final userName = vm.userName ?? 'User';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
@@ -52,7 +76,7 @@ class _ProfileBody extends StatelessWidget {
                 radius: 42,
                 backgroundColor: colorScheme.primaryContainer,
                 child: Text(
-                  userRole.isNotEmpty ? userRole[0].toUpperCase() : 'U',
+                  userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
                   style: TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
@@ -66,9 +90,17 @@ class _ProfileBody extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'User ID: $userId',
-                      style: theme.textTheme.titleLarge?.copyWith(
+                      userName,
+                      style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'ID: $userId',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: colorScheme.primary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -117,6 +149,12 @@ class _ProfileBody extends StatelessWidget {
                     label: 'Company',
                     value: companyName,
                   ),
+                  if (vm.companyIds != null && vm.companyIds!.isNotEmpty)
+                    _DetailTile(
+                      icon: Icons.list_alt_outlined,
+                      label: 'Company IDs',
+                      value: vm.companyIds!.join(', '),
+                    ),
                 ],
               ),
             ),
@@ -124,20 +162,75 @@ class _ProfileBody extends StatelessWidget {
 
           const SizedBox(height: 48),
 
-          FilledButton.tonal(
-            onPressed: () => vm.logout(context),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(double.infinity, 56),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: vm.isLoading
+                  ? null
+                  : () => context.read<ProfileViewModel>().logout(context),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 56),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                backgroundColor: Colors.red.shade50,
+                foregroundColor: Colors.red.shade600,
               ),
-              backgroundColor: const Color.fromARGB(255, 253, 227, 227),
-              foregroundColor: const Color.fromARGB(255, 192, 80, 36),
+              child: vm.isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                      ),
+                    )
+                  : const Text(
+                      'Log out',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
-            child: const Text(
-              'Log out',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorContent extends StatelessWidget {
+  final String error;
+  const _ErrorContent({required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 64,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          const SizedBox(height: 16),
+          Text('Error', style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 8),
+          Text(
+            error,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: Theme.of(context).colorScheme.error,
             ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () => context.read<ProfileViewModel>().refreshProfile(),
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry'),
           ),
         ],
       ),

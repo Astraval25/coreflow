@@ -1,20 +1,23 @@
-import 'package:coreflow/features/customers/view/add/add_customer_page.dart';
+import 'package:coreflow/features/customers/view/customer_create_page.dart';
+import 'package:coreflow/features/customers/view/customer_detail_page.dart';
+import 'package:coreflow/features/customers/view/customer_edit_page.dart';
 import 'package:coreflow/features/items/view/add/add_items_page.dart';
 import 'package:coreflow/features/items/view/items_page.dart';
-import 'package:coreflow/features/vender/view/add/add_vender_page.dart';
+import 'package:coreflow/features/registration/view/register_screen.dart';
 import 'package:coreflow/features/customers/view/customers_page.dart';
 import 'package:coreflow/features/dashboard/dashboard_view/dashboard_page.dart';
-import 'package:coreflow/features/vender/view/vender_page.dart';
 import 'package:coreflow/features/login/view/login_page.dart';
 import 'package:coreflow/features/profile/view_page/profile_page.dart';
-import 'package:coreflow/features/registration/view/register_screen.dart';
 import 'package:coreflow/features/resend_otp/view/resend_otp_sreen.dart';
+// import 'package:coreflow/features/vendors/view/CustomerCreatePage.dart';
+// import 'package:coreflow/features/vendors/view/customer_detail_page.dart';
+// import 'package:coreflow/features/vendors/view/customer_edit_page.dart';
+// import 'package:coreflow/features/vendors/view/customers_page.dart';
 import 'package:coreflow/features/verify_otp/view/verify_otp_screen.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/repositories/auth_repository.dart';
 
 final _authRepo = AuthRepository();
-
 final GoRouter router = GoRouter(
   initialLocation: '/login',
 
@@ -24,6 +27,7 @@ final GoRouter router = GoRouter(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
     ),
+
     GoRoute(
       path: '/verify/:userPath',
       builder: (context, state) =>
@@ -49,21 +53,90 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(path: '/profile', builder: (context, state) => const ProfilePage()),
 
+    // Customers route
     GoRoute(
-      path: '/customers',
-      builder: (context, state) => const CustomersPage(),
+      path: '/customers/:companyId',
+      builder: (context, state) {
+        final companyId = int.parse(state.pathParameters['companyId']!);
+        return ActiveCustomersPage(companyId: companyId);
+      },
+      routes: [
+        // Add customer page (nested)
+        GoRoute(
+          path: 'add',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            return CustomerCreatePage(companyId: companyId);
+          },
+        ),
+        // Customer detail page
+        GoRoute(
+          path: ':customerId',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            final customerId = int.parse(state.pathParameters['customerId']!);
+            return CustomerDetailView(
+              companyId: companyId,
+              customerId: customerId,
+            );
+          },
+          routes: [
+            // Customer edit page (nested)
+            GoRoute(
+              path: 'edit',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                final customerId = int.parse(
+                  state.pathParameters['customerId']!,
+                );
+                return CustomerEditPage(
+                  companyId: companyId,
+                  customerId: customerId,
+                );
+              },
+            ),
+          ],
+        ),
+      ],
     ),
-    GoRoute(path: '/vender', builder: (context, state) => const VenderPage()),
+    // GoRoute(
+    //   path: '/vendors/:companyId',
+    //   builder: (context, state) {
+    //     final companyId = int.parse(state.pathParameters['companyId']!);
+    //     return ActiveVendorPage(companyId: companyId);
+    //   },
+    //   routes: [
+    //     // Add vendor page (nested)
+    //     GoRoute(
+    //       path: 'add',
+    //       builder: (context, state) {
+    //         final companyId = int.parse(state.pathParameters['companyId']!);
+    //         return VendorCreatePage(companyId: companyId);
+    //       },
+    //     ),
+    //     GoRoute(
+    //       path: ':vendorId',
+    //       builder: (context, state) {
+    //         final companyId = int.parse(state.pathParameters['companyId']!);
+    //         final vendorId = int.parse(state.pathParameters['vendorId']!);
+    //         return VendorDetailView(companyId: companyId, vendorId: vendorId);
+    //       },
+    //       routes: [
+    //         GoRoute(
+    //           path: 'edit',
+    //           builder: (context, state) {
+    //             final companyId = int.parse(state.pathParameters['companyId']!);
+    //             final vendorId = int.parse(state.pathParameters['vendorId']!);
+    //             return VendorEditPage(companyId: companyId, vendorId: vendorId);
+    //           },
+    //         ),
+    //       ],
+    //     ),
+    //   ],
+    // ),
+
     GoRoute(path: '/items', builder: (context, state) => const ItemsPage()),
 
-    GoRoute(
-      path: '/customersadd',
-      builder: (context, state) => const AddCustomerPage(),
-    ),
-    GoRoute(
-      path: '/venderadd',
-      builder: (context, state) => const AddVenderPage(),
-    ),
     GoRoute(
       path: '/itemsadd',
       builder: (context, state) => const AddItemsPage(),
@@ -80,10 +153,7 @@ final GoRouter router = GoRouter(
       (route) => location.startsWith(route),
     );
 
-    if (!isLoggedIn && !isPublicRoute) {
-      return '/login';
-    }
-
+    if (!isLoggedIn && !isPublicRoute) return '/login';
     if (isLoggedIn && location == '/login') {
       final landingUrl = authData?['landingUrl'] as String?;
       if (landingUrl != null && landingUrl.isNotEmpty) {
@@ -92,7 +162,6 @@ final GoRouter router = GoRouter(
         return '/dashboard';
       }
     }
-
     return null;
   },
 );

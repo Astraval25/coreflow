@@ -1,3 +1,4 @@
+import 'package:coreflow/core/storage/token_storage.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/dashboard/widget/menu.dart';
 import 'package:flutter/material.dart';
@@ -21,98 +22,114 @@ class _DashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<DashboardViewModel>();
+    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-    return Scaffold(
+    return Consumer<DashboardViewModel>(
+      builder: (context, vm, child) {
+        return Scaffold(
+          key: scaffoldKey,
+          backgroundColor: Colors.white,
+          appBar: _buildAppBar(context, vm, scaffoldKey),
+          drawer: AppDrawer(vm: vm),
+          body: const Center(child: Text('Dashboard Content Here')),
+        );
+      },
+    );
+  }
+
+  AppBar _buildAppBar(
+    BuildContext context,
+    DashboardViewModel vm,
+    GlobalKey<ScaffoldState> scaffoldKey,
+  ) {
+    return AppBar(
+      title: Text(
+        vm.companyName ?? 'Select Company',
+        style: const TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+          letterSpacing: -0.3,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      centerTitle: true,
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
-          vm.companyName ?? 'Select Company',
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-            letterSpacing: -0.3,
+      elevation: 0.5,
+      shadowColor: Colors.black.withOpacity(0.08),
+      surfaceTintColor: Colors.transparent,
+      leading: IconButton(
+        icon: const Icon(Icons.menu_rounded, color: Colors.black87, size: 28),
+        onPressed: () {
+          scaffoldKey.currentState?.openDrawer();
+        },
+      ),
+      actions: [
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.add, size: 28),
+          tooltip: 'Add New',
+          offset: const Offset(0, 56),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        shadowColor: Colors.black.withOpacity(0.08),
-        surfaceTintColor: Colors.transparent,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(
-              Icons.menu_rounded,
-              color: Colors.black87,
-              size: 28,
+          elevation: 8,
+          shadowColor: Colors.black.withOpacity(0.15),
+          itemBuilder: (context) => [
+            _buildPopupMenuItem(
+              Icons.person_add_rounded,
+              'Customer',
+              'customer',
             ),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: Icon(Icons.add, size: 28),
-            tooltip: 'Add New',
-            offset: const Offset(0, 56),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 8,
-            shadowColor: Colors.black.withOpacity(0.15),
-            itemBuilder: (BuildContext context) => [
-              PopupMenuItem(
-                value: '/customersadd',
-                child: Row(
-                  children: const [
-                    Icon(Icons.person_add_rounded, size: 22),
-                    SizedBox(width: 12),
-                    Text('Customer', style: TextStyle(fontSize: 16)),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: '/venderadd',
-                child: Row(
-                  children: const [
-                    Icon(Icons.business_rounded, size: 22),
-                    SizedBox(width: 12),
-                    Text('Vendor', style: TextStyle(fontSize: 16)),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: '/itemsadd',
-                child: Row(
-                  children: const [
-                    Icon(Icons.inventory_2_rounded, size: 22),
-                    SizedBox(width: 12),
-                    Text('Item', style: TextStyle(fontSize: 16)),
-                  ],
-                ),
-              ),
-            ],
-            onSelected: (String route) {
-              context.go(route);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, size: 28),
-            onPressed: () {},
-            tooltip: 'Notifications',
-          ),
+            _buildPopupMenuItem(Icons.business_rounded, 'Vendor', 'vendor'),
+            _buildPopupMenuItem(Icons.inventory_2_rounded, 'Item', 'item'),
+          ],
+          onSelected: (String value) async {
+            final authData = await TokenStorage.getFullAuthData();
+            final companyId = authData?['companyId']?.toString() ?? '6';
 
+            switch (value) {
+              case 'customer':
+                context.push('/customers/$companyId/add');
+                break;
+              case 'vendor':
+                context.push('/vendors/$companyId/add');
+                break;
+              case 'item':
+                context.go('/itemsadd');
+                break;
+            }
+          },
+        ),
+
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined, size: 28),
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Notifications coming soon')),
+            );
+          },
+          tooltip: 'Notifications',
+        ),
+        const SizedBox(width: 12),
+      ],
+    );
+  }
+
+  PopupMenuItem<String> _buildPopupMenuItem(
+    IconData icon,
+    String label,
+    String route,
+  ) {
+    return PopupMenuItem(
+      value: route,
+      child: Row(
+        children: [
+          Icon(icon, size: 22),
           const SizedBox(width: 12),
+          Text(label, style: const TextStyle(fontSize: 16)),
         ],
       ),
-      drawer: const AppDrawer(),
-      body: vm.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : const Center(
-              child: Text('Dashboard Content', style: TextStyle(fontSize: 18)),
-            ),
     );
   }
 }

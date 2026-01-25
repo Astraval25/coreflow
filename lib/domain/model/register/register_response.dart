@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 
 class RegisterResponse {
   final bool responseStatus;

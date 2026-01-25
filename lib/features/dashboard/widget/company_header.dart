@@ -6,22 +6,22 @@ class CompanyHeader extends StatelessWidget {
 
   const CompanyHeader({super.key, required this.vm});
 
-  bool get _canChangeCompany => !vm.isCompaniesLoading && vm.availableCompanies.isNotEmpty;
+  bool get _canChangeCompany =>
+      !vm.isCompaniesLoading && vm.availableCompanies.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Theme.of(context).colorScheme.surface,
       elevation: 4,
-      shadowColor: Theme.of(context).colorScheme.shadow.withOpacity(0.08),
+      shadowColor: Theme.of(context).colorScheme.shadow.withOpacity(0.40),
+      borderRadius: const BorderRadius.only(
+        // bottomLeft: Radius.circular(20),
+        bottomRight: Radius.circular(20),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: Container(
         padding: const EdgeInsets.fromLTRB(20, 80, 20, 32),
-        decoration: const BoxDecoration(
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(20),
-            bottomRight: Radius.circular(20),
-          ),
-        ),
         child: Row(
           children: [
             _buildIconTapArea(context),
@@ -37,7 +37,9 @@ class CompanyHeader extends StatelessWidget {
   Widget _buildIconTapArea(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: _canChangeCompany ? () => _showCompaniesBottomSheet(context) : null,
+      onTap: _canChangeCompany
+          ? () => _showCompaniesBottomSheet(context)
+          : null,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -56,7 +58,9 @@ class CompanyHeader extends StatelessWidget {
   Widget _buildCompanyText(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(8),
-      onTap: _canChangeCompany ? () => _showCompaniesBottomSheet(context) : null,
+      onTap: _canChangeCompany
+          ? () => _showCompaniesBottomSheet(context)
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -86,7 +90,9 @@ class CompanyHeader extends StatelessWidget {
   Widget _buildArrowTapArea(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
-      onTap: _canChangeCompany ? () => _showCompaniesBottomSheet(context) : null,
+      onTap: _canChangeCompany
+          ? () => _showCompaniesBottomSheet(context)
+          : null,
       child: Icon(
         Icons.keyboard_arrow_down_rounded,
         size: 28,

@@ -14,10 +14,10 @@ class DashboardViewModel extends ChangeNotifier {
   bool _isCompaniesLoading = false;
 
   bool _isCustomersExpanded = false;
-  bool _isVendorsExpanded = false;
-  bool _isSalesExpanded = false;
-
   String _selectedMenu = 'badges';
+
+  bool _hasLoadedUserData = false;
+  bool _hasLoadedCompanies = false;
 
   bool get isLoading => _isLoading;
   String? get userName => _userName;
@@ -31,12 +31,22 @@ class DashboardViewModel extends ChangeNotifier {
   String get selectedMenu => _selectedMenu;
 
   DashboardViewModel() {
-    loadUserData().then(
-      (_) => loadCompanies(),
-    ); 
+    _initializeData();
+  }
+
+  void _initializeData() {
+    if (!_hasLoadedUserData) {
+      loadUserData().then((_) {
+        if (!_hasLoadedCompanies) {
+          loadCompanies();
+        }
+      });
+    }
   }
 
   Future<void> loadUserData() async {
+    if (_hasLoadedUserData) return;
+
     _isLoading = true;
     notifyListeners();
 
@@ -51,11 +61,14 @@ class DashboardViewModel extends ChangeNotifier {
       _companyName = null;
     } finally {
       _isLoading = false;
+      _hasLoadedUserData = true;
       notifyListeners();
     }
   }
 
   Future<void> loadCompanies() async {
+    if (_hasLoadedCompanies) return;
+
     _isCompaniesLoading = true;
     notifyListeners();
 
@@ -71,13 +84,13 @@ class DashboardViewModel extends ChangeNotifier {
         _availableCompanies.insert(0, _companyName!);
       }
     } catch (e) {
-      print('Error loading companies: $e');
-
+      debugPrint('Error loading companies: $e');
       if (_companyName != null) {
         _availableCompanies = [_companyName!];
       }
     } finally {
       _isCompaniesLoading = false;
+      _hasLoadedCompanies = true; // ✅ FIXED: Mark as loaded
       notifyListeners();
     }
   }
@@ -103,8 +116,10 @@ class DashboardViewModel extends ChangeNotifier {
 
     await _authRepository.clearAuthData();
 
-    if (!context.mounted) return;
+    _hasLoadedUserData = false;
+    _hasLoadedCompanies = false;
 
+    if (!context.mounted) return;
     context.go('/login');
   }
 }
