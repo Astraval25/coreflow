@@ -22,7 +22,6 @@ class CustomerDetailViewModel extends ChangeNotifier {
     loadCustomerDetail();
   }
 
-  // ───── Getters ─────
   CustomerViewState get state => _state;
   CustomerDetailData? get customer => _customer;
   String? get errorMessage => _errorMessage;
@@ -111,7 +110,6 @@ class CustomerDetailViewModel extends ChangeNotifier {
     }
   }
 
-  // ───── Helpers ─────
   void clearError() {
     _errorMessage = null;
     notifyListeners();

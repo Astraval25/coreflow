@@ -1,6 +1,5 @@
 import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
 import 'package:coreflow/domain/model/customer/create_customer_request.dart';
-import 'package:coreflow/features/customers/view_model/customers_view_model.dart';
 import 'package:coreflow/features/customers/widget/edit_create/billing_address_card.dart';
 import 'package:coreflow/features/customers/widget/edit_create/customer_info_def_section.dart';
 import 'package:coreflow/features/customers/widget/edit_create/customer_info_section.dart';
@@ -220,27 +219,25 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
           : null,
       dueAmount: double.tryParse(_advanceController.text.trim()) ?? 0.0,
       sameAsBillingAddress: _sameAsShippingAddress,
-      billingAddress: _sameAsShippingAddress
-          ? null
-          : BillingAddress(
-              attentionName: _billingAttentionController.text.trim().isNotEmpty
-                  ? _billingAttentionController.text.trim()
-                  : null,
-              country: 'India',
-              line1: _billingLine1Controller.text.trim(),
-              line2: _billingLine2Controller.text.trim().isNotEmpty
-                  ? _billingLine2Controller.text.trim()
-                  : null,
-              city: _billingCityController.text.trim(),
-              state: _billingStateController.text.trim(),
-              pincode: int.tryParse(_billingPincodeController.text.trim()) ?? 0,
-              phone: _billingPhoneController.text.trim().isNotEmpty
-                  ? _billingPhoneController.text.trim()
-                  : null,
-              email: _billingEmailController.text.trim().isNotEmpty
-                  ? _billingEmailController.text.trim()
-                  : null,
-            ),
+      billingAddress: BillingAddress(
+        attentionName: _billingAttentionController.text.trim().isNotEmpty
+            ? _billingAttentionController.text.trim()
+            : null,
+        country: 'India',
+        line1: _billingLine1Controller.text.trim(),
+        line2: _billingLine2Controller.text.trim().isNotEmpty
+            ? _billingLine2Controller.text.trim()
+            : null,
+        city: _billingCityController.text.trim(),
+        state: _billingStateController.text.trim(),
+        pincode: int.tryParse(_billingPincodeController.text.trim()) ?? 0,
+        phone: _billingPhoneController.text.trim().isNotEmpty
+            ? _billingPhoneController.text.trim()
+            : null,
+        email: _billingEmailController.text.trim().isNotEmpty
+            ? _billingEmailController.text.trim()
+            : null,
+      ),
       shippingAddress: ShippingAddress(
         attentionName: _shippingAttentionController.text.trim().isNotEmpty
             ? _shippingAttentionController.text.trim()

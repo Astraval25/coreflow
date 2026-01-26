@@ -16,9 +16,7 @@ class ActiveCustomersViewModel extends ChangeNotifier {
   String? _error;
   bool _showActiveOnly = true;
 
-  // =======================
-  // GETTERS
-  // =======================
+
 
   bool get isLoading => _isLoading;
   bool get hasError => _error != null;
@@ -38,9 +36,6 @@ class ActiveCustomersViewModel extends ChangeNotifier {
   List<Customer> get activeCustomers => List.unmodifiable(_activeCustomers);
   List<Customer> get inactiveCustomers => List.unmodifiable(_inactiveCustomers);
 
-  // =======================
-  // CORE METHODS
-  // =======================
 
   Future<void> loadCustomers(int companyId) async {
     _companyId = companyId;
@@ -103,9 +98,6 @@ class ActiveCustomersViewModel extends ChangeNotifier {
     }
   }
 
-  // =======================
-  // PRIVATE HELPERS
-  // =======================
 
   void _setLoading(bool value) {
     _isLoading = value;

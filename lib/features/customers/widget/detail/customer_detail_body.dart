@@ -232,6 +232,12 @@ class _AddressSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Decide which address to show as shipping
+    final Address? shippingToShow =
+        (customer.sameAsBillingAddress || customer.shippingAddress == null)
+        ? customer.billingAddress
+        : customer.shippingAddress;
+
     return Container(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,19 +251,20 @@ class _AddressSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
+
+                // Billing address
                 CustomerAddressTile(
                   title: 'Billing address',
-
                   address: customer.billingAddress,
                 ),
 
-                if (customer.shippingAddress != null &&
-                    !customer.sameAsBillingAddress) ...[
+                if (shippingToShow != null) ...[
                   const SizedBox(height: 28),
-
                   CustomerAddressTile(
-                    title: 'Shipping address',
-                    address: customer.shippingAddress!,
+                    title: customer.sameAsBillingAddress
+                        ? 'Shipping address'
+                        : 'Shipping address',
+                    address: shippingToShow,
                   ),
                 ],
               ],

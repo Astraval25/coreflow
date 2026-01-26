@@ -1,16 +1,16 @@
-import 'package:coreflow/features/customers/view_model/customers_view_model.dart';
-import 'package:coreflow/features/customers/widget/customer_list_item.dart';
+import 'package:coreflow/features/vendor/view_model/vendor_view_model.dart';
+import 'package:coreflow/features/vendor/widget/vendor_list_item.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
-class CustomersList extends StatelessWidget {
-  final List<dynamic> customers;
+class VendorsList extends StatelessWidget {
+  final List<dynamic> vendors;
   final int companyId;
 
-  const CustomersList({
+  const VendorsList({
     super.key,
-    required this.customers,
+    required this.vendors,
     required this.companyId,
   });
 
@@ -28,18 +28,15 @@ class CustomersList extends StatelessWidget {
                     vertical: 8,
                     horizontal: 12,
                   ),
-                  itemCount: customers.length,
+                  itemCount: vendors.length,
                   separatorBuilder: (context, index) => const Divider(
                     height: 1,
                     thickness: 1,
                     color: Color(0xFFE0E0E0),
                   ),
                   itemBuilder: (context, index) {
-                    final customer = customers[index];
-                    return CustomerListItem(
-                      customer: customer,
-                      companyId: companyId,
-                    );
+                    final vendor = vendors[index];
+                    return VendorListItem(vendor: vendor, companyId: companyId);
                   },
                 ),
                 Positioned(
@@ -61,10 +58,10 @@ class CustomersList extends StatelessWidget {
                       borderRadius: BorderRadius.circular(30),
                       onTap: () async {
                         final result = await context.push<bool>(
-                          '/customers/$companyId/add',
+                          '/vendors/$companyId/add',
                         );
                         if (result == true) {
-                          context.read<ActiveCustomersViewModel>().refresh();
+                          context.read<ActiveVendorViewModel>().refresh();
                         }
                       },
                       splashColor: Colors.white24,
@@ -85,7 +82,7 @@ class CustomersList extends StatelessWidget {
   }
 
   Widget _buildTopToggleTabs(BuildContext context) {
-    return Consumer<ActiveCustomersViewModel>(
+    return Consumer<ActiveVendorViewModel>(
       builder: (context, viewModel, child) {
         const double gapBetweenTabs = 6.0;
         const double indicatorHeight = 3.0;
@@ -141,8 +138,8 @@ class CustomersList extends StatelessWidget {
                       _TabItem(
                         label: 'Active',
                         count: isActiveSelected
-                            ? viewModel.customers.length
-                            : viewModel.activeCustomersCount,
+                            ? viewModel.vendor.length
+                            : viewModel.activeVendorCount,
                         isSelected: isActiveSelected,
                         color: const Color(0xFF4CAF50),
                         tabWidth: tabWidth,
@@ -154,8 +151,8 @@ class CustomersList extends StatelessWidget {
                       _TabItem(
                         label: 'Inactive',
                         count: !isActiveSelected
-                            ? viewModel.customers.length
-                            : viewModel.inactiveCustomersCount,
+                            ? viewModel.vendor.length
+                            : viewModel.inactiveVendorCount,
                         isSelected: !isActiveSelected,
                         color: const Color(0xFFE53935),
                         tabWidth: tabWidth,
@@ -184,7 +181,6 @@ class _TabItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const _TabItem({
-    super.key,
     required this.label,
     required this.count,
     required this.isSelected,

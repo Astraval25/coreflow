@@ -1,28 +1,22 @@
-import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
+import 'package:coreflow/domain/model/vendors/create_vendors_request.dart';
 import 'package:coreflow/features/customers/widget/edit_create/billing_address_card.dart';
-import 'package:coreflow/features/customers/widget/edit_create/customer_info_def_section.dart';
-import 'package:coreflow/features/customers/widget/edit_create/customer_info_section.dart';
-import 'package:coreflow/features/customers/widget/edit_create/save_customer_button.dart';
 import 'package:coreflow/features/customers/widget/edit_create/shipping_address_card.dart';
 import 'package:coreflow/features/dashboard/widget/menu.dart';
+import 'package:coreflow/features/vendor/view_model/vendor_edit_view_model.dart';
+import 'package:coreflow/features/vendor/widget/edit_create/save_customer_button.dart';
+import 'package:coreflow/features/vendor/widget/edit_create/vendor_info_def_section.dart';
+import 'package:coreflow/features/vendor/widget/edit_create/vendor_info_section.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/features/customers/view_model/customer_edit_view_model.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
-import 'package:coreflow/domain/model/customer/customer_detail.dart';
-import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
 import 'package:go_router/go_router.dart';
 
-class CustomerEditPage extends StatelessWidget {
+class VendorCreatePage extends StatelessWidget {
   final int companyId;
-  final int customerId;
 
-  const CustomerEditPage({
-    super.key,
-    required this.companyId,
-    required this.customerId,
-  });
+  const VendorCreatePage({super.key, required this.companyId});
 
   @override
   Widget build(BuildContext context) {
@@ -32,47 +26,38 @@ class CustomerEditPage extends StatelessWidget {
           create: (_) => DashboardViewModel()..loadUserData(),
         ),
         ChangeNotifierProvider(
-          create: (_) =>
-              CustomerEditViewModel(AuthRepository())
-                ..loadCustomerDetails(companyId, customerId),
+          create: (_) => VendorEditViewModel(AuthRepository()),
         ),
       ],
-      child: CustomerEditScreen(companyId: companyId, customerId: customerId),
+      child: VendorCreateScreen(companyId: companyId),
     );
   }
 }
 
-class CustomerEditScreen extends StatefulWidget {
+class VendorCreateScreen extends StatefulWidget {
   final int companyId;
-  final int customerId;
 
-  const CustomerEditScreen({
-    super.key,
-    required this.companyId,
-    required this.customerId,
-  });
+  const VendorCreateScreen({super.key, required this.companyId});
 
   @override
-  State<CustomerEditScreen> createState() => _CustomerEditScreenState();
+  State<VendorCreateScreen> createState() => _VendorCreateScreenState();
 }
 
-class _CustomerEditScreenState extends State<CustomerEditScreen> {
+class _VendorCreateScreenState extends State<VendorCreateScreen> {
   final _formKey = GlobalKey<FormState>();
-  bool _billingSameAsShipping = false;
-  bool _isFormPopulated = false;
+  bool _sameAsShippingAddress = false;
 
-  // Controllers
-  final _customerNameController = TextEditingController();
-  final _displayNameController = TextEditingController();
   final _languageController = TextEditingController(text: 'en');
 
+  final _vendorNameController = TextEditingController();
+  final _displayNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _panController = TextEditingController();
   final _gstController = TextEditingController();
   final _advanceController = TextEditingController();
 
-  // Billing
+  // Billing controllers
   final _billingAttentionController = TextEditingController();
   final _billingLine1Controller = TextEditingController();
   final _billingLine2Controller = TextEditingController();
@@ -82,7 +67,7 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
   final _billingPhoneController = TextEditingController();
   final _billingEmailController = TextEditingController();
 
-  // Shipping
+  // Shipping controllers
   final _shippingAttentionController = TextEditingController();
   final _shippingLine1Controller = TextEditingController();
   final _shippingLine2Controller = TextEditingController();
@@ -115,9 +100,9 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
 
   void _updateSameAsBillingFromData() {
     final equals = _isShippingEqualToBilling();
-    if (_billingSameAsShipping != equals) {
+    if (_sameAsShippingAddress != equals) {
       setState(() {
-        _billingSameAsShipping = equals;
+        _sameAsShippingAddress = equals;
       });
     }
   }
@@ -126,13 +111,14 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
   void initState() {
     super.initState();
 
-    _customerNameController.addListener(_syncDisplayNameIfNotEdited);
+    _vendorNameController.addListener(_syncDisplayNameIfNotEdited);
 
     _displayNameController.addListener(() {
       if (_displayNameController.text.trim().isNotEmpty) {
         _hasEditedDisplayName = true;
       }
     });
+
     final shippingControllers = [
       _shippingAttentionController,
       _shippingLine1Controller,
@@ -151,27 +137,16 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
 
   void _syncDisplayNameIfNotEdited() {
     if (!_hasEditedDisplayName && _displayNameController.text.trim().isEmpty) {
-      _displayNameController.text = _customerNameController.text.trim();
+      _displayNameController.text = _vendorNameController.text.trim();
       _displayNameController.selection = TextSelection.fromPosition(
         TextPosition(offset: _displayNameController.text.length),
       );
     }
   }
 
-  void _copyBillingToShipping() {
-    _shippingAttentionController.text = _billingAttentionController.text;
-    _shippingLine1Controller.text = _billingLine1Controller.text;
-    _shippingLine2Controller.text = _billingLine2Controller.text;
-    _shippingCityController.text = _billingCityController.text;
-    _shippingStateController.text = _billingStateController.text;
-    _shippingPincodeController.text = _billingPincodeController.text;
-    _shippingPhoneController.text = _billingPhoneController.text;
-    _shippingEmailController.text = _billingEmailController.text;
-  }
-
   @override
   void dispose() {
-    _customerNameController.removeListener(_syncDisplayNameIfNotEdited);
+    _vendorNameController.removeListener(_syncDisplayNameIfNotEdited);
     _displayNameController.removeListener(() {});
 
     final shippingControllers = [
@@ -189,9 +164,9 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
       c.removeListener(_updateSameAsBillingFromData);
     }
 
-    _customerNameController.dispose();
-    _displayNameController.dispose();
     _languageController.dispose();
+    _vendorNameController.dispose();
+    _displayNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _panController.dispose();
@@ -219,67 +194,13 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
     super.dispose();
   }
 
-  void _populateForm(CustomerDetailData? data) {
-    if (data == null || _isFormPopulated) return;
-
-    _isFormPopulated = true;
-
-    // Required fields
-    _customerNameController.text = data.customerName;
-    _displayNameController.text = data.displayName;
-
-    // Customer info
-    _emailController.text = (data.email ?? '').trim();
-    _phoneController.text = (data.phone ?? '').trim();
-    _panController.text = (data.pan ?? '').trim();
-    _gstController.text = (data.gst ?? '').trim();
-    _advanceController.text = data.dueAmount?.toString() ?? '';
-    _languageController.text = data.lang ?? 'en';
-
-    _billingSameAsShipping = data.sameAsBillingAddress ?? false;
-
-    // Billing
-    final billing = data.billingAddress;
-    if (billing != null) {
-      _billingAttentionController.text = (billing.attentionName ?? '').trim();
-      _billingLine1Controller.text = (billing.line1 ?? '').trim();
-      _billingLine2Controller.text = (billing.line2 ?? '').trim();
-      _billingCityController.text = (billing.city ?? '').trim();
-      _billingStateController.text = (billing.state ?? '').trim();
-      _billingPincodeController.text = billing.pincode.toString();
-      _billingPhoneController.text = (billing.phone ?? '').trim();
-      _billingEmailController.text = (billing.email ?? '').trim();
-    }
-
-    // Shipping
-    final shipping = data.shippingAddress;
-    if (shipping != null) {
-      _shippingAttentionController.text = (shipping.attentionName ?? '').trim();
-      _shippingLine1Controller.text = (shipping.line1 ?? '').trim();
-      _shippingLine2Controller.text = (shipping.line2 ?? '').trim();
-      _shippingCityController.text = (shipping.city ?? '').trim();
-      _shippingStateController.text = (shipping.state ?? '').trim();
-      _shippingPincodeController.text = shipping.pincode.toString();
-      _shippingPhoneController.text = (shipping.phone ?? '').trim();
-      _shippingEmailController.text = (shipping.email ?? '').trim();
-    }
-
-    if (_billingSameAsShipping) {
-      _copyBillingToShipping();
-    }
-
-    _updateSameAsBillingFromData();
-
-    setState(() {});
-  }
-
-  Future<void> _saveCustomer(CustomerEditViewModel viewModel) async {
+  Future<void> _saveVendor(VendorEditViewModel viewModel) async {
     viewModel.clearError();
 
     if (!_formKey.currentState!.validate()) return;
 
-    final request = CustomerEditRequest(
-      customerName: _customerNameController.text.trim(),
+    final request = CreateVendorsRequest(
+      vendorName: _vendorNameController.text.trim(),
       displayName: _displayNameController.text.trim(),
       email: _emailController.text.trim().isNotEmpty
           ? _emailController.text.trim()
@@ -297,9 +218,10 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
           ? _gstController.text.trim()
           : null,
       dueAmount: double.tryParse(_advanceController.text.trim()) ?? 0.0,
-      sameAsBillingAddress: _billingSameAsShipping,
+      sameAsBillingAddress: _sameAsShippingAddress,
 
-      billingAddress: !_billingSameAsShipping
+      // billingAddress is NOT null when checkbox is checked
+      billingAddress: _sameAsShippingAddress
           ? BillingAddress(
               attentionName: _billingAttentionController.text.trim().isNotEmpty
                   ? _billingAttentionController.text.trim()
@@ -321,7 +243,7 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
             )
           : null,
 
-      shippingAddress: _billingSameAsShipping
+      shippingAddress: _sameAsShippingAddress
           ? ShippingAddress(
               attentionName: _billingAttentionController.text.trim().isNotEmpty
                   ? _billingAttentionController.text.trim()
@@ -363,34 +285,23 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
             ),
     );
 
-    final success = await viewModel.updateCustomer(
-      widget.companyId,
-      widget.customerId,
-      request,
-    );
-
-    if (success && mounted && context.mounted) {
+    final success = await viewModel.createNewVendor(widget.companyId, request);
+    if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Edit updated successfully')),
+        const SnackBar(content: Text('Vendor created successfully')),
       );
-      context.pop();
+      context.pop(true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<CustomerEditViewModel, DashboardViewModel>(
+    return Consumer2<VendorEditViewModel, DashboardViewModel>(
       builder: (context, editVM, dashboardVM, _) {
-        if (editVM.customerDetails != null && !_isFormPopulated) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _populateForm(editVM.customerDetails);
-          });
-        }
-
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            title: const Text('Edit Customer'),
+            title: const Text('Create Vendor'),
             elevation: 0,
             backgroundColor: Colors.transparent,
             actions: [
@@ -406,16 +317,14 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
                       letterSpacing: 0.4,
                     ),
                   ),
-                  onPressed: editVM.isSaving
-                      ? null
-                      : () => _saveCustomer(editVM),
+                  onPressed: editVM.isSaving ? null : () => _saveVendor(editVM),
                 ),
               ),
             ],
           ),
           drawerEnableOpenDragGesture: false,
           drawer: AppDrawer(vm: dashboardVM),
-          body: editVM.isLoading
+          body: editVM.isSaving
               ? const Center(child: CircularProgressIndicator())
               : Form(
                   key: _formKey,
@@ -424,25 +333,15 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        CustomerInfoSections(
+                        VendorInfoSections(
                           formKey: _formKey,
-                          customerName: _customerNameController,
+                          vendorName: _vendorNameController,
                           displayName: _displayNameController,
                         ),
                         const SizedBox(height: 24),
-
-                        // Customer info
                         ExpansionTile(
-                          initiallyExpanded: false,
-                          shape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          collapsedShape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          clipBehavior: Clip.none,
                           title: Text(
-                            'Customer information',
+                            'Vendor information',
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
@@ -453,7 +352,7 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
                             16,
                           ),
                           children: [
-                            CustomerInfoSection(
+                            VendorInfoSection(
                               formKey: _formKey,
                               email: _emailController,
                               phone: _phoneController,
@@ -465,15 +364,7 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
                           ],
                         ),
                         const SizedBox(height: 32),
-
-                        // Billing
                         ExpansionTile(
-                          shape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          collapsedShape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
                           title: Text(
                             'Billing Address',
                             style: Theme.of(context).textTheme.titleMedium
@@ -498,16 +389,8 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
                             ),
                           ],
                         ),
-
-                        const SizedBox(height: 20),
-
+                        const SizedBox(height: 21),
                         ExpansionTile(
-                          shape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          collapsedShape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
                           title: Text(
                             'Shipping Address',
                             style: Theme.of(context).textTheme.titleMedium
@@ -522,20 +405,34 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
                           children: [
                             CheckboxListTile(
                               title: const Text('Same as billing'),
-                              value: _billingSameAsShipping,
+                              value: _sameAsShippingAddress,
                               onChanged: (value) {
                                 final newValue = value ?? false;
                                 setState(() {
-                                  _billingSameAsShipping = newValue;
+                                  _sameAsShippingAddress = newValue;
                                   if (newValue) {
-                                    _copyBillingToShipping();
+                                    _shippingAttentionController.text =
+                                        _billingAttentionController.text;
+                                    _shippingLine1Controller.text =
+                                        _billingLine1Controller.text;
+                                    _shippingLine2Controller.text =
+                                        _billingLine2Controller.text;
+                                    _shippingCityController.text =
+                                        _billingCityController.text;
+                                    _shippingStateController.text =
+                                        _billingStateController.text;
+                                    _shippingPincodeController.text =
+                                        _billingPincodeController.text;
+                                    _shippingPhoneController.text =
+                                        _billingPhoneController.text;
+                                    _shippingEmailController.text =
+                                        _billingEmailController.text;
                                   }
                                 });
                               },
                               contentPadding: EdgeInsets.zero,
                               controlAffinity: ListTileControlAffinity.leading,
                             ),
-
                             ShippingAddressCard(
                               attention: _shippingAttentionController,
                               line1: _shippingLine1Controller,
@@ -548,15 +445,12 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 20),
-
-                        SaveCustomerButton(
-                          onPressed: () => _saveCustomer(editVM),
+                        SaveVendorButton(
+                          onPressed: () => _saveVendor(editVM),
                           isSaving: editVM.isSaving,
                         ),
                         const SizedBox(height: 40),
-
                         if (editVM.error != null) ...[
                           Container(
                             padding: const EdgeInsets.all(16),

@@ -1,27 +1,27 @@
-import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
+import 'package:coreflow/domain/model/vendors/vendors_edit_request.dart';
 import 'package:coreflow/features/customers/widget/edit_create/billing_address_card.dart';
-import 'package:coreflow/features/customers/widget/edit_create/customer_info_def_section.dart';
-import 'package:coreflow/features/customers/widget/edit_create/customer_info_section.dart';
-import 'package:coreflow/features/customers/widget/edit_create/save_customer_button.dart';
 import 'package:coreflow/features/customers/widget/edit_create/shipping_address_card.dart';
 import 'package:coreflow/features/dashboard/widget/menu.dart';
+import 'package:coreflow/features/vendor/view_model/vendor_edit_view_model.dart';
+import 'package:coreflow/features/vendor/widget/edit_create/save_customer_button.dart';
+import 'package:coreflow/features/vendor/widget/edit_create/vendor_info_def_section.dart';
+import 'package:coreflow/features/vendor/widget/edit_create/vendor_info_section.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/features/customers/view_model/customer_edit_view_model.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
-import 'package:coreflow/domain/model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
 import 'package:go_router/go_router.dart';
 
-class CustomerEditPage extends StatelessWidget {
+class VendorEditPage extends StatelessWidget {
   final int companyId;
-  final int customerId;
+  final int vendorId;
 
-  const CustomerEditPage({
+  const VendorEditPage({
     super.key,
     required this.companyId,
-    required this.customerId,
+    required this.vendorId,
   });
 
   @override
@@ -33,36 +33,36 @@ class CustomerEditPage extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) =>
-              CustomerEditViewModel(AuthRepository())
-                ..loadCustomerDetails(companyId, customerId),
+              VendorEditViewModel(AuthRepository())
+                ..loadVendorDetails(companyId, vendorId),
         ),
       ],
-      child: CustomerEditScreen(companyId: companyId, customerId: customerId),
+      child: VendorEditScreen(companyId: companyId, vendorId: vendorId),
     );
   }
 }
 
-class CustomerEditScreen extends StatefulWidget {
+class VendorEditScreen extends StatefulWidget {
   final int companyId;
-  final int customerId;
+  final int vendorId;
 
-  const CustomerEditScreen({
+  const VendorEditScreen({
     super.key,
     required this.companyId,
-    required this.customerId,
+    required this.vendorId,
   });
 
   @override
-  State<CustomerEditScreen> createState() => _CustomerEditScreenState();
+  State<VendorEditScreen> createState() => _VendorEditScreenState();
 }
 
-class _CustomerEditScreenState extends State<CustomerEditScreen> {
+class _VendorEditScreenState extends State<VendorEditScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _billingSameAsShipping = false;
   bool _isFormPopulated = false;
 
   // Controllers
-  final _customerNameController = TextEditingController();
+  final _vendorNameController = TextEditingController();
   final _displayNameController = TextEditingController();
   final _languageController = TextEditingController(text: 'en');
 
@@ -126,13 +126,14 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
   void initState() {
     super.initState();
 
-    _customerNameController.addListener(_syncDisplayNameIfNotEdited);
+    _vendorNameController.addListener(_syncDisplayNameIfNotEdited);
 
     _displayNameController.addListener(() {
       if (_displayNameController.text.trim().isNotEmpty) {
         _hasEditedDisplayName = true;
       }
     });
+
     final shippingControllers = [
       _shippingAttentionController,
       _shippingLine1Controller,
@@ -151,7 +152,7 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
 
   void _syncDisplayNameIfNotEdited() {
     if (!_hasEditedDisplayName && _displayNameController.text.trim().isEmpty) {
-      _displayNameController.text = _customerNameController.text.trim();
+      _displayNameController.text = _vendorNameController.text.trim();
       _displayNameController.selection = TextSelection.fromPosition(
         TextPosition(offset: _displayNameController.text.length),
       );
@@ -171,7 +172,7 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
 
   @override
   void dispose() {
-    _customerNameController.removeListener(_syncDisplayNameIfNotEdited);
+    _vendorNameController.removeListener(_syncDisplayNameIfNotEdited);
     _displayNameController.removeListener(() {});
 
     final shippingControllers = [
@@ -189,7 +190,7 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
       c.removeListener(_updateSameAsBillingFromData);
     }
 
-    _customerNameController.dispose();
+    _vendorNameController.dispose();
     _displayNameController.dispose();
     _languageController.dispose();
     _emailController.dispose();
@@ -219,16 +220,15 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
     super.dispose();
   }
 
-  void _populateForm(CustomerDetailData? data) {
+  void _populateForm(VendorsDetailData? data) {
     if (data == null || _isFormPopulated) return;
 
     _isFormPopulated = true;
 
-    // Required fields
-    _customerNameController.text = data.customerName;
+    _vendorNameController.text = data.vendorName;
     _displayNameController.text = data.displayName;
 
-    // Customer info
+    // vendor info
     _emailController.text = (data.email ?? '').trim();
     _phoneController.text = (data.phone ?? '').trim();
     _panController.text = (data.pan ?? '').trim();
@@ -273,13 +273,14 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
     setState(() {});
   }
 
-  Future<void> _saveCustomer(CustomerEditViewModel viewModel) async {
+  Future<void> _saveVendor(VendorEditViewModel viewModel) async {
     viewModel.clearError();
 
     if (!_formKey.currentState!.validate()) return;
 
-    final request = CustomerEditRequest(
-      customerName: _customerNameController.text.trim(),
+    // Build request without touching visible text.
+    final request = VendorsEditRequest(
+      vendorName: _vendorNameController.text.trim(),
       displayName: _displayNameController.text.trim(),
       email: _emailController.text.trim().isNotEmpty
           ? _emailController.text.trim()
@@ -363,9 +364,9 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
             ),
     );
 
-    final success = await viewModel.updateCustomer(
+    final success = await viewModel.updateVendor(
       widget.companyId,
-      widget.customerId,
+      widget.vendorId,
       request,
     );
 
@@ -379,18 +380,18 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<CustomerEditViewModel, DashboardViewModel>(
+    return Consumer2<VendorEditViewModel, DashboardViewModel>(
       builder: (context, editVM, dashboardVM, _) {
-        if (editVM.customerDetails != null && !_isFormPopulated) {
+        if (editVM.vendorDetails != null && !_isFormPopulated) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            _populateForm(editVM.customerDetails);
+            _populateForm(editVM.vendorDetails);
           });
         }
 
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            title: const Text('Edit Customer'),
+            title: const Text('Edit vendor'),
             elevation: 0,
             backgroundColor: Colors.transparent,
             actions: [
@@ -406,9 +407,7 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
                       letterSpacing: 0.4,
                     ),
                   ),
-                  onPressed: editVM.isSaving
-                      ? null
-                      : () => _saveCustomer(editVM),
+                  onPressed: editVM.isSaving ? null : () => _saveVendor(editVM),
                 ),
               ),
             ],
@@ -424,14 +423,13 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        CustomerInfoSections(
+                        VendorInfoSections(
                           formKey: _formKey,
-                          customerName: _customerNameController,
+                          vendorName: _vendorNameController,
                           displayName: _displayNameController,
                         ),
                         const SizedBox(height: 24),
 
-                        // Customer info
                         ExpansionTile(
                           initiallyExpanded: false,
                           shape: const RoundedRectangleBorder(
@@ -442,7 +440,7 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
                           ),
                           clipBehavior: Clip.none,
                           title: Text(
-                            'Customer information',
+                            'vendor information',
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
@@ -453,7 +451,7 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
                             16,
                           ),
                           children: [
-                            CustomerInfoSection(
+                            VendorInfoSection(
                               formKey: _formKey,
                               email: _emailController,
                               phone: _phoneController,
@@ -551,8 +549,8 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
 
                         const SizedBox(height: 20),
 
-                        SaveCustomerButton(
-                          onPressed: () => _saveCustomer(editVM),
+                        SaveVendorButton(
+                          onPressed: () => _saveVendor(editVM),
                           isSaving: editVM.isSaving,
                         ),
                         const SizedBox(height: 40),
