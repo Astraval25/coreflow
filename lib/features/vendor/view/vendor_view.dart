@@ -12,7 +12,6 @@ import 'package:coreflow/data/repositories/auth_repository.dart';
 
 class ActiveVendorView extends StatefulWidget {
   final int companyId;
-
   const ActiveVendorView({super.key, required this.companyId});
 
   @override
@@ -125,5 +124,3 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
     return VendorsList(vendors: filteredVendor, companyId: widget.companyId);
   }
 }
-
-
