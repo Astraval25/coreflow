@@ -33,6 +33,7 @@ class AppConfig {
       '/api/companies/{companyId}/vendors/{vendorId}/activate';
   static const String vendorDeactivateEndpoint =
       '/api/companies/{companyId}/vendors/{vendorId}/deactivate';
+  static const String itemsEndpoint = '/api/companies/{companyId}/items';
 
   static String get loginUrl => '$baseUrl$loginEndpoint';
   static String get registerUrl => '$baseUrl$registerEndpoint';
@@ -77,4 +78,7 @@ class AppConfig {
 
   static String getVendorDeactivateUrl(int companyId, int vendorId) =>
       '$baseUrl${vendorDeactivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+
+  static String getItemsUrl(int companyId) =>
+      '$baseUrl${itemsEndpoint.replaceAll('{companyId}', companyId.toString())}';
 }

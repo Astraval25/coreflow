@@ -184,7 +184,7 @@ class _TabItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const _TabItem({
-    super.key,
+    // super.key,
     required this.label,
     required this.count,
     required this.isSelected,
