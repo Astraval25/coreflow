@@ -15,13 +15,13 @@ class ItemDetailViewModel extends ChangeNotifier {
   Uint8List? _currentImageBytes;
 
   bool _isLoading = false;
-  bool _isLoadingImage = false;          
+  bool _isLoadingImage = false;
   String? _errorMessage;
 
   ItemResponse? get itemResponse => _itemResponse;
   Uint8List? get currentImageBytes => _currentImageBytes;
   bool get isLoading => _isLoading;
-  bool get isLoadingImage => _isLoadingImage;  
+  bool get isLoadingImage => _isLoadingImage;
   String? get errorMessage => _errorMessage;
 
   ItemDetailViewModel({
@@ -29,8 +29,8 @@ class ItemDetailViewModel extends ChangeNotifier {
     required this.itemId,
     required AuthRepository repository,
     required ApiService apiService,
-  })  : _repository = repository,
-        _apiService = apiService;
+  }) : _repository = repository,
+       _apiService = apiService;
 
   Future<void> loadItemDetail() async {
     _isLoading = true;
@@ -43,14 +43,10 @@ class ItemDetailViewModel extends ChangeNotifier {
 
       final item = response.responseData;
 
-      // Determine image URL
-      if (item.preferredVendorId != null) {
-        _currentImageUrl = _repository.getFileUrl(item.preferredVendorId.toString());
-      } else if (item.itemImage?.isNotEmpty == true) {
-        _currentImageUrl = _repository.getFileUrl(item.itemImage!);
-      } else {
-        _currentImageUrl = null;
-      }
+      // FIXED: Removed non-existent preferredVendorId - using only itemImage
+      _currentImageUrl = item.itemImage?.isNotEmpty == true
+          ? _repository.getFileUrl(item.itemImage!)
+          : null;
 
       // Load image if available
       if (_currentImageUrl != null) {
@@ -77,14 +73,10 @@ class ItemDetailViewModel extends ChangeNotifier {
 
     final item = _itemResponse!.responseData;
 
-    // Re-determine URL (in case item changed somehow)
-    if (item.preferredVendorId != null) {
-      _currentImageUrl = _repository.getFileUrl(item.preferredVendorId.toString());
-    } else if (item.itemImage?.isNotEmpty == true) {
-      _currentImageUrl = _repository.getFileUrl(item.itemImage!);
-    } else {
-      _currentImageUrl = null;
-    }
+    // FIXED: Simplified - using only itemImage
+    _currentImageUrl = item.itemImage?.isNotEmpty == true
+        ? _repository.getFileUrl(item.itemImage!)
+        : null;
 
     _currentImageBytes = null;
     notifyListeners();
@@ -119,6 +111,52 @@ class ItemDetailViewModel extends ChangeNotifier {
 
   Future<void> refresh() async {
     await loadItemDetail();
+  }
+
+  Future<bool> activateItem() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await _repository.activateItem(companyId, itemId);
+      if (response != null && response.responseStatus) {
+        return true;
+      } else {
+        _errorMessage = response?.responseMessage ?? 'Failed to activate item';
+      }
+    } catch (e) {
+      debugPrint('ItemDetailViewModel.activateItem error: $e');
+      _errorMessage = 'Failed to activate item';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+
+    return false;
+  }
+
+  Future<bool> deactivateItem() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await _repository.deactivateItem(companyId, itemId);
+      if (response != null && response.responseStatus) {
+        return true;
+      } else {
+        _errorMessage = response?.responseMessage ?? 'Failed to deactivate item';
+      }
+    } catch (e) {
+      debugPrint('ItemDetailViewModel.deactivateItem error: $e');
+      _errorMessage = 'Failed to deactivate item';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+
+    return false;
   }
 
   @override

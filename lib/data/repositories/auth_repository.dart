@@ -10,6 +10,7 @@ import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
 import 'package:coreflow/domain/model/customer/customer_edit_response.dart';
 import 'package:coreflow/domain/model/customer/customer_mapped_item.dart';
 import 'package:coreflow/domain/model/customer/customer_status_response.dart';
+import 'package:coreflow/domain/model/items/create_item_request.dart';
 import 'package:coreflow/domain/model/items/detail_item.dart';
 import 'package:coreflow/domain/model/items/item.dart';
 import 'package:coreflow/domain/model/items/item_status_response.dart';
@@ -621,6 +622,299 @@ class AuthRepository {
     }
   }
 
+  Future<List<CustomerMappedItem>> getCustomerMappedItems(
+    int companyId,
+    int customerId,
+  ) async {
+    try {
+      final url = AppConfig.getCustomerMappedItemsUrl(companyId, customerId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      debugPrint(
+        'GET /customers/$customerId/items/mapped response status: ${response.statusCode}',
+      );
+
+      if (response.statusCode != 200) {
+        debugPrint('Get customer mapped items failed: ${response.statusCode}');
+        return [];
+      }
+
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      final bool? responseStatus = decodedBody['responseStatus'];
+      if (responseStatus != true) {
+        debugPrint(
+          'Get customer mapped items responseStatus false: ${decodedBody['responseMessage']}',
+        );
+        return [];
+      }
+
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      return data.map((json) => CustomerMappedItem.fromJson(json)).toList();
+    } catch (e, stack) {
+      debugPrint('Get customer mapped items error: $e\n$stack');
+      return [];
+    }
+  }
+
+  Future<ItemStatusResponse?> createCustomerItem({
+    required int companyId,
+    required int customerId,
+    required int itemId,
+    required double salesPrice,
+    String? salesDescription,
+  }) async {
+    try {
+      final response = await _apiService
+          .post(AppConfig.getCustomerItemsUrl(companyId, customerId), {
+            'itemId': itemId,
+            'salesPrice': salesPrice,
+            if (salesDescription != null && salesDescription.trim().isNotEmpty)
+              'salesDescription': salesDescription.trim(),
+          });
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        debugPrint('Create customer item failed: ${response.statusCode}');
+        return null;
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return ItemStatusResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Create customer item error: $e');
+      return null;
+    }
+  }
+
+  Future<ItemStatusResponse?> updateCustomerItem({
+    required int companyId,
+    required int customerId,
+    required int itemId,
+    required double salesPrice,
+    String? salesDescription,
+  }) async {
+    try {
+      final url = AppConfig.getCustomerItemDetailUrl(
+        companyId,
+        customerId,
+        itemId,
+      );
+      final body = {
+        'salesPrice': salesPrice,
+        if (salesDescription != null && salesDescription.trim().isNotEmpty)
+          'salesDescription': salesDescription.trim(),
+      };
+
+      var response = await _apiService.put(url, body);
+      if (response.statusCode == 405) {
+        response = await _apiService.patch(url, body);
+      }
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        debugPrint('Update customer item failed: ${response.statusCode}');
+        return null;
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return ItemStatusResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Update customer item error: $e');
+      return null;
+    }
+  }
+
+  Future<ItemStatusResponse?> activateCustomerMappedItem(
+    int companyId,
+    int customerId,
+    int itemId,
+  ) async {
+    try {
+      final response = await _apiService.patch(
+        AppConfig.getCustomerItemActivateUrl(companyId, customerId, itemId),
+        {},
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 203) {
+        debugPrint('Activate customer item failed: ${response.statusCode}');
+        return null;
+      }
+
+      final data = jsonDecode(response.body);
+      return ItemStatusResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Activate customer item error: $e');
+      return null;
+    }
+  }
+
+  Future<ItemStatusResponse?> deactivateCustomerMappedItem(
+    int companyId,
+    int customerId,
+    int itemId,
+  ) async {
+    try {
+      final response = await _apiService.patch(
+        AppConfig.getCustomerItemDeactivateUrl(companyId, customerId, itemId),
+        {},
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 203) {
+        debugPrint('Deactivate customer item failed: ${response.statusCode}');
+        return null;
+      }
+
+      final data = jsonDecode(response.body);
+      return ItemStatusResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Deactivate customer item error: $e');
+      return null;
+    }
+  }
+
+  Future<List<CustomerMappedItem>> getVendorMappedItems(
+    int companyId,
+    int vendorId,
+  ) async {
+    try {
+      final url = AppConfig.getVendorMappedItemsUrl(companyId, vendorId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      if (response.statusCode != 200) {
+        debugPrint('Get vendor mapped items failed: ${response.statusCode}');
+        return [];
+      }
+
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (decodedBody['responseStatus'] != true) {
+        debugPrint(
+          'Get vendor mapped items responseStatus false: ${decodedBody['responseMessage']}',
+        );
+        return [];
+      }
+
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      return data.map((json) => CustomerMappedItem.fromJson(json)).toList();
+    } catch (e, stack) {
+      debugPrint('Get vendor mapped items error: $e\n$stack');
+      return [];
+    }
+  }
+
+  Future<ItemStatusResponse?> createVendorItem({
+    required int companyId,
+    required int vendorId,
+    required int itemId,
+    required double purchasePrice,
+    String? purchaseDescription,
+  }) async {
+    try {
+      final response = await _apiService
+          .post(AppConfig.getVendorItemsUrl(companyId, vendorId), {
+            'itemId': itemId,
+            'purchasePrice': purchasePrice,
+            if (purchaseDescription != null &&
+                purchaseDescription.trim().isNotEmpty)
+              'purchaseDescription': purchaseDescription.trim(),
+          });
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        debugPrint('Create vendor item failed: ${response.statusCode}');
+        return null;
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return ItemStatusResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Create vendor item error: $e');
+      return null;
+    }
+  }
+
+  Future<ItemStatusResponse?> updateVendorItem({
+    required int companyId,
+    required int vendorId,
+    required int itemId,
+    required double purchasePrice,
+    String? purchaseDescription,
+  }) async {
+    try {
+      final url = AppConfig.getVendorItemDetailUrl(companyId, vendorId, itemId);
+      final body = {
+        'purchasePrice': purchasePrice,
+        if (purchaseDescription != null &&
+            purchaseDescription.trim().isNotEmpty)
+          'purchaseDescription': purchaseDescription.trim(),
+      };
+
+      var response = await _apiService.put(url, body);
+      if (response.statusCode == 405) {
+        response = await _apiService.patch(url, body);
+      }
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        debugPrint('Update vendor item failed: ${response.statusCode}');
+        return null;
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return ItemStatusResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Update vendor item error: $e');
+      return null;
+    }
+  }
+
+  Future<ItemStatusResponse?> activateVendorMappedItem(
+    int companyId,
+    int vendorId,
+    int itemId,
+  ) async {
+    try {
+      final response = await _apiService.patch(
+        AppConfig.getVendorItemActivateUrl(companyId, vendorId, itemId),
+        {},
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 203) {
+        debugPrint('Activate vendor item failed: ${response.statusCode}');
+        return null;
+      }
+
+      final data = jsonDecode(response.body);
+      return ItemStatusResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Activate vendor item error: $e');
+      return null;
+    }
+  }
+
+  Future<ItemStatusResponse?> deactivateVendorMappedItem(
+    int companyId,
+    int vendorId,
+    int itemId,
+  ) async {
+    try {
+      final response = await _apiService.patch(
+        AppConfig.getVendorItemDeactivateUrl(companyId, vendorId, itemId),
+        {},
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 203) {
+        debugPrint('Deactivate vendor item failed: ${response.statusCode}');
+        return null;
+      }
+
+      final data = jsonDecode(response.body);
+      return ItemStatusResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Deactivate vendor item error: $e');
+      return null;
+    }
+  }
+
   Future<ItemResponse> fetchItemDetail(int companyId, int itemId) async {
     final url = AppConfig.getItemDetailUrl(companyId, itemId);
     final response = await _apiService.get(Uri.parse(url));
@@ -640,4 +934,231 @@ class AuthRepository {
   }
 
   String getFileUrl(String fsId) => AppConfig.getFileUrl(fsId);
+
+  Future<http.Response> createItem({
+    required int companyId,
+    required CreateItemRequest request,
+    required String token,
+    File? imageFile,
+  }) async {
+    final uri = Uri.parse(AppConfig.getItemsUrl(companyId));
+
+    final multipartRequest = http.MultipartRequest('POST', uri);
+
+    multipartRequest.headers['Authorization'] = 'Bearer $token';
+
+    multipartRequest.fields['item'] = jsonEncode(request.toJson());
+
+    if (imageFile != null) {
+      multipartRequest.files.add(
+        await http.MultipartFile.fromPath('file', imageFile.path),
+      );
+    }
+
+    final streamedResponse = await multipartRequest.send();
+    return await http.Response.fromStream(streamedResponse);
+  }
+
+  Future<http.Response> updateItem({
+    required int companyId,
+    required int itemId,
+    required UpdateItemRequest request,
+    required String token,
+    File? imageFile,
+  }) async {
+    final uri = Uri.parse(AppConfig.getItemDetailUrl(companyId, itemId));
+
+    final multipartRequest = http.MultipartRequest('PUT', uri);
+
+    multipartRequest.headers['Authorization'] = 'Bearer $token';
+
+    // Send JSON as single "item" part
+    multipartRequest.fields['item'] = jsonEncode(request.toJson());
+
+    if (imageFile != null) {
+      multipartRequest.files.add(
+        await http.MultipartFile.fromPath('file', imageFile.path),
+      );
+    }
+
+    final streamedResponse = await multipartRequest.send();
+    return await http.Response.fromStream(streamedResponse);
+  }
+
+  Future<ItemStatusResponse?> activateItem(int companyId, int itemId) async {
+    try {
+      final response = await _apiService.patch(
+        AppConfig.getItemActivateUrl(companyId, itemId),
+        {},
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 203) {
+        debugPrint('Activate item failed: ${response.statusCode}');
+        return null;
+      }
+
+      final data = jsonDecode(response.body);
+      return ItemStatusResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Activate item error: $e');
+      return null;
+    }
+  }
+
+  Future<ItemStatusResponse?> deactivateItem(int companyId, int itemId) async {
+    try {
+      final response = await _apiService.patch(
+        AppConfig.getItemDeactivateUrl(companyId, itemId),
+        {},
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 203) {
+        debugPrint('Deactivate item failed: ${response.statusCode}');
+        return null;
+      }
+
+      final data = jsonDecode(response.body);
+      return ItemStatusResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Deactivate item error: $e');
+      return null;
+    }
+  }
+
+  // getSalesOrder
+  Future<List<SalesOrder>> getSalesOrders(int companyId) async {
+    try {
+      final url = AppConfig.getSalesOrdersUrl(companyId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      debugPrint(
+        'GET /companies/$companyId/sales/orders status: ${response.statusCode}',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        debugPrint('Get sales orders failed: ${response.statusCode}');
+        return [];
+      }
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (decodedBody['responseStatus'] != true) {
+        debugPrint(
+          'Get sales orders responseStatus false: ${decodedBody['responseMessage']}',
+        );
+        return [];
+      }
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      return data.map((json) => SalesOrder.fromJson(json)).toList();
+    } catch (e, stack) {
+      debugPrint('Get sales orders error: $e\n$stack');
+      return [];
+    }
+  }
+
+  Future<List<PurchaseOrder>> getPurchaseOrders(int companyId) async {
+    try {
+      final url = AppConfig.getPurchaseOrdersUrl(companyId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      debugPrint(
+        'GET /companies/$companyId/purchase/orders status: ${response.statusCode}',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        debugPrint('Get purchase orders failed: ${response.statusCode}');
+        return [];
+      }
+
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (decodedBody['responseStatus'] != true) {
+        debugPrint(
+          'Get purchase orders responseStatus false: ${decodedBody['responseMessage']}',
+        );
+        return [];
+      }
+
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      return data
+          .map((json) => PurchaseOrder.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e, stack) {
+      debugPrint('Get purchase orders error: $e\n$stack');
+      return [];
+    }
+  }
+
+  Future<List<PaymentSentSummary>> getPaymentsSentSummary(int companyId) async {
+    try {
+      final url = AppConfig.getPaymentsSentSummaryUrl(companyId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      debugPrint(
+        'GET /companies/$companyId/payments-sent/summary status: ${response.statusCode}',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        debugPrint('Get payments sent summary failed: ${response.statusCode}');
+        return [];
+      }
+
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (decodedBody['responseStatus'] != true) {
+        debugPrint(
+          'Get payments sent summary responseStatus false: ${decodedBody['responseMessage']}',
+        );
+        return [];
+      }
+
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      return data
+          .map((json) =>
+              PaymentSentSummary.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e, stack) {
+      debugPrint('Get payments sent summary error: $e\n$stack');
+      return [];
+    }
+  }
+
+  Future<List<PaymentReceivedSummary>> getPaymentsReceivedSummary(
+    int companyId,
+  ) async {
+    try {
+      final url = AppConfig.getPaymentsReceivedSummaryUrl(companyId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      debugPrint(
+        'GET /companies/$companyId/payments-received/summary status: ${response.statusCode}',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        debugPrint('Get payments received summary failed: ${response.statusCode}');
+        return [];
+      }
+
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (decodedBody['responseStatus'] != true) {
+        debugPrint(
+          'Get payments received summary responseStatus false: ${decodedBody['responseMessage']}',
+        );
+        return [];
+      }
+
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      return data
+          .map((json) =>
+              PaymentReceivedSummary.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e, stack) {
+      debugPrint('Get payments received summary error: $e\n$stack');
+      return [];
+    }
+  }
 }

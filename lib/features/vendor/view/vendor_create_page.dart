@@ -1,7 +1,7 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
 import 'package:coreflow/domain/model/vendors/create_vendors_request.dart';
-import 'package:coreflow/features/dashboard/widget/menu.dart';
+import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/features/vendor/view_model/vendor_edit_view_model.dart';
 import 'package:coreflow/features/vendor/widget/edit_create/billing_address_card.dart';
 import 'package:coreflow/features/vendor/widget/edit_create/save_customer_button.dart';
@@ -424,28 +424,11 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        ExpansionTile(
-                          title: Text(
-                            'Billing Address',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          childrenPadding: const EdgeInsets.fromLTRB(
-                            16,
-                            8,
-                            16,
-                            16,
-                          ),
-                          children: [
-                            BillingAddressCardVendor(
-                              attention: _billingAttentionController,
-                              line1: _billingLine1Controller,
-                              line2: _billingLine2Controller,
-                              city: _billingCityController,
-                              state: _billingStateController,
-                              pincode: _billingPincodeController,
-                              phone: _billingPhoneController,
-                              email: _billingEmailController,
+                        _buildSectionContainer(
+                          child: ExpansionTile(
+                            title: _buildSectionHeader(
+                              'Billing Address',
+                              Icons.home_work_outlined,
                             ),
                             iconColor: LoginColors.primary,
                             collapsedIconColor: LoginColors.textSecondary,
@@ -476,15 +459,13 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
                               'Shipping Address',
                               Icons.local_shipping_outlined,
                             ),
-                            ShippingAddressCardVendor(
-                              attention: _shippingAttentionController,
-                              line1: _shippingLine1Controller,
-                              line2: _shippingLine2Controller,
-                              city: _shippingCityController,
-                              state: _shippingStateController,
-                              pincode: _shippingPincodeController,
-                              phone: _shippingPhoneController,
-                              email: _shippingEmailController,
+                            iconColor: LoginColors.primary,
+                            collapsedIconColor: LoginColors.textSecondary,
+                            childrenPadding: const EdgeInsets.fromLTRB(
+                              16,
+                              8,
+                              16,
+                              16,
                             ),
                             children: [
                               CheckboxListTile(

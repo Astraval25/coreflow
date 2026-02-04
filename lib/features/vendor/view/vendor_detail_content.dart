@@ -109,8 +109,8 @@ class VendorDetailContent extends StatelessWidget {
                       break;
                   }
                 },
-                itemBuilder: (_) => [
-                  const PopupMenuItem(
+                itemBuilder: (BuildContext context) => [
+                  PopupMenuItem(
                     value: 'edit',
                     textStyle: TextStyle(
                       color: LoginColors.textPrimary,
@@ -168,50 +168,101 @@ class VendorDetailContent extends StatelessWidget {
       drawer: AppDrawer(vm: dashboardVM),
 
       body: Consumer<VendorDetailViewModel>(
-        builder: (context, vm, _) {
-          if (vm.isLoading && vm.vendor == null) {
-            return const Center(
-              child: CircularProgressIndicator(color: LoginColors.primary),
-            );
-          }
-
-          if (vm.isError) {
-            return VendorErrorState(
-              message: vm.errorMessage ?? 'Failed to load vendor data',
-              onRetry: vm.loadVendorDetail,
-            );
-          }
-
+        builder: (context, vm, child) {
           return RefreshIndicator(
+            onRefresh: () async => vm.loadVendorDetail(),
+            backgroundColor: LoginColors.surface,
             color: LoginColors.primary,
-            onRefresh: () async {
-              await context.read<DashboardViewModel>().loadUserData();
-              await context.read<VendorDetailViewModel>().loadVendorDetail();
-            },
-            child: CustomScrollView(
+            child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: VendorHeader(
-                    vendor: vm.vendor!,
-                    onToggleStatus: () async {
-                      if (vm.isActive) {
-                        await vm.deactivateVendor(context);
-                      } else {
-                        await vm.activateVendor(context);
-                      }
-                    },
-                  ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight:
+                      MediaQuery.of(context).size.height -
+                      AppBar().preferredSize.height -
+                      MediaQuery.of(context).padding.top,
                 ),
-                SliverFillRemaining(
-                  hasScrollBody: true,
-                  child: VendorDetailBody(vendor: vm.vendor!),
-                ),
-              ],
+                child: _buildBody(context, vm),
+              ),
             ),
           );
         },
       ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, VendorDetailViewModel vm) {
+    if (vm.isLoading) {
+      return Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // Header Skeleton
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: LoginColors.surface,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: LoginColors.borderLight, width: 1),
+              ),
+              child: Row(
+                children: [
+                  const Skeleton(height: 70, width: 70, borderRadius: 35),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Skeleton(height: 24, width: 180),
+                        const SizedBox(height: 12),
+                        const Skeleton(height: 16, width: 120),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Body Skeletons
+            const Skeleton(
+              height: 200,
+              width: double.infinity,
+              borderRadius: 24,
+            ),
+            const SizedBox(height: 24),
+            const Skeleton(
+              height: 180,
+              width: double.infinity,
+              borderRadius: 24,
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (vm.isError) {
+      return VendorErrorState(
+        message: vm.errorMessage ?? 'Failed to load vendor data',
+        onRetry: vm.loadVendorDetail,
+      );
+    }
+
+
+
+    return Column(
+      children: [
+        VendorHeader(
+          vendor: vm.vendor!,
+          onToggleStatus: () async {
+            if (vm.isActive) {
+              await vm.deactivateVendor(context);
+            } else {
+              await vm.activateVendor(context);
+            }
+          },
+        ),
+        VendorDetailBody(vendor: vm.vendor!),
+      ],
     );
   }
 }

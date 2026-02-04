@@ -1,10 +1,12 @@
+import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/features/vendor/view_model/vendor_view_model.dart';
+
 import 'package:coreflow/features/vendor/widget/empty_vendor_view.dart';
 import 'package:coreflow/features/vendor/widget/error_view.dart';
 import 'package:coreflow/features/vendor/widget/loading_view.dart';
-import 'package:coreflow/features/vendor/widget/vendor_app_bar.dart';
 import 'package:coreflow/features/vendor/widget/vendor_list.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -77,14 +79,12 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
             key: _scaffoldKey,
             drawerEnableOpenDragGesture: false,
             drawer: AppDrawer(vm: dashboardVm),
-            appBar: VendorAppBar(
-              companyId: widget.companyId,
+            appBar: SearchableEntityAppBar(
               isSearchOpen: _isSearchOpen,
               onSearchToggle: _toggleSearch,
               searchQuery: _searchQuery,
               searchController: _searchController,
-              onSearchChanged: (value) =>
-                  setState(() => _searchQuery = value),
+              onSearchChanged: (value) => setState(() => _searchQuery = value),
               onClearSearch: () {
                 _searchController.clear();
                 setState(() => _searchQuery = '');
@@ -153,13 +153,6 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
                 child: const Icon(Icons.add_rounded, size: 28),
               ),
             ),
-            body: RefreshIndicator(
-              onRefresh: () async {
-                setState(() => _hasLoaded = false);
-                await viewModel.loadVendor(widget.companyId);
-              },
-              child: _buildBody(viewModel, _searchQuery),
-            ),
           );
         },
       ),
@@ -168,6 +161,33 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
 
   Widget _buildBody(ActiveVendorViewModel viewModel, String searchQuery) {
     if (viewModel.isLoading && !viewModel.hasData) {
+      return const KeyedSubtree(
+        key: ValueKey('vendor-loading'),
+        child: LoadingDisplayView(),
+      );
+    }
+
+    if (viewModel.hasError) {
+      return KeyedSubtree(
+        key: ValueKey('vendor-error-${viewModel.error}'),
+        child: ErrorDisplayView(
+          error: viewModel.error ?? 'Something went wrong',
+          onRetry: () {
+            setState(() => _hasLoaded = false);
+            viewModel.loadVendor(widget.companyId);
+          },
+        ),
+      );
+    }
+
+    if (viewModel.hasError) {
+      return ErrorDisplayView(
+        error: viewModel.error ?? 'Something went wrong',
+        onRetry: () {
+          setState(() => _hasLoaded = false);
+          viewModel.loadVendor(widget.companyId);
+        },
+      );
       return const SingleChildScrollView(
         physics: AlwaysScrollableScrollPhysics(),
         child: LoadingDisplayView(),
@@ -195,8 +215,8 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
     }).toList();
 
     if (filteredVendor.isEmpty) {
-      return SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
+      return KeyedSubtree(
+        key: ValueKey('vendor-empty-${viewModel.showActiveOnly}-$searchQuery'),
         child: EmptyVendorView(
           searchQuery: searchQuery,
           companyId: widget.companyId,
@@ -204,9 +224,28 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
       );
     }
 
-    return VendorsList(
-      vendors: filteredVendor,
-      companyId: widget.companyId,
+    return KeyedSubtree(
+      key: ValueKey(
+        'vendor-list-${viewModel.showActiveOnly}-$searchQuery-${filteredVendor.length}',
+      ),
+      child: VendorsList(vendors: filteredVendor, companyId: widget.companyId),
+    );
+  }
+
+  Widget _buildTopToggleTabs(
+    BuildContext context,
+    ActiveVendorViewModel viewModel,
+  ) {
+    return StatusToggleTabs(
+      isActiveSelected: viewModel.showActiveOnly,
+      activeLabel: 'Active',
+      inactiveLabel: 'Inactive',
+      onActiveTap: () {
+        if (!viewModel.showActiveOnly) viewModel.toggleActiveFilter();
+      },
+      onInactiveTap: () {
+        if (viewModel.showActiveOnly) viewModel.toggleActiveFilter();
+      },
     );
   }
 }

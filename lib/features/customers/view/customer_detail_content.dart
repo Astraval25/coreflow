@@ -43,7 +43,11 @@ class CustomerDetailContent extends StatelessWidget {
                   color: Colors.white.withOpacity(0.18),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.menu_rounded, color: Colors.white, size: 19),
+                child: const Icon(
+                  Icons.menu_rounded,
+                  color: Colors.white,
+                  size: 19,
+                ),
               ),
               onPressed: () => Scaffold.of(scaffoldContext).openDrawer(),
             );
@@ -85,7 +89,11 @@ class CustomerDetailContent extends StatelessWidget {
                     color: Colors.white.withOpacity(0.18),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.more_vert, color: Colors.white, size: 19),
+                  child: const Icon(
+                    Icons.more_vert,
+                    color: Colors.white,
+                    size: 19,
+                  ),
                 ),
                 color: LoginColors.surface,
                 elevation: 4,
@@ -118,14 +126,13 @@ class CustomerDetailContent extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                     child: Row(
-                      children: const [
-                        SizedBox(width: 12),
+                      children: [
                         Icon(
-                          Icons.edit,
+                          Icons.edit_rounded,
                           size: 18,
-                          color: LoginColors.textPrimary,
+                          color: LoginColors.primary,
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 10),
                         Text(
                           'Edit',
                           style: TextStyle(color: LoginColors.textPrimary),
@@ -167,10 +174,25 @@ class CustomerDetailContent extends StatelessWidget {
       ),
       drawerEnableOpenDragGesture: false,
       drawer: AppDrawer(vm: dashboardVM),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          final vm = context.read<CustomerDetailViewModel>();
-          await vm.loadCustomerDetail();
+      body: Consumer<CustomerDetailViewModel>(
+        builder: (context, vm, child) {
+          return RefreshIndicator(
+            onRefresh: () async => vm.loadCustomerDetail(),
+            backgroundColor: LoginColors.surface,
+            color: LoginColors.primary,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight:
+                      MediaQuery.of(context).size.height -
+                      AppBar().preferredSize.height -
+                      MediaQuery.of(context).padding.top,
+                ),
+                child: _buildBody(context, vm),
+              ),
+            ),
+          );
         },
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -254,9 +276,17 @@ class CustomerDetailContent extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             // Body Skeletons
-            const Skeleton(height: 200, width: double.infinity, borderRadius: 24),
+            const Skeleton(
+              height: 200,
+              width: double.infinity,
+              borderRadius: 24,
+            ),
             const SizedBox(height: 24),
-            const Skeleton(height: 180, width: double.infinity, borderRadius: 24),
+            const Skeleton(
+              height: 180,
+              width: double.infinity,
+              borderRadius: 24,
+            ),
           ],
         ),
       );
@@ -267,10 +297,6 @@ class CustomerDetailContent extends StatelessWidget {
         message: vm.errorMessage ?? 'Failed to load customer data',
         onRetry: vm.loadCustomerDetail,
       );
-    }
-
-    if (!vm.hasData || vm.customer == null) {
-      return const CustomerEmptyState();
     }
 
     return Column(

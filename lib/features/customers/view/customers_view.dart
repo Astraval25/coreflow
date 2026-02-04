@@ -154,14 +154,6 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
                 child: const Icon(Icons.add_rounded, size: 28),
               ),
             ),
-
-            body: RefreshIndicator(
-              onRefresh: () async {
-                setState(() => _hasLoaded = false);
-                await viewModel.loadCustomers(widget.companyId);
-              },
-              child: _buildBody(viewModel, _searchQuery),
-            ),
           );
         },
       ),
@@ -170,15 +162,15 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
 
   Widget _buildBody(ActiveCustomersViewModel viewModel, String searchQuery) {
     if (viewModel.isLoading && !viewModel.hasData) {
-      return const SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
+      return const KeyedSubtree(
+        key: ValueKey('customers-loading'),
         child: LoadingView(),
       );
     }
 
     if (viewModel.hasError) {
-      return SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
+      return KeyedSubtree(
+        key: ValueKey('customers-error-${viewModel.error}'),
         child: ErrorView(
           error: viewModel.error ?? 'Something went wrong',
           onRetry: () {
@@ -197,8 +189,10 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
     }).toList();
 
     if (filteredCustomers.isEmpty) {
-      return SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
+      return KeyedSubtree(
+        key: ValueKey(
+          'customers-empty-${viewModel.showActiveOnly}-$searchQuery',
+        ),
         child: EmptyCustomersView(
           searchQuery: searchQuery,
           companyId: widget.companyId,
