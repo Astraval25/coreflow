@@ -3,6 +3,7 @@ import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/items/item.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/dashboard/widget/menu.dart';
+import 'package:coreflow/features/items/view/item_detail_view.dart';
 import 'package:coreflow/features/items/view_model/items_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -61,7 +62,7 @@ class _ItemsViewBodyState extends State<_ItemsViewBody> {
         _searchQuery = '';
         context.read<ItemsViewModel>().filterItems('');
       } else {
-        _searchController.clear(); // optional: start fresh
+        _searchController.clear();
       }
     });
   }
@@ -104,9 +105,9 @@ class _ItemsViewBodyState extends State<_ItemsViewBody> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: LoginColors.primary,
         foregroundColor: Colors.white,
-        elevation: 6,
+        elevation: 7,
         shape: const CircleBorder(),
-        onPressed: () {}, // TODO: navigate to add item screen
+        onPressed: () {},
         child: const Icon(Icons.add_rounded, size: 28),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -146,10 +147,6 @@ class _ItemsViewBodyState extends State<_ItemsViewBody> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Custom AppBar with expandable search (unchanged)
-// ─────────────────────────────────────────────────────────────────────────────
-
 class CustomSearchAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final bool isSearchOpen;
@@ -171,11 +168,11 @@ class CustomSearchAppBar extends StatelessWidget
     required this.scaffoldKey,
   });
 
-  static const double _searchHeight = 56.0;
+  static const double _searchBarHeight = 56.0;
 
   @override
   Size get preferredSize =>
-      Size.fromHeight(kToolbarHeight + (isSearchOpen ? _searchHeight : 0));
+      Size.fromHeight(kToolbarHeight + (isSearchOpen ? _searchBarHeight : 0));
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +181,7 @@ class CustomSearchAppBar extends StatelessWidget
       foregroundColor: LoginColors.textPrimary,
       surfaceTintColor: Colors.transparent,
       elevation: isSearchOpen ? 0 : 1,
-      shadowColor: LoginColors.shadowLight?.withOpacity(0.2),
+      shadowColor: LoginColors.shadowLight.withOpacity(0.2),
 
       leading: IconButton(
         icon: const Icon(Icons.menu_rounded),
@@ -194,7 +191,10 @@ class CustomSearchAppBar extends StatelessWidget
       ),
 
       title: isSearchOpen
-          ? const SizedBox.shrink()
+          ? const Text(
+              'Items',
+              style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 0.1),
+            )
           : const Text(
               'Items',
               style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 0.1),
@@ -210,17 +210,15 @@ class CustomSearchAppBar extends StatelessWidget
       ],
 
       bottom: PreferredSize(
-        preferredSize: Size.fromHeight(isSearchOpen ? _searchHeight : 0),
+        preferredSize: Size.fromHeight(isSearchOpen ? _searchBarHeight : 0),
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 280),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
+          duration: const Duration(milliseconds: 250),
           child: isSearchOpen
               ? SizedBox(
-                  height: _searchHeight,
-                  child: _SearchField(
+                  height: _searchBarHeight,
+                  child: _SearchBar(
                     controller: searchController,
-                    query: searchQuery,
+                    searchQuery: searchQuery,
                     onChanged: onSearchChanged,
                     onClear: onClearSearch,
                   ),
@@ -232,15 +230,15 @@ class CustomSearchAppBar extends StatelessWidget
   }
 }
 
-class _SearchField extends StatelessWidget {
+class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
-  final String query;
+  final String searchQuery;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
 
-  const _SearchField({
+  const _SearchBar({
     required this.controller,
-    required this.query,
+    required this.searchQuery,
     required this.onChanged,
     required this.onClear,
   });
@@ -248,40 +246,24 @@ class _SearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      child: SearchBar(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: TextField(
         controller: controller,
-        autoFocus: true,
-        leading: const Icon(
-          Icons.search_rounded,
-          color: LoginColors.textSecondary,
-        ),
-        hintText: 'Search items...',
-        hintStyle: WidgetStatePropertyAll(
-          TextStyle(color: LoginColors.textTertiary),
-        ),
-        textStyle: WidgetStatePropertyAll(
-          TextStyle(color: LoginColors.textPrimary),
-        ),
-        backgroundColor: WidgetStatePropertyAll(LoginColors.fieldFill),
-        elevation: WidgetStatePropertyAll(0),
-        shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        ),
-        side: WidgetStateProperty.resolveWith((states) {
-          return states.contains(WidgetState.focused)
-              ? BorderSide(color: LoginColors.primary, width: 1.5)
-              : BorderSide.none;
-        }),
-        trailing: [
-          if (query.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.clear_rounded, size: 20),
-              onPressed: onClear,
-              tooltip: 'Clear',
-            ),
-        ],
+        autofocus: true,
         onChanged: onChanged,
+        decoration: InputDecoration(
+          hintText: 'Search customers...',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: searchQuery.isNotEmpty
+              ? IconButton(icon: const Icon(Icons.clear), onPressed: onClear)
+              : null,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 10,
+          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
+        ),
       ),
     );
   }
@@ -297,7 +279,7 @@ class _ItemCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       elevation: 1.5,
-      shadowColor: LoginColors.shadowLight?.withOpacity(0.25),
+      shadowColor: LoginColors.shadowLight.withOpacity(0.25),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(color: LoginColors.border.withOpacity(0.45)),
@@ -318,7 +300,7 @@ class _ItemCard extends StatelessWidget {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 6),
           child: Text(
-            'ID: ${item.itemId}    •    ${item.unit}    •    ${item.itemType ?? "Unknown"}',
+            'ID: ${item.itemId}    •    ${item.unit}    •    ${item.itemType}',
             style: TextStyle(
               color: LoginColors.textSecondary,
               fontSize: 13.5,
@@ -334,6 +316,16 @@ class _ItemCard extends StatelessWidget {
             fontSize: 18,
           ),
         ),
+        onTap: () {
+          final companyId = context.read<ItemsViewModel>().companyId;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  ItemDetailView(companyId: companyId, itemId: item.itemId),
+            ),
+          );
+        },
       ),
     );
   }

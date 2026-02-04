@@ -1,10 +1,10 @@
-import 'package:coreflow/features/customers/widget/custom_app_bar.dart';
-import 'package:coreflow/features/customers/widget/error_view.dart';
-import 'package:coreflow/features/customers/widget/loading_view.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/dashboard/widget/menu.dart';
 import 'package:coreflow/features/vendor/view_model/vendor_view_model.dart';
 import 'package:coreflow/features/vendor/widget/empty_customers_view.dart';
+import 'package:coreflow/features/vendor/widget/error_view.dart';
+import 'package:coreflow/features/vendor/widget/loading_view.dart';
+import 'package:coreflow/features/vendor/widget/vendor_app_bar.dart';
 import 'package:coreflow/features/vendor/widget/vendor_list.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -75,7 +75,7 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
             key: _scaffoldKey,
             drawerEnableOpenDragGesture: false,
             drawer: AppDrawer(vm: dashboardVm),
-            appBar: CustomAppBar(
+            appBar: VendorAppBar(
               companyId: widget.companyId,
               isSearchOpen: _isSearchOpen,
               onSearchToggle: _toggleSearch,
@@ -97,11 +97,11 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
 
   Widget _buildBody(ActiveVendorViewModel viewModel, String searchQuery) {
     if (viewModel.isLoading && !viewModel.hasData) {
-      return const LoadingView();
+      return const LoadingDisplayView();
     }
 
     if (viewModel.hasError) {
-      return ErrorView(
+      return ErrorDisplayView(
         error: viewModel.error ?? 'Something went wrong',
         onRetry: () {
           setState(() => _hasLoaded = false);

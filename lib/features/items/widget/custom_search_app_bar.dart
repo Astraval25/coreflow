@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:coreflow/core/theme/colors.dart';
 
-class VendorAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final int companyId;
+class CustomSearchAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
   final bool isSearchOpen;
   final VoidCallback onSearchToggle;
   final String searchQuery;
@@ -10,9 +11,8 @@ class VendorAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onClearSearch;
   final GlobalKey<ScaffoldState> scaffoldKey;
 
-  const VendorAppBar({
+  const CustomSearchAppBar({
     super.key,
-    required this.companyId,
     required this.isSearchOpen,
     required this.onSearchToggle,
     required this.searchQuery,
@@ -30,50 +30,38 @@ class VendorAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return AppBar(
-      backgroundColor: colorScheme.surface,
-      surfaceTintColor: Colors.transparent,
-      elevation: 1,
-      shadowColor: colorScheme.shadow.withOpacity(0.12),
-
+      backgroundColor: LoginColors.surface,
+      foregroundColor: LoginColors.textPrimary,
+      elevation: isSearchOpen ? 0 : 1,
       leading: IconButton(
         icon: const Icon(Icons.menu_rounded),
-        onPressed: () {
-          scaffoldKey.currentState?.openDrawer();
-        },
+        onPressed: () => scaffoldKey.currentState?.openDrawer(),
       ),
-
-      title: const Text(
-        'Vendors',
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
-
+      title: isSearchOpen
+          ? const SizedBox.shrink()
+          : const Text(
+              'Items',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.filter_list_rounded),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Filter coming soon...')),
-            );
-          },
-        ),
-        IconButton(
-          icon: Icon(isSearchOpen ? Icons.close_rounded : Icons.search_rounded),
+          icon: Icon(
+            isSearchOpen ? Icons.close_rounded : Icons.search_rounded,
+          ),
           onPressed: onSearchToggle,
         ),
         const SizedBox(width: 8),
       ],
-
       bottom: PreferredSize(
-        preferredSize: Size.fromHeight(isSearchOpen ? _searchBarHeight : 0),
+        preferredSize:
+            Size.fromHeight(isSearchOpen ? _searchBarHeight : 0),
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 250),
           child: isSearchOpen
               ? SizedBox(
                   height: _searchBarHeight,
-                  child: _VendorSearchBar(
+                  child: _SearchBar(
                     controller: searchController,
                     searchQuery: searchQuery,
                     onChanged: onSearchChanged,
@@ -85,15 +73,16 @@ class VendorAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
     );
   }
+  
 }
 
-class _VendorSearchBar extends StatelessWidget {
+class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
   final String searchQuery;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
 
-  const _VendorSearchBar({
+  const _SearchBar({
     required this.controller,
     required this.searchQuery,
     required this.onChanged,
@@ -109,17 +98,22 @@ class _VendorSearchBar extends StatelessWidget {
         autofocus: true,
         onChanged: onChanged,
         decoration: InputDecoration(
-          hintText: 'Search vendors...',
+          hintText: 'Search customers...',
           prefixIcon: const Icon(Icons.search),
           suffixIcon: searchQuery.isNotEmpty
-              ? IconButton(icon: const Icon(Icons.clear), onPressed: onClear)
+              ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: onClear,
+                )
               : null,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 10,
           ),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
         ),
       ),
     );
