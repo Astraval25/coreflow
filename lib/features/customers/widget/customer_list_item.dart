@@ -97,15 +97,6 @@ class CustomerListItem extends StatelessWidget {
       );
     }
 
-    if (subtitleChildren.isEmpty) {
-      subtitleChildren.add(
-        Text(
-          'No details available',
-          style: TextStyle(color: Colors.grey[500], fontSize: 13),
-        ),
-      );
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: subtitleChildren,

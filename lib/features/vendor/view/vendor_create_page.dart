@@ -1,6 +1,5 @@
 import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
 import 'package:coreflow/domain/model/vendors/create_vendors_request.dart';
-
 import 'package:coreflow/features/dashboard/widget/menu.dart';
 import 'package:coreflow/features/vendor/view_model/vendor_edit_view_model.dart';
 import 'package:coreflow/features/vendor/widget/edit_create/billing_address_card.dart';
