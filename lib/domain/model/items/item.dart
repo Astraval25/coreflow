@@ -3,26 +3,22 @@ class Item {
   final String itemName;
   final String itemType;
   final String unit;
-  final double salesPrice;
-  final int? preferredCustomerId;
-  final String? preferredCustomerName;
-  final double? purchasePrice;
-  final int? preferredVendorId;
-  final String? preferredVendorName;
+  final double baseSalesPrice;
+  final double? basePurchasePrice;
   final bool isActive;
+  final bool isSellable;
+  final bool isPurchasable;
 
   Item({
     required this.itemId,
     required this.itemName,
     required this.itemType,
     required this.unit,
-    required this.salesPrice,
-    this.preferredCustomerId,
-    this.preferredCustomerName,
-    this.purchasePrice,
-    this.preferredVendorId,
-    this.preferredVendorName,
+    required this.baseSalesPrice,
+    this.basePurchasePrice,
     required this.isActive,
+    required this.isSellable,
+    required this.isPurchasable,
   });
 
   factory Item.fromJson(Map<String, dynamic> json) {
@@ -31,15 +27,13 @@ class Item {
       itemName: json['itemName'],
       itemType: json['itemType'],
       unit: json['unit'],
-      salesPrice: (json['salesPrice'] as num).toDouble(),
-      preferredCustomerId: json['preferredCustomerId'],
-      preferredCustomerName: json['preferredCustomerName'],
-      purchasePrice: json['purchasePrice'] != null
-          ? (json['purchasePrice'] as num).toDouble()
+      baseSalesPrice: (json['baseSalesPrice'] as num).toDouble(),
+      basePurchasePrice: json['basePurchasePrice'] != null
+          ? (json['basePurchasePrice'] as num).toDouble()
           : null,
-      preferredVendorId: json['preferredVendorId'],
-      preferredVendorName: json['preferredVendorName'],
       isActive: json['isActive'],
+      isSellable: json['isSellable'],
+      isPurchasable: json['isPurchasable'],
     );
   }
 }

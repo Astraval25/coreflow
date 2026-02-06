@@ -11,7 +11,6 @@ class ItemsViewModel extends ChangeNotifier {
   ItemsViewModel({required ApiService apiService, required this.companyId})
     : _apiService = apiService;
 
-  // ── Core data ────────────────────────────────────────────────────────────────
   List<Item> _items = [];
   List<Item> _filteredItems = [];
 
@@ -19,7 +18,6 @@ class ItemsViewModel extends ChangeNotifier {
   String? _errorMessage;
   String _searchQuery = '';
 
-  // ── Getters ──────────────────────────────────────────────────────────────────
   List<Item> get items => List.unmodifiable(_items);
   List<Item> get filteredItems => List.unmodifiable(_filteredItems);
 
@@ -27,15 +25,14 @@ class ItemsViewModel extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
 
-  // ── Fetch / Refresh ──────────────────────────────────────────────────────────
   Future<void> fetchItems() async {
     _setLoading(true);
     _setError(null);
 
     try {
-      final fetched = await _getItems(companyId);
-      _items = fetched;
-      _applyFilter(); // important: re-apply current search after fetch
+      final fetchedItems = await _getItems(companyId);
+      _items = fetchedItems;
+      _applyFilter();
     } catch (e, stack) {
       debugPrint('fetchItems failed: $e\n$stack');
       _setError('Failed to load items. Please try again.');
@@ -48,7 +45,6 @@ class ItemsViewModel extends ChangeNotifier {
     await fetchItems();
   }
 
-  // ── Search / Filter ──────────────────────────────────────────────────────────
   void filterItems(String query) {
     _searchQuery = query.trim().toLowerCase();
     _applyFilter();
@@ -56,30 +52,33 @@ class ItemsViewModel extends ChangeNotifier {
   }
 
   void clearSearch() {
-    filterItems('');
+    _searchQuery = '';
+    _applyFilter();
+    notifyListeners();
   }
 
   void _applyFilter() {
     if (_searchQuery.isEmpty) {
       _filteredItems = List.from(_items);
-    } else {
-      _filteredItems = _items.where((item) {
-        final nameMatch = item.itemName.toLowerCase().contains(_searchQuery);
-        final idMatch = item.itemId.toString().contains(_searchQuery);
-        final unitMatch = item.unit.toLowerCase().contains(_searchQuery);
-        return nameMatch || idMatch || unitMatch;
-      }).toList();
+      return;
     }
+
+    _filteredItems = _items.where((item) {
+      final nameMatch = item.itemName.toLowerCase().contains(_searchQuery);
+      final idMatch = item.itemId.toString().contains(_searchQuery);
+      final unitMatch = item.unit.toLowerCase().contains(_searchQuery);
+      final typeMatch = item.itemType.toLowerCase().contains(_searchQuery);
+
+      return nameMatch || idMatch || unitMatch || typeMatch;
+    }).toList();
   }
 
-  // ── API Call ─────────────────────────────────────────────────────────────────
   Future<List<Item>> _getItems(int companyId) async {
     try {
       final url = AppConfig.getItemsUrl(companyId);
       debugPrint('GET → $url');
 
       final response = await _apiService.get(Uri.parse(url));
-
       debugPrint('Response status: ${response.statusCode}');
 
       if (response.statusCode != 200) {
@@ -89,19 +88,19 @@ class ItemsViewModel extends ChangeNotifier {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (body['responseStatus'] != true) {
-        final msg = body['responseMessage'] ?? 'Unknown error';
-        throw Exception('API error: $msg');
+        throw Exception(body['responseMessage'] ?? 'Unknown API error');
       }
 
-      final List<dynamic> data = body['responseData'] ?? [];
+      final List<dynamic> data = body['responseData'] as List<dynamic>? ?? [];
+
       final items = data
-          .map((json) => Item.fromJson(json as Map<String, dynamic>))
+          .map((e) => Item.fromJson(e as Map<String, dynamic>))
           .toList();
 
       debugPrint('Parsed ${items.length} items');
       return items;
-    } catch (e) {
-      debugPrint('API call failed: $e');
+    } catch (e, stack) {
+      debugPrint('API call failed: $e\n$stack');
       rethrow;
     }
   }
