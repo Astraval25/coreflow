@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_header.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_detail_body.dart';
-import 'package:coreflow/features/customers/widget/detail/customer_empty_state.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_error_state.dart';
 import '../view_model/customer_detail_view_model.dart';
 import '../../dashboard/dashboard_view_model/dashboard_view_model.dart';
@@ -93,11 +92,17 @@ class CustomerDetailContent extends StatelessWidget {
                   }
                 },
                 itemBuilder: (BuildContext context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'edit',
                     child: Row(
-                      children: [
+                      children: const [
                         SizedBox(width: 12),
+                        Icon(
+                          Icons.edit,
+                          size: 18,
+                          color: LoginColors.textPrimary,
+                        ),
+                        SizedBox(width: 8),
                         Text(
                           'Edit',
                           style: TextStyle(color: LoginColors.textPrimary),
@@ -110,6 +115,15 @@ class CustomerDetailContent extends StatelessWidget {
                     child: Row(
                       children: [
                         const SizedBox(width: 12),
+                        Icon(
+                          vm.isActive ? Icons.circle : Icons.circle,
+                          size: 18,
+                          color: vm.isActive
+                              ? const Color.fromARGB(255, 255, 0, 0)
+                              : const Color.fromARGB(255, 0, 255, 0),
+                        ),
+
+                        const SizedBox(width: 8),
                         Text(
                           vm.isActive ? 'Make inactive' : 'Make active',
                           style: const TextStyle(
@@ -128,37 +142,56 @@ class CustomerDetailContent extends StatelessWidget {
       ),
       drawerEnableOpenDragGesture: false,
       drawer: AppDrawer(vm: dashboardVM),
-      body: Consumer<CustomerDetailViewModel>(
-        builder: (context, vm, child) {
-          if (vm.isLoading && vm.customer == null) {
-            return const Center(
-              child: CircularProgressIndicator(color: LoginColors.primary),
-            );
-          }
-
-          if (vm.isError) {
-            return CustomerErrorState(
-              message: vm.errorMessage ?? 'Failed to load customer data',
-              onRetry: vm.loadCustomerDetail,
-            );
-          }
-
-          if (!vm.hasData || vm.customer == null) {
-            return const CustomerEmptyState();
-          }
-
-          return Column(
-            children: [
-              CustomerHeader(
-                customer: vm.customer!,
-                onToggleStatus: () => vm.isActive
-                    ? vm.deactivateCustomer(context)
-                    : vm.activateCustomer(context),
-              ),
-              Expanded(child: CustomerDetailBody(customer: vm.customer!)),
-            ],
-          );
+      body: RefreshIndicator(
+        onRefresh: () async {
+          final vm = context.read<CustomerDetailViewModel>();
+          await vm.loadCustomerDetail();
         },
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final minHeight = constraints.maxHeight;
+            final vm = context.watch<CustomerDetailViewModel>();
+
+            if (vm.isLoading && vm.customer == null) {
+              return ConstrainedBox(
+                constraints: BoxConstraints(minHeight: minHeight),
+                child: const Center(
+                  child: CircularProgressIndicator(color: LoginColors.primary),
+                ),
+              );
+            }
+
+            if (vm.isError) {
+              return ConstrainedBox(
+                constraints: BoxConstraints(minHeight: minHeight),
+                child: CustomerErrorState(
+                  message: vm.errorMessage ?? 'Failed to load customer data',
+                  onRetry: vm.loadCustomerDetail,
+                ),
+              );
+            }
+
+            // if (vm.customer == null) {
+            //   return ConstrainedBox(
+            //     constraints: BoxConstraints(minHeight: minHeight),
+            //     child: const CustomerEmptyState(),
+            //   );
+            // }
+
+            // Main content
+            return Column(
+              children: [
+                CustomerHeader(
+                  customer: vm.customer!,
+                  onToggleStatus: () => vm.isActive
+                      ? vm.deactivateCustomer(context)
+                      : vm.activateCustomer(context),
+                ),
+                Expanded(child: CustomerDetailBody(customer: vm.customer!)),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

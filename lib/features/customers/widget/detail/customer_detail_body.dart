@@ -24,10 +24,9 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
     return Column(
       children: [
         CustomerFinancialStrip(customer: customer),
-        const SizedBox(height: 12),
 
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -53,38 +52,51 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
   Widget _buildTabText(String title, int index) {
     final isSelected = _selectedIndex == index;
 
-    return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 15.5,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                color: isSelected
-                    ? LoginColors.primaryDark
-                    : LoginColors.textSecondary,
+    return TextButton(
+      onPressed: () {
+        setState(() => _selectedIndex = index);
+      },
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        backgroundColor: isSelected
+            ? const Color.fromARGB(255, 255, 255, 255).withOpacity(0.1)
+            : const Color.fromARGB(0, 255, 255, 255), // background on select
+        foregroundColor: const Color.fromARGB(
+          0,
+          255,
+          255,
+          255,
+        ), // keep text color controlled manually
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 15.5,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+              color: isSelected
+                  ? LoginColors.primaryDark
+                  : LoginColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 1),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeInOut,
+            height: 3,
+            width: isSelected ? 44 : 0,
+            decoration: BoxDecoration(
+              color: LoginColors.primary,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(4),
               ),
             ),
-            const SizedBox(height: 6),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              height: 3,
-              width: isSelected ? 44 : 0,
-              decoration: BoxDecoration(
-                color: LoginColors.primary,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(4),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

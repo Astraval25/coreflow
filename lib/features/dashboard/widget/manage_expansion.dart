@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:coreflow/core/storage/token_storage.dart';
+import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -15,32 +16,23 @@ class DashboardMenuItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSelected = vm.selectedMenu == '/dashboard';
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 0.5),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? Theme.of(context).colorScheme.primaryContainer
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-      ),
+    return _MenuTileContainer(
+      isSelected: isSelected,
       child: ListTile(
         leading: Icon(
           Icons.dashboard_rounded,
-          color: isSelected
-              ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.onSurface,
+          color: isSelected ? LoginColors.primary : LoginColors.textSecondary,
+          size: 24,
         ),
         title: Text(
           'Dashboard',
           style: TextStyle(
-            fontSize: 17,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.onSurface,
+            fontSize: 16,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            color: isSelected ? LoginColors.primary : LoginColors.textPrimary,
           ),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 1),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
         dense: true,
         onTap: () {
           vm.setSelectedMenu('/dashboard');
@@ -59,55 +51,66 @@ class ManageExpansion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ExpansionTile(
-      leading: const Icon(Icons.manage_accounts_outlined, size: 25),
-      title: Text(
-        'Manage',
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-          fontSize: 17,
+    return Theme(
+      // Make expansion tile look cleaner and match brand
+      data: Theme.of(context).copyWith(
+        dividerColor: Colors.transparent,
+        expansionTileTheme: ExpansionTileThemeData(
+          backgroundColor: Colors.transparent,
+          collapsedBackgroundColor: Colors.transparent,
+          iconColor: LoginColors.textSecondary,
+          collapsedIconColor: LoginColors.textSecondary,
+          textColor: LoginColors.textPrimary,
+          collapsedTextColor: LoginColors.textPrimary,
         ),
       ),
-      trailing: Icon(
-        vm.isCustomersExpanded
-            ? Icons.keyboard_arrow_down_rounded
-            : Icons.keyboard_arrow_right,
-        size: 20,
-      ),
-      tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 1),
-      childrenPadding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 0.05,
-      ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      backgroundColor: Colors.transparent,
-      collapsedBackgroundColor: Colors.transparent,
-      initiallyExpanded: false, // ← keep collapsed when drawer opens
-      onExpansionChanged: vm.toggleCustomersExpanded,
-      children: [
-        SizedBox(
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              SubMenuItem(
-                title: 'Customers',
-                menuKey: '/customers',
-                menuKeys: "/customersadd",
-              ),
-              SubMenuItem(
-                title: 'Vendors',
-                menuKey: '/vendors',
-                menuKeys: "/vendoradd",
-              ),
-              SubMenuItem(
-                title: 'Items',
-                menuKey: '/items',
-                menuKeys: "/itemsadd",
-              ),
-            ],
+      child: ExpansionTile(
+        initiallyExpanded: false,
+        onExpansionChanged: vm.toggleCustomersExpanded,
+        leading: Icon(
+          Icons.manage_accounts_outlined,
+          size: 24,
+          color: vm.isCustomersExpanded
+              ? LoginColors.primary
+              : LoginColors.textSecondary,
+        ),
+        title: Text(
+          'Manage',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: vm.isCustomersExpanded
+                ? FontWeight.w600
+                : FontWeight.w500,
+            color: vm.isCustomersExpanded
+                ? LoginColors.primary
+                : LoginColors.textPrimary,
           ),
         ),
-      ],
+        trailing: Icon(
+          vm.isCustomersExpanded
+              ? Icons.keyboard_arrow_down_rounded
+              : Icons.keyboard_arrow_right_rounded,
+          size: 20,
+          color: vm.isCustomersExpanded
+              ? LoginColors.primary
+              : LoginColors.textSecondary,
+        ),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+        childrenPadding: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
+        children: const [
+          SubMenuItem(
+            title: 'Customers',
+            menuKey: '/customers',
+            menuKeys: '/customersadd',
+          ),
+          SubMenuItem(
+            title: 'Vendors',
+            menuKey: '/vendors',
+            menuKeys: '/vendoradd',
+          ),
+          SubMenuItem(title: 'Items', menuKey: '/items', menuKeys: '/itemsadd'),
+        ],
+      ),
     );
   }
 }
@@ -127,58 +130,40 @@ class SubMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
-    final isSelectedMain = vm.selectedMenu == menuKey;
-    final isSelectedAdd = menuKeys.isNotEmpty && vm.selectedMenu == menuKeys;
+    final isSelected =
+        vm.selectedMenu == menuKey || vm.selectedMenu == menuKeys;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 0.5),
-      decoration: BoxDecoration(
-        color: isSelectedMain || isSelectedAdd
-            ? Theme.of(context).colorScheme.primaryContainer
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-      ),
+    return _MenuTileContainer(
+      isSelected: isSelected,
       child: ListTile(
         dense: true,
+        leading: const SizedBox(width: 24), // indent sub-items nicely
         title: Text(
           title,
           style: TextStyle(
             fontSize: 15,
-            color: isSelectedMain || isSelectedAdd
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.onSurface,
-            fontWeight: isSelectedMain || isSelectedAdd
-                ? FontWeight.w600
-                : FontWeight.normal,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            color: isSelected ? LoginColors.primary : LoginColors.textPrimary,
           ),
         ),
         trailing: menuKeys.isNotEmpty
             ? GestureDetector(
                 onTap: () => _handleAddTap(context),
                 child: Container(
-                  padding: const EdgeInsets.all(4.0),
+                  padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.surfaceVariant.withOpacity(0.1),
-                    border: Border.all(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.05),
-                      width: 1.5,
-                    ),
-                    borderRadius: BorderRadius.circular(4.0),
+                    color: LoginColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(
-                    Icons.add,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.outline,
+                    Icons.add_rounded,
+                    size: 18,
+                    color: LoginColors.primary,
                   ),
                 ),
               )
             : null,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-        minVerticalPadding: 2,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         onTap: () => _handleMainTap(context),
       ),
     );
@@ -186,31 +171,55 @@ class SubMenuItem extends StatelessWidget {
 
   Future<void> _handleMainTap(BuildContext context) async {
     final authData = await TokenStorage.getFullAuthData();
-    final companyId = authData?['companyId']?.toString();
+    final companyId = authData?['companyId']?.toString() ?? '';
 
     context.read<DashboardViewModel>().setSelectedMenu(menuKey);
-    if (context.mounted) {
-      Navigator.pop(context);
-      context.push('/${menuKey.replaceFirst('/', '')}/$companyId');
-    }
+    if (!context.mounted) return;
+
+    Navigator.pop(context);
+    context.push('/${menuKey.replaceFirst('/', '')}/$companyId');
   }
 
   Future<void> _handleAddTap(BuildContext context) async {
     final authData = await TokenStorage.getFullAuthData();
-    final companyId = authData?['companyId']?.toString();
+    final companyId = authData?['companyId']?.toString() ?? '';
 
-    context.read<DashboardViewModel>().setSelectedMenu(menuKeys);
-    if (context.mounted) {
-      Navigator.pop(context);
-      await Future.delayed(const Duration(milliseconds: 50));
+    final vm = context.read<DashboardViewModel>();
+    vm.setSelectedMenu(menuKeys);
 
-      if (menuKeys == '/vendoradd') {
-        context.push('/vendors/$companyId/add');
-      } else if (menuKeys == '/customersadd') {
-        context.push('/customers/$companyId/add');
-      } else {
-        context.push('/$menuKeys');
-      }
-    }
+    if (!context.mounted) return;
+
+    Navigator.pop(context);
+    await Future.delayed(const Duration(milliseconds: 80));
+
+    final path = switch (menuKeys) {
+      '/vendoradd' => '/vendors/$companyId/add',
+      '/customersadd' => '/customers/$companyId/add',
+      _ => '/${menuKeys.replaceFirst('/', '')}',
+    };
+
+    context.push(path);
+  }
+}
+
+// ── Reusable selected/highlight wrapper ───────────────────────────────────────
+class _MenuTileContainer extends StatelessWidget {
+  final bool isSelected;
+  final Widget child;
+
+  const _MenuTileContainer({required this.isSelected, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? LoginColors.primary.withOpacity(0.08)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: child,
+    );
   }
 }

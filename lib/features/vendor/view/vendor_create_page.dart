@@ -1,10 +1,10 @@
 import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
 import 'package:coreflow/domain/model/vendors/create_vendors_request.dart';
-import 'package:coreflow/features/customers/widget/edit_create/billing_address_card.dart';
-import 'package:coreflow/features/customers/widget/edit_create/shipping_address_card.dart';
 import 'package:coreflow/features/dashboard/widget/menu.dart';
 import 'package:coreflow/features/vendor/view_model/vendor_edit_view_model.dart';
+import 'package:coreflow/features/vendor/widget/edit_create/billing_address_card.dart';
 import 'package:coreflow/features/vendor/widget/edit_create/save_customer_button.dart';
+import 'package:coreflow/features/vendor/widget/edit_create/shipping_address_card.dart';
 import 'package:coreflow/features/vendor/widget/edit_create/vendor_info_def_section.dart';
 import 'package:coreflow/features/vendor/widget/edit_create/vendor_info_section.dart';
 import 'package:flutter/material.dart';
@@ -377,7 +377,7 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
                             16,
                           ),
                           children: [
-                            BillingAddressCard(
+                            BillingAddressCardVendor(
                               attention: _billingAttentionController,
                               line1: _billingLine1Controller,
                               line2: _billingLine2Controller,
@@ -433,7 +433,7 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
                               contentPadding: EdgeInsets.zero,
                               controlAffinity: ListTileControlAffinity.leading,
                             ),
-                            ShippingAddressCard(
+                            ShippingAddressCardVendor(
                               attention: _shippingAttentionController,
                               line1: _shippingLine1Controller,
                               line2: _shippingLine2Controller,

@@ -1,10 +1,10 @@
-import 'package:coreflow/features/customers/widget/custom_app_bar.dart';
-import 'package:coreflow/features/customers/widget/error_view.dart';
-import 'package:coreflow/features/customers/widget/loading_view.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/dashboard/widget/menu.dart';
 import 'package:coreflow/features/vendor/view_model/vendor_view_model.dart';
-import 'package:coreflow/features/vendor/widget/empty_customers_view.dart';
+import 'package:coreflow/features/vendor/widget/empty_vendor_view.dart';
+import 'package:coreflow/features/vendor/widget/error_view.dart';
+import 'package:coreflow/features/vendor/widget/loading_view.dart';
+import 'package:coreflow/features/vendor/widget/vendor_app_bar.dart';
 import 'package:coreflow/features/vendor/widget/vendor_list.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -61,8 +61,8 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
       ],
       child: Builder(
         builder: (context) {
-          final viewModel = Provider.of<ActiveVendorViewModel>(context);
-          final dashboardVm = Provider.of<DashboardViewModel>(context);
+          final viewModel = context.watch<ActiveVendorViewModel>();
+          final dashboardVm = context.watch<DashboardViewModel>();
 
           if (!_hasLoaded && !viewModel.hasData && !viewModel.isLoading) {
             _hasLoaded = true;
@@ -75,20 +75,27 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
             key: _scaffoldKey,
             drawerEnableOpenDragGesture: false,
             drawer: AppDrawer(vm: dashboardVm),
-            appBar: CustomAppBar(
+            appBar: VendorAppBar(
               companyId: widget.companyId,
               isSearchOpen: _isSearchOpen,
               onSearchToggle: _toggleSearch,
               searchQuery: _searchQuery,
               searchController: _searchController,
-              onSearchChanged: (value) => setState(() => _searchQuery = value),
+              onSearchChanged: (value) =>
+                  setState(() => _searchQuery = value),
               onClearSearch: () {
                 _searchController.clear();
                 setState(() => _searchQuery = '');
               },
               scaffoldKey: _scaffoldKey,
             ),
-            body: _buildBody(viewModel, _searchQuery),
+            body: RefreshIndicator(
+              onRefresh: () async {
+                setState(() => _hasLoaded = false);
+                await viewModel.loadVendor(widget.companyId);
+              },
+              child: _buildBody(viewModel, _searchQuery),
+            ),
           );
         },
       ),
@@ -97,16 +104,22 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
 
   Widget _buildBody(ActiveVendorViewModel viewModel, String searchQuery) {
     if (viewModel.isLoading && !viewModel.hasData) {
-      return const LoadingView();
+      return const SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        child: LoadingDisplayView(),
+      );
     }
 
     if (viewModel.hasError) {
-      return ErrorView(
-        error: viewModel.error ?? 'Something went wrong',
-        onRetry: () {
-          setState(() => _hasLoaded = false);
-          viewModel.loadVendor(widget.companyId);
-        },
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: ErrorDisplayView(
+          error: viewModel.error ?? 'Something went wrong',
+          onRetry: () {
+            setState(() => _hasLoaded = false);
+            viewModel.loadVendor(widget.companyId);
+          },
+        ),
       );
     }
 
@@ -118,9 +131,18 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
     }).toList();
 
     if (filteredVendor.isEmpty) {
-      return EmptyVendorView(searchQuery: searchQuery);
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: EmptyVendorView(
+          searchQuery: searchQuery,
+          companyId: widget.companyId,
+        ),
+      );
     }
 
-    return VendorsList(vendors: filteredVendor, companyId: widget.companyId);
+    return VendorsList(
+      vendors: filteredVendor,
+      companyId: widget.companyId,
+    );
   }
 }

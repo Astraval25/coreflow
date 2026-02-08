@@ -33,6 +33,10 @@ class AppConfig {
       '/api/companies/{companyId}/vendors/{vendorId}/activate';
   static const String vendorDeactivateEndpoint =
       '/api/companies/{companyId}/vendors/{vendorId}/deactivate';
+  static const String itemsEndpoint = '/api/companies/{companyId}/items';
+  static const String itemDetailEndpoint =
+      '/api/companies/{companyId}/items/{itemId}';
+  static const String fileEndpoint = '/api/file';
 
   static String get loginUrl => '$baseUrl$loginEndpoint';
   static String get registerUrl => '$baseUrl$registerEndpoint';
@@ -77,4 +81,11 @@ class AppConfig {
 
   static String getVendorDeactivateUrl(int companyId, int vendorId) =>
       '$baseUrl${vendorDeactivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+
+  static String getItemsUrl(int companyId) =>
+      '$baseUrl${itemsEndpoint.replaceAll('{companyId}', companyId.toString())}';
+  static String getItemDetailUrl(int companyId, int itemId) =>
+      '$baseUrl${itemDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{itemId}', itemId.toString())}';
+
+  static String getFileUrl(String fsId) => '$baseUrl$fileEndpoint?fsId=$fsId';
 }

@@ -22,12 +22,12 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
     final vendor = widget.vendor;
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         VendorFinancialStrip(vendor: vendor),
-        const SizedBox(height: 12),
 
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -40,11 +40,9 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
 
         const Divider(height: 1, color: LoginColors.border),
 
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(12, 16, 12, 32),
-            child: _buildSelectedSection(vendor),
-          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(1, 1, 1, 2),
+          child: _buildSelectedSection(vendor),
         ),
       ],
     );
@@ -53,38 +51,42 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
   Widget _buildTabText(String title, int index) {
     final isSelected = _selectedIndex == index;
 
-    return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 15.5,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                color: isSelected
-                    ? LoginColors.primaryDark
-                    : LoginColors.textSecondary,
+    return TextButton(
+      onPressed: () {
+        setState(() => _selectedIndex = index);
+      },
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 15.5,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+              color: isSelected
+                  ? LoginColors.primaryDark
+                  : LoginColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeInOut,
+            height: 3,
+            width: isSelected ? 44 : 0,
+            decoration: BoxDecoration(
+              color: LoginColors.primary,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(4),
               ),
             ),
-            const SizedBox(height: 6),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              height: 3,
-              width: isSelected ? 44 : 0,
-              decoration: BoxDecoration(
-                color: LoginColors.primary,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(4),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

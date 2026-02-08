@@ -8,6 +8,8 @@ import 'package:coreflow/domain/model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
 import 'package:coreflow/domain/model/customer/customer_edit_response.dart';
 import 'package:coreflow/domain/model/customer/customer_status_response.dart';
+import 'package:coreflow/domain/model/items/detail_item.dart';
+import 'package:coreflow/domain/model/items/item.dart';
 import 'package:coreflow/domain/model/login/login_request.dart';
 import 'package:coreflow/domain/model/register/register_request.dart';
 import 'package:coreflow/domain/model/register/register_response.dart';
@@ -576,4 +578,58 @@ class AuthRepository {
       return null;
     }
   }
+
+  Future<List<Item>> getItems(int companyId) async {
+    try {
+      final url = AppConfig.getItemsUrl(companyId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      // Log the actual status code
+      debugPrint('GET /items response status: ${response.statusCode}');
+
+      if (response.statusCode != 200) {
+        debugPrint('Get items failed: ${response.statusCode}');
+        return [];
+      }
+
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      final bool? responseStatus = decodedBody['responseStatus'];
+      if (responseStatus != true) {
+        debugPrint(
+          'Get items responseStatus false: ${decodedBody['responseMessage']}',
+        );
+        return [];
+      }
+
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      final List<Item> items = data.map((json) => Item.fromJson(json)).toList();
+
+      return items;
+    } catch (e, stack) {
+      debugPrint('Get items error: $e\n$stack');
+      return [];
+    }
+  }
+
+  Future<ItemResponse> fetchItemDetail(int companyId, int itemId) async {
+    final url = AppConfig.getItemDetailUrl(companyId, itemId);
+    final response = await _apiService.get(Uri.parse(url));
+
+    debugPrint(
+      'Item detail response: ${response.statusCode} → ${response.body}',
+    );
+
+    if (response.statusCode == 200) {
+      final jsonMap = json.decode(response.body) as Map<String, dynamic>;
+      return ItemResponse.fromJson(jsonMap);
+    } else {
+      throw Exception(
+        'Failed to load item detail: ${response.statusCode} - ${response.body}',
+      );
+    }
+  }
+
+  String getFileUrl(String fsId) => AppConfig.getFileUrl(fsId);
 }

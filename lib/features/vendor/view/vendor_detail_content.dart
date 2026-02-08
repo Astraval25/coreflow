@@ -1,12 +1,10 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_detail_body.dart';
-import 'package:coreflow/features/vendor/widget/detail/vendor_empty_state.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_error_state.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_header.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-
 import '../view_model/vendor_detail_view_model.dart';
 import '../../dashboard/dashboard_view_model/dashboard_view_model.dart';
 import '../../dashboard/widget/menu.dart';
@@ -41,19 +39,11 @@ class VendorDetailContent extends StatelessWidget {
           },
         ),
         title: Consumer<VendorDetailViewModel>(
-          builder: (context, vm, child) {
-            if (vm.isLoading || vm.vendor == null) {
-              return const Text(
-                'Vendor Details',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.4,
-                ),
-              );
-            }
+          builder: (context, vm, _) {
             return Text(
-              vm.vendor!.vendorName,
+              vm.isLoading || vm.vendor == null
+                  ? 'Vendor Details'
+                  : vm.vendor!.vendorName,
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -64,7 +54,7 @@ class VendorDetailContent extends StatelessWidget {
         ),
         actions: [
           Consumer<VendorDetailViewModel>(
-            builder: (context, vm, child) {
+            builder: (context, vm, _) {
               if (vm.vendor == null || vm.isLoading) {
                 return const SizedBox(width: 10);
               }
@@ -79,22 +69,20 @@ class VendorDetailContent extends StatelessWidget {
                 onSelected: (value) async {
                   switch (value) {
                     case 'edit':
-                      await context.push(
+                      context.pushReplacement(
                         '/vendors/${vm.companyId}/${vm.vendorId}/edit',
                       );
-
                       vm.loadVendorDetail();
                       break;
+
                     case 'otherAction':
-                      if (vm.vendor != null) {
-                        vm.isActive
-                            ? vm.deactivateVendor(context)
-                            : vm.activateVendor(context);
-                      }
+                      vm.isActive
+                          ? vm.deactivateVendor(context)
+                          : vm.activateVendor(context);
                       break;
                   }
                 },
-                itemBuilder: (BuildContext context) => [
+                itemBuilder: (_) => [
                   const PopupMenuItem(
                     value: 'edit',
                     child: Row(
@@ -114,9 +102,7 @@ class VendorDetailContent extends StatelessWidget {
                         const SizedBox(width: 12),
                         Text(
                           vm.isActive ? 'Make inactive' : 'Make active',
-                          style: const TextStyle(
-                            color: LoginColors.textPrimary,
-                          ),
+                          style: TextStyle(color: LoginColors.textPrimary),
                         ),
                       ],
                     ),
@@ -128,10 +114,12 @@ class VendorDetailContent extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
+
       drawerEnableOpenDragGesture: false,
       drawer: AppDrawer(vm: dashboardVM),
+
       body: Consumer<VendorDetailViewModel>(
-        builder: (context, vm, child) {
+        builder: (context, vm, _) {
           if (vm.isLoading && vm.vendor == null) {
             return const Center(
               child: CircularProgressIndicator(color: LoginColors.primary),
@@ -145,28 +133,36 @@ class VendorDetailContent extends StatelessWidget {
             );
           }
 
-          if (!vm.hasData || vm.vendor == null) {
-            return const VendorEmptyState();
-          }
-
-          return Column(
-            children: [
-              VendorHeader(
-                vendor: vm.vendor!,
-                onToggleStatus: () async {
-                  if (vm.isActive) {
-                    await vm.deactivateVendor(context);
-                  } else {
-                    await vm.activateVendor(context);
-                  }
-                },
-              ),
-              Expanded(child: VendorDetailBody(vendor: vm.vendor!)),
-            ],
+          return RefreshIndicator(
+            color: LoginColors.primary,
+            onRefresh: () async {
+              await context.read<DashboardViewModel>().loadUserData();
+              await context.read<VendorDetailViewModel>().loadVendorDetail();
+            },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: VendorHeader(
+                    vendor: vm.vendor!,
+                    onToggleStatus: () async {
+                      if (vm.isActive) {
+                        await vm.deactivateVendor(context);
+                      } else {
+                        await vm.activateVendor(context);
+                      }
+                    },
+                  ),
+                ),
+                SliverFillRemaining(
+                  hasScrollBody: true,
+                  child: VendorDetailBody(vendor: vm.vendor!),
+                ),
+              ],
+            ),
           );
         },
       ),
     );
   }
 }
-

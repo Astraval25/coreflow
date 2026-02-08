@@ -4,7 +4,6 @@ import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_
 import '../view_model/vendor_detail_view_model.dart';
 import 'vendor_detail_content.dart';
 
-
 class VendorDetailView extends StatelessWidget {
   final int companyId;
   final int vendorId;
@@ -26,10 +25,12 @@ class VendorDetailView extends StatelessWidget {
           create: (_) => VendorDetailViewModel(
             companyId: companyId,
             vendorId: vendorId,
-          )..loadVendorDetail(), 
+          )..loadVendorDetail(),
         ),
       ],
-      child: const VendorDetailContent(),
+      child: const VendorDetailContent(), // ✅ no scroll here
     );
   }
 }
+
+

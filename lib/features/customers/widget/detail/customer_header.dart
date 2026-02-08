@@ -14,7 +14,7 @@ class CustomerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isActive = customer.isActive;
+
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),

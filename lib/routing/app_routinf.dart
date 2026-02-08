@@ -1,8 +1,7 @@
 import 'package:coreflow/features/customers/view/customer_create_page.dart';
 import 'package:coreflow/features/customers/view/customer_detail_page.dart';
 import 'package:coreflow/features/customers/view/customer_edit_page.dart';
-import 'package:coreflow/features/items/view/add/add_items_page.dart';
-import 'package:coreflow/features/items/view/items_page.dart';
+import 'package:coreflow/features/items/view/items_view.dart';
 import 'package:coreflow/features/registration/view/register_screen.dart';
 import 'package:coreflow/features/customers/view/customers_page.dart';
 import 'package:coreflow/features/dashboard/dashboard_view/dashboard_page.dart';
@@ -135,11 +134,12 @@ final GoRouter router = GoRouter(
       ],
     ),
 
-    GoRoute(path: '/items', builder: (context, state) => const ItemsPage()),
-
     GoRoute(
-      path: '/itemsadd',
-      builder: (context, state) => const AddItemsPage(),
+      path: '/items/:companyId',
+      builder: (context, state) {
+        final companyId = int.parse(state.pathParameters['companyId']!);
+        return ItemsPage(companyId: companyId);
+      },
     ),
   ],
 

@@ -1,13 +1,13 @@
-import 'package:coreflow/features/customers/view_model/customers_view_model.dart';
+import 'package:coreflow/features/vendor/view_model/vendor_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-class EmptyCustomersView extends StatelessWidget {
+class EmptyVendorView extends StatelessWidget {
   final String searchQuery;
   final int companyId;
 
-  const EmptyCustomersView({
+  const EmptyVendorView({
     super.key,
     required this.searchQuery,
     required this.companyId,
@@ -32,6 +32,7 @@ class EmptyCustomersView extends StatelessWidget {
               _buildTopToggleTabs(context),
               const SizedBox(height: 90),
 
+              // Illustration circle
               Container(
                 width: 160,
                 height: 160,
@@ -46,7 +47,7 @@ class EmptyCustomersView extends StatelessWidget {
                 child: Icon(
                   isSearching
                       ? Icons.search_off_rounded
-                      : Icons.group_add_rounded,
+                      : Icons.business_rounded,
                   size: 80,
                   color: colorScheme.primary.withOpacity(0.70),
                 ),
@@ -54,8 +55,9 @@ class EmptyCustomersView extends StatelessWidget {
 
               const SizedBox(height: 48),
 
+              // Main headline
               Text(
-                isSearching ? 'No matches found' : 'No customers added yet',
+                isSearching ? 'No matches found' : 'No vendors added yet',
                 style: textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.4,
@@ -67,10 +69,11 @@ class EmptyCustomersView extends StatelessWidget {
 
               const SizedBox(height: 16),
 
+              // Subtext
               Text(
                 isSearching
-                    ? 'No customers match “$searchQuery”.\nTry adjusting your search or add someone new.'
-                    : 'Start building your customer list by adding your first contact.',
+                    ? 'No vendors match “$searchQuery”.\nTry a different search or add a new vendor.'
+                    : 'Start building your vendor list by adding your first supplier.',
                 style: textTheme.bodyLarge?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                   height: 1.48,
@@ -81,11 +84,11 @@ class EmptyCustomersView extends StatelessWidget {
 
               const SizedBox(height: 48),
 
-              // ── Primary CTA ───────────────────────────────────────────────
+              // Primary CTA - Add First Vendor
               if (!isSearching)
                 FilledButton.icon(
                   icon: const Icon(Icons.add_rounded, size: 20),
-                  label: const Text('Add First Customer'),
+                  label: const Text('Add First Vendor'),
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 40,
@@ -101,16 +104,16 @@ class EmptyCustomersView extends StatelessWidget {
                       letterSpacing: 0.1,
                     ),
                   ),
-                  onPressed: () => context.push('/customers/$companyId/add'),
+                  onPressed: () => context.push('/vendors/$companyId/add'),
                 ),
 
-              // ── Secondary CTA (when searching) ────────────────────────────
+              // Secondary CTA - When searching
               if (isSearching) ...[
                 const SizedBox(height: 12),
 
                 OutlinedButton.icon(
                   icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Add New Customer'),
+                  label: const Text('Add New Vendor'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 36,
@@ -128,15 +131,15 @@ class EmptyCustomersView extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  onPressed: () => context.push('/customers/$companyId/add'),
+                  onPressed: () => context.push('/vendors/$companyId/add'),
                 ),
 
                 const SizedBox(height: 32),
 
                 TextButton(
                   onPressed: () {
-                    // Optional: clear search field logic here
-                    // Usually handled one level up
+                    // Usually handled by parent widget (search field clear)
+                    // Or you can use context.read<SearchController>().clear();
                   },
                   child: Text(
                     'Clear search',
@@ -155,7 +158,7 @@ class EmptyCustomersView extends StatelessWidget {
   }
 
   Widget _buildTopToggleTabs(BuildContext context) {
-    return Consumer<ActiveCustomersViewModel>(
+    return Consumer<ActiveVendorViewModel>(
       builder: (context, viewModel, child) {
         const double gapBetweenTabs = 6.0;
         const double indicatorHeight = 3.0;
@@ -211,8 +214,8 @@ class EmptyCustomersView extends StatelessWidget {
                       _TabItem(
                         label: 'Active',
                         count: isActiveSelected
-                            ? viewModel.customers.length
-                            : viewModel.activeCustomersCount,
+                            ? viewModel.vendor.length
+                            : viewModel.activeVendorCount,
                         isSelected: isActiveSelected,
                         color: const Color(0xFF4CAF50),
                         tabWidth: tabWidth,
@@ -224,8 +227,8 @@ class EmptyCustomersView extends StatelessWidget {
                       _TabItem(
                         label: 'Inactive',
                         count: !isActiveSelected
-                            ? viewModel.customers.length
-                            : viewModel.inactiveCustomersCount,
+                            ? viewModel.vendor.length
+                            : viewModel.inactiveVendorCount,
                         isSelected: !isActiveSelected,
                         color: const Color(0xFFE53935),
                         tabWidth: tabWidth,
@@ -254,7 +257,6 @@ class _TabItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const _TabItem({
-    // super.key,
     required this.label,
     required this.count,
     required this.isSelected,

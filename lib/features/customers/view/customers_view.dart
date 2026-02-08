@@ -21,6 +21,7 @@ class ActiveCustomersView extends StatefulWidget {
 class _ActiveCustomersViewState extends State<ActiveCustomersView> {
   final TextEditingController _searchController = TextEditingController();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   String _searchQuery = '';
   bool _isSearchOpen = false;
   late final AuthRepository _authRepository;
@@ -55,14 +56,14 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
         ChangeNotifierProvider(
           create: (_) => ActiveCustomersViewModel(_authRepository),
         ),
-        ChangeNotifierProvider<DashboardViewModel>(
+        ChangeNotifierProvider(
           create: (_) => DashboardViewModel()..loadUserData(),
         ),
       ],
       child: Builder(
         builder: (context) {
-          final viewModel = Provider.of<ActiveCustomersViewModel>(context);
-          final dashboardVm = Provider.of<DashboardViewModel>(context);
+          final viewModel = context.watch<ActiveCustomersViewModel>();
+          final dashboardVm = context.watch<DashboardViewModel>();
 
           if (!_hasLoaded && !viewModel.hasData && !viewModel.isLoading) {
             _hasLoaded = true;
@@ -88,7 +89,14 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
               },
               scaffoldKey: _scaffoldKey,
             ),
-            body: _buildBody(viewModel, _searchQuery),
+
+            body: RefreshIndicator(
+              onRefresh: () async {
+                setState(() => _hasLoaded = false);
+                await viewModel.loadCustomers(widget.companyId);
+              },
+              child: _buildBody(viewModel, _searchQuery),
+            ),
           );
         },
       ),
@@ -97,16 +105,22 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
 
   Widget _buildBody(ActiveCustomersViewModel viewModel, String searchQuery) {
     if (viewModel.isLoading && !viewModel.hasData) {
-      return const LoadingView();
+      return const SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        child: LoadingView(),
+      );
     }
 
     if (viewModel.hasError) {
-      return ErrorView(
-        error: viewModel.error ?? 'Something went wrong',
-        onRetry: () {
-          setState(() => _hasLoaded = false);
-          viewModel.loadCustomers(widget.companyId);
-        },
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: ErrorView(
+          error: viewModel.error ?? 'Something went wrong',
+          onRetry: () {
+            setState(() => _hasLoaded = false);
+            viewModel.loadCustomers(widget.companyId);
+          },
+        ),
       );
     }
 
@@ -118,7 +132,13 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
     }).toList();
 
     if (filteredCustomers.isEmpty) {
-      return EmptyCustomersView(searchQuery: searchQuery);
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: EmptyCustomersView(
+          searchQuery: searchQuery,
+          companyId: widget.companyId,
+        ),
+      );
     }
 
     return CustomersList(
