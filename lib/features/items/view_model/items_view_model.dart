@@ -1,15 +1,13 @@
-import 'dart:convert';
+import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:flutter/material.dart';
-import 'package:coreflow/core/config/app_config.dart';
-import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/items/item.dart';
 
 class ItemsViewModel extends ChangeNotifier {
-  final ApiService _apiService;
+  final AuthRepository _repository;
   final int companyId;
 
-  ItemsViewModel({required ApiService apiService, required this.companyId})
-    : _apiService = apiService;
+  ItemsViewModel({required AuthRepository repository, required this.companyId})
+    : _repository = repository;
 
   List<Item> _items = [];
   List<Item> _filteredItems = [];
@@ -17,6 +15,7 @@ class ItemsViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   String _searchQuery = '';
+  bool _showActiveOnly = true;
 
   List<Item> get items => List.unmodifiable(_items);
   List<Item> get filteredItems => List.unmodifiable(_filteredItems);
@@ -24,13 +23,23 @@ class ItemsViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
+  bool get showActiveOnly => _showActiveOnly;
+
+  int get activeItemCount => _items.where((item) => item.isActive).length;
+  int get inactiveItemCount => _items.where((item) => !item.isActive).length;
+
+  void toggleActiveFilter() {
+    _showActiveOnly = !_showActiveOnly;
+    _applyFilter();
+    notifyListeners();
+  }
 
   Future<void> fetchItems() async {
     _setLoading(true);
     _setError(null);
 
     try {
-      final fetchedItems = await _getItems(companyId);
+      final fetchedItems = await _repository.getItems(companyId);
       _items = fetchedItems;
       _applyFilter();
     } catch (e, stack) {
@@ -43,6 +52,24 @@ class ItemsViewModel extends ChangeNotifier {
 
   Future<void> refresh() async {
     await fetchItems();
+  }
+
+  Future<void> toggleItemStatus(int itemId, bool currentStatus) async {
+    _setError(null);
+    try {
+      final response = currentStatus
+          ? await _repository.deactivateItem(companyId, itemId)
+          : await _repository.activateItem(companyId, itemId);
+
+      if (response != null && response.responseStatus) {
+        await fetchItems(); // Refresh the list
+      } else {
+        _setError(response?.responseMessage ?? 'Failed to update status');
+      }
+    } catch (e) {
+      debugPrint('toggleItemStatus error: $e');
+      _setError('Failed to update status');
+    }
   }
 
   void filterItems(String query) {
@@ -58,51 +85,21 @@ class ItemsViewModel extends ChangeNotifier {
   }
 
   void _applyFilter() {
-    if (_searchQuery.isEmpty) {
-      _filteredItems = List.from(_items);
-      return;
+    // 1. Filter by status
+    Iterable<Item> list = _items.where((item) => item.isActive == _showActiveOnly);
+
+    // 2. Filter by search query if present
+    if (_searchQuery.isNotEmpty) {
+      list = list.where((item) {
+        final nameMatch = item.itemName.toLowerCase().contains(_searchQuery);
+        final idMatch = item.itemId.toString().contains(_searchQuery);
+        final unitMatch = item.unit.toLowerCase().contains(_searchQuery);
+        final typeMatch = item.itemType.toLowerCase().contains(_searchQuery);
+        return nameMatch || idMatch || unitMatch || typeMatch;
+      });
     }
 
-    _filteredItems = _items.where((item) {
-      final nameMatch = item.itemName.toLowerCase().contains(_searchQuery);
-      final idMatch = item.itemId.toString().contains(_searchQuery);
-      final unitMatch = item.unit.toLowerCase().contains(_searchQuery);
-      final typeMatch = item.itemType.toLowerCase().contains(_searchQuery);
-
-      return nameMatch || idMatch || unitMatch || typeMatch;
-    }).toList();
-  }
-
-  Future<List<Item>> _getItems(int companyId) async {
-    try {
-      final url = AppConfig.getItemsUrl(companyId);
-      debugPrint('GET → $url');
-
-      final response = await _apiService.get(Uri.parse(url));
-      debugPrint('Response status: ${response.statusCode}');
-
-      if (response.statusCode != 200) {
-        throw Exception('Server returned ${response.statusCode}');
-      }
-
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (body['responseStatus'] != true) {
-        throw Exception(body['responseMessage'] ?? 'Unknown API error');
-      }
-
-      final List<dynamic> data = body['responseData'] as List<dynamic>? ?? [];
-
-      final items = data
-          .map((e) => Item.fromJson(e as Map<String, dynamic>))
-          .toList();
-
-      debugPrint('Parsed ${items.length} items');
-      return items;
-    } catch (e, stack) {
-      debugPrint('API call failed: $e\n$stack');
-      rethrow;
-    }
+    _filteredItems = list.toList();
   }
 
   void _setLoading(bool value) {

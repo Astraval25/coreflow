@@ -1,38 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:coreflow/core/theme/colors.dart';
 
 class CustomerEmptyState extends StatelessWidget {
   const CustomerEmptyState({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.symmetric(horizontal: 40),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.person_off_rounded,
-              size: 72,
-              color: colorScheme.outlineVariant,
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: LoginColors.primary.withOpacity(0.06),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.person_off_rounded,
+                size: 64,
+                color: LoginColors.textTertiary.withOpacity(0.6),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 28),
             Text(
               'No customer data',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: LoginColors.textPrimary,
+                letterSpacing: -0.5,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               'Customer information is not available for this record.',
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
               textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14.5,
+                color: LoginColors.textTertiary,
+                height: 1.5,
+              ),
             ),
           ],
         ),

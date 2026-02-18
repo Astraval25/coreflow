@@ -1,6 +1,10 @@
+import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/features/customers/view/customer_create_page.dart';
 import 'package:coreflow/features/customers/view/customer_detail_page.dart';
 import 'package:coreflow/features/customers/view/customer_edit_page.dart';
+import 'package:coreflow/features/dashboard/dashboard_view/notification_page.dart';
+import 'package:coreflow/features/items/view/create_item_screen.dart';
+import 'package:coreflow/features/items/view/item_detail_view.dart';
 import 'package:coreflow/features/items/view/items_view.dart';
 import 'package:coreflow/features/registration/view/register_screen.dart';
 import 'package:coreflow/features/customers/view/customers_page.dart';
@@ -13,20 +17,23 @@ import 'package:coreflow/features/vendor/view/vendor_detail_page.dart';
 import 'package:coreflow/features/vendor/view/vendor_edit_page.dart';
 import 'package:coreflow/features/vendor/view/vendor_page.dart';
 import 'package:coreflow/features/verify_otp/view/verify_otp_screen.dart';
+import 'package:coreflow/features/dashboard/widget/main_layout.dart';
+import 'package:coreflow/features/presentation/sales/view/sales_page.dart';
+import 'package:coreflow/features/presentation/purchase/view/purchase_page.dart';
+import 'package:coreflow/features/presentation/payment/send_payment/view/payment_page.dart';
+import 'package:coreflow/features/presentation/payment/receive_payment/view/pay_received_page.dart';
 import 'package:go_router/go_router.dart';
-import '../../../data/repositories/auth_repository.dart';
+
 
 final _authRepo = AuthRepository();
 final GoRouter router = GoRouter(
   initialLocation: '/login',
-
   routes: [
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
     ),
-
     GoRoute(
       path: '/verify/:userPath',
       builder: (context, state) =>
@@ -41,108 +48,166 @@ final GoRouter router = GoRouter(
       path: '/resend-otp',
       builder: (context, state) => const ResendOtpScreen(),
     ),
-    GoRoute(
-      path: '/:role/dashboard',
-      builder: (context, state) =>
-          DashboardPage(role: state.pathParameters['role']),
-    ),
-    GoRoute(
-      path: '/dashboard',
-      builder: (context, state) => const DashboardPage(),
-    ),
-    GoRoute(path: '/profile', builder: (context, state) => const ProfilePage()),
 
-    // Customers route
-    GoRoute(
-      path: '/customers/:companyId',
-      builder: (context, state) {
-        final companyId = int.parse(state.pathParameters['companyId']!);
-        return ActiveCustomersPage(companyId: companyId);
+    // Shell Route for Main Layout
+    ShellRoute(
+      builder: (context, state, child) {
+        return MainLayout(child: child);
       },
       routes: [
-        // Add customer page (nested)
         GoRoute(
-          path: 'add',
-          builder: (context, state) {
-            final companyId = int.parse(state.pathParameters['companyId']!);
-            return CustomerCreatePage(companyId: companyId);
-          },
+          path: '/dashboard',
+          builder: (context, state) => const DashboardPage(),
         ),
-        // Customer detail page
         GoRoute(
-          path: ':customerId',
+          path: '/:role/dashboard',
+          builder: (context, state) =>
+              DashboardPage(role: state.pathParameters['role']),
+        ),
+        GoRoute(
+          path: '/dashboard/notifications',
+          builder: (context, state) => const NotificationPage(),
+        ),
+        GoRoute(
+          path: '/profile',
+          builder: (context, state) => const ProfilePage(),
+        ),
+        GoRoute(
+          path: '/sales',
+          builder: (context, state) => const SalesPage(),
+        ),
+        GoRoute(
+          path: '/purchase',
+          builder: (context, state) => const PurchasePage(),
+        ),
+        GoRoute(
+          path: '/payment',
+          builder: (context, state) => const PaymentPage(),
+        ),
+        GoRoute(
+          path: '/pay-received',
+          builder: (context, state) => const PayReceivedPage(),
+        ),
+        // Customers route inside shell
+        GoRoute(
+          path: '/customers/:companyId',
           builder: (context, state) {
             final companyId = int.parse(state.pathParameters['companyId']!);
-            final customerId = int.parse(state.pathParameters['customerId']!);
-            return CustomerDetailView(
-              companyId: companyId,
-              customerId: customerId,
-            );
+            return ActiveCustomersPage(companyId: companyId);
           },
           routes: [
-            // Customer edit page (nested)
             GoRoute(
-              path: 'edit',
+              path: 'add',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                return CustomerCreatePage(companyId: companyId);
+              },
+            ),
+            GoRoute(
+              path: ':customerId',
               builder: (context, state) {
                 final companyId = int.parse(state.pathParameters['companyId']!);
                 final customerId = int.parse(
                   state.pathParameters['customerId']!,
                 );
-                return CustomerEditPage(
+                return CustomerDetailView(
                   companyId: companyId,
                   customerId: customerId,
                 );
               },
+              routes: [
+                GoRoute(
+                  path: 'edit',
+                  builder: (context, state) {
+                    final companyId = int.parse(
+                      state.pathParameters['companyId']!,
+                    );
+                    final customerId = int.parse(
+                      state.pathParameters['customerId']!,
+                    );
+                    return CustomerEditPage(
+                      companyId: companyId,
+                      customerId: customerId,
+                    );
+                  },
+                ),
+              ],
             ),
           ],
         ),
-      ],
-    ),
-    GoRoute(
-      path: '/vendors/:companyId',
-      builder: (context, state) {
-        final companyId = int.parse(state.pathParameters['companyId']!);
-        return ActiveVendorsPage(companyId: companyId);
-      },
-      routes: [
-        // Add vendor page (nested)
+        // Vendors route inside shell
         GoRoute(
-          path: 'add',
+          path: '/vendors/:companyId',
           builder: (context, state) {
             final companyId = int.parse(state.pathParameters['companyId']!);
-            return VendorCreatePage(companyId: companyId);
-          },
-        ),
-        GoRoute(
-          path: ':vendorId',
-          builder: (context, state) {
-            final companyId = int.parse(state.pathParameters['companyId']!);
-            final vendorId = int.parse(state.pathParameters['vendorId']!);
-            return VendorDetailView(companyId: companyId, vendorId: vendorId);
+            return ActiveVendorsPage(companyId: companyId);
           },
           routes: [
             GoRoute(
-              path: 'edit',
+              path: 'add',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                return VendorCreatePage(companyId: companyId);
+              },
+            ),
+            GoRoute(
+              path: ':vendorId',
               builder: (context, state) {
                 final companyId = int.parse(state.pathParameters['companyId']!);
                 final vendorId = int.parse(state.pathParameters['vendorId']!);
-                return VendorEditPage(companyId: companyId, vendorId: vendorId);
+                return VendorDetailView(
+                  companyId: companyId,
+                  vendorId: vendorId,
+                );
+              },
+              routes: [
+                GoRoute(
+                  path: 'edit',
+                  builder: (context, state) {
+                    final companyId = int.parse(
+                      state.pathParameters['companyId']!,
+                    );
+                    final vendorId = int.parse(
+                      state.pathParameters['vendorId']!,
+                    );
+                    return VendorEditPage(
+                      companyId: companyId,
+                      vendorId: vendorId,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        // Items route inside shell
+        GoRoute(
+          path: '/items/:companyId',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            return ItemsPage(companyId: companyId);
+          },
+          routes: [
+            GoRoute(
+              path: 'add',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                return CreateItemScreen(companyId: companyId);
+              },
+            ),
+            GoRoute(
+              path: ':itemId',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                final itemId = int.parse(state.pathParameters['itemId']!);
+                return ItemDetailView(companyId: companyId, itemId: itemId);
               },
             ),
           ],
         ),
       ],
     ),
-
-    GoRoute(
-      path: '/items/:companyId',
-      builder: (context, state) {
-        final companyId = int.parse(state.pathParameters['companyId']!);
-        return ItemsPage(companyId: companyId);
-      },
-    ),
   ],
-
   redirect: (context, state) async {
     final authData = await _authRepo.getAuthData();
     final isLoggedIn = await _authRepo.isLoggedIn();

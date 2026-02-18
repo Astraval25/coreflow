@@ -1,3 +1,4 @@
+import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';
 
 class CustomerInfoSection extends StatelessWidget {
@@ -21,6 +22,7 @@ class CustomerInfoSection extends StatelessWidget {
   });
 
   final List<String> _languages = ['en', 'hi', 'ta', 'te', 'kn', 'ml', 'bn'];
+  static const double _iconSize = 18;
 
   @override
   Widget build(BuildContext context) {
@@ -29,25 +31,10 @@ class CustomerInfoSection extends StatelessWidget {
       children: [
         DropdownButtonFormField<String>(
           value: _languages.contains(language.text) ? language.text : null,
-          decoration: InputDecoration(
+          decoration: _inputDecoration(
             labelText: 'Language',
+            icon: Icons.language_rounded,
             hintText: 'en',
-            labelStyle: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).hintColor,
-            ),
-            border: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: Theme.of(context).primaryColor,
-                width: 2,
-              ),
-            ),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
           ),
           items: _languages.map((String lang) {
             return DropdownMenuItem<String>(
@@ -66,24 +53,9 @@ class CustomerInfoSection extends StatelessWidget {
         TextFormField(
           controller: email,
           style: const TextStyle(fontSize: 16),
-          decoration: InputDecoration(
+          decoration: _inputDecoration(
             labelText: 'Email',
-            labelStyle: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).hintColor,
-            ),
-            border: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: Theme.of(context).primaryColor,
-                width: 2,
-              ),
-            ),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
+            icon: Icons.alternate_email_rounded,
           ),
           keyboardType: TextInputType.emailAddress,
         ),
@@ -92,24 +64,9 @@ class CustomerInfoSection extends StatelessWidget {
         TextFormField(
           controller: phone,
           style: const TextStyle(fontSize: 16),
-          decoration: InputDecoration(
+          decoration: _inputDecoration(
             labelText: 'Phone',
-            labelStyle: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).hintColor,
-            ),
-            border: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: Theme.of(context).primaryColor,
-                width: 2,
-              ),
-            ),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
+            icon: Icons.call_outlined,
           ),
           keyboardType: TextInputType.phone,
         ),
@@ -121,24 +78,9 @@ class CustomerInfoSection extends StatelessWidget {
               child: TextFormField(
                 controller: pan,
                 style: const TextStyle(fontSize: 16),
-                decoration: InputDecoration(
+                decoration: _inputDecoration(
                   labelText: 'PAN',
-                  labelStyle: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).hintColor,
-                  ),
-                  border: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(context).primaryColor,
-                      width: 2,
-                    ),
-                  ),
-                  enabledBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
+                  icon: Icons.account_box_outlined,
                 ),
               ),
             ),
@@ -147,24 +89,9 @@ class CustomerInfoSection extends StatelessWidget {
               child: TextFormField(
                 controller: gst,
                 style: const TextStyle(fontSize: 16),
-                decoration: InputDecoration(
+                decoration: _inputDecoration(
                   labelText: 'GST',
-                  labelStyle: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).hintColor,
-                  ),
-                  border: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(context).primaryColor,
-                      width: 2,
-                    ),
-                  ),
-                  enabledBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
+                  icon: Icons.receipt_long_outlined,
                 ),
               ),
             ),
@@ -175,32 +102,52 @@ class CustomerInfoSection extends StatelessWidget {
         TextFormField(
           controller: dueAmount,
           style: const TextStyle(fontSize: 16),
-          decoration: InputDecoration(
+          decoration: _inputDecoration(
             labelText: 'Advance amount',
-            labelStyle: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).hintColor,
-            ),
-            prefixIcon: Icon(
-              Icons.currency_rupee_rounded,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            border: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: Theme.of(context).primaryColor,
-                width: 2,
-              ),
-            ),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
+            icon: Icons.currency_rupee_rounded,
           ),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
         ),
       ],
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String labelText,
+    required IconData icon,
+    String? hintText,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      labelStyle: TextStyle(
+        fontSize: 14,
+        color: LoginColors.textSecondary,
+      ),
+      hintStyle: TextStyle(
+        fontSize: 14,
+        color: LoginColors.textTertiary,
+      ),
+      prefixIcon: Icon(
+        icon,
+        size: _iconSize,
+        color: LoginColors.textTertiary,
+      ),
+      filled: true,
+      fillColor: LoginColors.fieldFill,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: LoginColors.borderLight, width: 1),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: LoginColors.borderLight, width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: LoginColors.primary, width: 1.4),
+      ),
     );
   }
 }

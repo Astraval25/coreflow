@@ -1,3 +1,4 @@
+import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';
 
 class OtpStatusMessage extends StatelessWidget {
@@ -12,31 +13,31 @@ class OtpStatusMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isError ? Colors.red : Colors.green;
+    final base = isError ? LoginColors.error : LoginColors.success;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: color.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.shade200),
+        color: base.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: base.withOpacity(0.3)),
       ),
       child: Row(
         children: [
           Icon(
-            isError ? Icons.error_outline : Icons.check_circle,
-            color: color.shade700,
+            isError ? Icons.error_outline_rounded : Icons.check_circle_rounded,
+            color: base,
             size: 20,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
               style: TextStyle(
-                color: color.shade700,
-                fontWeight: FontWeight.w500,
+                color: base,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),

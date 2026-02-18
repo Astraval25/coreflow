@@ -1,3 +1,4 @@
+import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/customers/view_model/customer_edit_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -18,9 +19,16 @@ class SaveCustomerButton extends StatelessWidget {
       builder: (context, viewModel, _) {
         return SizedBox(
           width: double.infinity,
-          height: 50,
+          height: 52,
           child: FilledButton(
             onPressed: viewModel.isSaving ? null : onPressed,
+            style: FilledButton.styleFrom(
+              backgroundColor: LoginColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
             child: viewModel.isSaving
                 ? const SizedBox(
                     height: 22,
@@ -32,7 +40,7 @@ class SaveCustomerButton extends StatelessWidget {
                   )
                 : const Text(
                     'Save customer',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                   ),
           ),
         );

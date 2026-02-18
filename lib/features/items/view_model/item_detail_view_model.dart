@@ -113,6 +113,52 @@ class ItemDetailViewModel extends ChangeNotifier {
     await loadItemDetail();
   }
 
+  Future<bool> activateItem() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await _repository.activateItem(companyId, itemId);
+      if (response != null && response.responseStatus) {
+        return true;
+      } else {
+        _errorMessage = response?.responseMessage ?? 'Failed to activate item';
+      }
+    } catch (e) {
+      debugPrint('ItemDetailViewModel.activateItem error: $e');
+      _errorMessage = 'Failed to activate item';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+
+    return false;
+  }
+
+  Future<bool> deactivateItem() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await _repository.deactivateItem(companyId, itemId);
+      if (response != null && response.responseStatus) {
+        return true;
+      } else {
+        _errorMessage = response?.responseMessage ?? 'Failed to deactivate item';
+      }
+    } catch (e) {
+      debugPrint('ItemDetailViewModel.deactivateItem error: $e');
+      _errorMessage = 'Failed to deactivate item';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+
+    return false;
+  }
+
   @override
   void dispose() {
     _currentImageBytes = null;

@@ -1,4 +1,4 @@
-import 'package:coreflow/core/theme/colors.dart'; // assuming this is where LoginColors lives
+import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/domain/model/customer/customer_detail.dart';
 import 'package:flutter/material.dart';
 
@@ -47,40 +47,33 @@ class CustomerAddressTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(16),
-      // decoration: BoxDecoration(
-      //   color: Colors.white,
-      //   borderRadius: BorderRadius.circular(12),
-      //   border: Border.all(color: LoginColors.border),
-      //   boxShadow: [
-      //     BoxShadow(
-      //       color: LoginColors.shadowLight.withOpacity(0.05),
-      //       blurRadius: 6,
-      //       offset: const Offset(0, 2),
-      //     ),
-      //   ],
-      // ),
+      decoration: BoxDecoration(
+        color: LoginColors.fieldFill,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Title
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 16,
+            style: TextStyle(
+              fontSize: 15.5,
               fontWeight: FontWeight.w700,
               color: LoginColors.textPrimary,
             ),
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, thickness: 1, color: LoginColors.border),
+          Divider(height: 1, thickness: 1, color: LoginColors.border),
 
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
                 Icons.person_pin_rounded,
-                size: 20,
-                color: LoginColors.textPrimary.withOpacity(0.75),
+                size: 18,
+                color: LoginColors.primary,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -106,8 +99,8 @@ class CustomerAddressTile extends StatelessWidget {
             children: [
               Icon(
                 Icons.location_on_outlined,
-                size: 20,
-                color: LoginColors.textPrimary.withOpacity(0.75),
+                size: 18,
+                color: LoginColors.primary,
               ),
               const SizedBox(width: 12),
               Expanded(

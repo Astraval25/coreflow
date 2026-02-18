@@ -1,0 +1,145 @@
+import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/core/theme/theme_provider.dart';
+import 'package:coreflow/core/widgets/app_drawer.dart';
+import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
+import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/features/presentation/payment/receive_payment/viewmodel/receive_payment_view_model.dart';
+import 'package:coreflow/features/presentation/payment/receive_payment/widgets/pay_received_body_message.dart';
+import 'package:coreflow/features/presentation/payment/receive_payment/widgets/pay_received_card.dart';
+import 'package:coreflow/features/presentation/payment/receive_payment/widgets/pay_received_empty_state.dart';
+import 'package:coreflow/features/presentation/payment/receive_payment/widgets/pay_received_loading_body.dart';
+import 'package:coreflow/features/presentation/payment/receive_payment/widgets/pay_received_skeleton.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+class PayReceivedPage extends StatelessWidget {
+  const PayReceivedPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
+    return Consumer<DashboardViewModel>(
+      builder: (context, vm, child) {
+        if (vm.isLoading) {
+          return const PayReceivedSkeleton();
+        }
+
+        final companyId = vm.companyId;
+        if (companyId == null) {
+          return const PayReceivedEmptyState(
+            title: 'Pay Received',
+            subtitle: 'Company not selected.',
+          );
+        }
+
+        return ChangeNotifierProvider<ReceivePaymentViewModel>(
+          create: (_) => ReceivePaymentViewModel(
+            repository: AuthRepository(),
+            companyId: companyId,
+          )..fetchPaymentsReceivedSummary(),
+          child: const _PayReceivedContent(),
+        );
+      },
+    );
+  }
+}
+
+class _PayReceivedContent extends StatefulWidget {
+  const _PayReceivedContent();
+
+  @override
+  State<_PayReceivedContent> createState() => _PayReceivedContentState();
+}
+
+class _PayReceivedContentState extends State<_PayReceivedContent> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final TextEditingController _disabledSearchController =
+      TextEditingController();
+  int _selectedTabIndex = 0;
+
+  @override
+  void dispose() {
+    _disabledSearchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
+    final dashboardVm = context.watch<DashboardViewModel>();
+
+    return Consumer<ReceivePaymentViewModel>(
+      builder: (context, vm, child) {
+        return Scaffold(
+          key: _scaffoldKey,
+          backgroundColor: LoginColors.background,
+          drawerEnableOpenDragGesture: true,
+          drawer: AppDrawer(vm: dashboardVm),
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          floatingActionButton: _buildCreateButton(),
+          appBar: SearchableEntityAppBar(
+            isSearchOpen: false,
+            onSearchToggle: () {},
+            searchQuery: '',
+            searchController: _disabledSearchController,
+            onSearchChanged: (_) {},
+            onClearSearch: () {},
+            scaffoldKey: _scaffoldKey,
+            title: '',
+            searchHint: '',
+            showSearchAction: false,
+            tabs: const [
+              SearchableEntityTab(label: 'Received'),
+              // SearchableEntityTab(label: 'Paid Orders'),
+            ],
+            selectedTabIndex: _selectedTabIndex,
+            onTabSelected: (index) {
+              setState(() => _selectedTabIndex = index);
+            },
+          ),
+          body: RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(ReceivePaymentViewModel vm) {
+    if (vm.isLoading) {
+      return const PayReceivedLoadingBody();
+    }
+
+    if (vm.errorMessage != null && vm.payments.isEmpty) {
+      return PayReceivedBodyMessage(subtitle: vm.errorMessage!);
+    }
+
+    if (vm.payments.isEmpty) {
+      return const PayReceivedBodyMessage(
+        subtitle: 'No received payment summary found.',
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+      itemCount: vm.payments.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final payment = vm.payments[index];
+        return PayReceivedCard(payment: payment);
+      },
+    );
+  }
+
+  Widget _buildCreateButton() {
+    return FloatingActionButton(
+      backgroundColor: LoginColors.primary,
+      foregroundColor: Colors.white,
+      onPressed: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Create received payment coming soon.')),
+        );
+      },
+      child: const Icon(Icons.add_rounded),
+    );
+  }
+}

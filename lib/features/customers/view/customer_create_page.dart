@@ -1,3 +1,4 @@
+import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
 import 'package:coreflow/domain/model/customer/create_customer_request.dart';
 import 'package:coreflow/features/customers/widget/edit_create/billing_address_card.dart';
@@ -5,7 +6,7 @@ import 'package:coreflow/features/customers/widget/edit_create/customer_info_def
 import 'package:coreflow/features/customers/widget/edit_create/customer_info_section.dart';
 import 'package:coreflow/features/customers/widget/edit_create/save_customer_button.dart';
 import 'package:coreflow/features/customers/widget/edit_create/shipping_address_card.dart';
-import 'package:coreflow/features/dashboard/widget/menu.dart';
+import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
@@ -272,16 +273,51 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
     }
   }
 
+  Widget _buildSectionContainer({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: LoginColors.primary),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: LoginColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer2<CustomerEditViewModel, DashboardViewModel>(
       builder: (context, editVM, dashboardVM, _) {
         return Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: LoginColors.background,
           appBar: AppBar(
-            title: const Text('Create Customer'),
+            title: Text(
+              'Create Customer',
+              style: TextStyle(
+                color: LoginColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            foregroundColor: LoginColors.textPrimary,
             elevation: 0,
-            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            backgroundColor: LoginColors.background,
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),
@@ -298,6 +334,10 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
                   onPressed: editVM.isSaving
                       ? null
                       : () => _saveCustomer(editVM),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: LoginColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -305,7 +345,9 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
           drawerEnableOpenDragGesture: false,
           drawer: AppDrawer(vm: dashboardVM),
           body: editVM.isSaving
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(
+                  child: CircularProgressIndicator(color: LoginColors.primary),
+                )
               : Form(
                   key: _formKey,
                   child: SingleChildScrollView(
@@ -313,143 +355,176 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        CustomerInfoSections(
-                          formKey: _formKey,
-                          customerName: _customerNameController,
-                          displayName: _displayNameController,
+                        _buildSectionContainer(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildSectionHeader(
+                                  'Basic Details',
+                                  Icons.badge_outlined,
+                                ),
+                                const SizedBox(height: 14),
+                                CustomerInfoSections(
+                                  formKey: _formKey,
+                                  customerName: _customerNameController,
+                                  displayName: _displayNameController,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 24),
 
-                        ExpansionTile(
-                          shape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          collapsedShape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          initiallyExpanded: false,
-                          title: Text(
-                            'Customer information',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          childrenPadding: const EdgeInsets.fromLTRB(
-                            16,
-                            8,
-                            16,
-                            16,
-                          ),
-                          children: [
-                            CustomerInfoSection(
-                              formKey: _formKey,
-                              email: _emailController,
-                              phone: _phoneController,
-                              pan: _panController,
-                              gst: _gstController,
-                              dueAmount: _advanceController,
-                              language: _languageController,
+                        _buildSectionContainer(
+                          child: ExpansionTile(
+                            shape: const RoundedRectangleBorder(
+                              side: BorderSide(color: Colors.transparent),
                             ),
-                          ],
+                            collapsedShape: const RoundedRectangleBorder(
+                              side: BorderSide(color: Colors.transparent),
+                            ),
+                            initiallyExpanded: false,
+                            title: _buildSectionHeader(
+                              'Customer Information',
+                              Icons.info_outline_rounded,
+                            ),
+                            iconColor: LoginColors.primary,
+                            collapsedIconColor: LoginColors.textSecondary,
+                            childrenPadding: const EdgeInsets.fromLTRB(
+                              16,
+                              8,
+                              16,
+                              16,
+                            ),
+                            children: [
+                              CustomerInfoSection(
+                                formKey: _formKey,
+                                email: _emailController,
+                                phone: _phoneController,
+                                pan: _panController,
+                                gst: _gstController,
+                                dueAmount: _advanceController,
+                                language: _languageController,
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 32),
 
                         // Billing Address
-                        ExpansionTile(
-                          shape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          collapsedShape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          title: Text(
-                            'Billing Address',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          childrenPadding: const EdgeInsets.fromLTRB(
-                            16,
-                            8,
-                            16,
-                            16,
-                          ),
-                          children: [
-                            BillingAddressCard(
-                              attention: _billingAttentionController,
-                              line1: _billingLine1Controller,
-                              line2: _billingLine2Controller,
-                              city: _billingCityController,
-                              state: _billingStateController,
-                              pincode: _billingPincodeController,
-                              phone: _billingPhoneController,
-                              email: _billingEmailController,
+                        _buildSectionContainer(
+                          child: ExpansionTile(
+                            shape: const RoundedRectangleBorder(
+                              side: BorderSide(color: Colors.transparent),
                             ),
-                          ],
+                            collapsedShape: const RoundedRectangleBorder(
+                              side: BorderSide(color: Colors.transparent),
+                            ),
+                            title: _buildSectionHeader(
+                              'Billing Address',
+                              Icons.home_work_outlined,
+                            ),
+                            iconColor: LoginColors.primary,
+                            collapsedIconColor: LoginColors.textSecondary,
+                            childrenPadding: const EdgeInsets.fromLTRB(
+                              16,
+                              8,
+                              16,
+                              16,
+                            ),
+                            children: [
+                              BillingAddressCard(
+                                attention: _billingAttentionController,
+                                line1: _billingLine1Controller,
+                                line2: _billingLine2Controller,
+                                city: _billingCityController,
+                                state: _billingStateController,
+                                pincode: _billingPincodeController,
+                                phone: _billingPhoneController,
+                                email: _billingEmailController,
+                              ),
+                            ],
+                          ),
                         ),
 
                         const SizedBox(height: 21),
 
                         // Shipping Address
-                        ExpansionTile(
-                          shape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          collapsedShape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          title: Text(
-                            'Same as billing',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          childrenPadding: const EdgeInsets.fromLTRB(
-                            16,
-                            8,
-                            16,
-                            16,
-                          ),
-                          children: [
-                            CheckboxListTile(
-                              title: const Text('Same as billing'),
-                              value: _sameAsShippingAddress,
-                              onChanged: (value) {
-                                final newValue = value ?? false;
-                                setState(() {
-                                  _sameAsShippingAddress = newValue;
-                                  if (newValue) {
-                                    _shippingAttentionController.text =
-                                        _billingAttentionController.text;
-                                    _shippingLine1Controller.text =
-                                        _billingLine1Controller.text;
-                                    _shippingLine2Controller.text =
-                                        _billingLine2Controller.text;
-                                    _shippingCityController.text =
-                                        _billingCityController.text;
-                                    _shippingStateController.text =
-                                        _billingStateController.text;
-                                    _shippingPincodeController.text =
-                                        _billingPincodeController.text;
-                                    _shippingPhoneController.text =
-                                        _billingPhoneController.text;
-                                    _shippingEmailController.text =
-                                        _billingEmailController.text;
-                                  }
-                                });
-                              },
-                              contentPadding: EdgeInsets.zero,
-                              controlAffinity: ListTileControlAffinity.leading,
+                        _buildSectionContainer(
+                          child: ExpansionTile(
+                            shape: const RoundedRectangleBorder(
+                              side: BorderSide(color: Colors.transparent),
                             ),
+                            collapsedShape: const RoundedRectangleBorder(
+                              side: BorderSide(color: Colors.transparent),
+                            ),
+                            title: _buildSectionHeader(
+                              'Shipping Address',
+                              Icons.local_shipping_outlined,
+                            ),
+                            iconColor: LoginColors.primary,
+                            collapsedIconColor: LoginColors.textSecondary,
+                            childrenPadding: const EdgeInsets.fromLTRB(
+                              16,
+                              8,
+                              16,
+                              16,
+                            ),
+                            children: [
+                              CheckboxListTile(
+                                title: Text(
+                                  'Same as billing',
+                                  style: TextStyle(
+                                    color: LoginColors.textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                value: _sameAsShippingAddress,
+                                activeColor: LoginColors.primary,
+                                checkColor: Colors.white,
+                                onChanged: (value) {
+                                  final newValue = value ?? false;
+                                  setState(() {
+                                    _sameAsShippingAddress = newValue;
+                                    if (newValue) {
+                                      _shippingAttentionController.text =
+                                          _billingAttentionController.text;
+                                      _shippingLine1Controller.text =
+                                          _billingLine1Controller.text;
+                                      _shippingLine2Controller.text =
+                                          _billingLine2Controller.text;
+                                      _shippingCityController.text =
+                                          _billingCityController.text;
+                                      _shippingStateController.text =
+                                          _billingStateController.text;
+                                      _shippingPincodeController.text =
+                                          _billingPincodeController.text;
+                                      _shippingPhoneController.text =
+                                          _billingPhoneController.text;
+                                      _shippingEmailController.text =
+                                          _billingEmailController.text;
+                                    }
+                                  });
+                                },
+                                contentPadding: EdgeInsets.zero,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                              ),
 
-                            ShippingAddressCard(
-                              attention: _shippingAttentionController,
-                              line1: _shippingLine1Controller,
-                              line2: _shippingLine2Controller,
-                              city: _shippingCityController,
-                              state: _shippingStateController,
-                              pincode: _shippingPincodeController,
-                              phone: _shippingPhoneController,
-                              email: _shippingEmailController,
-                            ),
-                          ],
+                              ShippingAddressCard(
+                                attention: _shippingAttentionController,
+                                line1: _shippingLine1Controller,
+                                line2: _shippingLine2Controller,
+                                city: _shippingCityController,
+                                state: _shippingStateController,
+                                pincode: _shippingPincodeController,
+                                phone: _shippingPhoneController,
+                                email: _shippingEmailController,
+                              ),
+                            ],
+                          ),
                         ),
 
                         const SizedBox(height: 20),
@@ -464,17 +539,17 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.1),
+                              color: LoginColors.error.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: Colors.red.withOpacity(0.3),
+                                color: LoginColors.error.withOpacity(0.3),
                               ),
                             ),
                             child: Row(
                               children: [
                                 Icon(
                                   Icons.error_outline,
-                                  color: Colors.red[700],
+                                  color: LoginColors.error,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 12),
@@ -482,7 +557,7 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
                                   child: Text(
                                     editVM.error!,
                                     style: TextStyle(
-                                      color: Colors.red[700],
+                                      color: LoginColors.error,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),

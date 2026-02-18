@@ -1,9 +1,10 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_address_tile.dart';
+import 'package:coreflow/features/vendor/widget/detail/body/vendor_item_section.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_financial_strip.dart';
 import 'package:flutter/material.dart';
-import 'package:coreflow/features/customers/widget/detail/customer_info_tile.dart';
+import 'package:coreflow/features/vendor/widget/detail/vendor_info_tile.dart';
 
 class VendorDetailBody extends StatefulWidget {
   final VendorsDetailData vendor;
@@ -16,6 +17,7 @@ class VendorDetailBody extends StatefulWidget {
 
 class _VendorDetailBodyState extends State<VendorDetailBody> {
   int _selectedIndex = 0;
+  static const double _horizontal = 20;
 
   @override
   Widget build(BuildContext context) {
@@ -24,25 +26,44 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
     return Column(
       children: [
         VendorFinancialStrip(vendor: vendor),
-        const SizedBox(height: 12),
-
+        const SizedBox(height: 10),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildTabText('Basic Info', 0),
-              _buildTabText('Address', 1),
-              _buildTabText('Company', 2),
-            ],
+          padding: const EdgeInsets.symmetric(horizontal: _horizontal),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: LoginColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: LoginColors.borderLight),
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildTabText('Basic Info', 0),
+                  _buildTabText('Items', 1),
+                  _buildTabText('Address', 2),
+                  _buildTabText('Company', 3),
+                ],
+              ),
+            ),
           ),
         ),
-
-        const Divider(height: 1, color: LoginColors.border),
-
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(12, 16, 12, 32),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(_horizontal, 14, _horizontal, 32),
+          child: Container(
+            decoration: BoxDecoration(
+              color: LoginColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: LoginColors.borderLight),
+              boxShadow: [
+                BoxShadow(
+                  color: LoginColors.shadowLight.withOpacity(0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
             child: _buildSelectedSection(vendor),
           ),
         ),
@@ -56,7 +77,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
     return GestureDetector(
       onTap: () => setState(() => _selectedIndex = index),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -94,8 +115,10 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
       case 0:
         return _BasicInfoSection(vendor: vendor);
       case 1:
-        return _AddressSection(vendor: vendor);
+        return const VendorItemSection();
       case 2:
+        return _AddressSection(vendor: vendor);
+      case 3:
         return _CompanySection(vendor: vendor);
       default:
         return const SizedBox.shrink();
@@ -117,7 +140,7 @@ class _SectionHeader extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: LoginColors.textPrimary,
@@ -149,32 +172,32 @@ class _BasicInfoSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(title: 'Basic Information'),
-        const Divider(height: 1, thickness: 1, color: LoginColors.border),
+        Divider(height: 1, thickness: 1, color: LoginColors.border),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Column(
             children: [
-              CustomerInfoTile(
+              VendorInfoTile(
                 icon: Icons.email_outlined,
                 label: 'Email',
                 value: vendor.email,
               ),
-              CustomerInfoTile(
+              VendorInfoTile(
                 icon: Icons.phone_outlined,
                 label: 'Phone',
                 value: vendor.phone,
               ),
-              CustomerInfoTile(
+              VendorInfoTile(
                 icon: Icons.badge_outlined,
                 label: 'PAN',
                 value: vendor.pan,
               ),
-              CustomerInfoTile(
+              VendorInfoTile(
                 icon: Icons.receipt_long_outlined,
                 label: 'GST',
                 value: vendor.gst,
               ),
-              CustomerInfoTile(
+              VendorInfoTile(
                 icon: Icons.language_rounded,
                 label: 'Language',
                 value: vendor.lang,
@@ -194,26 +217,31 @@ class _AddressSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Address? shippingToShow =
+        (vendor.sameAsBillingAddress || vendor.shippingAddress == null)
+            ? vendor.billingAddress
+            : vendor.shippingAddress;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(title: 'Address Details'),
-        const Divider(height: 1, thickness: 1, color: LoginColors.border),
+        Divider(height: 1, thickness: 1, color: LoginColors.border),
         Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               VendorAddressTile(
-                title: 'Billing address',
+                title: 'Billing Address',
                 address: vendor.billingAddress,
               ),
-              if (vendor.shippingAddress != null)
+              if (shippingToShow != null) ...[
+                const SizedBox(height: 8),
                 VendorAddressTile(
-                  title: vendor.sameAsBillingAddress
-                      ? 'Shipping address'
-                      : 'Shipping address',
-                  address: vendor.shippingAddress!,
+                  title: 'Shipping Address',
+                  address: shippingToShow,
                 ),
+              ],
             ],
           ),
         ),
@@ -233,16 +261,26 @@ class _CompanySection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(title: 'Company Details'),
-        const Divider(height: 1, thickness: 1, color: LoginColors.border),
+        Divider(height: 1, thickness: 1, color: LoginColors.border),
         Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              CustomerInfoTile(
+              VendorInfoTile(
                 icon: Icons.business_rounded,
                 label: 'Company',
-                value: vendor.company.companyName ?? '—',
+                value: vendor.company.companyName,
               ),
+              if (vendor.vendorCompany != null) ...[
+                VendorInfoTile(
+                  label: 'Vendor Company ID',
+                  value: vendor.vendorCompany!.companyId?.toString() ?? '—',
+                ),
+                VendorInfoTile(
+                  label: 'Vendor Company Name',
+                  value: vendor.vendorCompany!.companyName ?? '—',
+                ),
+              ],
             ],
           ),
         ),

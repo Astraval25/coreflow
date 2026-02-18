@@ -13,6 +13,12 @@ class CustomTextField extends StatelessWidget {
   final void Function(String)? onSubmitted;
   final bool enabled;
   final List<String>? autofillHints;
+  final String? hintText;
+  final String? helperText;
+  final String? prefixText;
+  final int? minLines;
+  final int? maxLines;
+  final bool alignLabelWithHint;
 
   const CustomTextField({
     super.key,
@@ -27,12 +33,20 @@ class CustomTextField extends StatelessWidget {
     this.onSubmitted,
     this.enabled = true,
     this.autofillHints,
+    this.hintText,
+    this.helperText,
+    this.prefixText,
+    this.minLines,
+    this.maxLines = 1,
+    this.alignLabelWithHint = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
+      minLines: minLines,
+      maxLines: maxLines,
       obscureText: obscureText,
       keyboardType: keyboardType,
       textInputAction: textInputAction,
@@ -43,6 +57,10 @@ class CustomTextField extends StatelessWidget {
       style: const TextStyle(fontSize: 16),
       decoration: InputDecoration(
         labelText: labelText,
+        hintText: hintText,
+        helperText: helperText,
+        prefixText: prefixText,
+        alignLabelWithHint: alignLabelWithHint,
         labelStyle: TextStyle(color: LoginColors.textSecondary),
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, color: LoginColors.textSecondary)
@@ -65,7 +83,7 @@ class CustomTextField extends StatelessWidget {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide(color: Colors.red.shade400, width: 2),
+          borderSide: BorderSide(color: LoginColors.error, width: 2),
         ),
       ),
     );

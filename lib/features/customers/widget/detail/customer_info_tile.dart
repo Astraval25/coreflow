@@ -17,8 +17,6 @@ class CustomerInfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     final displayValue = (value?.trim().isNotEmpty ?? false) ? value! : '—';
 
     final effectiveValueColor =
@@ -27,24 +25,55 @@ class CustomerInfoTile extends StatelessWidget {
             ? LoginColors.textTertiary
             : LoginColors.textPrimary);
 
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: icon != null
-          ? Icon(icon, color: LoginColors.textPrimary.withOpacity(0.75))
-          : null,
-      title: Text(
-        label,
-        style: theme.textTheme.labelMedium?.copyWith(
-          color: LoginColors.textSecondary,
-          fontWeight: FontWeight.w500,
-        ),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: LoginColors.fieldFill,
+        borderRadius: BorderRadius.circular(12),
       ),
-      subtitle: Text(
-        displayValue,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: effectiveValueColor,
-          fontWeight: displayValue == '—' ? FontWeight.normal : FontWeight.w600,
-        ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (icon != null) ...[
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: LoginColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 16, color: LoginColors.primary),
+            ),
+            const SizedBox(width: 10),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: LoginColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  displayValue,
+                  style: TextStyle(
+                    color: effectiveValueColor,
+                    fontWeight: displayValue == '—'
+                        ? FontWeight.w500
+                        : FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

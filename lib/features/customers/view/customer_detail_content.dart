@@ -1,24 +1,28 @@
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_header.dart';
+import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_detail_body.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_empty_state.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_error_state.dart';
 import '../view_model/customer_detail_view_model.dart';
 import '../../dashboard/dashboard_view_model/dashboard_view_model.dart';
-import '../../dashboard/widget/menu.dart';
 
 class CustomerDetailContent extends StatelessWidget {
   const CustomerDetailContent({super.key});
 
   @override
   Widget build(BuildContext context) {
+    LoginColors.setBrightness(Theme.of(context).brightness);
     final dashboardVM = context.read<DashboardViewModel>();
 
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -34,7 +38,14 @@ class CustomerDetailContent extends StatelessWidget {
         leading: Builder(
           builder: (scaffoldContext) {
             return IconButton(
-              icon: const Icon(Icons.menu_rounded, color: Colors.white),
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.menu_rounded, color: Colors.white, size: 19),
+              ),
               onPressed: () => Scaffold.of(scaffoldContext).openDrawer(),
             );
           },
@@ -69,11 +80,19 @@ class CustomerDetailContent extends StatelessWidget {
               }
 
               return PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, color: Colors.white),
-                color: Colors.white,
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.more_vert, color: Colors.white, size: 19),
+                ),
+                color: LoginColors.surface,
                 elevation: 4,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: LoginColors.borderLight),
                 ),
                 onSelected: (value) async {
                   switch (value) {
@@ -93,11 +112,16 @@ class CustomerDetailContent extends StatelessWidget {
                   }
                 },
                 itemBuilder: (BuildContext context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'edit',
+                    textStyle: TextStyle(
+                      color: LoginColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
                     child: Row(
                       children: [
-                        SizedBox(width: 12),
+                        Icon(Icons.edit_rounded, size: 18, color: LoginColors.primary),
+                        const SizedBox(width: 10),
                         Text(
                           'Edit',
                           style: TextStyle(color: LoginColors.textPrimary),
@@ -107,14 +131,21 @@ class CustomerDetailContent extends StatelessWidget {
                   ),
                   PopupMenuItem(
                     value: 'otherAction',
+                    textStyle: TextStyle(
+                      color: LoginColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
                     child: Row(
                       children: [
-                        const SizedBox(width: 12),
+                        Icon(
+                          vm.isActive ? Icons.block_rounded : Icons.check_circle_rounded,
+                          size: 18,
+                          color: vm.isActive ? LoginColors.error : LoginColors.success,
+                        ),
+                        const SizedBox(width: 10),
                         Text(
                           vm.isActive ? 'Make inactive' : 'Make active',
-                          style: const TextStyle(
-                            color: LoginColors.textPrimary,
-                          ),
+                          style: TextStyle(color: LoginColors.textPrimary),
                         ),
                       ],
                     ),
@@ -130,36 +161,89 @@ class CustomerDetailContent extends StatelessWidget {
       drawer: AppDrawer(vm: dashboardVM),
       body: Consumer<CustomerDetailViewModel>(
         builder: (context, vm, child) {
-          if (vm.isLoading && vm.customer == null) {
-            return const Center(
-              child: CircularProgressIndicator(color: LoginColors.primary),
-            );
-          }
-
-          if (vm.isError) {
-            return CustomerErrorState(
-              message: vm.errorMessage ?? 'Failed to load customer data',
-              onRetry: vm.loadCustomerDetail,
-            );
-          }
-
-          if (!vm.hasData || vm.customer == null) {
-            return const CustomerEmptyState();
-          }
-
-          return Column(
-            children: [
-              CustomerHeader(
-                customer: vm.customer!,
-                onToggleStatus: () => vm.isActive
-                    ? vm.deactivateCustomer(context)
-                    : vm.activateCustomer(context),
+          return RefreshIndicator(
+            onRefresh: () async => vm.loadCustomerDetail(),
+            backgroundColor: LoginColors.surface,
+            color: LoginColors.primary,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height -
+                      AppBar().preferredSize.height -
+                      MediaQuery.of(context).padding.top,
+                ),
+                child: _buildBody(context, vm),
               ),
-              Expanded(child: CustomerDetailBody(customer: vm.customer!)),
-            ],
+            ),
           );
         },
       ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, CustomerDetailViewModel vm) {
+    if (vm.isLoading) {
+      return Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // Header Skeleton
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: LoginColors.surface,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: LoginColors.borderLight, width: 1),
+              ),
+              child: Row(
+                children: [
+                  const Skeleton(height: 70, width: 70, borderRadius: 35),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Skeleton(height: 24, width: 180),
+                        const SizedBox(height: 12),
+                        const Skeleton(height: 16, width: 120),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Body Skeletons
+            const Skeleton(height: 200, width: double.infinity, borderRadius: 24),
+            const SizedBox(height: 24),
+            const Skeleton(height: 180, width: double.infinity, borderRadius: 24),
+          ],
+        ),
+      );
+    }
+
+    if (vm.isError) {
+      return CustomerErrorState(
+        message: vm.errorMessage ?? 'Failed to load customer data',
+        onRetry: vm.loadCustomerDetail,
+      );
+    }
+
+    if (!vm.hasData || vm.customer == null) {
+      return const CustomerEmptyState();
+    }
+
+    return Column(
+      children: [
+        CustomerHeader(
+          customer: vm.customer!,
+          onToggleStatus: () => vm.isActive
+              ? vm.deactivateCustomer(context)
+              : vm.activateCustomer(context),
+        ),
+        CustomerDetailBody(customer: vm.customer!),
+      ],
     );
   }
 }

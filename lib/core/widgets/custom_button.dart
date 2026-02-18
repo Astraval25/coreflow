@@ -1,11 +1,14 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';
+
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
   final bool isLoading;
   final bool enabled;
   final TextStyle? textStyleOverride;
+  final IconData? icon;
+  final double iconSize;
 
   const CustomButton({
     super.key,
@@ -14,6 +17,8 @@ class CustomButton extends StatelessWidget {
     this.isLoading = false,
     this.enabled = true,
     this.textStyleOverride,
+    this.icon,
+    this.iconSize = 18,
   });
 
   @override
@@ -27,8 +32,9 @@ class CustomButton extends StatelessWidget {
         onPressed: isDisabled ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: LoginColors.primary,
-          disabledBackgroundColor: LoginColors.primary.withOpacity(0.5),
+          disabledBackgroundColor: LoginColors.primary.withOpacity(0.4),
           foregroundColor: Colors.white,
+          disabledForegroundColor: Colors.white.withOpacity(0.6),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
@@ -44,14 +50,33 @@ class CustomButton extends StatelessWidget {
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               )
-            : Text(
+            : icon == null
+            ? Text(
                 text,
-                style: textStyleOverride ??
+                style:
+                    textStyleOverride ??
                     const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
+              )
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: iconSize, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text(
+                    text,
+                    style:
+                        textStyleOverride ??
+                        const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                  ),
+                ],
               ),
       ),
     );

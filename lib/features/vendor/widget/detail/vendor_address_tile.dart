@@ -37,42 +37,52 @@ class VendorAddressTile extends StatelessWidget {
     final fullAddress =
         parts.isEmpty ? 'No address provided' : parts.join('\n');
 
-    const String vendorName = 'Vendor';
+    final attention = (address!.attentionName?.trim().isNotEmpty ?? false)
+        ? address!.attentionName!.trim()
+        : '—';
+    final hasAttention = attention != '—';
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: LoginColors.fieldFill,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 16,
+            style: TextStyle(
+              fontSize: 15.5,
               fontWeight: FontWeight.w700,
               color: LoginColors.textPrimary,
             ),
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, thickness: 1, color: LoginColors.border),
+          Divider(height: 1, thickness: 1, color: LoginColors.border),
 
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
                 Icons.person_pin_rounded,
-                size: 20,
-                color: LoginColors.textPrimary.withOpacity(0.75),
+                size: 18,
+                color: LoginColors.primary,
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  vendorName,
+                  attention,
                   style: TextStyle(
                     fontSize: 15,
                     height: 1.3,
                     fontWeight: FontWeight.w500,
-                    color: LoginColors.textPrimary,
+                    color: hasAttention
+                        ? LoginColors.textPrimary
+                        : LoginColors.textTertiary,
                   ),
                 ),
               ),
@@ -85,8 +95,8 @@ class VendorAddressTile extends StatelessWidget {
             children: [
               Icon(
                 Icons.location_on_outlined,
-                size: 20,
-                color: LoginColors.textPrimary.withOpacity(0.75),
+                size: 18,
+                color: LoginColors.primary,
               ),
               const SizedBox(width: 12),
               Expanded(

@@ -1,3 +1,5 @@
+import 'item.dart';
+
 class ItemResponse {
   final bool responseStatus;
   final int responseCode;
@@ -65,20 +67,38 @@ class DetailItem {
     this.unit,
   });
 
+  Item toItem() {
+    return Item(
+      itemId: itemId,
+      itemName: itemName,
+      itemType: itemType,
+      unit: unit ?? 'Unit',
+      baseSalesPrice: baseSalesPrice ?? 0.0,
+      basePurchasePrice: basePurchasePrice,
+      salesDescription: salesDescription,
+      purchaseDescription: purchaseDescription,
+      hsnCode: hsnCode.trim().isEmpty ? null : hsnCode.trim(),
+      taxRate: taxRate,
+      isActive: isActive,
+      isSellable: isSellable,
+      isPurchasable: isPurchasable,
+    );
+  }
+
   factory DetailItem.fromJson(Map<String, dynamic> json) {
     return DetailItem(
-      createdBy: json['createdBy'],
-      createdDt: json['createdDt'],
-      hsnCode: json['hsnCode'],
-      isActive: json['isActive'],
-      isPurchasable: json['isPurchasable'],
-      isSellable: json['isSellable'],
-      itemId: json['itemId'],
+      createdBy: json['createdBy'] ?? 0,
+      createdDt: json['createdDt'] ?? '',
+      hsnCode: json['hsnCode'] ?? '',
+      isActive: json['isActive'] ?? true,
+      isPurchasable: json['isPurchasable'] ?? true,
+      isSellable: json['isSellable'] ?? true,
+      itemId: json['itemId'] ?? 0,
       itemImage: json['itemImage'],
-      itemName: json['itemName'],
-      itemType: json['itemType'],
-      lastModifiedBy: json['lastModifiedBy'],
-      lastModifiedDt: json['lastModifiedDt'],
+      itemName: json['itemName'] ?? '',
+      itemType: json['itemType'] ?? 'PRODUCT',
+      lastModifiedBy: json['lastModifiedBy'] ?? 0,
+      lastModifiedDt: json['lastModifiedDt'] ?? '',
       purchaseDescription: json['purchaseDescription'],
       basePurchasePrice: (json['basePurchasePrice'] as num?)?.toDouble(),
       salesDescription: json['salesDescription'],

@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'package:coreflow/core/config/app_config.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -9,8 +11,7 @@ import '../../core/storage/token_storage.dart';
 class ApiService {
   static const Duration timeout = Duration(seconds: 30);
   static bool _isRefreshing = false;
-  static Completer<String?>?
-  _tokenRefreshCompleter;
+  static Completer<String?>? _tokenRefreshCompleter;
 
   static Future<Map<String?, String?>> _getTokens() async {
     final prefs = await SharedPreferences.getInstance();
@@ -144,4 +145,129 @@ class ApiService {
           .timeout(timeout);
     });
   }
+
+  Future<http.Response> multipartPost({
+    required String url,
+    required Map<String, String> fields,
+    File? file,
+    String fileFieldName = 'file',
+  }) async {
+    debugPrint('MULTIPART POST → $url');
+    debugPrint('FIELDS → $fields');
+    debugPrint('FILE → ${file?.path}');
+
+    return _makeRequest((token) async {
+      final uri = Uri.parse(url);
+      final request = http.MultipartRequest('POST', uri);
+
+      // ✅ Authorization
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
+      // ❗ DO NOT set Content-Type manually
+
+      // ✅ Add text fields
+      fields.forEach((key, value) {
+        if (value.trim().isNotEmpty) {
+          request.fields[key] = value;
+        }
+      });
+
+      // ✅ Add file
+      if (file != null && await file.exists()) {
+        final fileName = file.path.split('/').last;
+
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            fileFieldName,
+            file.path,
+            filename: fileName,
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send().timeout(timeout);
+      return await http.Response.fromStream(streamedResponse);
+    });
+  }
+
+  Future<http.Response> multipartPut({
+    required String url,
+    required Map<String, String> fields,
+    File? file,
+    String fileFieldName = 'file',
+  }) async {
+    debugPrint('MULTIPART PUT → $url');
+    debugPrint('FIELDS → $fields');
+    debugPrint('FILE → ${file?.path}');
+
+    return _makeRequest((token) async {
+      final uri = Uri.parse(url);
+      final request = http.MultipartRequest('PUT', uri);
+
+      // ✅ Authorization
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
+      // ❗ DO NOT set Content-Type manually
+
+      // ✅ Add text fields
+      fields.forEach((key, value) {
+        if (value.trim().isNotEmpty) {
+          request.fields[key] = value;
+        }
+      });
+
+      // ✅ Add file
+      if (file != null && await file.exists()) {
+        final fileName = file.path.split('/').last;
+
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            fileFieldName,
+            file.path,
+            filename: fileName,
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send().timeout(timeout);
+      return await http.Response.fromStream(streamedResponse);
+    });
+  }
+
+  Future<http.Response> createItem({
+    required int companyId,
+    required Map<String, dynamic> itemData,
+    File? imageFile,
+  }) async {
+    final url = AppConfig.getItemsUrl(companyId);
+
+    return multipartPost(
+      url: url,
+      fields: {"item": jsonEncode(itemData)},
+      file: imageFile,
+      fileFieldName: "file",
+    );
+  }
+
+  Future<http.Response> updateItem({
+    required int companyId,
+    required int itemId,
+    required Map<String, dynamic> itemData,
+    File? imageFile,
+  }) async {
+    final url = '${AppConfig.getItemsUrl(companyId)}/$itemId';
+
+    return multipartPut(
+      url: url,
+      fields: {"item": jsonEncode(itemData)},
+      file: imageFile,
+      fileFieldName: "file",
+    );
+  }
+
+  
 }
