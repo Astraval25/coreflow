@@ -147,8 +147,25 @@ class CustomerListItem extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      );
+    }
+
+    if (customer.email != null && customer.email!.isNotEmpty) {
+      subtitleChildren.add(
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            customer.email!,
+            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: subtitleChildren,
     );
   }
 }

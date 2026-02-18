@@ -24,48 +24,27 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
     final vendor = widget.vendor;
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         VendorFinancialStrip(vendor: vendor),
-        const SizedBox(height: 10),
+
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: _horizontal),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(
-              color: LoginColors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: LoginColors.borderLight),
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildTabText('Basic Info', 0),
-                  _buildTabText('Items', 1),
-                  _buildTabText('Address', 2),
-                  _buildTabText('Company', 3),
-                ],
-              ),
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildTabText('Basic Info', 0),
+              _buildTabText('Address', 1),
+              _buildTabText('Company', 2),
+            ],
           ),
         ),
+
+        const Divider(height: 1, color: LoginColors.border),
+
         Padding(
-          padding: const EdgeInsets.fromLTRB(_horizontal, 14, _horizontal, 32),
-          child: Container(
-            decoration: BoxDecoration(
-              color: LoginColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: LoginColors.borderLight),
-              boxShadow: [
-                BoxShadow(
-                  color: LoginColors.shadowLight.withOpacity(0.06),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: _buildSelectedSection(vendor),
-          ),
+          padding: const EdgeInsets.fromLTRB(1, 1, 1, 2),
+          child: _buildSelectedSection(vendor),
         ),
       ],
     );
@@ -74,38 +53,42 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
   Widget _buildTabText(String title, int index) {
     final isSelected = _selectedIndex == index;
 
-    return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 15.5,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                color: isSelected
-                    ? LoginColors.primaryDark
-                    : LoginColors.textSecondary,
+    return TextButton(
+      onPressed: () {
+        setState(() => _selectedIndex = index);
+      },
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 15.5,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+              color: isSelected
+                  ? LoginColors.primaryDark
+                  : LoginColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeInOut,
+            height: 3,
+            width: isSelected ? 44 : 0,
+            decoration: BoxDecoration(
+              color: LoginColors.primary,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(4),
               ),
             ),
-            const SizedBox(height: 6),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              height: 3,
-              width: isSelected ? 44 : 0,
-              decoration: BoxDecoration(
-                color: LoginColors.primary,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(4),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -219,8 +202,8 @@ class _AddressSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final Address? shippingToShow =
         (vendor.sameAsBillingAddress || vendor.shippingAddress == null)
-            ? vendor.billingAddress
-            : vendor.shippingAddress;
+        ? vendor.billingAddress
+        : vendor.shippingAddress;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

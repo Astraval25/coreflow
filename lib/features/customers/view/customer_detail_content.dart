@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_header.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_detail_body.dart';
-import 'package:coreflow/features/customers/widget/detail/customer_empty_state.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_error_state.dart';
 import '../view_model/customer_detail_view_model.dart';
 import '../../dashboard/dashboard_view_model/dashboard_view_model.dart';
@@ -119,9 +118,14 @@ class CustomerDetailContent extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                     child: Row(
-                      children: [
-                        Icon(Icons.edit_rounded, size: 18, color: LoginColors.primary),
-                        const SizedBox(width: 10),
+                      children: const [
+                        SizedBox(width: 12),
+                        Icon(
+                          Icons.edit,
+                          size: 18,
+                          color: LoginColors.textPrimary,
+                        ),
+                        SizedBox(width: 8),
                         Text(
                           'Edit',
                           style: TextStyle(color: LoginColors.textPrimary),
@@ -137,12 +141,16 @@ class CustomerDetailContent extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
+                        const SizedBox(width: 12),
                         Icon(
-                          vm.isActive ? Icons.block_rounded : Icons.check_circle_rounded,
+                          vm.isActive ? Icons.circle : Icons.circle,
                           size: 18,
-                          color: vm.isActive ? LoginColors.error : LoginColors.success,
+                          color: vm.isActive
+                              ? const Color.fromARGB(255, 255, 0, 0)
+                              : const Color.fromARGB(255, 0, 255, 0),
                         ),
-                        const SizedBox(width: 10),
+
+                        const SizedBox(width: 8),
                         Text(
                           vm.isActive ? 'Make inactive' : 'Make active',
                           style: TextStyle(color: LoginColors.textPrimary),
@@ -159,25 +167,56 @@ class CustomerDetailContent extends StatelessWidget {
       ),
       drawerEnableOpenDragGesture: false,
       drawer: AppDrawer(vm: dashboardVM),
-      body: Consumer<CustomerDetailViewModel>(
-        builder: (context, vm, child) {
-          return RefreshIndicator(
-            onRefresh: () async => vm.loadCustomerDetail(),
-            backgroundColor: LoginColors.surface,
-            color: LoginColors.primary,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: MediaQuery.of(context).size.height -
-                      AppBar().preferredSize.height -
-                      MediaQuery.of(context).padding.top,
-                ),
-                child: _buildBody(context, vm),
-              ),
-            ),
-          );
+      body: RefreshIndicator(
+        onRefresh: () async {
+          final vm = context.read<CustomerDetailViewModel>();
+          await vm.loadCustomerDetail();
         },
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final minHeight = constraints.maxHeight;
+            final vm = context.watch<CustomerDetailViewModel>();
+
+            if (vm.isLoading && vm.customer == null) {
+              return ConstrainedBox(
+                constraints: BoxConstraints(minHeight: minHeight),
+                child: const Center(
+                  child: CircularProgressIndicator(color: LoginColors.primary),
+                ),
+              );
+            }
+
+            if (vm.isError) {
+              return ConstrainedBox(
+                constraints: BoxConstraints(minHeight: minHeight),
+                child: CustomerErrorState(
+                  message: vm.errorMessage ?? 'Failed to load customer data',
+                  onRetry: vm.loadCustomerDetail,
+                ),
+              );
+            }
+
+            // if (vm.customer == null) {
+            //   return ConstrainedBox(
+            //     constraints: BoxConstraints(minHeight: minHeight),
+            //     child: const CustomerEmptyState(),
+            //   );
+            // }
+
+            // Main content
+            return Column(
+              children: [
+                CustomerHeader(
+                  customer: vm.customer!,
+                  onToggleStatus: () => vm.isActive
+                      ? vm.deactivateCustomer(context)
+                      : vm.activateCustomer(context),
+                ),
+                Expanded(child: CustomerDetailBody(customer: vm.customer!)),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

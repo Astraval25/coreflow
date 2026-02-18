@@ -25,28 +25,16 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
     return Column(
       children: [
         CustomerFinancialStrip(customer: customer),
-        const SizedBox(height: 10),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: _horizontal),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(
-              color: LoginColors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: LoginColors.borderLight),
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildTabText('Basic Info', 0),
 
-                  _buildTabText('Items', 1),
-                  _buildTabText('Address', 2),
-                  _buildTabText('Company', 3),
-                ],
-              ),
-            ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildTabText('Basic Info', 0),
+              _buildTabText('Address', 1),
+              _buildTabText('Company', 2),
+            ],
           ),
         ),
         Padding(
@@ -67,38 +55,51 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
   Widget _buildTabText(String title, int index) {
     final isSelected = _selectedIndex == index;
 
-    return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 15.5,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                color: isSelected
-                    ? LoginColors.primaryDark
-                    : LoginColors.textSecondary,
+    return TextButton(
+      onPressed: () {
+        setState(() => _selectedIndex = index);
+      },
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        backgroundColor: isSelected
+            ? const Color.fromARGB(255, 255, 255, 255).withOpacity(0.1)
+            : const Color.fromARGB(0, 255, 255, 255), // background on select
+        foregroundColor: const Color.fromARGB(
+          0,
+          255,
+          255,
+          255,
+        ), // keep text color controlled manually
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 15.5,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+              color: isSelected
+                  ? LoginColors.primaryDark
+                  : LoginColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 1),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeInOut,
+            height: 3,
+            width: isSelected ? 44 : 0,
+            decoration: BoxDecoration(
+              color: LoginColors.primary,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(4),
               ),
             ),
-            const SizedBox(height: 6),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              height: 3,
-              width: isSelected ? 44 : 0,
-              decoration: BoxDecoration(
-                color: LoginColors.primary,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(4),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
