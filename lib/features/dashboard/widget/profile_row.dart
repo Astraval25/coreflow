@@ -1,3 +1,4 @@
+import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -9,57 +10,57 @@ class ProfileRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userName = vm.userName ?? 'User';
+    final userEmail = vm.email ?? 'No email provided';
+
     return Container(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: LoginColors.surface,
         border: Border(
-          top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+          top: BorderSide(color: LoginColors.borderLight, width: 1),
         ),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
         onTap: () {
           Navigator.pop(context);
           context.push('/profile');
         },
-        child: Padding(
-          padding: const EdgeInsets.all(8),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: LoginColors.fieldFill,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: LoginColors.borderLight, width: 1),
+          ),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: _getAvatarColor(vm.userName ?? 'User'),
-                child: Text(
-                  (vm.userName ?? 'User').isNotEmpty
-                      ? (vm.userName![0].toUpperCase())
-                      : 'U',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Flexible(
+              _buildAvatar(userName),
+              const SizedBox(width: 14),
+              Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      vm.userName ?? 'User',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
+                      userName,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: LoginColors.textPrimary,
+                        letterSpacing: -0.2,
                       ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      vm.email ?? '',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      userEmail,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: LoginColors.textSecondary,
                       ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
@@ -67,11 +68,25 @@ class ProfileRow extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 40),
-              Icon(
-                Icons.arrow_forward_ios,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                size: 18,
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: LoginColors.surface,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: LoginColors.shadowLight.withOpacity(0.04),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: LoginColors.textTertiary,
+                  size: 14,
+                ),
               ),
             ],
           ),
@@ -80,24 +95,58 @@ class ProfileRow extends StatelessWidget {
     );
   }
 
+  Widget _buildAvatar(String name) {
+    final color = _getAvatarColor(name);
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color,
+            color.withOpacity(0.8),
+          ],
+        ),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          name.isNotEmpty ? name[0].toUpperCase() : 'U',
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
   Color _getAvatarColor(String name) {
     const colors = [
-      Color(0xFFE91E63),
-      Color(0xFF9C27B0),
-      Color(0xFF673AB7),
-      Color(0xFF3F51B5),
-      Color(0xFF2196F3),
-      Color(0xFF00BCD4),
-      Color(0xFF009688),
-      Color(0xFF4CAF50),
-      Color(0xFF8BC34A),
-      Color(0xFFCDDC39),
-      Color(0xFFFFC107),
-      Color(0xFFFF9800),
-      Color(0xFFFF5722),
-      Color(0xFF795548),
-      Color(0xFF607D8B),
-      Color(0xFFF44336),
+      Color(0xFF0F172A), // Slate 900
+      Color(0xFF1E293B), // Slate 800
+      Color(0xFF334155), // Slate 700
+      Color(0xFF475569), // Slate 600
+      Color(0xFF64748B), // Slate 500
+      Color(0xFF0D9488), // Teal 600
+      Color(0xFF0891B2), // Cyan 600
+      Color(0xFF2563EB), // Blue 600
+      Color(0xFF4F46E5), // Indigo 600
+      Color(0xFF7C3AED), // Violet 600
+      Color(0xFF9333EA), // Purple 600
+      Color(0xFFC026D3), // Fuchsia 600
+      Color(0xFFDB2777), // Pink 600
+      Color(0xFFE11D48), // Rose 600
     ];
     final hash = name.hashCode.abs();
     return colors[hash % colors.length];

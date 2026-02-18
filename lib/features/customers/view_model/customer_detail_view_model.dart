@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/customer/customer_detail.dart';
+import 'package:coreflow/domain/model/customer/customer_mapped_item.dart';
+import 'package:coreflow/domain/model/items/item.dart';
+import 'package:coreflow/domain/model/items/item_status_response.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart'; 
 
@@ -11,7 +14,11 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
   CustomerViewState _state = CustomerViewState.initial;
   CustomerDetailData? _customer;
+  List<CustomerMappedItem> _mappedItems = [];
   String? _errorMessage;
+  bool _isMappedItemsLoading = false;
+  bool _isMappedItemStatusUpdating = false;
+  int? _statusUpdatingItemId;
 
   final int _companyId;
   final int _customerId;
@@ -24,7 +31,11 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
   CustomerViewState get state => _state;
   CustomerDetailData? get customer => _customer;
+  List<CustomerMappedItem> get mappedItems => List.unmodifiable(_mappedItems);
   String? get errorMessage => _errorMessage;
+  bool get isMappedItemsLoading => _isMappedItemsLoading;
+  bool get isMappedItemStatusUpdating => _isMappedItemStatusUpdating;
+  int? get statusUpdatingItemId => _statusUpdatingItemId;
 
   bool get isLoading => _state == CustomerViewState.loading;
   bool get hasData => _state == CustomerViewState.loaded;
@@ -48,6 +59,7 @@ class CustomerDetailViewModel extends ChangeNotifier {
       if (customerData != null) {
         _customer = customerData;
         _updateState(CustomerViewState.loaded);
+        await loadMappedItems();
       } else {
         _updateState(CustomerViewState.noData, error: 'No customer data found');
       }
@@ -113,6 +125,135 @@ class CustomerDetailViewModel extends ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  Future<void> loadMappedItems() async {
+    _isMappedItemsLoading = true;
+    notifyListeners();
+
+    try {
+      final items = await _authRepository.getCustomerMappedItems(
+        _companyId,
+        _customerId,
+      );
+      _mappedItems = items;
+    } catch (e) {
+      debugPrint('Failed to load mapped items: $e');
+      _mappedItems = [];
+    } finally {
+      _isMappedItemsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<List<Item>> getActiveCompanyItems() async {
+    try {
+      final allItems = await _authRepository.getItems(_companyId);
+      return allItems.where((item) => item.isActive).toList();
+    } catch (e) {
+      debugPrint('Failed to load active company items: $e');
+      return [];
+    }
+  }
+
+  Future<bool> createCustomerItem({
+    required int itemId,
+    required double salesPrice,
+    String? salesDescription,
+  }) async {
+    try {
+      final response = await _authRepository.createCustomerItem(
+        companyId: _companyId,
+        customerId: _customerId,
+        itemId: itemId,
+        salesPrice: salesPrice,
+        salesDescription: salesDescription,
+      );
+
+      if (response?.responseStatus == true) {
+        await loadMappedItems();
+        return true;
+      }
+
+      _errorMessage = response?.responseMessage ?? 'Create customer item failed';
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'Create customer item error: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updateCustomerItem({
+    required int itemId,
+    required double salesPrice,
+    String? salesDescription,
+  }) async {
+    try {
+      final response = await _authRepository.updateCustomerItem(
+        companyId: _companyId,
+        customerId: _customerId,
+        itemId: itemId,
+        salesPrice: salesPrice,
+        salesDescription: salesDescription,
+      );
+
+      if (response?.responseStatus == true) {
+        await loadMappedItems();
+        return true;
+      }
+
+      _errorMessage = response?.responseMessage ?? 'Update customer item failed';
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'Update customer item error: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> setMappedItemActiveStatus({
+    required int itemId,
+    required bool shouldActivate,
+  }) async {
+    _isMappedItemStatusUpdating = true;
+    _statusUpdatingItemId = itemId;
+    notifyListeners();
+
+    try {
+      final ItemStatusResponse? response = shouldActivate
+          ? await _authRepository.activateCustomerMappedItem(
+              _companyId,
+              _customerId,
+              itemId,
+            )
+          : await _authRepository.deactivateCustomerMappedItem(
+              _companyId,
+              _customerId,
+              itemId,
+            );
+
+      if (response?.responseStatus == true) {
+        await loadMappedItems();
+        return true;
+      }
+
+      _errorMessage =
+          response?.responseMessage ??
+          (shouldActivate ? 'Activate item failed' : 'Deactivate item failed');
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'Item status update failed: $e';
+      notifyListeners();
+      return false;
+    } finally {
+      _isMappedItemStatusUpdating = false;
+      _statusUpdatingItemId = null;
+      notifyListeners();
+    }
   }
 
   void _updateState(CustomerViewState state, {String? error}) {

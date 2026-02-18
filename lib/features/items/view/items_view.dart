@@ -1,10 +1,9 @@
-import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/data/services/api_services.dart';
-import 'package:coreflow/domain/model/items/item.dart';
+import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/dashboard/widget/menu.dart';
 import 'package:coreflow/features/items/view/item_detail_view.dart';
 import 'package:coreflow/features/items/view_model/items_view_model.dart';
+import 'package:coreflow/features/items/widget/items_view_body.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,7 +18,7 @@ class ItemsPage extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(
           create: (_) =>
-              ItemsViewModel(apiService: ApiService(), companyId: companyId)
+              ItemsViewModel(repository: AuthRepository(), companyId: companyId)
                 ..fetchItems(),
         ),
         ChangeNotifierProvider(

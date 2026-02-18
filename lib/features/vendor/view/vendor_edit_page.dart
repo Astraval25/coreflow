@@ -1,13 +1,15 @@
+import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
 import 'package:coreflow/domain/model/vendors/vendors_edit_request.dart';
-import 'package:coreflow/features/customers/widget/edit_create/billing_address_card.dart';
-import 'package:coreflow/features/customers/widget/edit_create/shipping_address_card.dart';
-import 'package:coreflow/features/dashboard/widget/menu.dart';
+import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/features/vendor/view_model/vendor_edit_view_model.dart';
+import 'package:coreflow/features/vendor/widget/edit_create/billing_address_card.dart';
 import 'package:coreflow/features/vendor/widget/edit_create/save_customer_button.dart';
+import 'package:coreflow/features/vendor/widget/edit_create/shipping_address_card.dart';
 import 'package:coreflow/features/vendor/widget/edit_create/vendor_info_def_section.dart';
 import 'package:coreflow/features/vendor/widget/edit_create/vendor_info_section.dart';
 import 'package:flutter/material.dart';
+import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
@@ -278,7 +280,6 @@ class _VendorEditScreenState extends State<VendorEditScreen> {
 
     if (!_formKey.currentState!.validate()) return;
 
-    // Build request without touching visible text.
     final request = VendorsEditRequest(
       vendorName: _vendorNameController.text.trim(),
       displayName: _displayNameController.text.trim(),
@@ -378,6 +379,33 @@ class _VendorEditScreenState extends State<VendorEditScreen> {
     }
   }
 
+  Widget _buildSectionContainer({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: LoginColors.primary),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: LoginColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer2<VendorEditViewModel, DashboardViewModel>(
@@ -389,11 +417,19 @@ class _VendorEditScreenState extends State<VendorEditScreen> {
         }
 
         return Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: LoginColors.background,
           appBar: AppBar(
-            title: const Text('Edit vendor'),
+            title: Text(
+              'Edit Vendor',
+              style: TextStyle(
+                color: LoginColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            foregroundColor: LoginColors.textPrimary,
             elevation: 0,
-            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            backgroundColor: LoginColors.background,
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),
@@ -408,6 +444,10 @@ class _VendorEditScreenState extends State<VendorEditScreen> {
                     ),
                   ),
                   onPressed: editVM.isSaving ? null : () => _saveVendor(editVM),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: LoginColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -415,7 +455,23 @@ class _VendorEditScreenState extends State<VendorEditScreen> {
           drawerEnableOpenDragGesture: false,
           drawer: AppDrawer(vm: dashboardVM),
           body: editVM.isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Skeleton(height: 80, width: double.infinity),
+                      const SizedBox(height: 24),
+                      const Skeleton(height: 50, width: double.infinity),
+                      const SizedBox(height: 16),
+                      const Skeleton(height: 50, width: double.infinity),
+                      const SizedBox(height: 32),
+                      const Skeleton(height: 60, width: 150),
+                      const SizedBox(height: 24),
+                      const Skeleton(height: 60, width: 150),
+                    ],
+                  ),
+                )
               : Form(
                   key: _formKey,
                   child: SingleChildScrollView(
@@ -423,128 +479,161 @@ class _VendorEditScreenState extends State<VendorEditScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        VendorInfoSections(
-                          formKey: _formKey,
-                          vendorName: _vendorNameController,
-                          displayName: _displayNameController,
+                        _buildSectionContainer(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildSectionHeader(
+                                  'Basic Details',
+                                  Icons.storefront_outlined,
+                                ),
+                                const SizedBox(height: 14),
+                                VendorInfoSections(
+                                  formKey: _formKey,
+                                  vendorName: _vendorNameController,
+                                  displayName: _displayNameController,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 24),
 
-                        ExpansionTile(
-                          initiallyExpanded: false,
-                          shape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          collapsedShape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          clipBehavior: Clip.none,
-                          title: Text(
-                            'vendor information',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          childrenPadding: const EdgeInsets.fromLTRB(
-                            16,
-                            8,
-                            16,
-                            16,
-                          ),
-                          children: [
-                            VendorInfoSection(
-                              formKey: _formKey,
-                              email: _emailController,
-                              phone: _phoneController,
-                              pan: _panController,
-                              gst: _gstController,
-                              dueAmount: _advanceController,
-                              language: _languageController,
+                        _buildSectionContainer(
+                          child: ExpansionTile(
+                            initiallyExpanded: false,
+                            shape: const RoundedRectangleBorder(
+                              side: BorderSide(color: Colors.transparent),
                             ),
-                          ],
+                            collapsedShape: const RoundedRectangleBorder(
+                              side: BorderSide(color: Colors.transparent),
+                            ),
+                            clipBehavior: Clip.none,
+                            title: _buildSectionHeader(
+                              'Vendor Information',
+                              Icons.info_outline_rounded,
+                            ),
+                            iconColor: LoginColors.primary,
+                            collapsedIconColor: LoginColors.textSecondary,
+                            childrenPadding: const EdgeInsets.fromLTRB(
+                              16,
+                              8,
+                              16,
+                              16,
+                            ),
+                            children: [
+                              VendorInfoSection(
+                                formKey: _formKey,
+                                email: _emailController,
+                                phone: _phoneController,
+                                pan: _panController,
+                                gst: _gstController,
+                                dueAmount: _advanceController,
+                                language: _languageController,
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 32),
 
                         // Billing
-                        ExpansionTile(
-                          shape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          collapsedShape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          title: Text(
-                            'Billing Address',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          childrenPadding: const EdgeInsets.fromLTRB(
-                            16,
-                            8,
-                            16,
-                            16,
-                          ),
-                          children: [
-                            BillingAddressCard(
-                              attention: _billingAttentionController,
-                              line1: _billingLine1Controller,
-                              line2: _billingLine2Controller,
-                              city: _billingCityController,
-                              state: _billingStateController,
-                              pincode: _billingPincodeController,
-                              phone: _billingPhoneController,
-                              email: _billingEmailController,
+                        _buildSectionContainer(
+                          child: ExpansionTile(
+                            shape: const RoundedRectangleBorder(
+                              side: BorderSide(color: Colors.transparent),
                             ),
-                          ],
+                            collapsedShape: const RoundedRectangleBorder(
+                              side: BorderSide(color: Colors.transparent),
+                            ),
+                            title: _buildSectionHeader(
+                              'Billing Address',
+                              Icons.home_work_outlined,
+                            ),
+                            iconColor: LoginColors.primary,
+                            collapsedIconColor: LoginColors.textSecondary,
+                            childrenPadding: const EdgeInsets.fromLTRB(
+                              16,
+                              8,
+                              16,
+                              16,
+                            ),
+                            children: [
+                              BillingAddressCardVendor(
+                                attention: _billingAttentionController,
+                                line1: _billingLine1Controller,
+                                line2: _billingLine2Controller,
+                                city: _billingCityController,
+                                state: _billingStateController,
+                                pincode: _billingPincodeController,
+                                phone: _billingPhoneController,
+                                email: _billingEmailController,
+                              ),
+                            ],
+                          ),
                         ),
 
                         const SizedBox(height: 20),
 
-                        ExpansionTile(
-                          shape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          collapsedShape: const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.transparent),
-                          ),
-                          title: Text(
-                            'Shipping Address',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          childrenPadding: const EdgeInsets.fromLTRB(
-                            16,
-                            8,
-                            16,
-                            16,
-                          ),
-                          children: [
-                            CheckboxListTile(
-                              title: const Text('Same as billing'),
-                              value: _billingSameAsShipping,
-                              onChanged: (value) {
-                                final newValue = value ?? false;
-                                setState(() {
-                                  _billingSameAsShipping = newValue;
-                                  if (newValue) {
-                                    _copyBillingToShipping();
-                                  }
-                                });
-                              },
-                              contentPadding: EdgeInsets.zero,
-                              controlAffinity: ListTileControlAffinity.leading,
+                        _buildSectionContainer(
+                          child: ExpansionTile(
+                            shape: const RoundedRectangleBorder(
+                              side: BorderSide(color: Colors.transparent),
                             ),
+                            collapsedShape: const RoundedRectangleBorder(
+                              side: BorderSide(color: Colors.transparent),
+                            ),
+                            title: _buildSectionHeader(
+                              'Shipping Address',
+                              Icons.local_shipping_outlined,
+                            ),
+                            iconColor: LoginColors.primary,
+                            collapsedIconColor: LoginColors.textSecondary,
+                            childrenPadding: const EdgeInsets.fromLTRB(
+                              16,
+                              8,
+                              16,
+                              16,
+                            ),
+                            children: [
+                              CheckboxListTile(
+                                title: Text(
+                                  'Same as billing',
+                                  style: TextStyle(
+                                    color: LoginColors.textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                value: _billingSameAsShipping,
+                                activeColor: LoginColors.primary,
+                                checkColor: Colors.white,
+                                onChanged: (value) {
+                                  final newValue = value ?? false;
+                                  setState(() {
+                                    _billingSameAsShipping = newValue;
+                                    if (newValue) {
+                                      _copyBillingToShipping();
+                                    }
+                                  });
+                                },
+                                contentPadding: EdgeInsets.zero,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                              ),
 
-                            ShippingAddressCard(
-                              attention: _shippingAttentionController,
-                              line1: _shippingLine1Controller,
-                              line2: _shippingLine2Controller,
-                              city: _shippingCityController,
-                              state: _shippingStateController,
-                              pincode: _shippingPincodeController,
-                              phone: _shippingPhoneController,
-                              email: _shippingEmailController,
-                            ),
-                          ],
+                              ShippingAddressCardVendor(
+                                attention: _shippingAttentionController,
+                                line1: _shippingLine1Controller,
+                                line2: _shippingLine2Controller,
+                                city: _shippingCityController,
+                                state: _shippingStateController,
+                                pincode: _shippingPincodeController,
+                                phone: _shippingPhoneController,
+                                email: _shippingEmailController,
+                              ),
+                            ],
+                          ),
                         ),
 
                         const SizedBox(height: 20),
@@ -559,17 +648,17 @@ class _VendorEditScreenState extends State<VendorEditScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.1),
+                              color: LoginColors.error.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: Colors.red.withOpacity(0.3),
+                                color: LoginColors.error.withOpacity(0.3),
                               ),
                             ),
                             child: Row(
                               children: [
                                 Icon(
                                   Icons.error_outline,
-                                  color: Colors.red[700],
+                                  color: LoginColors.error,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 12),
@@ -577,7 +666,7 @@ class _VendorEditScreenState extends State<VendorEditScreen> {
                                   child: Text(
                                     editVM.error!,
                                     style: TextStyle(
-                                      color: Colors.red[700],
+                                      color: LoginColors.error,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),

@@ -1,6 +1,7 @@
+import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';
 
-class ResendOtpButton extends StatefulWidget {
+class ResendOtpButton extends StatelessWidget {
   final bool canResend;
   final int timer;
   final VoidCallback? onPressed;
@@ -13,51 +14,36 @@ class ResendOtpButton extends StatefulWidget {
   });
 
   @override
-  State<ResendOtpButton> createState() => _ResendOtpButtonState();
-}
-
-class _ResendOtpButtonState extends State<ResendOtpButton> {
-  bool _isClicked = false;
-
-  void _handlePress() {
-    if (widget.canResend && !_isClicked && widget.onPressed != null) {
-      _isClicked = false;
-      setState(() {});
-      widget.onPressed!();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final isEnabled = widget.canResend && !_isClicked;
+    final isEnabled = canResend && onPressed != null;
 
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
         icon: Icon(
-          Icons.refresh,
-          color: isEnabled ? Colors.orange.shade600 : Colors.grey,
+          Icons.refresh_rounded,
+          color: isEnabled ? LoginColors.primary : LoginColors.textTertiary,
           size: 20,
         ),
         label: Text(
-          isEnabled ? 'Resend OTP' : 'Resend OTP in ${widget.timer}s',
+          isEnabled ? 'Resend OTP' : 'Resend OTP in ${timer}s',
           style: TextStyle(
-            color: isEnabled ? Colors.orange.shade700 : Colors.grey,
-            fontWeight: FontWeight.w500,
-            fontSize: 16,
+            color: isEnabled ? LoginColors.primary : LoginColors.textTertiary,
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
           ),
         ),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
           side: BorderSide(
-            color: isEnabled ? Colors.orange : Colors.grey,
+            color: isEnabled ? LoginColors.primary : LoginColors.border,
             width: 1.5,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(30),
           ),
         ),
-        onPressed: isEnabled ? _handlePress : null,
+        onPressed: isEnabled ? onPressed : null,
       ),
     );
   }

@@ -1,5 +1,5 @@
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
-import 'package:coreflow/features/dashboard/widget/menu.dart';
+import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/features/vendor/view_model/vendor_view_model.dart';
 import 'package:coreflow/features/vendor/widget/empty_vendor_view.dart';
 import 'package:coreflow/features/vendor/widget/error_view.dart';
@@ -7,8 +7,10 @@ import 'package:coreflow/features/vendor/widget/loading_view.dart';
 import 'package:coreflow/features/vendor/widget/vendor_app_bar.dart';
 import 'package:coreflow/features/vendor/widget/vendor_list.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/core/widgets/status_toggle_tabs.dart';
 
 class ActiveVendorView extends StatefulWidget {
   final int companyId;
@@ -88,6 +90,68 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
                 setState(() => _searchQuery = '');
               },
               scaffoldKey: _scaffoldKey,
+              title: 'Vendors',
+              searchHint: 'Search vendors...',
+            ),
+            body: Column(
+              children: [
+                _buildTopToggleTabs(context, viewModel),
+                Expanded(
+                  child: RefreshIndicator(
+                    backgroundColor: LoginColors.surface,
+                    color: LoginColors.primary,
+                    onRefresh: () async {
+                      setState(() => _hasLoaded = false);
+                      await viewModel.loadVendor(widget.companyId);
+                    },
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 260),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) {
+                        final slide = Tween<Offset>(
+                          begin: const Offset(0, 0.02),
+                          end: Offset.zero,
+                        ).animate(animation);
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(position: slide, child: child),
+                        );
+                      },
+                      child: _buildBody(viewModel, _searchQuery),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            floatingActionButton: FloatingActionButton(
+              backgroundColor: LoginColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 6,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              onPressed: () async {
+                final result = await context.push<bool>(
+                  '/vendors/${widget.companyId}/add',
+                );
+                if (result == true && context.mounted) {
+                  context.read<ActiveVendorViewModel>().refresh();
+                }
+              },
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [LoginColors.primary, LoginColors.primaryDark],
+                  ),
+                ),
+                child: const Icon(Icons.add_rounded, size: 28),
+              ),
             ),
             body: RefreshIndicator(
               onRefresh: () async {

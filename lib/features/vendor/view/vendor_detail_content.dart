@@ -1,23 +1,27 @@
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_detail_body.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_error_state.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_header.dart';
 import 'package:flutter/material.dart';
+import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../view_model/vendor_detail_view_model.dart';
 import '../../dashboard/dashboard_view_model/dashboard_view_model.dart';
-import '../../dashboard/widget/menu.dart';
 
 class VendorDetailContent extends StatelessWidget {
   const VendorDetailContent({super.key});
 
   @override
   Widget build(BuildContext context) {
+    LoginColors.setBrightness(Theme.of(context).brightness);
     final dashboardVM = context.read<DashboardViewModel>();
 
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -33,7 +37,18 @@ class VendorDetailContent extends StatelessWidget {
         leading: Builder(
           builder: (scaffoldContext) {
             return IconButton(
-              icon: const Icon(Icons.menu_rounded, color: Colors.white),
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.menu_rounded,
+                  color: Colors.white,
+                  size: 19,
+                ),
+              ),
               onPressed: () => Scaffold.of(scaffoldContext).openDrawer(),
             );
           },
@@ -60,11 +75,23 @@ class VendorDetailContent extends StatelessWidget {
               }
 
               return PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, color: Colors.white),
-                color: Colors.white,
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.more_vert,
+                    color: Colors.white,
+                    size: 19,
+                  ),
+                ),
+                color: LoginColors.surface,
                 elevation: 4,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: LoginColors.borderLight),
                 ),
                 onSelected: (value) async {
                   switch (value) {
@@ -85,9 +112,18 @@ class VendorDetailContent extends StatelessWidget {
                 itemBuilder: (_) => [
                   const PopupMenuItem(
                     value: 'edit',
+                    textStyle: TextStyle(
+                      color: LoginColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
                     child: Row(
                       children: [
-                        SizedBox(width: 12),
+                        Icon(
+                          Icons.edit_rounded,
+                          size: 18,
+                          color: LoginColors.primary,
+                        ),
+                        const SizedBox(width: 10),
                         Text(
                           'Edit',
                           style: TextStyle(color: LoginColors.textPrimary),
@@ -97,9 +133,22 @@ class VendorDetailContent extends StatelessWidget {
                   ),
                   PopupMenuItem(
                     value: 'otherAction',
+                    textStyle: TextStyle(
+                      color: LoginColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
                     child: Row(
                       children: [
-                        const SizedBox(width: 12),
+                        Icon(
+                          vm.isActive
+                              ? Icons.block_rounded
+                              : Icons.check_circle_rounded,
+                          size: 18,
+                          color: vm.isActive
+                              ? LoginColors.error
+                              : LoginColors.success,
+                        ),
+                        const SizedBox(width: 10),
                         Text(
                           vm.isActive ? 'Make inactive' : 'Make active',
                           style: TextStyle(color: LoginColors.textPrimary),

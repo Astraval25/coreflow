@@ -1,6 +1,8 @@
 import 'package:coreflow/domain/model/login/login_request.dart';
+import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 
 class LoginViewModel extends ChangeNotifier {
@@ -75,6 +77,10 @@ class LoginViewModel extends ChangeNotifier {
         _successMessage = response.responseMessage;
         _isLoading = false;
         notifyListeners();
+
+        if (context.mounted) {
+          await context.read<DashboardViewModel>().refresh();
+        }
 
         final landingUrl = _landingUrl!.toLowerCase();
         if (landingUrl.contains('/verify')) {

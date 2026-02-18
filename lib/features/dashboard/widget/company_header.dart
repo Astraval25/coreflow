@@ -1,3 +1,4 @@
+import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:flutter/material.dart';
 
@@ -11,25 +12,28 @@ class CompanyHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Theme.of(context).colorScheme.surface,
-      elevation: 4,
-      shadowColor: Theme.of(context).colorScheme.shadow.withOpacity(0.40),
-      borderRadius: const BorderRadius.only(
-        // bottomLeft: Radius.circular(20),
-        bottomRight: Radius.circular(20),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 80, 20, 32),
-        child: Row(
-          children: [
-            _buildIconTapArea(context),
-            const SizedBox(width: 18),
-            Expanded(child: _buildCompanyText(context)),
-            _buildArrowTapArea(context),
-          ],
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 70, 24, 28),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: const BorderRadius.only(
+          bottomRight: Radius.circular(32),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: LoginColors.shadowLight.withOpacity(0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _buildIconTapArea(context),
+          const SizedBox(width: 18),
+          Expanded(child: _buildCompanyText(context)),
+          _buildArrowTapArea(context),
+        ],
       ),
     );
   }
@@ -37,19 +41,31 @@ class CompanyHeader extends StatelessWidget {
   Widget _buildIconTapArea(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: _canChangeCompany
-          ? () => _showCompaniesBottomSheet(context)
-          : null,
+      onTap: _canChangeCompany ? () => _showCompaniesBottomSheet(context) : null,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primaryContainer,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              LoginColors.primary,
+              LoginColors.primaryDark,
+            ],
+          ),
           borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: LoginColors.primary.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        child: Icon(
+        child: const Icon(
           Icons.business_rounded,
-          color: Theme.of(context).colorScheme.primary,
-          size: 32,
+          color: Colors.white,
+          size: 28,
         ),
       ),
     );
@@ -58,29 +74,39 @@ class CompanyHeader extends StatelessWidget {
   Widget _buildCompanyText(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(8),
-      onTap: _canChangeCompany
-          ? () => _showCompaniesBottomSheet(context)
-          : null,
+      onTap: _canChangeCompany ? () => _showCompaniesBottomSheet(context) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             vm.companyName ?? 'Select Company',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-              letterSpacing: -0.3,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: LoginColors.textPrimary,
+              letterSpacing: -0.4,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
-          Text(
-            'Tap to switch company',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+          Row(
+            children: [
+              Text(
+                'Switch Company',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: LoginColors.primary,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.swap_horiz_rounded,
+                size: 14,
+                color: LoginColors.primary,
+              ),
+            ],
           ),
         ],
       ),
@@ -88,15 +114,22 @@ class CompanyHeader extends StatelessWidget {
   }
 
   Widget _buildArrowTapArea(BuildContext context) {
+    if (!_canChangeCompany) return const SizedBox.shrink();
+    
     return InkWell(
       borderRadius: BorderRadius.circular(12),
-      onTap: _canChangeCompany
-          ? () => _showCompaniesBottomSheet(context)
-          : null,
-      child: Icon(
-        Icons.keyboard_arrow_down_rounded,
-        size: 28,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      onTap: () => _showCompaniesBottomSheet(context),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: LoginColors.fieldFill,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.keyboard_arrow_down_rounded,
+          size: 22,
+          color: LoginColors.textSecondary,
+        ),
       ),
     );
   }
@@ -104,9 +137,8 @@ class CompanyHeader extends StatelessWidget {
   void _showCompaniesBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) => _CompaniesBottomSheet(vm: vm),
     );
   }
@@ -120,44 +152,104 @@ class _CompaniesBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Select Company',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: LoginColors.borderLight,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          Text(
+            'Select Company',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: LoginColors.textPrimary,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 20),
           if (vm.isCompaniesLoading)
-            const CircularProgressIndicator()
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: CircularProgressIndicator(color: LoginColors.primary),
+              ),
+            )
           else if (vm.availableCompanies.isEmpty)
-            const Text('No companies available')
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: Text('No companies available'),
+              ),
+            )
           else
-            ...vm.availableCompanies.map((company) {
-              return ListTile(
-                key: ValueKey(company),
-                leading: Icon(
-                  Icons.business_rounded,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                title: Text(
-                  company,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                onTap: () {
-                  vm.selectCompany(company);
-                  Navigator.pop(context);
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: vm.availableCompanies.length,
+                itemBuilder: (context, index) {
+                  final company = vm.availableCompanies[index];
+                  final isSelected = company.companyId == vm.companyId;
+                  
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: isSelected ? LoginColors.primary.withOpacity(0.06) : LoginColors.fieldFill,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected ? LoginColors.primary.withOpacity(0.12) : Colors.transparent,
+                        width: 1,
+                      ),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? LoginColors.primary : Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.business_rounded,
+                          color: isSelected ? Colors.white : LoginColors.textTertiary,
+                          size: 20,
+                        ),
+                      ),
+                      title: Text(
+                        company.companyName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                          color: isSelected ? LoginColors.primary : LoginColors.textPrimary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: isSelected 
+                        ? const Icon(Icons.check_circle_rounded, color: LoginColors.primary, size: 22)
+                        : null,
+                      onTap: () {
+                        vm.selectCompany(company);
+                        Navigator.pop(context);
+                      },
+                    ),
+                  );
                 },
-              );
-            }).toList(),
+              ),
+            ),
         ],
       ),
     );

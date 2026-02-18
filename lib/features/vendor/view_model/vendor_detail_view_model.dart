@@ -1,4 +1,7 @@
 import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
+import 'package:coreflow/domain/model/customer/customer_mapped_item.dart';
+import 'package:coreflow/domain/model/items/item.dart';
+import 'package:coreflow/domain/model/items/item_status_response.dart';
 import 'package:flutter/foundation.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +14,11 @@ class VendorDetailViewModel extends ChangeNotifier {
 
   VendorViewState _state = VendorViewState.initial;
   VendorsDetailData? _vendor;
+  List<CustomerMappedItem> _mappedItems = [];
   String? _errorMessage;
+  bool _isMappedItemsLoading = false;
+  bool _isMappedItemStatusUpdating = false;
+  int? _statusUpdatingItemId;
 
   final int _companyId;
   final int _vendorId;
@@ -24,8 +31,12 @@ class VendorDetailViewModel extends ChangeNotifier {
 
   // ───── Getters ─────
   VendorViewState get state => _state;
-  VendorsDetailData? get vendor => _vendor; 
+  VendorsDetailData? get vendor => _vendor;
+  List<CustomerMappedItem> get mappedItems => List.unmodifiable(_mappedItems);
   String? get errorMessage => _errorMessage;
+  bool get isMappedItemsLoading => _isMappedItemsLoading;
+  bool get isMappedItemStatusUpdating => _isMappedItemStatusUpdating;
+  int? get statusUpdatingItemId => _statusUpdatingItemId;
 
   bool get isLoading => _state == VendorViewState.loading;
   bool get hasData => _state == VendorViewState.loaded;
@@ -49,6 +60,7 @@ class VendorDetailViewModel extends ChangeNotifier {
       if (vendorData != null) {
         _vendor = vendorData;
         _updateState(VendorViewState.loaded);
+        await loadMappedItems();
       } else {
         _updateState(VendorViewState.noData, error: 'No Vendor data found');
       }
@@ -110,6 +122,135 @@ class VendorDetailViewModel extends ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  Future<void> loadMappedItems() async {
+    _isMappedItemsLoading = true;
+    notifyListeners();
+
+    try {
+      final items = await _authRepository.getVendorMappedItems(
+        _companyId,
+        _vendorId,
+      );
+      _mappedItems = items;
+    } catch (e) {
+      debugPrint('Failed to load vendor mapped items: $e');
+      _mappedItems = [];
+    } finally {
+      _isMappedItemsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<List<Item>> getActiveCompanyItems() async {
+    try {
+      final allItems = await _authRepository.getItems(_companyId);
+      return allItems.where((item) => item.isActive).toList();
+    } catch (e) {
+      debugPrint('Failed to load active company items: $e');
+      return [];
+    }
+  }
+
+  Future<bool> createVendorItem({
+    required int itemId,
+    required double purchasePrice,
+    String? purchaseDescription,
+  }) async {
+    try {
+      final response = await _authRepository.createVendorItem(
+        companyId: _companyId,
+        vendorId: _vendorId,
+        itemId: itemId,
+        purchasePrice: purchasePrice,
+        purchaseDescription: purchaseDescription,
+      );
+
+      if (response?.responseStatus == true) {
+        await loadMappedItems();
+        return true;
+      }
+
+      _errorMessage = response?.responseMessage ?? 'Create vendor item failed';
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'Create vendor item error: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updateVendorItem({
+    required int itemId,
+    required double purchasePrice,
+    String? purchaseDescription,
+  }) async {
+    try {
+      final response = await _authRepository.updateVendorItem(
+        companyId: _companyId,
+        vendorId: _vendorId,
+        itemId: itemId,
+        purchasePrice: purchasePrice,
+        purchaseDescription: purchaseDescription,
+      );
+
+      if (response?.responseStatus == true) {
+        await loadMappedItems();
+        return true;
+      }
+
+      _errorMessage = response?.responseMessage ?? 'Update vendor item failed';
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'Update vendor item error: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> setMappedItemActiveStatus({
+    required int itemId,
+    required bool shouldActivate,
+  }) async {
+    _isMappedItemStatusUpdating = true;
+    _statusUpdatingItemId = itemId;
+    notifyListeners();
+
+    try {
+      final ItemStatusResponse? response = shouldActivate
+          ? await _authRepository.activateVendorMappedItem(
+              _companyId,
+              _vendorId,
+              itemId,
+            )
+          : await _authRepository.deactivateVendorMappedItem(
+              _companyId,
+              _vendorId,
+              itemId,
+            );
+
+      if (response?.responseStatus == true) {
+        await loadMappedItems();
+        return true;
+      }
+
+      _errorMessage =
+          response?.responseMessage ??
+          (shouldActivate ? 'Activate item failed' : 'Deactivate item failed');
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'Item status update failed: $e';
+      notifyListeners();
+      return false;
+    } finally {
+      _isMappedItemStatusUpdating = false;
+      _statusUpdatingItemId = null;
+      notifyListeners();
+    }
   }
 
   void _updateState(VendorViewState state, {String? error}) {

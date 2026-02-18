@@ -5,7 +5,7 @@ class AppConfig {
   static const String loginEndpoint = '/api/auth/login';
   static const String registerEndpoint = '/api/auth/register';
   static const String verifyOtpEndpoint = '/api/auth/verify-otp';
-  static const String resendOtpEndpoint = ' /api/auth/send-otp';
+  static const String resendOtpEndpoint = '/api/auth/send-otp';
   static const String companyEndpoint = '/api/companies/my-companies';
   static const String refreshTokenEndpoint = '/api/auth/refresh-token';
   static const String customersEndpoint =
@@ -33,6 +33,16 @@ class AppConfig {
       '/api/companies/{companyId}/vendors/{vendorId}/activate';
   static const String vendorDeactivateEndpoint =
       '/api/companies/{companyId}/vendors/{vendorId}/deactivate';
+  static const String vendorMappedItemsEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/items/mapped';
+  static const String vendorItemsEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/items';
+  static const String vendorItemDetailEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/items/{itemId}';
+  static const String vendorItemActivateEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/items/{itemId}/activate';
+  static const String vendorItemDeactivateEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/items/{itemId}/deactivate';
   static const String itemsEndpoint = '/api/companies/{companyId}/items';
   static const String itemDetailEndpoint =
       '/api/companies/{companyId}/items/{itemId}';
@@ -81,6 +91,28 @@ class AppConfig {
 
   static String getVendorDeactivateUrl(int companyId, int vendorId) =>
       '$baseUrl${vendorDeactivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+  static String getVendorMappedItemsUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorMappedItemsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+  static String getVendorItemsUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorItemsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+  static String getVendorItemDetailUrl(
+    int companyId,
+    int vendorId,
+    int itemId,
+  ) =>
+      '$baseUrl${vendorItemDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString()).replaceAll('{itemId}', itemId.toString())}';
+  static String getVendorItemActivateUrl(
+    int companyId,
+    int vendorId,
+    int itemId,
+  ) =>
+      '$baseUrl${vendorItemActivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString()).replaceAll('{itemId}', itemId.toString())}';
+  static String getVendorItemDeactivateUrl(
+    int companyId,
+    int vendorId,
+    int itemId,
+  ) =>
+      '$baseUrl${vendorItemDeactivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString()).replaceAll('{itemId}', itemId.toString())}';
 
   static String getItemsUrl(int companyId) =>
       '$baseUrl${itemsEndpoint.replaceAll('{companyId}', companyId.toString())}';

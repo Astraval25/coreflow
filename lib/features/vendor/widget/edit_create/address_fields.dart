@@ -1,3 +1,4 @@
+import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';
 
 class VendorAddressFields extends StatelessWidget {
@@ -21,6 +22,7 @@ class VendorAddressFields extends StatelessWidget {
     required this.phone,
     required this.email,
   });
+  static const double _iconSize = 18;
 
   @override
   Widget build(BuildContext context) {
@@ -29,75 +31,27 @@ class VendorAddressFields extends StatelessWidget {
         TextFormField(
           controller: attention,
           style: const TextStyle(fontSize: 16),
-          decoration: InputDecoration(
+          decoration: _inputDecoration(
             labelText: 'Attention name',
-            labelStyle: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).hintColor,
-            ),
-            border: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: Theme.of(context).primaryColor,
-                width: 2,
-              ),
-            ),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            errorBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.red),
-            ),
+            icon: Icons.person_pin_circle_outlined,
           ),
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: line1,
           style: const TextStyle(fontSize: 16),
-          decoration: InputDecoration(
+          decoration: _inputDecoration(
             labelText: 'Address line 1',
-            labelStyle: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).hintColor,
-            ),
-            border: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: Theme.of(context).primaryColor,
-                width: 2,
-              ),
-            ),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
+            icon: Icons.home_work_outlined,
           ),
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: line2,
           style: const TextStyle(fontSize: 16),
-          decoration: InputDecoration(
+          decoration: _inputDecoration(
             labelText: 'Address line 2',
-            labelStyle: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).hintColor,
-            ),
-            border: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: Theme.of(context).primaryColor,
-                width: 2,
-              ),
-            ),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
+            icon: Icons.add_road_rounded,
           ),
         ),
         const SizedBox(height: 16),
@@ -107,24 +61,9 @@ class VendorAddressFields extends StatelessWidget {
               child: TextFormField(
                 controller: city,
                 style: const TextStyle(fontSize: 16),
-                decoration: InputDecoration(
+                decoration: _inputDecoration(
                   labelText: 'City',
-                  labelStyle: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).hintColor,
-                  ),
-                  border: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(context).primaryColor,
-                      width: 2,
-                    ),
-                  ),
-                  enabledBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
+                  icon: Icons.location_city_outlined,
                 ),
               ),
             ),
@@ -133,24 +72,9 @@ class VendorAddressFields extends StatelessWidget {
               child: TextFormField(
                 controller: state,
                 style: const TextStyle(fontSize: 16),
-                decoration: InputDecoration(
+                decoration: _inputDecoration(
                   labelText: 'State',
-                  labelStyle: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).hintColor,
-                  ),
-                  border: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(context).primaryColor,
-                      width: 2,
-                    ),
-                  ),
-                  enabledBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
+                  icon: Icons.map_outlined,
                 ),
               ),
             ),
@@ -163,24 +87,9 @@ class VendorAddressFields extends StatelessWidget {
               child: TextFormField(
                 controller: pincode,
                 style: const TextStyle(fontSize: 16),
-                decoration: InputDecoration(
+                decoration: _inputDecoration(
                   labelText: 'Pincode',
-                  labelStyle: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).hintColor,
-                  ),
-                  border: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(context).primaryColor,
-                      width: 2,
-                    ),
-                  ),
-                  enabledBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
+                  icon: Icons.markunread_mailbox_outlined,
                 ),
                 keyboardType: TextInputType.number,
               ),
@@ -190,24 +99,9 @@ class VendorAddressFields extends StatelessWidget {
               child: TextFormField(
                 controller: phone,
                 style: const TextStyle(fontSize: 16),
-                decoration: InputDecoration(
+                decoration: _inputDecoration(
                   labelText: 'Phone',
-                  labelStyle: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).hintColor,
-                  ),
-                  border: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(context).primaryColor,
-                      width: 2,
-                    ),
-                  ),
-                  enabledBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
+                  icon: Icons.call_outlined,
                 ),
                 keyboardType: TextInputType.phone,
               ),
@@ -218,28 +112,46 @@ class VendorAddressFields extends StatelessWidget {
         TextFormField(
           controller: email,
           style: const TextStyle(fontSize: 16),
-          decoration: InputDecoration(
+          decoration: _inputDecoration(
             labelText: 'Email',
-            labelStyle: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).hintColor,
-            ),
-            border: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: Theme.of(context).primaryColor,
-                width: 2,
-              ),
-            ),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
-            ),
+            icon: Icons.alternate_email_rounded,
           ),
           keyboardType: TextInputType.emailAddress,
         ),
       ],
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String labelText,
+    required IconData icon,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: TextStyle(
+        fontSize: 14,
+        color: LoginColors.textSecondary,
+      ),
+      prefixIcon: Icon(
+        icon,
+        size: _iconSize,
+        color: LoginColors.textTertiary,
+      ),
+      filled: true,
+      fillColor: LoginColors.fieldFill,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: LoginColors.borderLight, width: 1),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: LoginColors.borderLight, width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: LoginColors.primary, width: 1.4),
+      ),
     );
   }
 }
