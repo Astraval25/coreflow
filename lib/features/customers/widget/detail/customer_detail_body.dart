@@ -25,16 +25,28 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
     return Column(
       children: [
         CustomerFinancialStrip(customer: customer),
-
+        const SizedBox(height: 10),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildTabText('Basic Info', 0),
-              _buildTabText('Address', 1),
-              _buildTabText('Company', 2),
-            ],
+          padding: const EdgeInsets.symmetric(horizontal: _horizontal),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: LoginColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: LoginColors.borderLight),
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildTabText('Basic Info', 0),
+
+                  _buildTabText('Items', 1),
+                  _buildTabText('Address', 2),
+                  _buildTabText('Company', 3),
+                ],
+              ),
+            ),
           ),
         ),
         Padding(

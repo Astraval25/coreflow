@@ -19,7 +19,12 @@ class CustomerHeader extends StatelessWidget {
     final statusColor = isActive ? LoginColors.success : LoginColors.error;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(_horizontalPadding, 16, _horizontalPadding, 10),
+      padding: const EdgeInsets.fromLTRB(
+        _horizontalPadding,
+        16,
+        _horizontalPadding,
+        10,
+      ),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -94,7 +99,10 @@ class CustomerHeader extends StatelessWidget {
                 foregroundColor: statusColor,
                 side: BorderSide(color: statusColor.withOpacity(0.45)),
                 visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),

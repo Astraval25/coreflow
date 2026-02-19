@@ -11,11 +11,16 @@ class UpdateItemViewModel extends ChangeNotifier {
   bool isSuccess = false;
   String? errorMessage;
 
-  void resetState() {
+  void resetState({bool notify = true}) {
+    final hasChanges = isLoading || isSuccess || errorMessage != null;
+
     isLoading = false;
     isSuccess = false;
     errorMessage = null;
-    notifyListeners();
+
+    if (notify && hasChanges) {
+      notifyListeners();
+    }
   }
 
   String getFileUrl(String fsId) => AppConfig.getFileUrl(fsId);

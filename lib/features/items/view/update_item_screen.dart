@@ -27,11 +27,7 @@ class UpdateItemScreen extends StatefulWidget {
 
 class _UpdateItemScreenState extends State<UpdateItemScreen> {
   final _formKey = GlobalKey<FormState>();
-  static const List<String> _unitOptions = [
-    'PCE',
-    'KG',
-    'ML',
-  ];
+  static const List<String> _unitOptions = ['PCE', 'KG', 'ML'];
 
   late TextEditingController _itemNameController;
   late TextEditingController _salesPriceController;
@@ -72,7 +68,7 @@ class _UpdateItemScreenState extends State<UpdateItemScreen> {
     _selectedUnit = item.unit.trim().isEmpty
         ? null
         : item.unit.trim().toUpperCase();
-    context.read<UpdateItemViewModel>().resetState();
+    context.read<UpdateItemViewModel>().resetState(notify: false);
   }
 
   @override
