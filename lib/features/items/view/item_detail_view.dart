@@ -263,7 +263,7 @@ class _ItemDetailContentState extends State<_ItemDetailContent> {
                           onRetry: vm.refresh,
                         )
                       : item == null
-                          ? const SizedBox.shrink()
+                        ? const SizedBox.shrink()
                           : ItemDetailSections(
                               item: item,
                               currencyFormat: currencyFormat,

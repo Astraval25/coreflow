@@ -3,6 +3,7 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/payment/payment_detail.dart';
 import 'package:coreflow/features/presentation/payment/receive_payment/viewmodel/receive_payment_detail_view_model.dart';
+import 'package:coreflow/features/presentation/sales/view/sales_order_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -123,6 +124,13 @@ class _PayReceivedDetailView extends StatelessWidget {
         _MetaCard(payment: payment),
         const SizedBox(height: 10),
         _TransferCard(payment: payment),
+        if (payment.orderAllocations.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _OrderAllocationsCard(
+            allocations: payment.orderAllocations,
+            companyId: vm.companyId,
+          ),
+        ],
         const SizedBox(height: 10),
         _AmountCard(payment: payment),
         if (payment.notes.trim().isNotEmpty) ...[
@@ -317,7 +325,12 @@ class _TransferCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final orderIdsText = payment.orderIds.isEmpty
+    final allocationOrders = payment.orderAllocations
+        .map((allocation) => _orderLabel(allocation))
+        .toList();
+    final orderIdsText = allocationOrders.isNotEmpty
+        ? allocationOrders.join(', ')
+        : payment.orderIds.isEmpty
         ? ''
         : payment.orderIds.map((id) => '#$id').join(', ');
     final mode = payment.modeOfPayment.trim();
@@ -356,18 +369,129 @@ class _TransferCard extends StatelessWidget {
                   Expanded(
                     child: _MetaText(label: 'Reference', value: reference),
                   ),
-                if (hasOrders)
-                  Expanded(
-                    child: _MetaText(
-                      label: 'Linked Orders',
-                      value: orderIdsText,
-                      textAlignEnd: !hasReference,
-                    ),
-                  ),
               ],
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _OrderAllocationsCard extends StatelessWidget {
+  final List<PaymentOrderAllocation> allocations;
+  final int companyId;
+
+  const _OrderAllocationsCard({
+    required this.allocations,
+    required this.companyId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _CardBlock(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Order Allocations',
+            style: TextStyle(
+              color: LoginColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          for (int i = 0; i < allocations.length; i++) ...[
+            _OrderAllocationRow(
+              allocation: allocations[i],
+              companyId: companyId,
+            ),
+            if (i != allocations.length - 1)
+              Divider(height: 14, color: LoginColors.borderLight),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _OrderAllocationRow extends StatelessWidget {
+  final PaymentOrderAllocation allocation;
+  final int companyId;
+
+  const _OrderAllocationRow({
+    required this.allocation,
+    required this.companyId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final orderLabel = _orderLabel(allocation);
+    final remarks = allocation.allocationRemarks.trim();
+
+    return InkWell(
+      onTap: allocation.orderId > 0
+          ? () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => SalesOrderDetailPage(
+                    companyId: companyId,
+                    orderId: allocation.orderId,
+                  ),
+                ),
+              );
+            }
+          : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    orderLabel,
+                    style: TextStyle(
+                      color: LoginColors.textPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Text(
+                  _money(allocation.amountApplied),
+                  style: TextStyle(
+                    color: LoginColors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _formatDate(allocation.allocationDate),
+              style: TextStyle(
+                color: LoginColors.textSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (remarks.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                remarks,
+                style: TextStyle(
+                  color: LoginColors.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -380,39 +504,57 @@ class _AmountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stateLabel = payment.isActive ? 'Active' : 'Inactive';
-    final status = payment.paymentStatus.trim();
-    final hasStatus = status.isNotEmpty;
 
     return _CardBlock(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _MetaText(
-                  label: 'Amount',
-                  value: _money(payment.amount),
-                ),
-              ),
-              if (hasStatus)
-                Expanded(
-                  child: _MetaText(
-                    label: 'Status',
-                    value: status,
-                    textAlignEnd: true,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: _MetaText(label: 'State', value: stateLabel),
+          Expanded(
+            child: _HighlightAmount(
+              label: 'Amount',
+              value: _money(payment.amount),
+              color: LoginColors.success,
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _HighlightAmount extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _HighlightAmount({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$label:',
+          style: TextStyle(
+            color: LoginColors.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -519,6 +661,12 @@ String _paymentLabel(PaymentDetail payment) {
   return payment.paymentNumber.trim().isNotEmpty
       ? payment.paymentNumber
       : payment.paymentId.toString();
+}
+
+String _orderLabel(PaymentOrderAllocation allocation) {
+  return allocation.orderNumber.trim().isNotEmpty
+      ? allocation.orderNumber
+      : '#${allocation.orderId}';
 }
 
 String _displayCustomer(PaymentDetail payment) {
