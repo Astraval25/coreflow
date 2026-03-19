@@ -1,4 +1,5 @@
 import 'package:coreflow/core/widgets/skeleton.dart';
+import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/payment/payment_detail.dart';
 import 'package:coreflow/features/presentation/payment/send_payment/viewmodel/send_payment_detail_view_model.dart';
@@ -33,22 +34,29 @@ class _SendPaymentDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    LoginColors.setBrightness(Theme.of(context).brightness);
+
     return Consumer<SendPaymentDetailViewModel>(
       builder: (context, vm, _) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF3F4F6),
+          backgroundColor: LoginColors.background,
           appBar: AppBar(
-            backgroundColor: Colors.transparent,
             elevation: 0,
-            centerTitle: true,
-            title: const Text(
-              'Payment Detail',
-              style: TextStyle(
-                color: Color(0xFF1F2937),
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+            surfaceTintColor: Colors.transparent,
+            backgroundColor: Colors.transparent,
+            flexibleSpace: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    DashboardColors.headerGradientStart,
+                    DashboardColors.headerGradientEnd,
+                  ],
+                ),
               ),
             ),
+            title: _PaymentAppBarTitle(payment: vm.paymentDetail),
             leading: Padding(
               padding: const EdgeInsets.all(8),
               child: _RoundActionIcon(
@@ -112,8 +120,6 @@ class _SendPaymentDetailView extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(14, 8, 14, 20),
       children: [
-        _OverviewCard(payment: payment),
-        const SizedBox(height: 10),
         _MetaCard(payment: payment),
         const SizedBox(height: 10),
         _TransferCard(payment: payment),
@@ -137,7 +143,7 @@ class _RoundActionIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: DashboardColors.textWhite.withOpacity(0.18),
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
@@ -145,7 +151,7 @@ class _RoundActionIcon extends StatelessWidget {
         child: SizedBox(
           width: 36,
           height: 36,
-          child: Icon(icon, size: 18, color: const Color(0xFF4B5563)),
+          child: Icon(icon, size: 18, color: DashboardColors.textWhite),
         ),
       ),
     );
@@ -162,86 +168,58 @@ class _CardBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: LoginColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: LoginColors.borderLight),
       ),
       child: child,
     );
   }
 }
 
-class _OverviewCard extends StatelessWidget {
-  final PaymentDetail payment;
+class _PaymentAppBarTitle extends StatelessWidget {
+  final PaymentDetail? payment;
 
-  const _OverviewCard({required this.payment});
+  const _PaymentAppBarTitle({required this.payment});
 
   @override
   Widget build(BuildContext context) {
-    final vendor = _displayVendor(payment);
+    if (payment == null) {
+      return Text(
+        'Payment Detail',
+        style: TextStyle(
+          color: DashboardColors.textWhite,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+    }
 
-    return _CardBlock(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Send Payment',
-            style: TextStyle(
-              color: Color(0xFF111827),
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
+    final label = _paymentLabel(payment!);
+
+    return Column(
+      children: [
+        Text(
+          'Payment $label',
+          style: TextStyle(
+            color: DashboardColors.textWhite,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.payments_outlined,
-                  size: 20,
-                  color: Color(0xFF4B5563),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      vendor,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF111827),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _formatDate(payment.paymentDate),
-                      style: const TextStyle(
-                        color: Color(0xFF6B7280),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+        ),
+        Text(
+          _formatDate(payment!.paymentDate),
+          style: TextStyle(
+            color: DashboardColors.textWhite.withOpacity(0.85),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
+
 
 class _MetaCard extends StatelessWidget {
   final PaymentDetail payment;
@@ -260,8 +238,8 @@ class _MetaCard extends StatelessWidget {
         children: [
           Text(
             'Payment ID: $paymentLabel',
-            style: const TextStyle(
-              color: Color(0xFF111827),
+            style: TextStyle(
+              color: LoginColors.textPrimary,
               fontSize: 14,
               fontWeight: FontWeight.w700,
             ),
@@ -310,9 +288,9 @@ class _MetaText extends StatelessWidget {
       children: [
         Text(
           '$label:',
-          style: const TextStyle(
-            color: Color(0xFF6B7280),
-            fontSize: 11,
+          style: TextStyle(
+            color: LoginColors.textSecondary,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -320,8 +298,8 @@ class _MetaText extends StatelessWidget {
         Text(
           value,
           textAlign: textAlignEnd ? TextAlign.end : TextAlign.start,
-          style: const TextStyle(
-            color: Color(0xFF111827),
+          style: TextStyle(
+            color: LoginColors.textPrimary,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -339,11 +317,17 @@ class _TransferCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final orderIdsText = payment.orderIds.isEmpty
-        ? '-'
+        ? ''
         : payment.orderIds.map((id) => '#$id').join(', ');
+    final mode = payment.modeOfPayment.trim();
+    final reference = payment.referenceNumber.trim();
+    final hasMode = mode.isNotEmpty;
+    final hasReference = reference.isNotEmpty;
+    final hasOrders = orderIdsText.isNotEmpty;
 
     return _CardBlock(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -353,37 +337,36 @@ class _TransferCard extends StatelessWidget {
                   value: _displayVendor(payment),
                 ),
               ),
-              Expanded(
-                child: _MetaText(
-                  label: 'Mode',
-                  value: payment.modeOfPayment.trim().isEmpty
-                      ? '-'
-                      : payment.modeOfPayment,
-                  textAlignEnd: true,
+              if (hasMode)
+                Expanded(
+                  child: _MetaText(
+                    label: 'Mode',
+                    value: mode,
+                    textAlignEnd: true,
+                  ),
                 ),
-              ),
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _MetaText(
-                  label: 'Reference',
-                  value: payment.referenceNumber.trim().isEmpty
-                      ? '-'
-                      : payment.referenceNumber,
-                ),
-              ),
-              Expanded(
-                child: _MetaText(
-                  label: 'Linked Orders',
-                  value: orderIdsText,
-                  textAlignEnd: true,
-                ),
-              ),
-            ],
-          ),
+          if (hasReference || hasOrders) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                if (hasReference)
+                  Expanded(
+                    child: _MetaText(label: 'Reference',
+                      value: reference),
+                  ),
+                if (hasOrders)
+                  Expanded(
+                    child: _MetaText(
+                      label: 'Linked Orders',
+                      value: orderIdsText,
+                      textAlignEnd: !hasReference,
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -398,9 +381,12 @@ class _AmountCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stateLabel = payment.isActive ? 'Active' : 'Inactive';
+    final status = payment.paymentStatus.trim();
+    final hasStatus = status.isNotEmpty;
 
     return _CardBlock(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -410,15 +396,14 @@ class _AmountCard extends StatelessWidget {
                   value: _money(payment.amount),
                 ),
               ),
-              Expanded(
-                child: _MetaText(
-                  label: 'Status',
-                  value: payment.paymentStatus.trim().isEmpty
-                      ? '-'
-                      : payment.paymentStatus,
-                  textAlignEnd: true,
+              if (hasStatus)
+                Expanded(
+                  child: _MetaText(
+                    label: 'Status',
+                    value: status,
+                    textAlignEnd: true,
+                  ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -443,10 +428,10 @@ class _NotesCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Notes',
             style: TextStyle(
-              color: Color(0xFF111827),
+              color: LoginColors.textPrimary,
               fontSize: 14,
               fontWeight: FontWeight.w700,
             ),
@@ -454,8 +439,8 @@ class _NotesCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             notes,
-            style: const TextStyle(
-              color: Color(0xFF374151),
+            style: TextStyle(
+              color: LoginColors.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -502,13 +487,13 @@ class _StateMessage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, size: 40, color: const Color(0xFF6B7280)),
+        Icon(icon, size: 40, color: LoginColors.textSecondary),
         const SizedBox(height: 8),
         Text(
           title,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Color(0xFF111827),
+          style: TextStyle(
+            color: LoginColors.textPrimary,
             fontWeight: FontWeight.w700,
             fontSize: 16,
           ),
@@ -517,8 +502,8 @@ class _StateMessage extends StatelessWidget {
         Text(
           subtitle,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Color(0xFF6B7280),
+          style: TextStyle(
+            color: LoginColors.textSecondary,
             fontWeight: FontWeight.w600,
             fontSize: 12,
           ),
@@ -529,6 +514,12 @@ class _StateMessage extends StatelessWidget {
 }
 
 String _money(double value) => 'INR ${value.toStringAsFixed(2)}';
+
+String _paymentLabel(PaymentDetail payment) {
+  return payment.paymentNumber.trim().isNotEmpty
+      ? payment.paymentNumber
+      : payment.paymentId.toString();
+}
 
 String _displayVendor(PaymentDetail payment) {
   if (payment.vendorName.trim().isNotEmpty) {

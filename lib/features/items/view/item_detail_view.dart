@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/data/services/api_services.dart';
@@ -71,7 +73,7 @@ class _ItemDetailContentState extends State<_ItemDetailContent> {
 
   void _handleScroll() {
     final shouldShow = _scrollController.hasClients &&
-        _scrollController.offset > (_expandedAppBarHeight - kToolbarHeight);
+        _scrollController.offset > 40;
     if (shouldShow != _showCollapsedTitle) {
       setState(() => _showCollapsedTitle = shouldShow);
     }
@@ -145,14 +147,10 @@ class _ItemDetailContentState extends State<_ItemDetailContent> {
               title: AnimatedOpacity(
                 opacity: _showCollapsedTitle ? 1 : 0,
                 duration: const Duration(milliseconds: 180),
-                child: Text(
-                  item?.itemName ?? 'Item Detail',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                  ),
+                child: _CollapsedItemTitle(
+                  item: item,
+                  isLoadingImage: vm.isLoadingImage,
+                  currentImageBytes: vm.currentImageBytes,
                 ),
               ),
               leading: IconButton(
@@ -274,6 +272,63 @@ class _ItemDetailContentState extends State<_ItemDetailContent> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _CollapsedItemTitle extends StatelessWidget {
+  final DetailItem? item;
+  final bool isLoadingImage;
+  final Uint8List? currentImageBytes;
+
+  const _CollapsedItemTitle({
+    required this.item,
+    required this.isLoadingImage,
+    required this.currentImageBytes,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final title = item?.itemName ?? 'Item Detail';
+
+    return Row(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: 28,
+            height: 28,
+            color: Colors.white.withOpacity(0.2),
+            child: isLoadingImage
+                ? const Center(
+                    child: SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                : currentImageBytes != null
+                ? Image.memory(currentImageBytes!, fit: BoxFit.cover)
+                : const Icon(
+                    Icons.image_not_supported_rounded,
+                    size: 14,
+                    color: Colors.white70,
+                  ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+          ),
+        ),
+      ],
     );
   }
 }
