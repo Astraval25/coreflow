@@ -4,6 +4,7 @@ import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/features/presentation/payment/send_payment/view/send_payment_detail_page.dart';
 import 'package:coreflow/features/presentation/payment/send_payment/viewmodel/send_payment_view_model.dart';
 import 'package:coreflow/features/presentation/payment/send_payment/widgets/payment_body_message.dart';
 import 'package:coreflow/features/presentation/payment/send_payment/widgets/payment_card.dart';
@@ -131,8 +132,24 @@ class _PaymentContentState extends State<_PaymentContent> {
       separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final payment = vm.payments[index];
-        return PaymentCard(payment: payment);
+        return InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _openPaymentDetail(vm.companyId, payment.paymentId),
+          child: PaymentCard(payment: payment),
+        );
       },
+    );
+  }
+
+  Future<void> _openPaymentDetail(int companyId, int paymentId) async {
+    if (paymentId <= 0) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            SendPaymentDetailPage(companyId: companyId, paymentId: paymentId),
+      ),
     );
   }
 

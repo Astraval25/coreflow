@@ -4,6 +4,7 @@ import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/features/presentation/purchase/view/purchase_order_detail_page.dart';
 import 'package:coreflow/features/presentation/purchase/viewmodel/purchase_order_view_model.dart';
 import 'package:coreflow/features/presentation/purchase/widgets/purchase_body_message.dart';
 import 'package:coreflow/features/presentation/purchase/widgets/purchase_empty_state.dart';
@@ -136,8 +137,24 @@ class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
       separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final order = tabFilteredOrders[index];
-        return PurchaseOrderCard(order: order);
+        return InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _openOrderDetail(vm.companyId, order.orderId),
+          child: PurchaseOrderCard(order: order),
+        );
       },
+    );
+  }
+
+  Future<void> _openOrderDetail(int companyId, int orderId) async {
+    if (orderId <= 0) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            PurchaseOrderDetailPage(companyId: companyId, orderId: orderId),
+      ),
     );
   }
 
