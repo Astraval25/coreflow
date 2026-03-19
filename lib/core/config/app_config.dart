@@ -1,7 +1,10 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppConfig {
+  // Base URL for API
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
+
+  // API Endpoints
   static const String loginEndpoint = '/api/auth/login';
   static const String registerEndpoint = '/api/auth/register';
   static const String verifyOtpEndpoint = '/api/auth/verify-otp';
@@ -70,7 +73,12 @@ class AppConfig {
       '/api/companies/{companyId}/payments-sent/summary';
   static const String paymentsReceivedSummaryEndpoint =
       '/api/companies/{companyId}/payments-received/summary';
+  static const String paymentDetailEndpoint =
+      '/api/companies/{companyId}/payments/{paymentId}';
+  static const String orderDetailEndpoint =
+      '/api/companies/{companyId}/orders/{orderId}';
 
+  // getters for constructing full URLs
   static String get loginUrl => '$baseUrl$loginEndpoint';
   static String get registerUrl => '$baseUrl$registerEndpoint';
   static String get verifyOtpUrl => '$baseUrl$verifyOtpEndpoint';
@@ -183,4 +191,12 @@ class AppConfig {
 
   static String getPaymentsReceivedSummaryUrl(int companyId) =>
       '$baseUrl${paymentsReceivedSummaryEndpoint.replaceAll('{companyId}', companyId.toString())}';
+  static String getPaymentDetailUrl(int companyId, int paymentId) =>
+      '$baseUrl${paymentDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{paymentId}', paymentId.toString())}';
+  static String getSendPaymentDetailUrl(int companyId, int paymentId) =>
+      getPaymentDetailUrl(companyId, paymentId);
+  static String getReceivePaymentDetailUrl(int companyId, int paymentId) =>
+      getPaymentDetailUrl(companyId, paymentId);
+  static String getOrderDetailUrl(int companyId, int orderId) =>
+      '$baseUrl${orderDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{orderId}', orderId.toString())}';
 }

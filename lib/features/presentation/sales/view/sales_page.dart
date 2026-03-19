@@ -6,6 +6,7 @@ import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/sales/sales_order.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/presentation/sales/viewmodel/sales_order_view_model.dart';
+import 'package:coreflow/features/presentation/sales/view/sales_order_detail_page.dart';
 import 'package:coreflow/features/presentation/sales/widgets/sales_body_message.dart';
 import 'package:coreflow/features/presentation/sales/widgets/sales_empty_state.dart';
 import 'package:coreflow/features/presentation/sales/widgets/sales_loading_body.dart';
@@ -73,6 +74,7 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
     return Consumer<SalesOrderViewModel>(
       builder: (context, vm, child) {
         final filteredOrders = vm.filteredOrders;
+        final companyId = dashboardVm.companyId;
 
         return Scaffold(
           key: _scaffoldKey,
@@ -104,14 +106,18 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
           ),
           body: RefreshIndicator(
             onRefresh: vm.refresh,
-            child: _buildBody(vm, filteredOrders),
+            child: _buildBody(vm, filteredOrders, companyId),
           ),
         );
       },
     );
   }
 
-  Widget _buildBody(SalesOrderViewModel vm, List<SalesOrder> filteredOrders) {
+  Widget _buildBody(
+    SalesOrderViewModel vm,
+    List<SalesOrder> filteredOrders,
+    int? companyId,
+  ) {
     final tabFilteredOrders = filteredOrders
         .where((order) => _matchesSelectedTab(order.orderStatus))
         .toList();
@@ -142,8 +148,24 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
       separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final order = tabFilteredOrders[index];
-        return AnimatedSalesOrderCard(order: order, index: index);
+        return InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _openOrderDetail(order, companyId),
+          child: AnimatedSalesOrderCard(order: order, index: index),
+        );
       },
+    );
+  }
+
+  Future<void> _openOrderDetail(SalesOrder order, int? companyId) async {
+    if (companyId == null) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            SalesOrderDetailPage(companyId: companyId, orderId: order.orderId),
+      ),
     );
   }
 

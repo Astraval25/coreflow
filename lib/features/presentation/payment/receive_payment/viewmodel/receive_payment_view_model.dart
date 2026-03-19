@@ -1,4 +1,5 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/domain/model/payment/payment_detail.dart';
 import 'package:coreflow/domain/model/payment/payment_received_summary.dart';
 import 'package:flutter/material.dart';
 
@@ -36,6 +37,15 @@ class ReceivePaymentViewModel extends ChangeNotifier {
 
   Future<void> refresh() async {
     await fetchPaymentsReceivedSummary();
+  }
+
+  Future<PaymentDetail?> fetchPaymentDetail(int paymentId) async {
+    try {
+      return await _repository.getReceivePaymentDetail(companyId, paymentId);
+    } catch (e, stack) {
+      debugPrint('fetch received payment detail failed: $e\n$stack');
+      return null;
+    }
   }
 
   void _setLoading(bool value) {

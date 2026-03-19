@@ -16,14 +16,23 @@ import 'package:coreflow/domain/model/items/item.dart';
 import 'package:coreflow/domain/model/items/item_status_response.dart';
 import 'package:coreflow/domain/model/items/update_item_request.dart';
 import 'package:coreflow/domain/model/login/login_request.dart';
+import 'package:coreflow/domain/model/payment/payment_detail.dart';
+import 'package:coreflow/domain/model/payment/payment_detail_response.dart';
 import 'package:coreflow/domain/model/payment/payment_received_summary.dart';
 import 'package:coreflow/domain/model/payment/payment_sent_summary.dart';
+import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
+import 'package:coreflow/domain/model/purchase/purchase_order_detail_response.dart';
 import 'package:coreflow/domain/model/register/register_request.dart';
 import 'package:coreflow/domain/model/register/register_response.dart';
 import 'package:coreflow/domain/model/resend_otp/resend_otp_request.dart';
 import 'package:coreflow/domain/model/resend_otp/resend_otp_response.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order.dart';
 import 'package:coreflow/domain/model/sales/sales_order.dart';
+import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
+    as sales_detail;
+import 'package:coreflow/domain/model/sales/sales_order_detail_response.dart'
+    as sales_detail;
+
 import 'package:coreflow/domain/model/vendors/create_vendors_request.dart';
 import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
@@ -1056,6 +1065,35 @@ class AuthRepository {
     }
   }
 
+  Future<sales_detail.SalesOrderDetail?> getSalesOrderDetail(
+    int companyId,
+    int orderId,
+  ) async {
+    try {
+      final uri = Uri.parse(AppConfig.getOrderDetailUrl(companyId, orderId));
+
+      final response = await _apiService.get(uri);
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        return null;
+      }
+
+      final Map<String, dynamic> jsonMap =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      final detailResponse = sales_detail.SalesOrderDetailResponse.fromJson(
+        jsonMap,
+      );
+
+      if (!detailResponse.responseStatus) return null;
+
+      return detailResponse.responseData;
+    } catch (e) {
+      debugPrint('Get order detail error: $e');
+      return null;
+    }
+  }
+
   Future<List<PurchaseOrder>> getPurchaseOrders(int companyId) async {
     try {
       final url = AppConfig.getPurchaseOrdersUrl(companyId);
@@ -1090,6 +1128,75 @@ class AuthRepository {
     }
   }
 
+  Future<PurchaseOrderDetail?> getPurchaseOrderDetail(
+    int companyId,
+    int orderId,
+  ) async {
+    try {
+      final uri = Uri.parse(AppConfig.getOrderDetailUrl(companyId, orderId));
+      final response = await _apiService.get(uri);
+
+      debugPrint(
+        'GET /companies/$companyId/orders/$orderId status: ${response.statusCode}',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        return null;
+      }
+
+      final Map<String, dynamic> jsonMap =
+          jsonDecode(response.body) as Map<String, dynamic>;
+      final detailResponse = PurchaseOrderDetailResponse.fromJson(jsonMap);
+
+      if (!detailResponse.responseStatus) return null;
+
+      return detailResponse.responseData;
+    } catch (e, stack) {
+      debugPrint('Get purchase order detail error: $e\n$stack');
+      return null;
+    }
+  }
+
+  Future<PaymentDetail?> getPaymentDetail(int companyId, int paymentId) async {
+    try {
+      final url = AppConfig.getPaymentDetailUrl(companyId, paymentId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      debugPrint(
+        'GET /companies/$companyId/payments/$paymentId status: ${response.statusCode}',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        return null;
+      }
+
+      final Map<String, dynamic> jsonMap =
+          jsonDecode(response.body) as Map<String, dynamic>;
+      final detailResponse = PaymentDetailResponse.fromJson(jsonMap);
+
+      if (!detailResponse.responseStatus) return null;
+
+      return detailResponse.responseData;
+    } catch (e, stack) {
+      debugPrint('Get payment detail error: $e\n$stack');
+      return null;
+    }
+  }
+
+  Future<PaymentDetail?> getSendPaymentDetail(
+    int companyId,
+    int paymentId,
+  ) async {
+    return getPaymentDetail(companyId, paymentId);
+  }
+
+  Future<PaymentDetail?> getReceivePaymentDetail(
+    int companyId,
+    int paymentId,
+  ) async {
+    return getPaymentDetail(companyId, paymentId);
+  }
+
   Future<List<PaymentSentSummary>> getPaymentsSentSummary(int companyId) async {
     try {
       final url = AppConfig.getPaymentsSentSummaryUrl(companyId);
@@ -1116,8 +1223,9 @@ class AuthRepository {
 
       final List<dynamic> data = decodedBody['responseData'] ?? [];
       return data
-          .map((json) =>
-              PaymentSentSummary.fromJson(json as Map<String, dynamic>))
+          .map(
+            (json) => PaymentSentSummary.fromJson(json as Map<String, dynamic>),
+          )
           .toList();
     } catch (e, stack) {
       debugPrint('Get payments sent summary error: $e\n$stack');
@@ -1137,7 +1245,9 @@ class AuthRepository {
       );
 
       if (response.statusCode != 200 && response.statusCode != 202) {
-        debugPrint('Get payments received summary failed: ${response.statusCode}');
+        debugPrint(
+          'Get payments received summary failed: ${response.statusCode}',
+        );
         return [];
       }
 
@@ -1153,8 +1263,10 @@ class AuthRepository {
 
       final List<dynamic> data = decodedBody['responseData'] ?? [];
       return data
-          .map((json) =>
-              PaymentReceivedSummary.fromJson(json as Map<String, dynamic>))
+          .map(
+            (json) =>
+                PaymentReceivedSummary.fromJson(json as Map<String, dynamic>),
+          )
           .toList();
     } catch (e, stack) {
       debugPrint('Get payments received summary error: $e\n$stack');

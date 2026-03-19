@@ -4,6 +4,7 @@ import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/features/presentation/payment/receive_payment/view/pay_received_detail_page.dart';
 import 'package:coreflow/features/presentation/payment/receive_payment/viewmodel/receive_payment_view_model.dart';
 import 'package:coreflow/features/presentation/payment/receive_payment/widgets/pay_received_body_message.dart';
 import 'package:coreflow/features/presentation/payment/receive_payment/widgets/pay_received_card.dart';
@@ -125,8 +126,24 @@ class _PayReceivedContentState extends State<_PayReceivedContent> {
       separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final payment = vm.payments[index];
-        return PayReceivedCard(payment: payment);
+        return InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _openPaymentDetail(vm.companyId, payment.paymentId),
+          child: PayReceivedCard(payment: payment),
+        );
       },
+    );
+  }
+
+  Future<void> _openPaymentDetail(int companyId, int paymentId) async {
+    if (paymentId <= 0) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            PayReceivedDetailPage(companyId: companyId, paymentId: paymentId),
+      ),
     );
   }
 
