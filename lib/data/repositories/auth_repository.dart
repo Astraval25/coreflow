@@ -1083,19 +1083,19 @@ class AuthRepository {
       final url = AppConfig.getSalesOrdersUrl(companyId);
       final response = await _apiService.post(url, request.toJson());
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] == true) {
         return {
-          'success': data['responseStatus'] == true,
+          'success': true,
           'message': data['responseMessage'] ?? 'Order created',
           'data': data['responseData'],
         };
       }
 
-      final data = jsonDecode(response.body) as Map<String, dynamic>?;
       return {
         'success': false,
-        'message': data?['responseMessage'] ??
+        'message':
+            data['responseMessage'] ??
             'Failed with status ${response.statusCode}',
       };
     } catch (e) {
@@ -1113,15 +1113,6 @@ class AuthRepository {
           AppConfig.getVendorPurchasableItemsUrl(companyId, vendorId);
       final response = await _apiService.get(Uri.parse(url));
 
-      debugPrint(
-        'GET /vendors/$vendorId/items/purchasable status: ${response.statusCode}',
-      );
-
-      if (response.statusCode != 200 && response.statusCode != 202) {
-        debugPrint(
-            'Get purchasable items failed: ${response.statusCode}');
-        return [];
-      }
 
       final Map<String, dynamic> decodedBody =
           jsonDecode(response.body) as Map<String, dynamic>;
@@ -1149,19 +1140,19 @@ class AuthRepository {
       final url = AppConfig.getPurchaseOrdersUrl(companyId);
       final response = await _apiService.post(url, request.toJson());
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] == true) {
         return {
-          'success': data['responseStatus'] == true,
+          'success': true,
           'message': data['responseMessage'] ?? 'Order created',
           'data': data['responseData'],
         };
       }
 
-      final data = jsonDecode(response.body) as Map<String, dynamic>?;
       return {
         'success': false,
-        'message': data?['responseMessage'] ??
+        'message':
+            data['responseMessage'] ??
             'Failed with status ${response.statusCode}',
       };
     } catch (e) {

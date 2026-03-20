@@ -18,9 +18,9 @@ class CreatePurchaseOrderRequest {
   Map<String, dynamic> toJson() {
     return {
       'vendorId': vendorId,
-      if (taxAmount != null) 'taxAmount': taxAmount,
-      if (discountAmount != null) 'discountAmount': discountAmount,
-      if (deliveryCharge != null) 'deliveryCharge': deliveryCharge,
+      'taxAmount': taxAmount ?? 0.0,
+      'discountAmount': discountAmount ?? 0,
+      'deliveryCharge': deliveryCharge ?? 0.0,
       'hasBill': hasBill,
       'orderItems': orderItems.map((item) => item.toJson()).toList(),
     };
