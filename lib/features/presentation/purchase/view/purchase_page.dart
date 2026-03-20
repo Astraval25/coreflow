@@ -4,6 +4,7 @@ import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/features/presentation/purchase/view/create_purchase_order_page.dart';
 import 'package:coreflow/features/presentation/purchase/view/purchase_order_detail_page.dart';
 import 'package:coreflow/features/presentation/purchase/viewmodel/purchase_order_view_model.dart';
 import 'package:coreflow/features/presentation/purchase/widgets/purchase_body_message.dart';
@@ -173,13 +174,21 @@ class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
   }
 
   Widget _buildCreateButton() {
+    final companyId = context.read<DashboardViewModel>().companyId;
     return FloatingActionButton(
       backgroundColor: LoginColors.primary,
       foregroundColor: Colors.white,
-      onPressed: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Create purchase order coming soon.')),
+      onPressed: () async {
+        if (companyId == null) return;
+        final result = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CreatePurchaseOrderPage(companyId: companyId),
+          ),
         );
+        if (result == true && mounted) {
+          context.read<PurchaseOrderViewModel>().refresh();
+        }
       },
       child: const Icon(Icons.add_rounded),
     );

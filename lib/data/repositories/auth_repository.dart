@@ -27,6 +27,7 @@ import 'package:coreflow/domain/model/register/register_request.dart';
 import 'package:coreflow/domain/model/register/register_response.dart';
 import 'package:coreflow/domain/model/resend_otp/resend_otp_request.dart';
 import 'package:coreflow/domain/model/resend_otp/resend_otp_response.dart';
+import 'package:coreflow/domain/model/purchase/create_purchase_order_request.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order.dart';
 import 'package:coreflow/domain/model/sales/create_sales_order_request.dart';
 import 'package:coreflow/domain/model/sales/sales_order.dart';
@@ -1099,6 +1100,72 @@ class AuthRepository {
       };
     } catch (e) {
       debugPrint('Create sales order error: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  Future<List<SellableItem>> getVendorPurchasableItems(
+    int companyId,
+    int vendorId,
+  ) async {
+    try {
+      final url =
+          AppConfig.getVendorPurchasableItemsUrl(companyId, vendorId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      debugPrint(
+        'GET /vendors/$vendorId/items/purchasable status: ${response.statusCode}',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        debugPrint(
+            'Get purchasable items failed: ${response.statusCode}');
+        return [];
+      }
+
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (decodedBody['responseStatus'] != true) {
+        debugPrint(
+          'Get purchasable items responseStatus false: ${decodedBody['responseMessage']}',
+        );
+        return [];
+      }
+
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      return data.map((json) => SellableItem.fromJson(json)).toList();
+    } catch (e, stack) {
+      debugPrint('Get vendor purchasable items error: $e\n$stack');
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> createPurchaseOrder(
+    int companyId,
+    CreatePurchaseOrderRequest request,
+  ) async {
+    try {
+      final url = AppConfig.getPurchaseOrdersUrl(companyId);
+      final response = await _apiService.post(url, request.toJson());
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return {
+          'success': data['responseStatus'] == true,
+          'message': data['responseMessage'] ?? 'Order created',
+          'data': data['responseData'],
+        };
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>?;
+      return {
+        'success': false,
+        'message': data?['responseMessage'] ??
+            'Failed with status ${response.statusCode}',
+      };
+    } catch (e) {
+      debugPrint('Create purchase order error: $e');
       return {'success': false, 'message': 'Error: $e'};
     }
   }
