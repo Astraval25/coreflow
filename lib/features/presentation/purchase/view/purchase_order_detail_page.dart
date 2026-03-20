@@ -1,3 +1,4 @@
+import 'package:coreflow/core/utils/order_share_helper.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
@@ -128,6 +129,14 @@ class _PurchaseOrderDetailView extends StatelessWidget {
         _ItemDetailsCard(items: items, companyId: vm.companyId),
         const SizedBox(height: 10),
         _PaymentSummaryCard(order: order),
+        const SizedBox(height: 16),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: FractionallySizedBox(
+            widthFactor: 0.40,
+            child: _OrderShareButton(order: order),
+          ),
+        ),
       ],
     );
   }
@@ -660,6 +669,209 @@ TableRow _paymentRow(
       ),
     ],
   );
+}
+
+OrderShareData _purchaseOrderToShareData(PurchaseOrderDetail order) {
+  final vendor = order.vendorDisplayName.trim().isNotEmpty
+      ? order.vendorDisplayName
+      : order.vendorName.trim().isNotEmpty
+          ? order.vendorName
+          : 'Vendor';
+
+  return OrderShareData(
+    orderNumber: order.orderNumber,
+    orderId: order.orderId,
+    orderDate: order.orderDate,
+    partyName: vendor,
+    partyLabel: 'Vendor',
+    sellerCompanyName: order.sellerCompanyName,
+    buyerCompanyName: order.buyerCompanyName,
+    items: order.orderItems
+        .map((i) => OrderShareItemData(
+              itemName: i.itemName,
+              quantity: i.quantity,
+              unitPrice: i.unitPrice,
+              itemTotal: i.itemTotal,
+            ))
+        .toList(),
+    orderAmount: order.orderAmount,
+    taxAmount: order.taxAmount,
+    discountAmount: order.discountAmount,
+    deliveryCharge: order.deliveryCharge,
+    totalAmount: order.totalAmount,
+    paidAmount: order.paidAmount,
+    orderStatus: order.orderStatus,
+  );
+}
+
+class _OrderShareButton extends StatefulWidget {
+  final PurchaseOrderDetail order;
+
+  const _OrderShareButton({required this.order});
+
+  @override
+  State<_OrderShareButton> createState() => _OrderShareButtonState();
+}
+
+class _OrderShareButtonState extends State<_OrderShareButton> {
+  bool _expanded = false;
+  bool _sharing = false;
+
+  OrderShareData get _data => _purchaseOrderToShareData(widget.order);
+
+  Future<void> _defaultShare() async {
+    if (_sharing) return;
+    setState(() => _sharing = true);
+    await OrderShareHelper.shareText(_data);
+    if (mounted) setState(() => _sharing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          child: _expanded
+              ? Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: LoginColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: LoginColors.borderLight),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _ShareOptionTile(
+                        icon: Icons.text_fields_rounded,
+                        label: 'Share Text',
+                        onTap: () {
+                          setState(() => _expanded = false);
+                          OrderShareHelper.shareText(_data);
+                        },
+                      ),
+                      Divider(height: 1, color: LoginColors.borderLight),
+                      _ShareOptionTile(
+                        icon: Icons.picture_as_pdf_rounded,
+                        label: _data.isBillStatus
+                            ? 'Bill PDF'
+                            : 'Order PDF',
+                        onTap: () {
+                          setState(() => _expanded = false);
+                          OrderShareHelper.shareAsPdf(_data);
+                        },
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+        SizedBox(
+          height: 46,
+          child: Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _sharing ? null : _defaultShare,
+                  icon: _sharing
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.share_rounded, size: 18),
+                  label: const Text(
+                    'Share',
+                    style: TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: LoginColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        bottomLeft: Radius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Container(width: 1, color: Colors.white24),
+              SizedBox(
+                width: 46,
+                child: FilledButton(
+                  onPressed: () =>
+                      setState(() => _expanded = !_expanded),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: LoginColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.zero,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(12),
+                        bottomRight: Radius.circular(12),
+                      ),
+                    ),
+                  ),
+                  child: Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_down_rounded
+                        : Icons.keyboard_arrow_up_rounded,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ShareOptionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ShareOptionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: LoginColors.primary),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: LoginColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _PurchaseOrderDetailLoadingSkeleton extends StatelessWidget {
