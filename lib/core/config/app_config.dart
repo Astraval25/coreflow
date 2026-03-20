@@ -85,6 +85,10 @@ class AppConfig {
       '/api/companies/{companyId}/payments-sent';
   static const String vendorUnpaidOrdersEndpoint =
       '/api/companies/{companyId}/vendor/{vendorId}/unpaid-orders';
+  static const String createPaymentReceivedEndpoint =
+      '/api/companies/{companyId}/payments-received';
+  static const String customerUnpaidOrdersEndpoint =
+      '/api/companies/{companyId}/customer/{customerId}/unpaid-orders';
   static const String paymentProofEndpoint =
       '/api/companies/{companyId}/payments/payment-proof';
   static const String paymentProofFileEndpoint =
@@ -229,4 +233,10 @@ class AppConfig {
 
   static String getPaymentProofFileUrl(int companyId, String fsId) =>
       '$baseUrl${paymentProofFileEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{fsId}', fsId)}';
+
+  static String getCreatePaymentReceivedUrl(int companyId) =>
+      '$baseUrl${createPaymentReceivedEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getCustomerUnpaidOrdersUrl(int companyId, int customerId) =>
+      '$baseUrl${customerUnpaidOrdersEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
 }

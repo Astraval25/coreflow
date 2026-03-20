@@ -18,6 +18,7 @@ import 'package:coreflow/domain/model/items/item.dart';
 import 'package:coreflow/domain/model/items/item_status_response.dart';
 import 'package:coreflow/domain/model/items/update_item_request.dart';
 import 'package:coreflow/domain/model/login/login_request.dart';
+import 'package:coreflow/domain/model/payment/create_payment_received_request.dart';
 import 'package:coreflow/domain/model/payment/create_payment_sent_request.dart';
 import 'package:coreflow/domain/model/payment/payment_proof_response.dart';
 import 'package:coreflow/domain/model/payment/payment_detail.dart';
@@ -1513,6 +1514,68 @@ class AuthRepository {
     } catch (e, stack) {
       debugPrint('Upload payment proof error: $e\n$stack');
       return null;
+    }
+  }
+
+  Future<List<UnpaidOrder>> getCustomerUnpaidOrders(
+    int companyId,
+    int customerId,
+  ) async {
+    try {
+      final url = AppConfig.getCustomerUnpaidOrdersUrl(companyId, customerId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      debugPrint(
+        'GET /companies/$companyId/customer/$customerId/unpaid-orders status: ${response.statusCode}',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        return [];
+      }
+
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (decodedBody['responseStatus'] != true) {
+        return [];
+      }
+
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      return data
+          .map((json) => UnpaidOrder.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e, stack) {
+      debugPrint('Get customer unpaid orders error: $e\n$stack');
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> createPaymentReceived(
+    int companyId,
+    CreatePaymentReceivedRequest request,
+  ) async {
+    try {
+      final url = AppConfig.getCreatePaymentReceivedUrl(companyId);
+      final response = await _apiService.post(url, request.toJson());
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] == true) {
+        return {
+          'success': true,
+          'message': data['responseMessage'] ?? 'Payment created',
+          'data': data['responseData'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message':
+            data['responseMessage'] ??
+            'Failed with status ${response.statusCode}',
+      };
+    } catch (e) {
+      debugPrint('Create payment received error: $e');
+      return {'success': false, 'message': 'Error: $e'};
     }
   }
 }
