@@ -59,6 +59,8 @@ class AppConfig {
       '/api/companies/{companyId}/customers/{customerId}/items/{itemId}/activate';
   static const String customerItemDeactivateEndpoint =
       '/api/companies/{companyId}/customers/{customerId}/items/{itemId}/deactivate';
+  static const String customerSellableItemsEndpoint =
+      '/api/companies/{companyId}/customers/{customerId}/items/sellable';
   static const String fileEndpoint = '/api/file';
   static const String itemActivateEndpoint =
       '/api/companies/{companyId}/items/{itemId}/activate';
@@ -172,6 +174,9 @@ class AppConfig {
     int itemId,
   ) =>
       '$baseUrl${customerItemDeactivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString()).replaceAll('{itemId}', itemId.toString())}';
+
+  static String getCustomerSellableItemsUrl(int companyId, int customerId) =>
+      '$baseUrl${customerSellableItemsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
 
   static String getFileUrl(String fsId) => '$baseUrl$fileEndpoint?fsId=$fsId';
   static String getItemActivateUrl(int companyId, int itemId) =>

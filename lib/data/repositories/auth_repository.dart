@@ -11,6 +11,7 @@ import 'package:coreflow/domain/model/customer/customer_edit_response.dart';
 import 'package:coreflow/domain/model/customer/customer_mapped_item.dart';
 import 'package:coreflow/domain/model/customer/customer_status_response.dart';
 import 'package:coreflow/domain/model/items/create_item_request.dart';
+import 'package:coreflow/domain/model/items/sellable_item.dart';
 import 'package:coreflow/domain/model/items/detail_item.dart';
 import 'package:coreflow/domain/model/items/item.dart';
 import 'package:coreflow/domain/model/items/item_status_response.dart';
@@ -27,6 +28,7 @@ import 'package:coreflow/domain/model/register/register_response.dart';
 import 'package:coreflow/domain/model/resend_otp/resend_otp_request.dart';
 import 'package:coreflow/domain/model/resend_otp/resend_otp_response.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order.dart';
+import 'package:coreflow/domain/model/sales/create_sales_order_request.dart';
 import 'package:coreflow/domain/model/sales/sales_order.dart';
 import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
     as sales_detail;
@@ -1035,6 +1037,72 @@ class AuthRepository {
   }
 
   // getSalesOrder
+  Future<List<SellableItem>> getCustomerSellableItems(
+    int companyId,
+    int customerId,
+  ) async {
+    try {
+      final url =
+          AppConfig.getCustomerSellableItemsUrl(companyId, customerId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      debugPrint(
+        'GET /customers/$customerId/items/sellable status: ${response.statusCode}',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        debugPrint(
+            'Get sellable items failed: ${response.statusCode}');
+        return [];
+      }
+
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (decodedBody['responseStatus'] != true) {
+        debugPrint(
+          'Get sellable items responseStatus false: ${decodedBody['responseMessage']}',
+        );
+        return [];
+      }
+
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      return data.map((json) => SellableItem.fromJson(json)).toList();
+    } catch (e, stack) {
+      debugPrint('Get customer sellable items error: $e\n$stack');
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> createSalesOrder(
+    int companyId,
+    CreateSalesOrderRequest request,
+  ) async {
+    try {
+      final url = AppConfig.getSalesOrdersUrl(companyId);
+      final response = await _apiService.post(url, request.toJson());
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return {
+          'success': data['responseStatus'] == true,
+          'message': data['responseMessage'] ?? 'Order created',
+          'data': data['responseData'],
+        };
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>?;
+      return {
+        'success': false,
+        'message': data?['responseMessage'] ??
+            'Failed with status ${response.statusCode}',
+      };
+    } catch (e) {
+      debugPrint('Create sales order error: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
   Future<List<SalesOrder>> getSalesOrders(int companyId) async {
     try {
       final url = AppConfig.getSalesOrdersUrl(companyId);

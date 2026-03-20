@@ -6,6 +6,7 @@ import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/sales/sales_order.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/presentation/sales/viewmodel/sales_order_view_model.dart';
+import 'package:coreflow/features/presentation/sales/view/create_sales_order_page.dart';
 import 'package:coreflow/features/presentation/sales/view/sales_order_detail_page.dart';
 import 'package:coreflow/features/presentation/sales/widgets/sales_body_message.dart';
 import 'package:coreflow/features/presentation/sales/widgets/sales_empty_state.dart';
@@ -184,13 +185,21 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
   }
 
   Widget _buildCreateButton() {
+    final companyId = context.read<DashboardViewModel>().companyId;
     return FloatingActionButton(
       backgroundColor: LoginColors.primary,
       foregroundColor: Colors.white,
-      onPressed: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Create sales order coming soon.')),
+      onPressed: () async {
+        if (companyId == null) return;
+        final result = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CreateSalesOrderPage(companyId: companyId),
+          ),
         );
+        if (result == true && mounted) {
+          context.read<SalesOrderViewModel>().refresh();
+        }
       },
       child: const Icon(Icons.add_rounded),
     );
