@@ -1,5 +1,6 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/payment/create_payment_sent_request.dart';
+import 'package:coreflow/domain/model/payment/payment_proof_result.dart';
 import 'package:coreflow/domain/model/payment/unpaid_order.dart';
 import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:flutter/material.dart';
@@ -35,6 +36,7 @@ class CreatePaymentSentViewModel extends ChangeNotifier {
   String? _referenceNumber;
   String? _paymentRemarks;
   DateTime _paymentDate = DateTime.now();
+  String? _fsId;
 
   bool _isLoading = false;
   bool _isLoadingOrders = false;
@@ -50,6 +52,7 @@ class CreatePaymentSentViewModel extends ChangeNotifier {
   String? get referenceNumber => _referenceNumber;
   String? get paymentRemarks => _paymentRemarks;
   DateTime get paymentDate => _paymentDate;
+  String? get fsId => _fsId;
   bool get isLoading => _isLoading;
   bool get isLoadingOrders => _isLoadingOrders;
   bool get isSuccess => _isSuccess;
@@ -113,6 +116,22 @@ class CreatePaymentSentViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setProofResult(PaymentProofResult result) {
+    _fsId = result.fsId;
+    if (result.amount != null) {
+      _amount = result.amount!;
+    }
+    if (result.transactionId != null) {
+      _referenceNumber = result.transactionId;
+    }
+    notifyListeners();
+  }
+
+  void clearProof() {
+    _fsId = null;
+    notifyListeners();
+  }
+
   void toggleOrderSelection(int index, bool selected) {
     if (index >= 0 && index < _unpaidOrders.length) {
       _unpaidOrders[index].selected = selected;
@@ -167,6 +186,7 @@ class CreatePaymentSentViewModel extends ChangeNotifier {
           modeOfPayment: _modeOfPayment,
           referenceNumber: _referenceNumber,
           paymentRemarks: _paymentRemarks,
+          fsId: _fsId,
           orderAllocations: allocations,
         ),
       );

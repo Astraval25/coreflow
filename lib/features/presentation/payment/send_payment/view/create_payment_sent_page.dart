@@ -2,8 +2,10 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/vendor_selector_page.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/domain/model/payment/payment_proof_result.dart';
 import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/features/presentation/payment/proof/view/payment_proof_page.dart';
 import 'package:coreflow/features/presentation/payment/send_payment/viewmodel/create_payment_sent_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -11,8 +13,13 @@ import 'package:provider/provider.dart';
 
 class CreatePaymentSentPage extends StatelessWidget {
   final int companyId;
+  final PaymentProofResult? proofResult;
 
-  const CreatePaymentSentPage({super.key, required this.companyId});
+  const CreatePaymentSentPage({
+    super.key,
+    required this.companyId,
+    this.proofResult,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,15 +28,22 @@ class CreatePaymentSentPage extends StatelessWidget {
         repository: AuthRepository(),
         companyId: companyId,
       ),
-      child: _CreatePaymentSentView(companyId: companyId),
+      child: _CreatePaymentSentView(
+        companyId: companyId,
+        proofResult: proofResult,
+      ),
     );
   }
 }
 
 class _CreatePaymentSentView extends StatefulWidget {
   final int companyId;
+  final PaymentProofResult? proofResult;
 
-  const _CreatePaymentSentView({required this.companyId});
+  const _CreatePaymentSentView({
+    required this.companyId,
+    this.proofResult,
+  });
 
   @override
   State<_CreatePaymentSentView> createState() =>
@@ -55,11 +69,53 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.proofResult != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final vm = context.read<CreatePaymentSentViewModel>();
+        vm.setProofResult(widget.proofResult!);
+        if (widget.proofResult!.amount != null) {
+          _amountController.text =
+              widget.proofResult!.amount! % 1 == 0
+                  ? widget.proofResult!.amount!.toInt().toString()
+                  : widget.proofResult!.amount.toString();
+        }
+        if (widget.proofResult!.transactionId != null) {
+          _referenceController.text = widget.proofResult!.transactionId!;
+        }
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _amountController.dispose();
     _referenceController.dispose();
     _remarksController.dispose();
     super.dispose();
+  }
+
+  Future<void> _attachProof() async {
+    final result = await Navigator.push<PaymentProofResult>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentProofPage(companyId: widget.companyId),
+      ),
+    );
+    if (result != null && mounted) {
+      final vm = context.read<CreatePaymentSentViewModel>();
+      vm.setProofResult(result);
+      if (result.amount != null) {
+        _amountController.text = result.amount! % 1 == 0
+            ? result.amount!.toInt().toString()
+            : result.amount.toString();
+      }
+      if (result.transactionId != null) {
+        _referenceController.text = result.transactionId!;
+      }
+      setState(() {});
+    }
   }
 
   Future<void> _selectVendor() async {
@@ -208,6 +264,8 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
                 children: [
                   _buildVendorSection(vm),
                   const SizedBox(height: 20),
+                  _buildProofSection(vm),
+                  const SizedBox(height: 20),
                   _buildPaymentDetailsSection(vm),
                   const SizedBox(height: 20),
                   _buildOrderAllocationsSection(vm),
@@ -289,6 +347,148 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildProofSection(CreatePaymentSentViewModel vm) {
+    final hasProof = vm.fsId != null && vm.fsId!.isNotEmpty;
+
+    return InkWell(
+      onTap: _attachProof,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: LoginColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: LoginColors.borderLight),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: hasProof
+              ? Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: LoginColors.success.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.check_circle_rounded,
+                        color: LoginColors.success,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Proof Attached',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: LoginColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            vm.fsId!.length > 20
+                                ? '${vm.fsId!.substring(0, 20)}...'
+                                : vm.fsId!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: LoginColors.textTertiary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _attachProof,
+                      style: TextButton.styleFrom(
+                        foregroundColor: LoginColors.primary,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'Change',
+                        style: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        vm.clearProof();
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: LoginColors.error,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'Remove',
+                        style: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: LoginColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.receipt_long_rounded,
+                        color: LoginColors.primary,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Attach Payment Proof',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: LoginColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Upload screenshot or PDF for auto-fill',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: LoginColors.textTertiary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: LoginColors.textTertiary,
+                      size: 22,
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }

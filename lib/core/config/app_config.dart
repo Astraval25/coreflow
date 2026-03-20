@@ -85,6 +85,8 @@ class AppConfig {
       '/api/companies/{companyId}/payments-sent';
   static const String vendorUnpaidOrdersEndpoint =
       '/api/companies/{companyId}/vendor/{vendorId}/unpaid-orders';
+  static const String paymentProofEndpoint =
+      '/api/companies/{companyId}/payments/payment-proof';
 
   // getters for constructing full URLs
   static String get loginUrl => '$baseUrl$loginEndpoint';
@@ -219,4 +221,7 @@ class AppConfig {
 
   static String getVendorUnpaidOrdersUrl(int companyId, int vendorId) =>
       '$baseUrl${vendorUnpaidOrdersEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+
+  static String getPaymentProofUrl(int companyId) =>
+      '$baseUrl${paymentProofEndpoint.replaceAll('{companyId}', companyId.toString())}';
 }

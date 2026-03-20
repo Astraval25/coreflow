@@ -18,6 +18,7 @@ import 'package:coreflow/domain/model/items/item_status_response.dart';
 import 'package:coreflow/domain/model/items/update_item_request.dart';
 import 'package:coreflow/domain/model/login/login_request.dart';
 import 'package:coreflow/domain/model/payment/create_payment_sent_request.dart';
+import 'package:coreflow/domain/model/payment/payment_proof_response.dart';
 import 'package:coreflow/domain/model/payment/payment_detail.dart';
 import 'package:coreflow/domain/model/payment/payment_detail_response.dart';
 import 'package:coreflow/domain/model/payment/payment_received_summary.dart';
@@ -1461,6 +1462,38 @@ class AuthRepository {
     } catch (e) {
       debugPrint('Create payment sent error: $e');
       return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  Future<PaymentProofData?> uploadPaymentProof(
+    int companyId,
+    File file,
+  ) async {
+    try {
+      final url = AppConfig.getPaymentProofUrl(companyId);
+      final response = await _apiService.multipartPost(
+        url: url,
+        fields: {},
+        file: file,
+        fileFieldName: 'file',
+      );
+
+      debugPrint(
+        'POST /companies/$companyId/payments/payment-proof status: ${response.statusCode}',
+      );
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final proofResponse = PaymentProofResponse.fromJson(data);
+
+      if (proofResponse.responseStatus && proofResponse.responseData != null) {
+        return proofResponse.responseData;
+      }
+
+      debugPrint('Upload payment proof failed: ${proofResponse.responseMessage}');
+      return null;
+    } catch (e, stack) {
+      debugPrint('Upload payment proof error: $e\n$stack');
+      return null;
     }
   }
 }

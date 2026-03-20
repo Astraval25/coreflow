@@ -21,6 +21,7 @@ class PaymentDetailsRequest {
   final String modeOfPayment;
   final String? referenceNumber;
   final String? paymentRemarks;
+  final String? fsId;
   final List<OrderAllocationRequest> orderAllocations;
 
   PaymentDetailsRequest({
@@ -29,6 +30,7 @@ class PaymentDetailsRequest {
     required this.modeOfPayment,
     this.referenceNumber,
     this.paymentRemarks,
+    this.fsId,
     required this.orderAllocations,
   });
 
@@ -41,6 +43,8 @@ class PaymentDetailsRequest {
         'referenceNumber': referenceNumber!.trim(),
       if (paymentRemarks != null && paymentRemarks!.trim().isNotEmpty)
         'paymentRemarks': paymentRemarks!.trim(),
+      if (fsId != null && fsId!.trim().isNotEmpty)
+        'fsId': fsId!.trim(),
       'orderAllocations':
           orderAllocations.map((a) => a.toJson()).toList(),
     };
