@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:coreflow/core/utils/payment_share_helper.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
@@ -141,6 +142,14 @@ class _SendPaymentDetailView extends StatelessWidget {
         ],
         const SizedBox(height: 10),
         _ProofCard(vm: vm),
+        const SizedBox(height: 14),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: FractionallySizedBox(
+            widthFactor: 0.40,
+            child: _ShareButton(payment: payment, vm: vm),
+          ),
+        ),
       ],
     );
   }
@@ -784,6 +793,216 @@ class _ProofViewerPage extends StatelessWidget {
                 ),
               ),
             ),
+    );
+  }
+}
+
+class _ShareButton extends StatefulWidget {
+  final PaymentDetail payment;
+  final SendPaymentDetailViewModel vm;
+
+  const _ShareButton({required this.payment, required this.vm});
+
+  @override
+  State<_ShareButton> createState() => _ShareButtonState();
+}
+
+class _ShareButtonState extends State<_ShareButton> {
+  bool _expanded = false;
+  bool _sharing = false;
+
+  Future<void> _defaultShare() async {
+    if (_sharing) return;
+    setState(() => _sharing = true);
+
+    final hasProof = widget.payment.fsId != null &&
+        widget.payment.fsId!.isNotEmpty;
+
+    if (hasProof) {
+      final bytes = await widget.vm.fetchProofBytes();
+      if (bytes != null && bytes.isNotEmpty) {
+        await PaymentShareHelper.shareProofWithText(
+          widget.payment, bytes,
+          isSent: true,
+        );
+      } else {
+        await PaymentShareHelper.shareText(widget.payment, isSent: true);
+      }
+    } else {
+      await PaymentShareHelper.shareText(widget.payment, isSent: true);
+    }
+
+    if (mounted) setState(() => _sharing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Expandable options (appear above the button)
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          child: _expanded
+              ? Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: LoginColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: LoginColors.borderLight),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _ShareOptionTile(
+                        icon: Icons.text_fields_rounded,
+                        label: 'Share Text',
+                        onTap: () {
+                          setState(() => _expanded = false);
+                          PaymentShareHelper.shareText(
+                            widget.payment,
+                            isSent: true,
+                          );
+                        },
+                      ),
+                      Divider(
+                          height: 1, color: LoginColors.borderLight),
+                      _ShareOptionTile(
+                        icon: Icons.image_rounded,
+                        label: 'Share Image',
+                        onTap: () {
+                          setState(() => _expanded = false);
+                          PaymentShareHelper.shareAsImage(
+                            widget.payment,
+                            isSent: true,
+                          );
+                        },
+                      ),
+                      Divider(
+                          height: 1, color: LoginColors.borderLight),
+                      _ShareOptionTile(
+                        icon: Icons.picture_as_pdf_rounded,
+                        label: 'Share PDF',
+                        onTap: () {
+                          setState(() => _expanded = false);
+                          PaymentShareHelper.shareAsPdf(
+                            widget.payment,
+                            isSent: true,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+
+        // Split button row
+        SizedBox(
+          height: 46,
+          child: Row(
+            children: [
+              // Main share button
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _sharing ? null : _defaultShare,
+                  icon: _sharing
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.share_rounded, size: 18),
+                  label: const Text(
+                    'Share',
+                    style: TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: LoginColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        bottomLeft: Radius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Divider line
+              Container(width: 1, color: Colors.white24),
+              // Dropdown toggle
+              SizedBox(
+                width: 46,
+                child: FilledButton(
+                  onPressed: () =>
+                      setState(() => _expanded = !_expanded),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: LoginColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(12),
+                        bottomRight: Radius.circular(12),
+                      ),
+                    ),
+                  ),
+                  child: Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_down_rounded
+                        : Icons.keyboard_arrow_up_rounded,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ShareOptionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ShareOptionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: LoginColors.primary),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: LoginColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
