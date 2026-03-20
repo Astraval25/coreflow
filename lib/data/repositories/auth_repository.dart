@@ -17,10 +17,12 @@ import 'package:coreflow/domain/model/items/item.dart';
 import 'package:coreflow/domain/model/items/item_status_response.dart';
 import 'package:coreflow/domain/model/items/update_item_request.dart';
 import 'package:coreflow/domain/model/login/login_request.dart';
+import 'package:coreflow/domain/model/payment/create_payment_sent_request.dart';
 import 'package:coreflow/domain/model/payment/payment_detail.dart';
 import 'package:coreflow/domain/model/payment/payment_detail_response.dart';
 import 'package:coreflow/domain/model/payment/payment_received_summary.dart';
 import 'package:coreflow/domain/model/payment/payment_sent_summary.dart';
+import 'package:coreflow/domain/model/payment/unpaid_order.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_detail_response.dart';
 import 'package:coreflow/domain/model/register/register_request.dart';
@@ -1397,6 +1399,68 @@ class AuthRepository {
     } catch (e, stack) {
       debugPrint('Get payments received summary error: $e\n$stack');
       return [];
+    }
+  }
+
+  Future<List<UnpaidOrder>> getVendorUnpaidOrders(
+    int companyId,
+    int vendorId,
+  ) async {
+    try {
+      final url = AppConfig.getVendorUnpaidOrdersUrl(companyId, vendorId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      debugPrint(
+        'GET /companies/$companyId/vendor/$vendorId/unpaid-orders status: ${response.statusCode}',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        return [];
+      }
+
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (decodedBody['responseStatus'] != true) {
+        return [];
+      }
+
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      return data
+          .map((json) => UnpaidOrder.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e, stack) {
+      debugPrint('Get vendor unpaid orders error: $e\n$stack');
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> createPaymentSent(
+    int companyId,
+    CreatePaymentSentRequest request,
+  ) async {
+    try {
+      final url = AppConfig.getCreatePaymentSentUrl(companyId);
+      final response = await _apiService.post(url, request.toJson());
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] == true) {
+        return {
+          'success': true,
+          'message': data['responseMessage'] ?? 'Payment created',
+          'data': data['responseData'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message':
+            data['responseMessage'] ??
+            'Failed with status ${response.statusCode}',
+      };
+    } catch (e) {
+      debugPrint('Create payment sent error: $e');
+      return {'success': false, 'message': 'Error: $e'};
     }
   }
 }

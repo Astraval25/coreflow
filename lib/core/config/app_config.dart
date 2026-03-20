@@ -81,6 +81,10 @@ class AppConfig {
       '/api/companies/{companyId}/payments/{paymentId}';
   static const String orderDetailEndpoint =
       '/api/companies/{companyId}/orders/{orderId}';
+  static const String createPaymentSentEndpoint =
+      '/api/companies/{companyId}/payments-sent';
+  static const String vendorUnpaidOrdersEndpoint =
+      '/api/companies/{companyId}/vendor/{vendorId}/unpaid-orders';
 
   // getters for constructing full URLs
   static String get loginUrl => '$baseUrl$loginEndpoint';
@@ -209,4 +213,10 @@ class AppConfig {
       getPaymentDetailUrl(companyId, paymentId);
   static String getOrderDetailUrl(int companyId, int orderId) =>
       '$baseUrl${orderDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{orderId}', orderId.toString())}';
+
+  static String getCreatePaymentSentUrl(int companyId) =>
+      '$baseUrl${createPaymentSentEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getVendorUnpaidOrdersUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorUnpaidOrdersEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
 }
