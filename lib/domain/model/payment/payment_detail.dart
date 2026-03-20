@@ -17,6 +17,7 @@ class PaymentDetail {
   final String referenceNumber;
   final String notes;
   final bool isActive;
+  final String? fsId;
 
   PaymentDetail({
     required this.paymentId,
@@ -34,6 +35,7 @@ class PaymentDetail {
     required this.referenceNumber,
     required this.notes,
     required this.isActive,
+    this.fsId,
   }) : _orderAllocations = orderAllocations;
 
   List<PaymentOrderAllocation> get orderAllocations =>
@@ -59,6 +61,7 @@ class PaymentDetail {
       referenceNumber: json['referenceNumber']?.toString() ?? '',
       notes: json['notes']?.toString() ?? '',
       isActive: _asBool(json['isActive']),
+      fsId: json['fsId']?.toString(),
     );
   }
 

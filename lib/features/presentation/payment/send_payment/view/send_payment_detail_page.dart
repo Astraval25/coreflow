@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
@@ -137,6 +139,8 @@ class _SendPaymentDetailView extends StatelessWidget {
           const SizedBox(height: 10),
           _NotesCard(notes: payment.notes),
         ],
+        const SizedBox(height: 10),
+        _ProofCard(vm: vm),
       ],
     );
   }
@@ -360,26 +364,6 @@ class _TransferCard extends StatelessWidget {
                 ),
             ],
           ),
-          if (hasReference || hasOrders) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                if (hasReference)
-                  Expanded(
-                    child: _MetaText(label: 'Reference',
-                      value: reference),
-                  ),
-                if (hasOrders)
-                  Expanded(
-                    child: _MetaText(
-                      label: 'Linked Orders',
-                      value: orderIdsText,
-                      textAlignEnd: !hasReference,
-                    ),
-                  ),
-              ],
-            ),
-          ],
         ],
       ),
     );
@@ -608,6 +592,198 @@ class _NotesCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ProofCard extends StatefulWidget {
+  final SendPaymentDetailViewModel vm;
+  const _ProofCard({required this.vm});
+
+  @override
+  State<_ProofCard> createState() => _ProofCardState();
+}
+
+class _ProofCardState extends State<_ProofCard> {
+  bool _loading = false;
+  String? _error;
+
+  Future<void> _viewProof() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    final bytes = await widget.vm.fetchProofBytes();
+
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    if (bytes == null || bytes.isEmpty) {
+      setState(() => _error = 'Unable to load proof file');
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _ProofViewerPage(bytes: bytes),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _CardBlock(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.receipt_long_rounded,
+                  size: 16, color: LoginColors.textPrimary),
+              const SizedBox(width: 8),
+              Text(
+                'Payment Proof',
+                style: TextStyle(
+                  color: LoginColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              _buildAction(),
+            ],
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _error!,
+              style: TextStyle(
+                color: LoginColors.error,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAction() {
+    final fsId = widget.vm.paymentDetail?.fsId;
+    final hasProof = fsId != null && fsId.isNotEmpty;
+
+    if (!hasProof) {
+      return Text(
+        'No proof attached',
+        style: TextStyle(
+          color: LoginColors.textSecondary,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      );
+    }
+
+    if (_loading) {
+      return SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: LoginColors.primary,
+        ),
+      );
+    }
+
+    return FilledButton.icon(
+      onPressed: _viewProof,
+      icon: const Icon(Icons.visibility_rounded, size: 16),
+      label: const Text(
+        'View',
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      ),
+      style: FilledButton.styleFrom(
+        backgroundColor: LoginColors.primary,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+}
+
+class _ProofViewerPage extends StatelessWidget {
+  final List<int> bytes;
+  const _ProofViewerPage({required this.bytes});
+
+  bool get _isPdf {
+    if (bytes.length < 4) return false;
+    // PDF magic bytes: %PDF
+    return bytes[0] == 0x25 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x44 &&
+        bytes[3] == 0x46;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: const Text(
+          'Payment Proof',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close_rounded, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+      body: _isPdf
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.picture_as_pdf_rounded,
+                      size: 64, color: Colors.white54),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'PDF proof attached',
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${(bytes.length / 1024).toStringAsFixed(1)} KB',
+                    style: const TextStyle(
+                        color: Colors.white38, fontSize: 13),
+                  ),
+                ],
+              ),
+            )
+          : InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 5.0,
+              child: Center(
+                child: Image.memory(
+                  Uint8List.fromList(bytes),
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Center(
+                    child: Text(
+                      'Unable to display image',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                ),
+              ),
+            ),
     );
   }
 }

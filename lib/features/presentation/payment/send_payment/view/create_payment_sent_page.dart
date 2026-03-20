@@ -58,6 +58,10 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
   final _referenceController = TextEditingController();
   final _remarksController = TextEditingController();
 
+  // Per-row allocation controllers (amount + remarks)
+  final List<TextEditingController> _allocAmountControllers = [];
+  final List<TextEditingController> _allocRemarksControllers = [];
+
   static const List<String> _paymentModes = [
     'BANK_TRANSFER',
     'CASH',
@@ -93,7 +97,53 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
     _amountController.dispose();
     _referenceController.dispose();
     _remarksController.dispose();
+    for (final c in _allocAmountControllers) {
+      c.dispose();
+    }
+    for (final c in _allocRemarksControllers) {
+      c.dispose();
+    }
     super.dispose();
+  }
+
+  /// Ensures allocation controllers match the current order list.
+  /// Called from build() whenever the order count changes.
+  void _syncAllocationControllers(List<OrderAllocationEntry> orders) {
+    // Dispose extras if list shrank
+    while (_allocAmountControllers.length > orders.length) {
+      _allocAmountControllers.removeLast().dispose();
+      _allocRemarksControllers.removeLast().dispose();
+    }
+    // Add controllers for new entries
+    while (_allocAmountControllers.length < orders.length) {
+      final idx = _allocAmountControllers.length;
+      final entry = orders[idx];
+      _allocAmountControllers.add(
+        TextEditingController(
+          text: entry.amountApplied > 0
+              ? (entry.amountApplied % 1 == 0
+                  ? entry.amountApplied.toInt().toString()
+                  : entry.amountApplied.toStringAsFixed(2))
+              : '',
+        ),
+      );
+      _allocRemarksControllers.add(
+        TextEditingController(text: entry.remarks ?? ''),
+      );
+    }
+  }
+
+  /// Syncs controller texts after auto-split without recreating controllers.
+  void _syncAllocationAmountsFromVm(List<OrderAllocationEntry> orders) {
+    for (int i = 0; i < orders.length && i < _allocAmountControllers.length; i++) {
+      final v = orders[i].amountApplied;
+      final text = v > 0
+          ? (v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2))
+          : '';
+      if (_allocAmountControllers[i].text != text) {
+        _allocAmountControllers[i].text = text;
+      }
+    }
   }
 
   Future<void> _attachProof() async {
@@ -160,6 +210,12 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
     }
 
     vm.setAmount(amount);
+
+    if (vm.totalAllocated > amount) {
+      _showError('Total allocated (${vm.totalAllocated.toStringAsFixed(2)}) exceeds amount');
+      return;
+    }
+
     vm.setReferenceNumber(_referenceController.text.trim());
     vm.setPaymentRemarks(_remarksController.text.trim());
 
@@ -268,7 +324,10 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
                   const SizedBox(height: 20),
                   _buildPaymentDetailsSection(vm),
                   const SizedBox(height: 20),
-                  _buildOrderAllocationsSection(vm),
+                  Builder(builder: (_) {
+                    _syncAllocationControllers(vm.unpaidOrders);
+                    return _buildOrderAllocationsSection(vm);
+                  }),
                   const SizedBox(height: 28),
                   // Submit Button
                   SizedBox(
@@ -654,19 +713,72 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
             child: Column(
               children: [
-                // Amount
-                _buildTextField(
-                  label: 'Amount',
+                // Amount with auto-split button
+                TextFormField(
                   controller: _amountController,
-                  icon: Icons.currency_rupee_rounded,
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
+                  style: TextStyle(
+                      fontSize: 15, color: LoginColors.textPrimary),
+                  onChanged: (v) {
+                    final amount = double.tryParse(v.trim()) ?? 0;
+                    vm.setAmount(amount);
+                  },
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) return 'Required';
                     final n = double.tryParse(v);
                     if (n == null || n <= 0) return 'Must be > 0';
                     return null;
                   },
+                  decoration: InputDecoration(
+                    labelText: 'Amount',
+                    labelStyle: TextStyle(
+                        fontSize: 13, color: LoginColors.textSecondary),
+                    prefixIcon: Icon(Icons.currency_rupee_rounded,
+                        size: 18, color: LoginColors.textTertiary),
+                    suffixIcon: Tooltip(
+                      message: 'Auto-split to orders',
+                      child: IconButton(
+                        icon: Icon(Icons.auto_fix_high_rounded,
+                            size: 20, color: LoginColors.primary),
+                        onPressed: () {
+                          final amount = double.tryParse(
+                                  _amountController.text.trim()) ??
+                              0;
+                          if (amount > 0) {
+                            vm.setAmount(amount);
+                            vm.autoSplitAmount();
+                            _syncAllocationAmountsFromVm(vm.unpaidOrders);
+                            setState(() {});
+                          }
+                        },
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: LoginColors.fieldFill,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          BorderSide(color: LoginColors.borderLight),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          BorderSide(color: LoginColors.borderLight),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                          color: LoginColors.primary, width: 1.2),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: LoginColors.error),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 14),
 
@@ -756,12 +868,56 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
                 ),
                 const SizedBox(height: 14),
 
-                // Reference Number
-                _buildTextField(
-                  label: 'Reference Number (optional)',
+                // Reference Number with auto-fill
+                TextFormField(
                   controller: _referenceController,
-                  icon: Icons.tag_rounded,
                   keyboardType: TextInputType.text,
+                  style: TextStyle(
+                      fontSize: 15, color: LoginColors.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Reference Number (optional)',
+                    labelStyle: TextStyle(
+                        fontSize: 13, color: LoginColors.textSecondary),
+                    prefixIcon: Icon(Icons.tag_rounded,
+                        size: 18, color: LoginColors.textTertiary),
+                    suffixIcon: vm.selectedVendor != null
+                        ? Tooltip(
+                            message: 'Auto-fill vendor name',
+                            child: IconButton(
+                              icon: Icon(Icons.person_pin_rounded,
+                                  size: 20, color: LoginColors.primary),
+                              onPressed: () {
+                                _referenceController.text =
+                                    'Transferred to ${vm.selectedVendor!.displayName}';
+                              },
+                            ),
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: LoginColors.fieldFill,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          BorderSide(color: LoginColors.borderLight),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          BorderSide(color: LoginColors.borderLight),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                          color: LoginColors.primary, width: 1.2),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: LoginColors.error),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 14),
 
@@ -876,8 +1032,8 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
               child: Row(
                 children: [
-                  const SizedBox(width: 36),
                   Expanded(
+                    flex: 3,
                     child: Text('Order',
                         style: TextStyle(
                           fontSize: 12,
@@ -885,12 +1041,26 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
                           color: LoginColors.textTertiary,
                         )),
                   ),
-                  Text('Balance',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: LoginColors.textTertiary,
-                      )),
+                  Expanded(
+                    flex: 2,
+                    child: Text('Balance',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: LoginColors.textTertiary,
+                        )),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text('Allocate',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: LoginColors.textTertiary,
+                        )),
+                  ),
                 ],
               ),
             ),
@@ -900,6 +1070,34 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
               final alloc = entry.value;
               return _buildOrderAllocationRow(vm, alloc, index);
             }),
+            // Total allocated summary
+            Divider(color: LoginColors.borderLight, height: 1),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Total Allocated',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: LoginColors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    vm.totalAllocated.toStringAsFixed(2),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: vm.totalAllocated > vm.amount
+                          ? LoginColors.error
+                          : LoginColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ],
       ),
@@ -911,219 +1109,117 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
     OrderAllocationEntry entry,
     int index,
   ) {
-    return InkWell(
-      onTap: () {
-        vm.toggleOrderSelection(index, !entry.selected);
-        if (entry.selected) {
-          _showAllocationDetailSheet(vm, entry, index);
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: entry.selected
-              ? LoginColors.primaryLight.withOpacity(0.06)
-              : null,
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 28,
-              child: Checkbox(
-                value: entry.selected,
-                onChanged: (v) {
-                  vm.toggleOrderSelection(index, v ?? false);
-                  if (v == true) {
-                    _showAllocationDetailSheet(vm, entry, index);
-                  }
-                },
-                activeColor: LoginColors.primary,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    entry.order.orderNumber,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: LoginColors.textPrimary,
+    if (index >= _allocAmountControllers.length) return const SizedBox.shrink();
+    final amountCtrl = _allocAmountControllers[index];
+    final remarksCtrl = _allocRemarksControllers[index];
+    final hasAmount = entry.amountApplied > 0;
+
+    final inputDecoration = InputDecoration(
+      hintStyle: TextStyle(fontSize: 12, color: LoginColors.textTertiary),
+      filled: true,
+      fillColor: LoginColors.fieldFill,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: LoginColors.borderLight),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: LoginColors.borderLight),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: LoginColors.primary, width: 1.2),
+      ),
+    );
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      decoration: BoxDecoration(
+        color: hasAmount ? LoginColors.primary.withOpacity(0.04) : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Order info + balance row
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.order.orderNumber,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: LoginColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    DateFormat('dd MMM yyyy').format(entry.order.orderDate),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: LoginColors.textSecondary,
-                    ),
-                  ),
-                  if (entry.selected && entry.amountApplied > 0) ...[
                     const SizedBox(height: 2),
                     Text(
-                      'Allocated: ${entry.amountApplied.toStringAsFixed(2)}',
+                      DateFormat('dd MMM yyyy').format(entry.order.orderDate),
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: LoginColors.primary,
+                        fontSize: 11,
+                        color: LoginColors.textSecondary,
                       ),
                     ),
                   ],
-                ],
+                ),
               ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  entry.order.balanceAmount.toStringAsFixed(2),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: LoginColors.textPrimary,
-                  ),
+              Text(
+                'Bal: ${entry.order.balanceAmount.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: LoginColors.textSecondary,
                 ),
-                Text(
-                  'of ${entry.order.totalAmount.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: LoginColors.textTertiary,
-                  ),
-                ),
-              ],
-            ),
-            if (entry.selected) ...[
-              const SizedBox(width: 8),
-              InkWell(
-                onTap: () =>
-                    _showAllocationDetailSheet(vm, entry, index),
-                borderRadius: BorderRadius.circular(4),
-                child: Icon(Icons.edit_rounded,
-                    size: 16, color: LoginColors.primary),
               ),
             ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showAllocationDetailSheet(
-    CreatePaymentSentViewModel vm,
-    OrderAllocationEntry entry,
-    int index,
-  ) {
-    final amountCtrl = TextEditingController(
-      text: entry.amountApplied > 0
-          ? (entry.amountApplied % 1 == 0
-              ? entry.amountApplied.toInt().toString()
-              : entry.amountApplied.toString())
-          : '',
-    );
-    final remarksCtrl =
-        TextEditingController(text: entry.remarks ?? '');
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: LoginColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Padding(
-        padding: EdgeInsets.fromLTRB(
-            20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: LoginColors.borderLight,
-                borderRadius: BorderRadius.circular(2),
+          ),
+          const SizedBox(height: 8),
+          // Amount + Remarks fields side by side
+          Row(
+            children: [
+              // Amount field
+              SizedBox(
+                width: 110,
+                height: 34,
+                child: TextField(
+                  controller: amountCtrl,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  textAlign: TextAlign.right,
+                  style: TextStyle(fontSize: 13, color: LoginColors.textPrimary),
+                  onChanged: (v) {
+                    final amount = double.tryParse(v.trim()) ?? 0;
+                    vm.updateAllocationAmount(index, amount);
+                  },
+                  decoration: inputDecoration.copyWith(hintText: '0.00'),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              entry.order.orderNumber,
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: LoginColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Balance: ${entry.order.balanceAmount.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 13,
-                color: LoginColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              label: 'Amount to Apply',
-              controller: amountCtrl,
-              icon: Icons.currency_rupee_rounded,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Required';
-                final n = double.tryParse(v);
-                if (n == null || n <= 0) return 'Must be > 0';
-                if (n > entry.order.balanceAmount) {
-                  return 'Cannot exceed balance';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 14),
-            _buildTextField(
-              label: 'Remarks (optional)',
-              controller: remarksCtrl,
-              icon: Icons.notes_rounded,
-              keyboardType: TextInputType.text,
-              maxLines: 2,
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: FilledButton(
-                onPressed: () {
-                  final amount =
-                      double.tryParse(amountCtrl.text.trim()) ?? 0;
-                  if (amount <= 0) return;
-                  vm.updateAllocationAmount(index, amount);
-                  vm.updateAllocationRemarks(
-                    index,
-                    remarksCtrl.text.trim().isEmpty
-                        ? null
-                        : remarksCtrl.text.trim(),
-                  );
-                  Navigator.pop(context);
-                },
-                style: FilledButton.styleFrom(
-                  backgroundColor: LoginColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              const SizedBox(width: 8),
+              // Remarks field
+              Expanded(
+                child: SizedBox(
+                  height: 34,
+                  child: TextField(
+                    controller: remarksCtrl,
+                    style:
+                        TextStyle(fontSize: 12, color: LoginColors.textPrimary),
+                    onChanged: (v) {
+                      vm.updateAllocationRemarks(
+                          index, v.trim().isEmpty ? null : v.trim());
+                    },
+                    decoration:
+                        inputDecoration.copyWith(hintText: 'Remarks (optional)'),
                   ),
                 ),
-                child: const Text(
-                  'Apply',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -9,13 +9,11 @@ class OrderAllocationEntry {
   final UnpaidOrder order;
   double amountApplied;
   String? remarks;
-  bool selected;
 
   OrderAllocationEntry({
     required this.order,
     this.amountApplied = 0,
     this.remarks,
-    this.selected = false,
   });
 }
 
@@ -58,14 +56,13 @@ class CreatePaymentSentViewModel extends ChangeNotifier {
   bool get isSuccess => _isSuccess;
   String? get errorMessage => _errorMessage;
 
-  double get totalAllocated => _unpaidOrders
-      .where((e) => e.selected)
-      .fold(0, (sum, e) => sum + e.amountApplied);
+  double get totalAllocated =>
+      _unpaidOrders.fold(0, (sum, e) => sum + e.amountApplied);
 
   double get unallocatedAmount => _amount - totalAllocated;
 
   bool get canSubmit =>
-      _selectedVendor != null && _amount > 0 && !_isLoading;
+      _selectedVendor != null && !_isLoading;
 
   // Actions
   Future<void> setVendor(Vendor vendor) async {
@@ -132,20 +129,6 @@ class CreatePaymentSentViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleOrderSelection(int index, bool selected) {
-    if (index >= 0 && index < _unpaidOrders.length) {
-      _unpaidOrders[index].selected = selected;
-      if (!selected) {
-        _unpaidOrders[index].amountApplied = 0;
-        _unpaidOrders[index].remarks = null;
-      } else {
-        _unpaidOrders[index].amountApplied =
-            _unpaidOrders[index].order.balanceAmount;
-      }
-      notifyListeners();
-    }
-  }
-
   void updateAllocationAmount(int index, double amount) {
     if (index >= 0 && index < _unpaidOrders.length) {
       _unpaidOrders[index].amountApplied = amount;
@@ -159,6 +142,25 @@ class CreatePaymentSentViewModel extends ChangeNotifier {
     }
   }
 
+  void autoSplitAmount() {
+    if (_amount <= 0 || _unpaidOrders.isEmpty) return;
+
+    double remaining = _amount;
+    for (final entry in _unpaidOrders) {
+      if (remaining <= 0) {
+        entry.amountApplied = 0;
+      } else {
+        final apply =
+            remaining >= entry.order.balanceAmount
+                ? entry.order.balanceAmount
+                : remaining;
+        entry.amountApplied = apply;
+        remaining -= apply;
+      }
+    }
+    notifyListeners();
+  }
+
   Future<void> submitPayment() async {
     if (!canSubmit) return;
 
@@ -169,7 +171,7 @@ class CreatePaymentSentViewModel extends ChangeNotifier {
 
     try {
       final allocations = _unpaidOrders
-          .where((e) => e.selected && e.amountApplied > 0)
+          .where((e) => e.amountApplied > 0)
           .map((e) => OrderAllocationRequest(
                 orderId: e.order.orderId,
                 amountApplied: e.amountApplied,

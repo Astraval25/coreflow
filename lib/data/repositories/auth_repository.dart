@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/company/companies_response.dart';
 import 'package:coreflow/domain/model/company/company.dart';
@@ -1462,6 +1463,24 @@ class AuthRepository {
     } catch (e) {
       debugPrint('Create payment sent error: $e');
       return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  Future<Uint8List?> fetchPaymentProofBytes(
+    int companyId,
+    String fsId,
+  ) async {
+    try {
+      final url = Uri.parse(AppConfig.getFileUrl(fsId));
+      final response = await _apiService.get(url);
+      if (response.statusCode == 200) {
+        return response.bodyBytes;
+      }
+      debugPrint('Fetch proof file failed: ${response.statusCode}');
+      return null;
+    } catch (e, stack) {
+      debugPrint('Fetch proof file error: $e\n$stack');
+      return null;
     }
   }
 
