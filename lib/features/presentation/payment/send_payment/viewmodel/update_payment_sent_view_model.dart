@@ -36,6 +36,8 @@ class UpdatePaymentSentViewModel extends ChangeNotifier {
   // State
   Vendor? _selectedVendor;
   List<UpdatePaymentAllocationEntry> _allocations = [];
+  // Tracks which orderIds had a non-zero allocation before the edit
+  final Map<int, double> _initialAllocations = {};
   double _amount = 0;
   String _modeOfPayment = 'BANK_TRANSFER';
   String? _referenceNumber;
@@ -83,7 +85,7 @@ class UpdatePaymentSentViewModel extends ChangeNotifier {
     _referenceNumber =
         payment.referenceNumber.isNotEmpty ? payment.referenceNumber : null;
     _paymentRemarks = payment.notes.isNotEmpty ? payment.notes : null;
-    _paymentDate = payment.paymentDate;
+    _paymentDate = payment.paymentDate.toLocal();
     _fsId = payment.fsId;
 
     _allocations = payment.orderAllocations
@@ -97,6 +99,11 @@ class UpdatePaymentSentViewModel extends ChangeNotifier {
                   : null,
             ))
         .toList();
+
+    _initialAllocations.clear();
+    for (final a in payment.orderAllocations) {
+      if (a.amountApplied > 0) _initialAllocations[a.orderId] = a.amountApplied;
+    }
 
     _loadUnpaidOrders(payment.vendorId);
   }
@@ -214,7 +221,7 @@ class UpdatePaymentSentViewModel extends ChangeNotifier {
     try {
       final activeAllocations = _allocations
           .where((e) => e.amountApplied > 0)
-          .map((e) => {
+          .map((e) => <String, dynamic>{
                 'orderId': e.orderId,
                 'amountApplied': e.amountApplied,
                 'allocationDate': _paymentDate.toIso8601String(),
@@ -223,21 +230,20 @@ class UpdatePaymentSentViewModel extends ChangeNotifier {
               })
           .toList();
 
-      final body = {
+      final body = <String, dynamic>{
         'vendorId': _selectedVendor!.vendorId,
-        'paymentDetails': {
-          'amount': _amount,
-          'paymentDate': _paymentDate.toIso8601String(),
-          'modeOfPayment': _modeOfPayment,
-          if (_referenceNumber != null && _referenceNumber!.trim().isNotEmpty)
-            'referenceNumber': _referenceNumber!.trim(),
-          if (_paymentRemarks != null && _paymentRemarks!.trim().isNotEmpty)
-            'paymentRemarks': _paymentRemarks!.trim(),
-          if (_fsId != null && _fsId!.trim().isNotEmpty)
-            'fsId': _fsId!.trim(),
-          'orderAllocations': activeAllocations,
-        },
+        'amount': _amount,
+        'paymentDate': _paymentDate.toIso8601String(),
+        'modeOfPayment': _modeOfPayment,
+        if (_referenceNumber != null && _referenceNumber!.trim().isNotEmpty)
+          'referenceNumber': _referenceNumber!.trim(),
+        if (_paymentRemarks != null && _paymentRemarks!.trim().isNotEmpty)
+          'paymentRemarks': _paymentRemarks!.trim(),
+        if (_fsId != null && _fsId!.trim().isNotEmpty) 'fsId': _fsId!.trim(),
+        'orderAllocations': activeAllocations,
       };
+
+      debugPrint('Update payment sent body: $body');
 
       final result = await _repository.updatePaymentSent(
         companyId,
@@ -247,6 +253,13 @@ class UpdatePaymentSentViewModel extends ChangeNotifier {
 
       if (result['success'] == true) {
         _isSuccess = true;
+        final submittedOrderIds =
+            activeAllocations.map((e) => e['orderId'] as int).toSet();
+        for (final orderId in _initialAllocations.keys) {
+          if (!submittedOrderIds.contains(orderId)) {
+            await _repository.updateOrderStatus(companyId, orderId, 'invoiced');
+          }
+        }
       } else {
         _errorMessage = result['message'] ?? 'Failed to update payment';
       }

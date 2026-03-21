@@ -24,8 +24,12 @@ class SalesOrderDetailViewModel extends ChangeNotifier {
   sales_detail.SalesOrderDetail? _orderDetail;
   String? _errorMessage;
   bool _isDisposed = false;
+  bool _isStatusUpdating = false;
+  String? _statusError;
 
   SalesOrderDetailState get state => _state;
+  bool get isStatusUpdating => _isStatusUpdating;
+  String? get statusError => _statusError;
   sales_detail.SalesOrderDetail? get orderDetail => _orderDetail;
 
   sales_detail.SalesOrderDetail? get order => _orderDetail;
@@ -77,6 +81,28 @@ class SalesOrderDetailViewModel extends ChangeNotifier {
 
   Future<void> refresh() async {
     await loadOrderDetail();
+  }
+
+  Future<bool> updateStatus(String action) async {
+    _isStatusUpdating = true;
+    _statusError = null;
+    _notifyListenersSafely();
+    try {
+      final result =
+          await _repository.updateOrderStatus(companyId, orderId, action);
+      if (result['success'] == true) {
+        await loadOrderDetail();
+        return true;
+      }
+      _statusError = result['message'];
+      return false;
+    } catch (e) {
+      _statusError = 'Error: $e';
+      return false;
+    } finally {
+      _isStatusUpdating = false;
+      _notifyListenersSafely();
+    }
   }
 
   void clearError() {

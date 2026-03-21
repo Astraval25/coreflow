@@ -21,10 +21,14 @@ class ReceivePaymentDetailViewModel extends ChangeNotifier {
   PaymentDetail? _paymentDetail;
   String? _errorMessage;
   bool _isDisposed = false;
+  bool _isStatusUpdating = false;
+  String? _statusError;
 
   ReceivePaymentDetailState get state => _state;
   PaymentDetail? get paymentDetail => _paymentDetail;
   String? get errorMessage => _errorMessage;
+  bool get isStatusUpdating => _isStatusUpdating;
+  String? get statusError => _statusError;
 
   bool get isLoading => _state == ReceivePaymentDetailState.loading;
   bool get hasData => _state == ReceivePaymentDetailState.loaded;
@@ -62,6 +66,28 @@ class ReceivePaymentDetailViewModel extends ChangeNotifier {
 
   Future<void> refresh() async {
     await loadPaymentDetail();
+  }
+
+  Future<bool> updateStatus(String action) async {
+    _isStatusUpdating = true;
+    _statusError = null;
+    _notifyListenersSafely();
+    try {
+      final result =
+          await _repository.updatePaymentStatus(companyId, paymentId, action);
+      if (result['success'] == true) {
+        await loadPaymentDetail();
+        return true;
+      }
+      _statusError = result['message'];
+      return false;
+    } catch (e) {
+      _statusError = 'Error: $e';
+      return false;
+    } finally {
+      _isStatusUpdating = false;
+      _notifyListenersSafely();
+    }
   }
 
   Future<Uint8List?> fetchProofBytes() async {

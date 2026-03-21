@@ -21,10 +21,14 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
   PurchaseOrderDetail? _orderDetail;
   String? _errorMessage;
   bool _isDisposed = false;
+  bool _isStatusUpdating = false;
+  String? _statusError;
 
   PurchaseOrderDetailState get state => _state;
   PurchaseOrderDetail? get orderDetail => _orderDetail;
   String? get errorMessage => _errorMessage;
+  bool get isStatusUpdating => _isStatusUpdating;
+  String? get statusError => _statusError;
 
   bool get isLoading => _state == PurchaseOrderDetailState.loading;
   bool get hasData => _state == PurchaseOrderDetailState.loaded;
@@ -48,6 +52,10 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
 
       _orderDetail = data;
       _updateState(PurchaseOrderDetailState.loaded);
+
+      if (data.orderStatus == 'ORDER') {
+        _autoMarkViewed();
+      }
     } catch (e, stack) {
       debugPrint('loadPurchaseOrderDetail failed: $e\n$stack');
       _updateState(
@@ -57,8 +65,42 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _autoMarkViewed() async {
+    try {
+      final result =
+          await _repository.updateOrderStatus(companyId, orderId, 'viewed');
+      if (result['success'] == true) {
+        await loadOrderDetail();
+      }
+    } catch (e) {
+      debugPrint('Auto mark viewed failed: $e');
+    }
+  }
+
   Future<void> refresh() async {
     await loadOrderDetail();
+  }
+
+  Future<bool> updateStatus(String action) async {
+    _isStatusUpdating = true;
+    _statusError = null;
+    _notifyListenersSafely();
+    try {
+      final result =
+          await _repository.updateOrderStatus(companyId, orderId, action);
+      if (result['success'] == true) {
+        await loadOrderDetail();
+        return true;
+      }
+      _statusError = result['message'];
+      return false;
+    } catch (e) {
+      _statusError = 'Error: $e';
+      return false;
+    } finally {
+      _isStatusUpdating = false;
+      _notifyListenersSafely();
+    }
   }
 
   void clearError() {

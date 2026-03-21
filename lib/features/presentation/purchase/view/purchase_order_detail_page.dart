@@ -151,14 +151,8 @@ class _PurchaseOrderDetailView extends StatelessWidget {
         _ItemDetailsCard(items: items, companyId: vm.companyId),
         const SizedBox(height: 10),
         _PaymentSummaryCard(order: order),
-        const SizedBox(height: 16),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: FractionallySizedBox(
-            widthFactor: 0.40,
-            child: _OrderShareButton(order: order),
-          ),
-        ),
+        const SizedBox(height: 14),
+        _BottomActionsBar(order: order, vm: vm),
       ],
     );
   }
@@ -726,37 +720,120 @@ OrderShareData _purchaseOrderToShareData(PurchaseOrderDetail order) {
   );
 }
 
-class _OrderShareButton extends StatefulWidget {
+class _BottomActionsBar extends StatefulWidget {
   final PurchaseOrderDetail order;
+  final PurchaseOrderDetailViewModel vm;
 
-  const _OrderShareButton({required this.order});
+  const _BottomActionsBar({required this.order, required this.vm});
 
   @override
-  State<_OrderShareButton> createState() => _OrderShareButtonState();
+  State<_BottomActionsBar> createState() => _BottomActionsBarState();
 }
 
-class _OrderShareButtonState extends State<_OrderShareButton> {
-  bool _expanded = false;
+class _BottomActionsBarState extends State<_BottomActionsBar> {
+  bool _shareExpanded = false;
   bool _sharing = false;
 
   OrderShareData get _data => _purchaseOrderToShareData(widget.order);
 
-  Future<void> _defaultShare() async {
+  Future<void> _shareText() async {
     if (_sharing) return;
-    setState(() => _sharing = true);
+    setState(() {
+      _sharing = true;
+      _shareExpanded = false;
+    });
     await OrderShareHelper.shareText(_data);
     if (mounted) setState(() => _sharing = false);
   }
 
+  Future<void> _sharePdf() async {
+    if (_sharing) return;
+    setState(() {
+      _sharing = true;
+      _shareExpanded = false;
+    });
+    await OrderShareHelper.shareAsPdf(_data);
+    if (mounted) setState(() => _sharing = false);
+  }
+
+  String? get _statusLabel {
+    switch (widget.order.orderStatus) {
+      case 'ORDER':
+        return 'Mark as Viewed';
+      case 'ORDER_VIEWED':
+        return 'Mark as Invoiced';
+      case 'ORDER_INVOICED':
+        return 'Mark as Paid';
+      default:
+        return null;
+    }
+  }
+
+  IconData? get _statusIcon {
+    switch (widget.order.orderStatus) {
+      case 'ORDER':
+        return Icons.visibility_rounded;
+      case 'ORDER_VIEWED':
+        return Icons.receipt_long_outlined;
+      case 'ORDER_INVOICED':
+        return Icons.check_circle_outline_rounded;
+      default:
+        return null;
+    }
+  }
+
+  String? get _statusAction {
+    switch (widget.order.orderStatus) {
+      case 'ORDER':
+        return 'viewed';
+      case 'ORDER_VIEWED':
+        return 'invoiced';
+      case 'ORDER_INVOICED':
+        return 'paid';
+      default:
+        return null;
+    }
+  }
+
+  Color get _statusColor {
+    switch (widget.order.orderStatus) {
+      case 'ORDER':
+        return Colors.blue.shade600;
+      case 'ORDER_VIEWED':
+        return Colors.orange.shade700;
+      case 'ORDER_INVOICED':
+        return LoginColors.success;
+      default:
+        return LoginColors.primary;
+    }
+  }
+
+  Future<void> _doStatusAction() async {
+    final action = _statusAction;
+    if (action == null) return;
+    final success = await widget.vm.updateStatus(action);
+    if (!success && mounted && widget.vm.statusError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(widget.vm.statusError!),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hasStatusAction = _statusLabel != null;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Share options dropdown
         AnimatedSize(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeInOut,
-          child: _expanded
+          child: _shareExpanded
               ? Container(
                   margin: const EdgeInsets.only(bottom: 8),
                   decoration: BoxDecoration(
@@ -767,106 +844,143 @@ class _OrderShareButtonState extends State<_OrderShareButton> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _ShareOptionTile(
+                      _ActionTile(
                         icon: Icons.text_fields_rounded,
-                        label: 'Share Text',
-                        onTap: () {
-                          setState(() => _expanded = false);
-                          OrderShareHelper.shareText(_data);
-                        },
+                        label: 'Share as Text',
+                        color: LoginColors.primary,
+                        onTap: _shareText,
                       ),
                       Divider(height: 1, color: LoginColors.borderLight),
-                      _ShareOptionTile(
+                      _ActionTile(
                         icon: Icons.picture_as_pdf_rounded,
                         label: _data.isBillStatus
-                            ? 'Bill PDF'
-                            : 'Order PDF',
-                        onTap: () {
-                          setState(() => _expanded = false);
-                          OrderShareHelper.shareAsPdf(_data);
-                        },
+                            ? 'Share Bill PDF'
+                            : 'Share Order PDF',
+                        color: LoginColors.primary,
+                        onTap: _sharePdf,
                       ),
                     ],
                   ),
                 )
               : const SizedBox.shrink(),
         ),
-        SizedBox(
-          height: 46,
-          child: Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: _sharing ? null : _defaultShare,
+
+        // Status error
+        if (widget.vm.statusError != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              widget.vm.statusError!,
+              style: TextStyle(
+                color: LoginColors.error,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+
+        // Action buttons row
+        Row(
+          children: [
+            // Share button
+            Expanded(
+              child: SizedBox(
+                height: 44,
+                child: OutlinedButton.icon(
+                  onPressed: _sharing
+                      ? null
+                      : () => setState(
+                          () => _shareExpanded = !_shareExpanded),
                   icon: _sharing
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: LoginColors.primary,
                           ),
                         )
-                      : const Icon(Icons.share_rounded, size: 18),
-                  label: const Text(
-                    'Share',
-                    style: TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600),
+                      : Icon(
+                          _shareExpanded
+                              ? Icons.close_rounded
+                              : Icons.share_rounded,
+                          size: 18,
+                        ),
+                  label: Text(
+                    _shareExpanded ? 'Close' : 'Share',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: LoginColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        bottomLeft: Radius.circular(12),
-                      ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: LoginColors.primary,
+                    side: BorderSide(
+                      color: LoginColors.primary.withValues(alpha: 0.4),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
               ),
-              Container(width: 1, color: Colors.white24),
-              SizedBox(
-                width: 46,
-                child: FilledButton(
-                  onPressed: () =>
-                      setState(() => _expanded = !_expanded),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: LoginColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.zero,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(12),
-                        bottomRight: Radius.circular(12),
+            ),
+
+            // Status action button
+            if (hasStatusAction) ...[
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: SizedBox(
+                  height: 44,
+                  child: FilledButton.icon(
+                    onPressed:
+                        widget.vm.isStatusUpdating ? null : _doStatusAction,
+                    icon: widget.vm.isStatusUpdating
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Icon(_statusIcon, size: 18),
+                    label: Text(
+                      _statusLabel!,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ),
-                  child: Icon(
-                    _expanded
-                        ? Icons.keyboard_arrow_down_rounded
-                        : Icons.keyboard_arrow_up_rounded,
-                    size: 22,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _statusColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ],
-          ),
+          ],
         ),
       ],
     );
   }
 }
 
-class _ShareOptionTile extends StatelessWidget {
+class _ActionTile extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color color;
   final VoidCallback onTap;
 
-  const _ShareOptionTile({
+  const _ActionTile({
     required this.icon,
     required this.label,
+    required this.color,
     required this.onTap,
   });
 
@@ -879,7 +993,7 @@ class _ShareOptionTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: LoginColors.primary),
+            Icon(icon, size: 18, color: color),
             const SizedBox(width: 12),
             Text(
               label,

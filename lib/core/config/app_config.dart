@@ -275,6 +275,14 @@ class AppConfig {
   static String getUpdatePaymentReceivedUrl(int companyId, int paymentId) =>
       '$baseUrl${updatePaymentReceivedEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{paymentId}', paymentId.toString())}';
 
+  // ─── Order / Payment Status URLs ───
+  static String getOrderStatusUrl(int companyId, int orderId, String action) =>
+      '$baseUrl/api/companies/$companyId/orders/$orderId/$action';
+
+  static String getPaymentStatusUrl(
+          int companyId, int paymentId, String action) =>
+      '$baseUrl/api/companies/$companyId/payments/$paymentId/$action';
+
   static String getCustomerInvitationUrl(int companyId, int customerId) =>
       '$baseUrl${customerInvitationEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
 

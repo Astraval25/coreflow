@@ -1649,6 +1649,7 @@ class AuthRepository {
     try {
       final url = AppConfig.getUpdatePaymentSentUrl(companyId, paymentId);
       final response = await _apiService.put(url, body);
+      debugPrint('Update payment sent [${response.statusCode}]: ${response.body}');
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       if (data['responseStatus'] == true) {
@@ -1679,6 +1680,7 @@ class AuthRepository {
     try {
       final url = AppConfig.getUpdatePaymentReceivedUrl(companyId, paymentId);
       final response = await _apiService.put(url, body);
+      debugPrint('Update payment received [${response.statusCode}]: ${response.body}');
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       if (data['responseStatus'] == true) {
@@ -1697,6 +1699,60 @@ class AuthRepository {
       };
     } catch (e) {
       debugPrint('Update payment received error: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  // ─── Order / Payment Status APIs ───
+
+  Future<Map<String, dynamic>> updateOrderStatus(
+    int companyId,
+    int orderId,
+    String action,
+  ) async {
+    try {
+      final url = AppConfig.getOrderStatusUrl(companyId, orderId, action);
+      final response = await _apiService.put(url, {});
+      debugPrint('Order status [$action][${response.statusCode}]: ${response.body}');
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] == true) {
+        return {
+          'success': true,
+          'message': data['responseMessage'] ?? 'Status updated',
+        };
+      }
+      return {
+        'success': false,
+        'message': data['responseMessage'] ?? 'Failed to update status',
+      };
+    } catch (e) {
+      debugPrint('Update order status error: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> updatePaymentStatus(
+    int companyId,
+    int paymentId,
+    String action,
+  ) async {
+    try {
+      final url = AppConfig.getPaymentStatusUrl(companyId, paymentId, action);
+      final response = await _apiService.put(url, {});
+      debugPrint('Payment status [$action][${response.statusCode}]: ${response.body}');
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] == true) {
+        return {
+          'success': true,
+          'message': data['responseMessage'] ?? 'Status updated',
+        };
+      }
+      return {
+        'success': false,
+        'message': data['responseMessage'] ?? 'Failed to update status',
+      };
+    } catch (e) {
+      debugPrint('Update payment status error: $e');
       return {'success': false, 'message': 'Error: $e'};
     }
   }

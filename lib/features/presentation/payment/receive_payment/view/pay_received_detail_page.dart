@@ -175,13 +175,7 @@ class _PayReceivedDetailView extends StatelessWidget {
           _NotesCard(notes: payment.notes),
         ],
         const SizedBox(height: 14),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: FractionallySizedBox(
-            widthFactor: 0.40,
-            child: _ShareButton(payment: payment, vm: vm),
-          ),
-        ),
+        _BottomActionsBar(payment: payment, vm: vm),
       ],
     );
   }
@@ -638,54 +632,84 @@ class _NotesCard extends StatelessWidget {
   }
 }
 
-class _ShareButton extends StatefulWidget {
+class _BottomActionsBar extends StatefulWidget {
   final PaymentDetail payment;
   final ReceivePaymentDetailViewModel vm;
 
-  const _ShareButton({required this.payment, required this.vm});
+  const _BottomActionsBar({required this.payment, required this.vm});
 
   @override
-  State<_ShareButton> createState() => _ShareButtonState();
+  State<_BottomActionsBar> createState() => _BottomActionsBarState();
 }
 
-class _ShareButtonState extends State<_ShareButton> {
-  bool _expanded = false;
-  bool _sharing = false;
+class _BottomActionsBarState extends State<_BottomActionsBar> {
+  bool _shareExpanded = false;
 
-  Future<void> _defaultShare() async {
-    if (_sharing) return;
-    setState(() => _sharing = true);
+  List<({String label, IconData icon, String action, Color color})>
+      get _statusActions {
+    final status = widget.payment.paymentStatus;
+    final list =
+        <({String label, IconData icon, String action, Color color})>[];
 
-    final hasProof = widget.payment.fsId != null &&
-        widget.payment.fsId!.isNotEmpty;
-
-    if (hasProof) {
-      final bytes = await widget.vm.fetchProofBytes();
-      if (bytes != null && bytes.isNotEmpty) {
-        await PaymentShareHelper.shareProofWithText(
-          widget.payment, bytes,
-          isSent: false,
-        );
-      } else {
-        await PaymentShareHelper.shareText(widget.payment, isSent: false);
-      }
-    } else {
-      await PaymentShareHelper.shareText(widget.payment, isSent: false);
+    if (status == 'PENDING') {
+      list.add((
+        label: 'Mark as Viewed',
+        icon: Icons.visibility_rounded,
+        action: 'viewed',
+        color: Colors.blue.shade600,
+      ));
     }
+    if (status == 'VIEWED') {
+      list.add((
+        label: 'Partially Paid',
+        icon: Icons.payments_outlined,
+        action: 'partially-paid',
+        color: Colors.orange.shade700,
+      ));
+    }
+    if (status == 'PAID' || status == 'PARTIALLY_PAID') {
+      list.add((
+        label: 'Refund',
+        icon: Icons.undo_rounded,
+        action: 'refund',
+        color: Colors.purple.shade600,
+      ));
+    }
+    if (const ['PENDING', 'VIEWED', 'PARTIALLY_PAID'].contains(status)) {
+      list.add((
+        label: 'Mark Failed',
+        icon: Icons.cancel_outlined,
+        action: 'failed',
+        color: LoginColors.error,
+      ));
+    }
+    return list;
+  }
 
-    if (mounted) setState(() => _sharing = false);
+  Future<void> _doStatusAction(String action) async {
+    final success = await widget.vm.updateStatus(action);
+    if (!success && mounted && widget.vm.statusError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(widget.vm.statusError!),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final actions = _statusActions;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Expandable options (appear above the button)
+        // Share options dropdown
         AnimatedSize(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeInOut,
-          child: _expanded
+          child: _shareExpanded
               ? Container(
                   margin: const EdgeInsets.only(bottom: 8),
                   decoration: BoxDecoration(
@@ -696,37 +720,38 @@ class _ShareButtonState extends State<_ShareButton> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _ShareOptionTile(
+                      _ActionTile(
                         icon: Icons.text_fields_rounded,
-                        label: 'Share Text',
+                        label: 'Share as Text',
+                        color: LoginColors.primary,
                         onTap: () {
-                          setState(() => _expanded = false);
+                          setState(() => _shareExpanded = false);
                           PaymentShareHelper.shareText(
                             widget.payment,
                             isSent: false,
                           );
                         },
                       ),
-                      Divider(
-                          height: 1, color: LoginColors.borderLight),
-                      _ShareOptionTile(
+                      Divider(height: 1, color: LoginColors.borderLight),
+                      _ActionTile(
                         icon: Icons.image_rounded,
-                        label: 'Share Image',
+                        label: 'Share as Image',
+                        color: LoginColors.primary,
                         onTap: () {
-                          setState(() => _expanded = false);
+                          setState(() => _shareExpanded = false);
                           PaymentShareHelper.shareAsImage(
                             widget.payment,
                             isSent: false,
                           );
                         },
                       ),
-                      Divider(
-                          height: 1, color: LoginColors.borderLight),
-                      _ShareOptionTile(
+                      Divider(height: 1, color: LoginColors.borderLight),
+                      _ActionTile(
                         icon: Icons.picture_as_pdf_rounded,
-                        label: 'Share PDF',
+                        label: 'Share as PDF',
+                        color: LoginColors.primary,
                         onTap: () {
-                          setState(() => _expanded = false);
+                          setState(() => _shareExpanded = false);
                           PaymentShareHelper.shareAsPdf(
                             widget.payment,
                             isSent: false,
@@ -739,86 +764,109 @@ class _ShareButtonState extends State<_ShareButton> {
               : const SizedBox.shrink(),
         ),
 
-        // Split button row
-        SizedBox(
-          height: 46,
-          child: Row(
-            children: [
-              // Main share button
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: _sharing ? null : _defaultShare,
-                  icon: _sharing
-                      ? SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.share_rounded, size: 18),
-                  label: const Text(
-                    'Share',
-                    style: TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600),
+        // Status error
+        if (widget.vm.statusError != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              widget.vm.statusError!,
+              style: TextStyle(
+                color: LoginColors.error,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+
+        // Action buttons row
+        Row(
+          children: [
+            // Share button
+            SizedBox(
+              height: 44,
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    setState(() => _shareExpanded = !_shareExpanded),
+                icon: Icon(
+                  _shareExpanded ? Icons.close_rounded : Icons.share_rounded,
+                  size: 18,
+                ),
+                label: Text(
+                  _shareExpanded ? 'Close' : 'Share',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: LoginColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        bottomLeft: Radius.circular(12),
-                      ),
-                    ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: LoginColors.primary,
+                  side: BorderSide(
+                    color: LoginColors.primary.withValues(alpha: 0.4),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
-              // Divider line
-              Container(width: 1, color: Colors.white24),
-              // Dropdown toggle
-              SizedBox(
-                width: 46,
-                child: FilledButton(
-                  onPressed: () =>
-                      setState(() => _expanded = !_expanded),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: LoginColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(12),
-                        bottomRight: Radius.circular(12),
+            ),
+
+            // Status action buttons
+            for (final a in actions) ...[
+              const SizedBox(width: 8),
+              Expanded(
+                child: SizedBox(
+                  height: 44,
+                  child: FilledButton.icon(
+                    onPressed: widget.vm.isStatusUpdating
+                        ? null
+                        : () => _doStatusAction(a.action),
+                    icon: widget.vm.isStatusUpdating
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Icon(a.icon, size: 16),
+                    label: Text(
+                      a.label,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: a.color,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                  ),
-                  child: Icon(
-                    _expanded
-                        ? Icons.keyboard_arrow_down_rounded
-                        : Icons.keyboard_arrow_up_rounded,
-                    size: 22,
                   ),
                 ),
               ),
             ],
-          ),
+          ],
         ),
       ],
     );
   }
 }
 
-class _ShareOptionTile extends StatelessWidget {
+class _ActionTile extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color color;
   final VoidCallback onTap;
 
-  const _ShareOptionTile({
+  const _ActionTile({
     required this.icon,
     required this.label,
+    required this.color,
     required this.onTap,
   });
 
@@ -831,7 +879,7 @@ class _ShareOptionTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: LoginColors.primary),
+            Icon(icon, size: 18, color: color),
             const SizedBox(width: 12),
             Text(
               label,
