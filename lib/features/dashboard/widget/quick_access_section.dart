@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'dashboard_widgets.dart';
 import '../dashboard_view_model/dashboard_view_model.dart';
-import 'package:coreflow/core/theme/colors.dart';
 
 class QuickAccessSection extends StatelessWidget {
   final DashboardViewModel vm;
@@ -25,6 +24,30 @@ class QuickAccessSection extends StatelessWidget {
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
             children: [
+              DashboardGridItem(
+                icon: Icons.receipt_long_outlined,
+                label: 'Sales',
+                color: Colors.blue,
+                onTap: () => context.go('/sales'),
+              ),
+              DashboardGridItem(
+                icon: Icons.inventory_2_outlined,
+                label: 'Purchase',
+                color: Colors.orange,
+                onTap: () => context.go('/purchase'),
+              ),
+              DashboardGridItem(
+                icon: Icons.payments_outlined,
+                label: 'Payment',
+                color: Colors.green,
+                onTap: () => context.go('/payment'),
+              ),
+              DashboardGridItem(
+                icon: Icons.account_balance_wallet_outlined,
+                label: 'Received',
+                color: Colors.purple,
+                onTap: () => context.go('/pay-received'),
+              ),
               DashboardGridItem(
                 icon: Icons.groups_outlined,
                 label: 'Customers',
@@ -56,21 +79,10 @@ class QuickAccessSection extends StatelessWidget {
                 },
               ),
               DashboardGridItem(
-                icon: Icons.pie_chart_outline_rounded,
-                label: 'Reports',
+                icon: Icons.store_mall_directory_outlined,
+                label: 'Marketplace',
                 color: Colors.amber,
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Feature coming soon!'),
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: LoginColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  );
-                },
+                onTap: () => context.go('/marketplace'),
               ),
             ],
           ),

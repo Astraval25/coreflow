@@ -31,12 +31,22 @@ class CreateSection extends StatelessWidget {
             children: [
               DashboardGridItem(
                 icon: Icons.receipt_long_outlined,
-                label: 'Invoice',
+                label: 'Sales Order',
                 onTap: () => _showComingSoon(context),
               ),
               DashboardGridItem(
                 icon: Icons.shopping_cart_outlined,
                 label: 'Purchase',
+                onTap: () => _showComingSoon(context),
+              ),
+              DashboardGridItem(
+                icon: Icons.payments_outlined,
+                label: 'Payment',
+                onTap: () => _showComingSoon(context),
+              ),
+              DashboardGridItem(
+                icon: Icons.account_balance_wallet_outlined,
+                label: 'Received',
                 onTap: () => _showComingSoon(context),
               ),
               DashboardGridItem(
@@ -65,21 +75,6 @@ class CreateSection extends StatelessWidget {
                     context.push('/items/${vm.companyId}/add');
                   }
                 },
-              ),
-              DashboardGridItem(
-                icon: Icons.local_shipping_outlined,
-                label: 'Delivery Challan',
-                onTap: () => _showComingSoon(context),
-              ),
-              DashboardGridItem(
-                icon: Icons.wallet_outlined,
-                label: 'Expenses',
-                onTap: () => _showComingSoon(context),
-              ),
-              DashboardGridItem(
-                icon: Icons.description_outlined,
-                label: 'Pro Forma',
-                onTap: () => _showComingSoon(context),
               ),
             ],
           ),
