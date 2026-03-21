@@ -59,6 +59,10 @@ class AppConfig {
       '/api/companies/{companyId}/customers/{customerId}/items/{itemId}/activate';
   static const String customerItemDeactivateEndpoint =
       '/api/companies/{companyId}/customers/{customerId}/items/{itemId}/deactivate';
+  static const String customerSellableItemsEndpoint =
+      '/api/companies/{companyId}/customers/{customerId}/items/sellable';
+  static const String vendorPurchasableItemsEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/items/purchasable';
   static const String fileEndpoint = '/api/file';
   static const String itemActivateEndpoint =
       '/api/companies/{companyId}/items/{itemId}/activate';
@@ -77,6 +81,18 @@ class AppConfig {
       '/api/companies/{companyId}/payments/{paymentId}';
   static const String orderDetailEndpoint =
       '/api/companies/{companyId}/orders/{orderId}';
+  static const String createPaymentSentEndpoint =
+      '/api/companies/{companyId}/payments-sent';
+  static const String vendorUnpaidOrdersEndpoint =
+      '/api/companies/{companyId}/vendor/{vendorId}/unpaid-orders';
+  static const String createPaymentReceivedEndpoint =
+      '/api/companies/{companyId}/payments-received';
+  static const String customerUnpaidOrdersEndpoint =
+      '/api/companies/{companyId}/customer/{customerId}/unpaid-orders';
+  static const String paymentProofEndpoint =
+      '/api/companies/{companyId}/payments/payment-proof';
+  static const String paymentProofFileEndpoint =
+      '/api/companies/{companyId}/payments/payment-proof/{fsId}';
 
   // getters for constructing full URLs
   static String get loginUrl => '$baseUrl$loginEndpoint';
@@ -173,6 +189,12 @@ class AppConfig {
   ) =>
       '$baseUrl${customerItemDeactivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString()).replaceAll('{itemId}', itemId.toString())}';
 
+  static String getCustomerSellableItemsUrl(int companyId, int customerId) =>
+      '$baseUrl${customerSellableItemsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+
+  static String getVendorPurchasableItemsUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorPurchasableItemsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+
   static String getFileUrl(String fsId) => '$baseUrl$fileEndpoint?fsId=$fsId';
   static String getItemActivateUrl(int companyId, int itemId) =>
       '$baseUrl${itemActivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{itemId}', itemId.toString())}';
@@ -199,4 +221,22 @@ class AppConfig {
       getPaymentDetailUrl(companyId, paymentId);
   static String getOrderDetailUrl(int companyId, int orderId) =>
       '$baseUrl${orderDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{orderId}', orderId.toString())}';
+
+  static String getCreatePaymentSentUrl(int companyId) =>
+      '$baseUrl${createPaymentSentEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getVendorUnpaidOrdersUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorUnpaidOrdersEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+
+  static String getPaymentProofUrl(int companyId) =>
+      '$baseUrl${paymentProofEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getPaymentProofFileUrl(int companyId, String fsId) =>
+      '$baseUrl${paymentProofFileEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{fsId}', fsId)}';
+
+  static String getCreatePaymentReceivedUrl(int companyId) =>
+      '$baseUrl${createPaymentReceivedEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getCustomerUnpaidOrdersUrl(int companyId, int customerId) =>
+      '$baseUrl${customerUnpaidOrdersEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
 }

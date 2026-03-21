@@ -4,6 +4,7 @@ import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/features/presentation/payment/receive_payment/view/create_receive_payment_page.dart';
 import 'package:coreflow/features/presentation/payment/receive_payment/view/pay_received_detail_page.dart';
 import 'package:coreflow/features/presentation/payment/receive_payment/viewmodel/receive_payment_view_model.dart';
 import 'package:coreflow/features/presentation/payment/receive_payment/widgets/pay_received_body_message.dart';
@@ -148,15 +149,30 @@ class _PayReceivedContentState extends State<_PayReceivedContent> {
   }
 
   Widget _buildCreateButton() {
-    return FloatingActionButton(
-      backgroundColor: LoginColors.primary,
-      foregroundColor: Colors.white,
-      onPressed: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Create received payment coming soon.')),
+    return Consumer<ReceivePaymentViewModel>(
+      builder: (context, vm, child) {
+        return FloatingActionButton(
+          backgroundColor: LoginColors.primary,
+          foregroundColor: Colors.white,
+          onPressed: () => _navigateToCreatePayment(vm.companyId),
+          child: const Icon(Icons.add_rounded),
         );
       },
-      child: const Icon(Icons.add_rounded),
     );
+  }
+
+  Future<void> _navigateToCreatePayment(int companyId) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateReceivePaymentPage(companyId: companyId),
+      ),
+    );
+    
+    if (result == true && mounted) {
+      // Refresh the list if payment was created successfully
+      final vm = context.read<ReceivePaymentViewModel>();
+      vm.refresh();
+    }
   }
 }

@@ -4,6 +4,7 @@ import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/features/presentation/payment/send_payment/view/create_payment_sent_page.dart';
 import 'package:coreflow/features/presentation/payment/send_payment/view/send_payment_detail_page.dart';
 import 'package:coreflow/features/presentation/payment/send_payment/viewmodel/send_payment_view_model.dart';
 import 'package:coreflow/features/presentation/payment/send_payment/widgets/payment_body_message.dart';
@@ -154,13 +155,22 @@ class _PaymentContentState extends State<_PaymentContent> {
   }
 
   Widget _buildCreateButton() {
+    final companyId =
+        context.read<DashboardViewModel>().companyId;
     return FloatingActionButton(
       backgroundColor: LoginColors.primary,
       foregroundColor: Colors.white,
-      onPressed: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Create payment entry coming soon.')),
+      onPressed: () async {
+        if (companyId == null) return;
+        final result = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CreatePaymentSentPage(companyId: companyId),
+          ),
         );
+        if (result == true && mounted) {
+          context.read<SendPaymentViewModel>().refresh();
+        }
       },
       child: const Icon(Icons.add_rounded),
     );

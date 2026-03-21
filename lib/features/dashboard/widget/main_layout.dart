@@ -1,5 +1,6 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/theme/theme_provider.dart';
+import 'package:coreflow/core/share_intent/share_intent_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -20,6 +21,24 @@ class _MainLayoutState extends State<MainLayout> {
   static const double _desktopSidebarWidth = 304;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final ShareIntentHandler _shareIntentHandler = ShareIntentHandler();
+  int? _lastCompanyId;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _shareIntentHandler.start(context);
+    });
+  }
+
+  @override
+  void dispose() {
+    _shareIntentHandler.dispose();
+    super.dispose();
+  }
+
   int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/dashboard')) return 0;
@@ -56,6 +75,7 @@ class _MainLayoutState extends State<MainLayout> {
     context.watch<ThemeProvider>();
     final selectedIndex = _calculateSelectedIndex(context);
     final vm = context.watch<DashboardViewModel>();
+    _syncShareCompanyId(vm.companyId);
     final screenSize = MediaQuery.sizeOf(context);
     final useFixedDesktopSidebar =
         screenSize.width >= _desktopFrameWidth &&
@@ -163,6 +183,15 @@ class _MainLayoutState extends State<MainLayout> {
               },
             ),
     );
+  }
+
+  void _syncShareCompanyId(int? companyId) {
+    if (_lastCompanyId == companyId) return;
+    _lastCompanyId = companyId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _shareIntentHandler.updateCompanyId(companyId, context);
+    });
   }
 
   // Helper to build nav items with "floating" animation

@@ -64,6 +64,12 @@ class ReceivePaymentDetailViewModel extends ChangeNotifier {
     await loadPaymentDetail();
   }
 
+  Future<Uint8List?> fetchProofBytes() async {
+    final fsId = _paymentDetail?.fsId;
+    if (fsId == null || fsId.isEmpty) return null;
+    return _repository.fetchPaymentProofBytes(companyId, fsId);
+  }
+
   void clearError() {
     _errorMessage = null;
     if (_state == ReceivePaymentDetailState.error) {

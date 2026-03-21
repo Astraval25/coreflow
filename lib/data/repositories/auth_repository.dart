@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/company/companies_response.dart';
 import 'package:coreflow/domain/model/company/company.dart';
@@ -11,22 +12,29 @@ import 'package:coreflow/domain/model/customer/customer_edit_response.dart';
 import 'package:coreflow/domain/model/customer/customer_mapped_item.dart';
 import 'package:coreflow/domain/model/customer/customer_status_response.dart';
 import 'package:coreflow/domain/model/items/create_item_request.dart';
+import 'package:coreflow/domain/model/items/sellable_item.dart';
 import 'package:coreflow/domain/model/items/detail_item.dart';
 import 'package:coreflow/domain/model/items/item.dart';
 import 'package:coreflow/domain/model/items/item_status_response.dart';
 import 'package:coreflow/domain/model/items/update_item_request.dart';
 import 'package:coreflow/domain/model/login/login_request.dart';
+import 'package:coreflow/domain/model/payment/create_payment_received_request.dart';
+import 'package:coreflow/domain/model/payment/create_payment_sent_request.dart';
+import 'package:coreflow/domain/model/payment/payment_proof_response.dart';
 import 'package:coreflow/domain/model/payment/payment_detail.dart';
 import 'package:coreflow/domain/model/payment/payment_detail_response.dart';
 import 'package:coreflow/domain/model/payment/payment_received_summary.dart';
 import 'package:coreflow/domain/model/payment/payment_sent_summary.dart';
+import 'package:coreflow/domain/model/payment/unpaid_order.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_detail_response.dart';
 import 'package:coreflow/domain/model/register/register_request.dart';
 import 'package:coreflow/domain/model/register/register_response.dart';
 import 'package:coreflow/domain/model/resend_otp/resend_otp_request.dart';
 import 'package:coreflow/domain/model/resend_otp/resend_otp_response.dart';
+import 'package:coreflow/domain/model/purchase/create_purchase_order_request.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order.dart';
+import 'package:coreflow/domain/model/sales/create_sales_order_request.dart';
 import 'package:coreflow/domain/model/sales/sales_order.dart';
 import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
     as sales_detail;
@@ -1035,6 +1043,129 @@ class AuthRepository {
   }
 
   // getSalesOrder
+  Future<List<SellableItem>> getCustomerSellableItems(
+    int companyId,
+    int customerId,
+  ) async {
+    try {
+      final url =
+          AppConfig.getCustomerSellableItemsUrl(companyId, customerId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      debugPrint(
+        'GET /customers/$customerId/items/sellable status: ${response.statusCode}',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        debugPrint(
+            'Get sellable items failed: ${response.statusCode}');
+        return [];
+      }
+
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (decodedBody['responseStatus'] != true) {
+        debugPrint(
+          'Get sellable items responseStatus false: ${decodedBody['responseMessage']}',
+        );
+        return [];
+      }
+
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      return data.map((json) => SellableItem.fromJson(json)).toList();
+    } catch (e, stack) {
+      debugPrint('Get customer sellable items error: $e\n$stack');
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> createSalesOrder(
+    int companyId,
+    CreateSalesOrderRequest request,
+  ) async {
+    try {
+      final url = AppConfig.getSalesOrdersUrl(companyId);
+      final response = await _apiService.post(url, request.toJson());
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] == true) {
+        return {
+          'success': true,
+          'message': data['responseMessage'] ?? 'Order created',
+          'data': data['responseData'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message':
+            data['responseMessage'] ??
+            'Failed with status ${response.statusCode}',
+      };
+    } catch (e) {
+      debugPrint('Create sales order error: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  Future<List<SellableItem>> getVendorPurchasableItems(
+    int companyId,
+    int vendorId,
+  ) async {
+    try {
+      final url =
+          AppConfig.getVendorPurchasableItemsUrl(companyId, vendorId);
+      final response = await _apiService.get(Uri.parse(url));
+
+
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (decodedBody['responseStatus'] != true) {
+        debugPrint(
+          'Get purchasable items responseStatus false: ${decodedBody['responseMessage']}',
+        );
+        return [];
+      }
+
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      return data.map((json) => SellableItem.fromJson(json)).toList();
+    } catch (e, stack) {
+      debugPrint('Get vendor purchasable items error: $e\n$stack');
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> createPurchaseOrder(
+    int companyId,
+    CreatePurchaseOrderRequest request,
+  ) async {
+    try {
+      final url = AppConfig.getPurchaseOrdersUrl(companyId);
+      final response = await _apiService.post(url, request.toJson());
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] == true) {
+        return {
+          'success': true,
+          'message': data['responseMessage'] ?? 'Order created',
+          'data': data['responseData'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message':
+            data['responseMessage'] ??
+            'Failed with status ${response.statusCode}',
+      };
+    } catch (e) {
+      debugPrint('Create purchase order error: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
   Future<List<SalesOrder>> getSalesOrders(int companyId) async {
     try {
       final url = AppConfig.getSalesOrdersUrl(companyId);
@@ -1271,6 +1402,180 @@ class AuthRepository {
     } catch (e, stack) {
       debugPrint('Get payments received summary error: $e\n$stack');
       return [];
+    }
+  }
+
+  Future<List<UnpaidOrder>> getVendorUnpaidOrders(
+    int companyId,
+    int vendorId,
+  ) async {
+    try {
+      final url = AppConfig.getVendorUnpaidOrdersUrl(companyId, vendorId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      debugPrint(
+        'GET /companies/$companyId/vendor/$vendorId/unpaid-orders status: ${response.statusCode}',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        return [];
+      }
+
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (decodedBody['responseStatus'] != true) {
+        return [];
+      }
+
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      return data
+          .map((json) => UnpaidOrder.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e, stack) {
+      debugPrint('Get vendor unpaid orders error: $e\n$stack');
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> createPaymentSent(
+    int companyId,
+    CreatePaymentSentRequest request,
+  ) async {
+    try {
+      final url = AppConfig.getCreatePaymentSentUrl(companyId);
+      final response = await _apiService.post(url, request.toJson());
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] == true) {
+        return {
+          'success': true,
+          'message': data['responseMessage'] ?? 'Payment created',
+          'data': data['responseData'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message':
+            data['responseMessage'] ??
+            'Failed with status ${response.statusCode}',
+      };
+    } catch (e) {
+      debugPrint('Create payment sent error: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  Future<Uint8List?> fetchPaymentProofBytes(
+    int companyId,
+    String fsId,
+  ) async {
+    try {
+      final url = Uri.parse(AppConfig.getFileUrl(fsId));
+      final response = await _apiService.get(url);
+      if (response.statusCode == 200) {
+        return response.bodyBytes;
+      }
+      debugPrint('Fetch proof file failed: ${response.statusCode}');
+      return null;
+    } catch (e, stack) {
+      debugPrint('Fetch proof file error: $e\n$stack');
+      return null;
+    }
+  }
+
+  Future<PaymentProofData?> uploadPaymentProof(
+    int companyId,
+    File file,
+  ) async {
+    try {
+      final url = AppConfig.getPaymentProofUrl(companyId);
+      final response = await _apiService.multipartPost(
+        url: url,
+        fields: {},
+        file: file,
+        fileFieldName: 'file',
+      );
+
+      debugPrint(
+        'POST /companies/$companyId/payments/payment-proof status: ${response.statusCode}',
+      );
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final proofResponse = PaymentProofResponse.fromJson(data);
+
+      if (proofResponse.responseStatus && proofResponse.responseData != null) {
+        return proofResponse.responseData;
+      }
+
+      debugPrint('Upload payment proof failed: ${proofResponse.responseMessage}');
+      return null;
+    } catch (e, stack) {
+      debugPrint('Upload payment proof error: $e\n$stack');
+      return null;
+    }
+  }
+
+  Future<List<UnpaidOrder>> getCustomerUnpaidOrders(
+    int companyId,
+    int customerId,
+  ) async {
+    try {
+      final url = AppConfig.getCustomerUnpaidOrdersUrl(companyId, customerId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      debugPrint(
+        'GET /companies/$companyId/customer/$customerId/unpaid-orders status: ${response.statusCode}',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        return [];
+      }
+
+      final Map<String, dynamic> decodedBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (decodedBody['responseStatus'] != true) {
+        return [];
+      }
+
+      final List<dynamic> data = decodedBody['responseData'] ?? [];
+      return data
+          .map((json) => UnpaidOrder.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e, stack) {
+      debugPrint('Get customer unpaid orders error: $e\n$stack');
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> createPaymentReceived(
+    int companyId,
+    CreatePaymentReceivedRequest request,
+  ) async {
+    try {
+      final url = AppConfig.getCreatePaymentReceivedUrl(companyId);
+      final response = await _apiService.post(url, request.toJson());
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] == true) {
+        return {
+          'success': true,
+          'message': data['responseMessage'] ?? 'Payment created',
+          'data': data['responseData'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message':
+            data['responseMessage'] ??
+            'Failed with status ${response.statusCode}',
+      };
+    } catch (e) {
+      debugPrint('Create payment received error: $e');
+      return {'success': false, 'message': 'Error: $e'};
     }
   }
 }

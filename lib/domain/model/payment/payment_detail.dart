@@ -4,6 +4,7 @@ class PaymentDetail {
   final DateTime paymentDate;
   final double amount;
   final List<int> orderIds;
+  final List<PaymentOrderAllocation>? _orderAllocations;
 
   final int customerId;
   final String customerName;
@@ -16,6 +17,7 @@ class PaymentDetail {
   final String referenceNumber;
   final String notes;
   final bool isActive;
+  final String? fsId;
 
   PaymentDetail({
     required this.paymentId,
@@ -23,6 +25,7 @@ class PaymentDetail {
     required this.paymentDate,
     required this.amount,
     required this.orderIds,
+    List<PaymentOrderAllocation>? orderAllocations,
     required this.customerId,
     required this.customerName,
     required this.vendorId,
@@ -32,10 +35,15 @@ class PaymentDetail {
     required this.referenceNumber,
     required this.notes,
     required this.isActive,
-  });
+    this.fsId,
+  }) : _orderAllocations = orderAllocations;
+
+  List<PaymentOrderAllocation> get orderAllocations =>
+      _orderAllocations ?? const [];
 
   factory PaymentDetail.fromJson(Map<String, dynamic> json) {
     final parsedOrderIds = _parseOrderIds(json);
+    final parsedAllocations = _parseAllocations(json);
 
     return PaymentDetail(
       paymentId: _asInt(json['paymentId']),
@@ -43,6 +51,7 @@ class PaymentDetail {
       paymentDate: _asDate(json['paymentDate']),
       amount: _asDouble(json['amount']),
       orderIds: parsedOrderIds,
+      orderAllocations: parsedAllocations,
       customerId: _asInt(json['customerId']),
       customerName: json['customerName']?.toString() ?? '',
       vendorId: _asInt(json['vendorId']),
@@ -52,6 +61,7 @@ class PaymentDetail {
       referenceNumber: json['referenceNumber']?.toString() ?? '',
       notes: json['notes']?.toString() ?? '',
       isActive: _asBool(json['isActive']),
+      fsId: json['fsId']?.toString(),
     );
   }
 
@@ -95,5 +105,56 @@ class PaymentDetail {
     }
 
     return const [];
+  }
+
+  static List<PaymentOrderAllocation> _parseAllocations(
+    Map<String, dynamic> json,
+  ) {
+    final rawAllocations = json['orderAllocations'];
+    if (rawAllocations is List) {
+      return rawAllocations
+          .whereType<Map>()
+          .map(
+            (e) => PaymentOrderAllocation.fromJson(
+              Map<String, dynamic>.from(e),
+            ),
+          )
+          .toList();
+    }
+    return const [];
+  }
+}
+
+class PaymentOrderAllocation {
+  final int paymentOrderAllocationId;
+  final int orderId;
+  final String orderNumber;
+  final double amountApplied;
+  final DateTime allocationDate;
+  final String allocationRemarks;
+  final bool isActive;
+
+  PaymentOrderAllocation({
+    required this.paymentOrderAllocationId,
+    required this.orderId,
+    required this.orderNumber,
+    required this.amountApplied,
+    required this.allocationDate,
+    required this.allocationRemarks,
+    required this.isActive,
+  });
+
+  factory PaymentOrderAllocation.fromJson(Map<String, dynamic> json) {
+    return PaymentOrderAllocation(
+      paymentOrderAllocationId: PaymentDetail._asInt(
+        json['paymentOrderAllocationId'],
+      ),
+      orderId: PaymentDetail._asInt(json['orderId']),
+      orderNumber: json['orderNumber']?.toString() ?? '',
+      amountApplied: PaymentDetail._asDouble(json['amountApplied']),
+      allocationDate: PaymentDetail._asDate(json['allocationDate']),
+      allocationRemarks: json['allocationRemarks']?.toString() ?? '',
+      isActive: PaymentDetail._asBool(json['isActive']),
+    );
   }
 }

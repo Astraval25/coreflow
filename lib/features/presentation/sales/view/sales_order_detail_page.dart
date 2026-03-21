@@ -1,3 +1,4 @@
+import 'package:coreflow/core/utils/order_share_helper.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
@@ -5,6 +6,8 @@ import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
 import 'package:coreflow/domain/model/sales/sales_order_item.dart'
     as sales_item;
 import 'package:coreflow/features/presentation/sales/viewmodel/sales_order_detail_view_model.dart';
+import 'package:coreflow/features/items/view/item_detail_view.dart';
+import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -36,22 +39,29 @@ class _SalesOrderDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    LoginColors.setBrightness(Theme.of(context).brightness);
+
     return Consumer<SalesOrderDetailViewModel>(
       builder: (context, vm, _) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF3F4F6),
+          backgroundColor: LoginColors.background,
           appBar: AppBar(
-            backgroundColor: Colors.transparent,
             elevation: 0,
-            centerTitle: true,
-            title: const Text(
-              'Order Detail',
-              style: TextStyle(
-                color: Color(0xFF1F2937),
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+            surfaceTintColor: Colors.transparent,
+            backgroundColor: Colors.transparent,
+            flexibleSpace: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    DashboardColors.headerGradientStart,
+                    DashboardColors.headerGradientEnd,
+                  ],
+                ),
               ),
             ),
+            title: _OrderAppBarTitle(order: vm.order),
             leading: Padding(
               padding: const EdgeInsets.all(8),
               child: _RoundActionIcon(
@@ -117,15 +127,19 @@ class _SalesOrderDetailView extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(14, 8, 14, 20),
       children: [
-        _ItemDetailsCard(items: items),
+        _CustomerDetailsCard(order: order),
         const SizedBox(height: 10),
-        _OrderSummaryCard(order: order),
-        const SizedBox(height: 10),
-        _OrderMetaCard(order: order),
-        const SizedBox(height: 10),
-        _DeliveryInfoCard(order: order),
+        _ItemDetailsCard(items: items, companyId: vm.companyId),
         const SizedBox(height: 10),
         _PaymentSummaryCard(order: order),
+        const SizedBox(height: 16),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: FractionallySizedBox(
+            widthFactor: 0.40,
+            child: _OrderShareButton(order: order),
+          ),
+        ),
       ],
     );
   }
@@ -140,7 +154,7 @@ class _RoundActionIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: DashboardColors.textWhite.withOpacity(0.18),
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
@@ -148,7 +162,7 @@ class _RoundActionIcon extends StatelessWidget {
         child: SizedBox(
           width: 36,
           height: 36,
-          child: Icon(icon, size: 18, color: const Color(0xFF4B5563)),
+          child: Icon(icon, size: 18, color: DashboardColors.textWhite),
         ),
       ),
     );
@@ -165,130 +179,167 @@ class _CardBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: LoginColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: LoginColors.borderLight),
       ),
       child: child,
     );
   }
 }
 
-class _OrderSummaryCard extends StatelessWidget {
+class _OrderAppBarTitle extends StatelessWidget {
+  final sales_detail.SalesOrderDetail? order;
+
+  const _OrderAppBarTitle({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    if (order == null) {
+      return Text(
+        'Order Detail',
+        style: TextStyle(
+          color: DashboardColors.textWhite,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+    }
+
+    final orderLabel = _orderLabel(order!);
+    final overdueDays = _overdueDays(order!.orderDate);
+    final overdueText = overdueDays > 0
+        ? 'Overdue by $overdueDays day${overdueDays == 1 ? '' : 's'}'
+        : 'Overdue by 0 days';
+
+    return Column(
+      // mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Order $orderLabel',
+          style: TextStyle(
+            color: DashboardColors.textWhite,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        // const SizedBox(height: 2),
+        Text(
+          overdueText,
+          style: TextStyle(
+            color: DashboardColors.textWhite.withOpacity(0.85),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CustomerDetailsCard extends StatelessWidget {
   final sales_detail.SalesOrderDetail order;
 
-  const _OrderSummaryCard({required this.order});
+  const _CustomerDetailsCard({required this.order});
 
   @override
   Widget build(BuildContext context) {
     final customer = _displayCustomer(order);
+    final customerCompany = _displayCustomerCompany(order);
 
-    return _CardBlock(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Order Detail',
-            style: TextStyle(
-              color: Color(0xFF111827),
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        _CardBlock(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.local_shipping_outlined,
-                  size: 20,
-                  color: Color(0xFF4B5563),
+              Text(
+                'Customer Details',
+                style: TextStyle(
+                  color: LoginColors.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      customer,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF111827),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _MetaText(label: 'Customer Name', value: customer),
+                        const SizedBox(height: 8),
+                        _MetaText(
+                          label: 'Order Date',
+                          value: _formatDate(order.orderDate),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _MetaText(
+                      label: 'Customer Company',
+                      value: customerCompany,
+                      textAlignEnd: true,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        if (order.hasBill)
+          Positioned(
+            right: -20,
+            top: 6,
+            child: Transform.rotate(
+              angle: 0.6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Colors.grey, Colors.grey],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: LoginColors.shadowLight,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.receipt_long_rounded,
+                      size: 12,
+                      color: DashboardColors.textWhite,
+                    ),
+                    SizedBox(width: 6),
                     Text(
-                      _formatDate(order.orderDate),
-                      style: const TextStyle(
-                        color: Color(0xFF6B7280),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                      'Order Billed',
+                      style: TextStyle(
+                        color: DashboardColors.textWhite,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OrderMetaCard extends StatelessWidget {
-  final sales_detail.SalesOrderDetail order;
-
-  const _OrderMetaCard({required this.order});
-
-  @override
-  Widget build(BuildContext context) {
-    final orderLabel = order.orderNumber.trim().isNotEmpty
-        ? order.orderNumber
-        : order.orderId.toString();
-
-    return _CardBlock(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Order ID: $orderLabel',
-            style: const TextStyle(
-              color: Color(0xFF111827),
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _MetaText(
-                  label: 'Date',
-                  value: _formatDate(order.orderDate),
-                ),
-              ),
-              Expanded(
-                child: _MetaText(
-                  label: 'Time',
-                  value: _formatTime(order.orderDate),
-                  textAlignEnd: true,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      ],
     );
   }
 }
@@ -313,9 +364,9 @@ class _MetaText extends StatelessWidget {
       children: [
         Text(
           '$label:',
-          style: const TextStyle(
-            color: Color(0xFF6B7280),
-            fontSize: 11,
+          style: TextStyle(
+            color: LoginColors.textSecondary,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -323,8 +374,8 @@ class _MetaText extends StatelessWidget {
         Text(
           value,
           textAlign: textAlignEnd ? TextAlign.end : TextAlign.start,
-          style: const TextStyle(
-            color: Color(0xFF111827),
+          style: TextStyle(
+            color: LoginColors.textPrimary,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -336,8 +387,9 @@ class _MetaText extends StatelessWidget {
 
 class _ItemDetailsCard extends StatelessWidget {
   final List<sales_item.SalesOrderItem> items;
+  final int companyId;
 
-  const _ItemDetailsCard({required this.items});
+  const _ItemDetailsCard({required this.items, required this.companyId});
 
   @override
   Widget build(BuildContext context) {
@@ -345,18 +397,18 @@ class _ItemDetailsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(
                 Icons.inventory_2_outlined,
                 size: 16,
-                color: Color(0xFF111827),
+                color: LoginColors.textPrimary,
               ),
               SizedBox(width: 6),
               Text(
                 'Item Details',
                 style: TextStyle(
-                  color: Color(0xFF111827),
+                  color: LoginColors.textPrimary,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
@@ -365,19 +417,19 @@ class _ItemDetailsCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           if (items.isEmpty)
-            const Text(
+            Text(
               'No items available.',
               style: TextStyle(
-                color: Color(0xFF6B7280),
+                color: LoginColors.textSecondary,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             )
           else
             for (int i = 0; i < items.length; i++) ...[
-              _ItemDetailRow(item: items[i], index: i),
+              _ItemDetailRow(item: items[i], index: i, companyId: companyId),
               if (i != items.length - 1)
-                const Divider(height: 14, color: Color(0xFFE5E7EB)),
+                Divider(height: 14, color: LoginColors.borderLight),
             ],
         ],
       ),
@@ -388,8 +440,13 @@ class _ItemDetailsCard extends StatelessWidget {
 class _ItemDetailRow extends StatelessWidget {
   final sales_item.SalesOrderItem item;
   final int index;
+  final int companyId;
 
-  const _ItemDetailRow({required this.item, required this.index});
+  const _ItemDetailRow({
+    required this.item,
+    required this.index,
+    required this.companyId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -397,116 +454,70 @@ class _ItemDetailRow extends StatelessWidget {
         ? item.itemName
         : 'Item ${index + 1}';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Item ${index + 1}: $itemName',
-          style: const TextStyle(
-            color: Color(0xFF111827),
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        if (item.itemDescription != null &&
-            item.itemDescription!.trim().isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 3),
-            child: Text(
-              item.itemDescription!,
-              style: const TextStyle(
-                color: Color(0xFF6B7280),
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
+    return InkWell(
+      onTap: item.itemId > 0
+          ? () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      ItemDetailView(companyId: companyId, itemId: item.itemId),
+                ),
+              );
+            }
+          : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              itemName,
+              style: TextStyle(
+                color: LoginColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          ),
-        const SizedBox(height: 5),
-        Text(
-          'Quantity: ${_trimNumber(item.quantity)}',
-          style: const TextStyle(
-            color: Color(0xFF374151),
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        Text(
-          'Rate: ${_money(item.unitPrice)}',
-          style: const TextStyle(
-            color: Color(0xFF374151),
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        Text(
-          'Amount: ${_money(item.itemTotal)}',
-          style: const TextStyle(
-            color: Color(0xFF374151),
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DeliveryInfoCard extends StatelessWidget {
-  final sales_detail.SalesOrderDetail order;
-
-  const _DeliveryInfoCard({required this.order});
-
-  @override
-  Widget build(BuildContext context) {
-    final vendor = _displayVendor(order);
-    final customer = _displayCustomer(order);
-
-    return _CardBlock(
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _MetaText(label: 'Shipper name', value: vendor),
-              ),
-              Expanded(
-                child: _MetaText(
-                  label: 'Recipient name',
-                  value: customer,
-                  textAlignEnd: true,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _MetaText(
-                  label: 'Service Type',
-                  value: _serviceType(order),
-                ),
-              ),
-              Expanded(
-                child: _MetaText(
-                  label: 'Estimated Delivery Date',
-                  value: _formatDate(
-                    order.orderDate.add(const Duration(days: 1)),
+            if (item.itemDescription != null &&
+                item.itemDescription!.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: Text(
+                  item.itemDescription!,
+                  style: TextStyle(
+                    color: LoginColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
-                  textAlignEnd: true,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: _MetaText(
-              label: 'Delivery Time Window',
-              value: _deliveryTimeWindow(order),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _ItemValue(
+                    label: 'Qty',
+                    value: _trimNumber(item.quantity),
+                  ),
+                ),
+                Expanded(
+                  child: _ItemValue(
+                    label: 'Rate',
+                    value: _money(item.unitPrice),
+                    textAlignEnd: true,
+                  ),
+                ),
+                Expanded(
+                  child: _ItemValue(
+                    label: 'Amount',
+                    value: _money(item.itemTotal),
+                    textAlignEnd: true,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -523,51 +534,354 @@ class _PaymentSummaryCard extends StatelessWidget {
 
     return _CardBlock(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _MetaText(
-                  label: 'Shipment cost',
-                  value: _money(order.deliveryCharge),
-                ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Amount Details',
+              style: TextStyle(
+                color: LoginColors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
               ),
-              Expanded(
-                child: _MetaText(
-                  label: 'Amount paid',
-                  value: _money(order.paidAmount),
-                  textAlignEnd: true,
-                ),
+            ),
+          ),
+          Table(
+            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+            columnWidths: const {
+              0: FixedColumnWidth(150),
+              1: IntrinsicColumnWidth(),
+            },
+            children: [
+              _paymentRow(context, 'Sub Total', _money(order.orderAmount)),
+              _paymentRow(context, 'Tax Amount', _money(order.taxAmount)),
+              _paymentRow(context, 'Discount', _money(order.discountAmount)),
+              _paymentRow(
+                context,
+                'Delivery Charge',
+                _money(order.deliveryCharge),
+              ),
+              _paymentRow(
+                context,
+                'Total',
+                _money(order.totalAmount),
+                isEmphasized: true,
+                valueColor: LoginColors.textPrimary,
+                valueSize: 14,
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: _MetaText(
-              label: 'Time',
-              value: _formatTime(order.orderDate),
-            ),
-          ),
-          const Divider(height: 18, color: Color(0xFFE5E7EB)),
-          Row(
+          Divider(height: 18, color: LoginColors.borderLight),
+          Table(
+            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+            columnWidths: const {
+              0: FixedColumnWidth(140),
+              1: IntrinsicColumnWidth(),
+            },
             children: [
-              Expanded(
-                child: _MetaText(
-                  label: 'Total',
-                  value: _money(order.totalAmount),
-                ),
+              _paymentRow(
+                context,
+                'Amount Paid',
+                _money(order.paidAmount),
+                valueColor: LoginColors.success,
+                valueSize: 14,
               ),
-              Expanded(
-                child: _MetaText(
-                  label: 'Balance',
-                  value: _money(pending),
-                  textAlignEnd: true,
-                ),
+              _paymentRow(
+                context,
+                'Balance',
+                _money(pending),
+                isEmphasized: true,
+                valueColor: LoginColors.error,
+                valueSize: 14,
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ItemValue extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool textAlignEnd;
+
+  const _ItemValue({
+    required this.label,
+    required this.value,
+    this.textAlignEnd = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: textAlignEnd
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: LoginColors.textSecondary,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          textAlign: textAlignEnd ? TextAlign.end : TextAlign.start,
+          style: TextStyle(
+            color: LoginColors.textPrimary,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+TableRow _paymentRow(
+  BuildContext context,
+  String label,
+  String value, {
+  bool isEmphasized = false,
+  Color? valueColor,
+  double? valueSize,
+}) {
+  final valueStyle = TextStyle(
+    color: valueColor ?? LoginColors.textPrimary,
+    fontSize: valueSize ?? 12,
+    fontWeight: isEmphasized ? FontWeight.w700 : FontWeight.w600,
+  );
+
+  return TableRow(
+    children: [
+      Padding(
+        padding: const EdgeInsets.only(left: 24, top: 4, bottom: 4),
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            label,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: LoginColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: Text(value, textAlign: TextAlign.right, style: valueStyle),
+        ),
+      ),
+    ],
+  );
+}
+
+OrderShareData _salesOrderToShareData(sales_detail.SalesOrderDetail order) {
+  final customer = order.customerDisplayName.trim().isNotEmpty
+      ? order.customerDisplayName
+      : order.customerName.trim().isNotEmpty
+      ? order.customerName
+      : 'Customer';
+
+  return OrderShareData(
+    orderNumber: order.orderNumber,
+    orderId: order.orderId,
+    orderDate: order.orderDate,
+    partyName: customer,
+    partyLabel: 'Customer',
+    sellerCompanyName: order.sellerCompanyName,
+    buyerCompanyName: order.buyerCompanyName,
+    items: order.orderItems
+        .map(
+          (i) => OrderShareItemData(
+            itemName: i.itemName,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            itemTotal: i.itemTotal,
+          ),
+        )
+        .toList(),
+    orderAmount: order.orderAmount,
+    taxAmount: order.taxAmount,
+    discountAmount: order.discountAmount,
+    deliveryCharge: order.deliveryCharge,
+    totalAmount: order.totalAmount,
+    paidAmount: order.paidAmount,
+    orderStatus: order.orderStatus,
+  );
+}
+
+class _OrderShareButton extends StatefulWidget {
+  final sales_detail.SalesOrderDetail order;
+
+  const _OrderShareButton({required this.order});
+
+  @override
+  State<_OrderShareButton> createState() => _OrderShareButtonState();
+}
+
+class _OrderShareButtonState extends State<_OrderShareButton> {
+  bool _expanded = false;
+  bool _sharing = false;
+
+  OrderShareData get _data => _salesOrderToShareData(widget.order);
+
+  Future<void> _defaultShare() async {
+    if (_sharing) return;
+    setState(() => _sharing = true);
+    await OrderShareHelper.shareText(_data);
+    if (mounted) setState(() => _sharing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          child: _expanded
+              ? Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: LoginColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: LoginColors.borderLight),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _ShareOptionTile(
+                        icon: Icons.text_fields_rounded,
+                        label: 'Share Text',
+                        onTap: () {
+                          setState(() => _expanded = false);
+                          OrderShareHelper.shareText(_data);
+                        },
+                      ),
+                      Divider(height: 1, color: LoginColors.borderLight),
+                      _ShareOptionTile(
+                        icon: Icons.picture_as_pdf_rounded,
+                        label: _data.isBillStatus ? 'Bill PDF' : 'Order PDF',
+                        onTap: () {
+                          setState(() => _expanded = false);
+                          OrderShareHelper.shareAsPdf(_data);
+                        },
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+        SizedBox(
+          height: 46,
+          child: Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _sharing ? null : _defaultShare,
+                  icon: _sharing
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.share_rounded, size: 18),
+                  label: const Text(
+                    'Share',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: LoginColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        bottomLeft: Radius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Container(width: 1, color: Colors.white24),
+              SizedBox(
+                width: 46,
+                child: FilledButton(
+                  onPressed: () => setState(() => _expanded = !_expanded),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: LoginColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.zero,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(12),
+                        bottomRight: Radius.circular(12),
+                      ),
+                    ),
+                  ),
+                  child: Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_down_rounded
+                        : Icons.keyboard_arrow_up_rounded,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ShareOptionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ShareOptionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: LoginColors.primary),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: LoginColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -611,13 +925,13 @@ class _StateMessage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, size: 40, color: const Color(0xFF6B7280)),
+        Icon(icon, size: 40, color: LoginColors.textSecondary),
         const SizedBox(height: 8),
         Text(
           title,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Color(0xFF111827),
+          style: TextStyle(
+            color: LoginColors.textPrimary,
             fontWeight: FontWeight.w700,
             fontSize: 16,
           ),
@@ -626,8 +940,8 @@ class _StateMessage extends StatelessWidget {
         Text(
           subtitle,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Color(0xFF6B7280),
+          style: TextStyle(
+            color: LoginColors.textSecondary,
             fontWeight: FontWeight.w600,
             fontSize: 12,
           ),
@@ -637,7 +951,7 @@ class _StateMessage extends StatelessWidget {
   }
 }
 
-String _money(double value) => 'INR ${value.toStringAsFixed(2)}';
+String _money(double value) => ' ₹${value.toStringAsFixed(2)}';
 
 String _trimNumber(double value) {
   final rounded = value.roundToDouble();
@@ -657,25 +971,26 @@ String _displayCustomer(sales_detail.SalesOrderDetail order) {
   return 'Customer';
 }
 
-String _displayVendor(sales_detail.SalesOrderDetail order) {
-  if (order.vendorDisplayName.trim().isNotEmpty) {
-    return order.vendorDisplayName;
-  }
-  if (order.vendorName.trim().isNotEmpty) {
-    return order.vendorName;
+String _displayCustomerCompany(sales_detail.SalesOrderDetail order) {
+  if (order.buyerCompanyName.trim().isNotEmpty) {
+    return order.buyerCompanyName;
   }
   if (order.sellerCompanyName.trim().isNotEmpty) {
     return order.sellerCompanyName;
   }
-  return 'Shipper';
+  return 'Company';
 }
 
-String _serviceType(sales_detail.SalesOrderDetail order) {
-  return order.hasBill ? 'Scheduled Delivery' : 'Standard Delivery';
+String _orderLabel(sales_detail.SalesOrderDetail order) {
+  return order.orderNumber.trim().isNotEmpty
+      ? order.orderNumber
+      : order.orderId.toString();
 }
 
-String _deliveryTimeWindow(sales_detail.SalesOrderDetail order) {
-  return order.isActive ? 'Between 10:00 AM - 2:00 PM' : 'Not specified';
+int _overdueDays(DateTime orderDate) {
+  final now = DateTime.now();
+  final diff = now.difference(orderDate).inDays;
+  return diff < 0 ? 0 : diff;
 }
 
 String _formatDate(DateTime date) {
@@ -693,19 +1008,6 @@ String _formatDate(DateTime date) {
     'Nov',
     'Dec',
   ];
-  final month = months[(date.month - 1).clamp(0, 11)];
+  final month = months[(date.month - 1).clamp(0, 12)];
   return '$month ${date.day}, ${date.year}';
-}
-
-String _formatTime(DateTime date) {
-  int hour = date.hour;
-  final minute = date.minute.toString().padLeft(2, '0');
-  final suffix = hour >= 12 ? 'PM' : 'AM';
-
-  hour = hour % 12;
-  if (hour == 0) {
-    hour = 12;
-  }
-
-  return '$hour:$minute $suffix';
 }
