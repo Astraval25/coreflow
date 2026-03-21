@@ -10,6 +10,7 @@ class AppConfig {
   static const String verifyOtpEndpoint = '/api/auth/verify-otp';
   static const String resendOtpEndpoint = '/api/auth/send-otp';
   static const String companyEndpoint = '/api/companies/my-companies';
+  static const String allCompaniesEndpoint = '/api/companies';
   static const String refreshTokenEndpoint = '/api/auth/refresh-token';
   static const String customersEndpoint =
       '/api/companies/{companyId}/customers';
@@ -112,6 +113,7 @@ class AppConfig {
   static String get verifyOtpUrl => '$baseUrl$verifyOtpEndpoint';
   static String get resendOtpUrl => '$baseUrl$resendOtpEndpoint';
   static String get companyUrl => '$baseUrl$companyEndpoint';
+  static String get allCompaniesUrl => '$baseUrl$allCompaniesEndpoint';
   static String get refreshTokenUrl => '$baseUrl$refreshTokenEndpoint';
   static String getCustomersUrl(int companyId) =>
       '$baseUrl${customersEndpoint.replaceAll('{companyId}', companyId.toString())}';

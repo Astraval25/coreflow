@@ -1,5 +1,6 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:coreflow/domain/model/customer/customer_detail.dart';
 
 class CustomerHeader extends StatelessWidget {
@@ -67,27 +68,40 @@ class CustomerHeader extends StatelessWidget {
                   ),
                   if (customer.customerCompany != null) ...[
                     const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.link_rounded,
-                          size: 14,
-                          color: LoginColors.success,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            customer.customerCompany!.companyName ?? '—',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: LoginColors.success,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                    GestureDetector(
+                      onTap: () {
+                        final companyId = customer.customerCompany!.companyId;
+                        if (companyId != null) {
+                          context.push('/marketplace/$companyId');
+                        }
+                      },
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.link_rounded,
+                            size: 14,
+                            color: LoginColors.success,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              customer.customerCompany!.companyName ?? '—',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: LoginColors.success,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 12,
+                            color: LoginColors.success.withOpacity(0.6),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ],

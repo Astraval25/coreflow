@@ -2,6 +2,8 @@ class Customer {
   final int customerId;
   final String displayName;
   final String customerCompanyName;
+  final int? customerCompanyId;
+  final String dueAmount;
   final String? email;
   final bool isActive;
 
@@ -9,7 +11,9 @@ class Customer {
     required this.customerId,
     required this.displayName,
     required this.customerCompanyName,
-    this.email, 
+    this.customerCompanyId,
+    this.dueAmount = '',
+    this.email,
     this.isActive = true,
   });
 
@@ -18,7 +22,9 @@ class Customer {
       customerId: json['customerId'] ?? 0,
       displayName: json['displayName'] ?? '',
       customerCompanyName: json['customerCompanyName'] ?? '',
-      email: json['email'], 
+      customerCompanyId: json['customerCompanyId'],
+      dueAmount: json['dueAmount']?.toString() ?? '',
+      email: json['email'],
       isActive: json['isActive'] ?? true,
     );
   }
@@ -28,6 +34,8 @@ class Customer {
       'customerId': customerId,
       'displayName': displayName,
       'customerCompanyName': customerCompanyName,
+      'customerCompanyId': customerCompanyId,
+      'dueAmount': dueAmount,
       'email': email,
       'isActive': isActive,
     };
@@ -37,6 +45,8 @@ class Customer {
     int? customerId,
     String? displayName,
     String? customerCompanyName,
+    int? customerCompanyId,
+    String? dueAmount,
     String? email,
     bool? isActive,
   }) {
@@ -44,6 +54,8 @@ class Customer {
       customerId: customerId ?? this.customerId,
       displayName: displayName ?? this.displayName,
       customerCompanyName: customerCompanyName ?? this.customerCompanyName,
+      customerCompanyId: customerCompanyId ?? this.customerCompanyId,
+      dueAmount: dueAmount ?? this.dueAmount,
       email: email ?? this.email,
       isActive: isActive ?? this.isActive,
     );

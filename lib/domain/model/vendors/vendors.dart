@@ -2,6 +2,8 @@ class Vendor {
   final int vendorId;
   final String displayName;
   final String vendorCompanyName;
+  final int? vendorCompanyId;
+  final String dueAmount;
   final String? email;
   final bool isActive;
 
@@ -9,6 +11,8 @@ class Vendor {
     required this.vendorId,
     required this.displayName,
     required this.vendorCompanyName,
+    this.vendorCompanyId,
+    this.dueAmount = '',
     this.email,
     this.isActive = true,
   });
@@ -18,6 +22,8 @@ class Vendor {
       vendorId: json['vendorId'] ?? 0,
       displayName: json['displayName'] ?? '',
       vendorCompanyName: json['vendorCompanyName'] ?? '',
+      vendorCompanyId: json['vendorCompanyId'],
+      dueAmount: json['dueAmount']?.toString() ?? '',
       email: json['email'],
       isActive: json['isActive'] ?? true,
     );
@@ -28,6 +34,8 @@ class Vendor {
       'vendorId': vendorId,
       'displayName': displayName,
       'vendorCompanyName': vendorCompanyName,
+      'vendorCompanyId': vendorCompanyId,
+      'dueAmount': dueAmount,
       'email': email,
       'isActive': isActive,
     };
@@ -37,6 +45,8 @@ class Vendor {
     int? vendorId,
     String? displayName,
     String? vendorCompanyName,
+    int? vendorCompanyId,
+    String? dueAmount,
     String? email,
     bool? isActive,
   }) {
@@ -44,6 +54,8 @@ class Vendor {
       vendorId: vendorId ?? this.vendorId,
       displayName: displayName ?? this.displayName,
       vendorCompanyName: vendorCompanyName ?? this.vendorCompanyName,
+      vendorCompanyId: vendorCompanyId ?? this.vendorCompanyId,
+      dueAmount: dueAmount ?? this.dueAmount,
       email: email ?? this.email,
       isActive: isActive ?? this.isActive,
     );

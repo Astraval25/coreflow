@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/company/companies_response.dart';
 import 'package:coreflow/domain/model/company/company.dart';
+import 'package:coreflow/domain/model/company/marketplace_company.dart';
 import 'package:coreflow/domain/model/customer/create_customer_request.dart';
 import 'package:coreflow/domain/model/invitation/invitation_response.dart';
 import 'package:coreflow/domain/model/customer/customer.dart';
@@ -1577,6 +1578,29 @@ class AuthRepository {
     } catch (e) {
       debugPrint('Create payment received error: $e');
       return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  // ─── Marketplace APIs ───
+
+  Future<List<MarketplaceCompany>> getAllCompanies() async {
+    try {
+      final response = await _apiService.get(
+        Uri.parse(AppConfig.allCompaniesUrl),
+      );
+
+      if (response.statusCode != 200) return [];
+
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return [];
+
+      final List<dynamic> list = data['responseData'] ?? [];
+      return list
+          .map((json) => MarketplaceCompany.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Get all companies error: $e');
+      return [];
     }
   }
 

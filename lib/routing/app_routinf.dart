@@ -15,6 +15,8 @@ import 'package:coreflow/features/resend_otp/view/resend_otp_sreen.dart';
 import 'package:coreflow/features/vendor/view/vendor_create_page.dart';
 import 'package:coreflow/features/vendor/view/vendor_detail_page.dart';
 import 'package:coreflow/features/vendor/view/vendor_edit_page.dart';
+import 'package:coreflow/features/marketplace/view/marketplace_page.dart';
+import 'package:coreflow/features/marketplace/view/company_profile_page.dart';
 import 'package:coreflow/features/vendor/view/vendor_page.dart';
 import 'package:coreflow/features/verify_otp/view/verify_otp_screen.dart';
 import 'package:coreflow/features/dashboard/widget/main_layout.dart';
@@ -177,6 +179,20 @@ final GoRouter router = GoRouter(
                   },
                 ),
               ],
+            ),
+          ],
+        ),
+        // Marketplace routes
+        GoRoute(
+          path: '/marketplace',
+          builder: (context, state) => const MarketplacePage(),
+          routes: [
+            GoRoute(
+              path: ':companyId',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                return CompanyProfilePage(companyId: companyId);
+              },
             ),
           ],
         ),

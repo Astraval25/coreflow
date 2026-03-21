@@ -575,6 +575,168 @@ class _QuickAddTile extends StatelessWidget {
   }
 }
 
+class MarketplaceMenuItem extends StatelessWidget {
+  final DashboardViewModel vm;
+
+  const MarketplaceMenuItem({super.key, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final currentLocation = GoRouterState.of(context).matchedLocation;
+    final isSelected = currentLocation.startsWith('/marketplace');
+
+    return _MenuTileContainer(
+      isSelected: isSelected,
+      child: ListTile(
+        minLeadingWidth: 0,
+        horizontalTitleGap: 12,
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? LoginColors.primary.withOpacity(0.12)
+                : LoginColors.fieldFill,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            Icons.store_mall_directory_rounded,
+            color: isSelected ? LoginColors.primary : LoginColors.textTertiary,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          'Marketplace',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+            color: isSelected ? LoginColors.primary : LoginColors.textPrimary,
+            letterSpacing: -0.1,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onTap: () {
+          vm.setSelectedMenu('/marketplace');
+          Navigator.pop(context);
+          if (!currentLocation.startsWith('/marketplace')) {
+            context.go('/marketplace');
+          }
+        },
+      ),
+    );
+  }
+}
+
+class ReportMenuItem extends StatelessWidget {
+  final DashboardViewModel vm;
+
+  const ReportMenuItem({super.key, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final currentLocation = GoRouterState.of(context).matchedLocation;
+    final isSelected = currentLocation.startsWith('/report');
+
+    return _MenuTileContainer(
+      isSelected: isSelected,
+      child: ListTile(
+        minLeadingWidth: 0,
+        horizontalTitleGap: 12,
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? LoginColors.primary.withOpacity(0.12)
+                : LoginColors.fieldFill,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            Icons.bar_chart_rounded,
+            color: isSelected ? LoginColors.primary : LoginColors.textTertiary,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          'Report',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+            color: isSelected ? LoginColors.primary : LoginColors.textPrimary,
+            letterSpacing: -0.1,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onTap: () {
+          vm.setSelectedMenu('/report');
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Report - Coming soon'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class SettingsMenuItem extends StatelessWidget {
+  final DashboardViewModel vm;
+
+  const SettingsMenuItem({super.key, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final currentLocation = GoRouterState.of(context).matchedLocation;
+    final isSelected = currentLocation.startsWith('/settings');
+
+    return _MenuTileContainer(
+      isSelected: isSelected,
+      child: ListTile(
+        minLeadingWidth: 0,
+        horizontalTitleGap: 12,
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? LoginColors.primary.withOpacity(0.12)
+                : LoginColors.fieldFill,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            Icons.settings_rounded,
+            color: isSelected ? LoginColors.primary : LoginColors.textTertiary,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          'Settings',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+            color: isSelected ? LoginColors.primary : LoginColors.textPrimary,
+            letterSpacing: -0.1,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onTap: () {
+          vm.setSelectedMenu('/settings');
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Settings - Coming soon'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _MenuTileContainer extends StatelessWidget {
   final bool isSelected;
   final Widget child;

@@ -53,15 +53,28 @@ class CustomerListItem extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // ── Avatar ──
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: primaryColor.withOpacity(0.15),
-                child: Text(
-                  avatarText,
-                  style: TextStyle(
-                    color: primaryColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: customer.customerCompanyId != null
+                    ? () => context.push('/marketplace/${customer.customerCompanyId}')
+                    : null,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 0),
+                  child: CircleAvatar(
+                    radius: 26,
+                    backgroundColor: customer.customerCompanyId != null
+                        ? LoginColors.success.withOpacity(0.15)
+                        : primaryColor.withOpacity(0.15),
+                    child: Text(
+                      avatarText,
+                      style: TextStyle(
+                        color: customer.customerCompanyId != null
+                            ? LoginColors.success
+                            : primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -92,7 +105,7 @@ class CustomerListItem extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 13,
-                          color: LoginColors.textSecondary,
+                          color: LoginColors.successLight,
                           fontWeight: FontWeight.w400,
                         ),
                       ),
@@ -115,11 +128,28 @@ class CustomerListItem extends StatelessWidget {
                   ],
                 ),
               ),
+              if (customer.dueAmount.isNotEmpty) ...[
+                const SizedBox(width: 10),
+                Text(
+                  customer.dueAmount,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: _getDueAmountColor(customer.dueAmount),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  Color _getDueAmountColor(String amount) {
+    final parsed = double.tryParse(amount.replaceAll(',', ''));
+    if (parsed == null || parsed == 0) return LoginColors.textSecondary;
+    return parsed < 0 ? LoginColors.error : LoginColors.success;
   }
 
   Widget _buildTag(String text, Color color, IconData icon) {
