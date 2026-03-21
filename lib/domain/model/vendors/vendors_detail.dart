@@ -133,7 +133,9 @@ class VendorsDetailData {
       vendorCompany: json['vendorCompany'] != null
           ? VendorCompany.fromJson(json['vendorCompany'])
           : null,
-      acceptedInvitationId: json['acceptedInvitationId'],
+      acceptedInvitationId: json['acceptedInvitationId'] != null
+          ? int.tryParse(json['acceptedInvitationId'].toString())
+          : null,
       vendorName: json['vendorName'] ?? '',
       displayName: json['displayName'] ?? '',
       email: json['email'],

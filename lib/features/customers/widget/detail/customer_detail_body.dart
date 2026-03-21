@@ -1,9 +1,12 @@
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/core/widgets/link_company_section.dart';
 import 'package:coreflow/domain/model/customer/customer_detail.dart';
+import 'package:coreflow/features/customers/view_model/customer_detail_view_model.dart';
 import 'package:coreflow/features/customers/widget/detail/body/customer_detail_sections.dart';
 import 'package:coreflow/features/customers/widget/detail/body/customer_item_section.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_financial_strip.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class CustomerDetailBody extends StatefulWidget {
   final CustomerDetailData customer;
@@ -22,9 +25,13 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
   Widget build(BuildContext context) {
     final customer = widget.customer;
 
+    final vm = context.watch<CustomerDetailViewModel>();
+    final isLinked = customer.customerCompany != null;
+
     return Column(
       children: [
         CustomerFinancialStrip(customer: customer),
+        _buildLinkCompanyStrip(context, vm, customer, isLinked),
         const SizedBox(height: 10),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: _horizontal),
@@ -40,10 +47,8 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
               child: Row(
                 children: [
                   _buildTabText('Basic Info', 0),
-
                   _buildTabText('Items', 1),
                   _buildTabText('Address', 2),
-                  _buildTabText('Company', 3),
                 ],
               ),
             ),
@@ -124,10 +129,81 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
         return const CustomerItemSection();
       case 2:
         return CustomerAddressSection(customer: customer);
-      case 3:
-        return CustomerCompanySection(customer: customer);
       default:
         return const SizedBox.shrink();
     }
+  }
+
+  Widget _buildLinkCompanyStrip(
+    BuildContext context,
+    CustomerDetailViewModel vm,
+    CustomerDetailData customer,
+    bool isLinked,
+  ) {
+    if (isLinked) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(_horizontal, 6, _horizontal, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: LoginColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: LoginColors.borderLight),
+          boxShadow: [
+            BoxShadow(
+              color: LoginColors.shadowLight.withOpacity(0.07),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: LinkCompanySection(
+          isLinked: false,
+          isLoading: vm.isInvitationLoading,
+          invitationCode: vm.invitationData?.invitationCode,
+          onGenerateCode: () async {
+            final response = await vm.sendInvitation();
+            if (context.mounted && response != null && !response.responseStatus) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(response.responseMessage),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          },
+          onGetExistingCode: () async {
+            final response = await vm.getInvitationCode();
+            if (context.mounted && response == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('No existing invitation code found'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          },
+          onAcceptCode: (code) async {
+            final response = await vm.acceptInvitation(code);
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    response?.responseStatus == true
+                        ? 'Company linked successfully'
+                        : response?.responseMessage ?? 'Failed to link company',
+                  ),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: response?.responseStatus == true
+                      ? Colors.green
+                      : Colors.red,
+                ),
+              );
+            }
+            return response?.responseStatus == true;
+          },
+        ),
+      ),
+    );
   }
 }

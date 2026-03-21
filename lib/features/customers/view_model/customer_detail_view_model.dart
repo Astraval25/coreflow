@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/customer/customer_mapped_item.dart';
+import 'package:coreflow/domain/model/invitation/invitation_response.dart';
 import 'package:coreflow/domain/model/items/item.dart';
 import 'package:coreflow/domain/model/items/item_status_response.dart';
 import 'package:flutter/material.dart';
@@ -252,6 +253,83 @@ class CustomerDetailViewModel extends ChangeNotifier {
     } finally {
       _isMappedItemStatusUpdating = false;
       _statusUpdatingItemId = null;
+      notifyListeners();
+    }
+  }
+
+  // ─── Invitation ───
+
+  bool _isInvitationLoading = false;
+  InvitationData? _invitationData;
+
+  bool get isInvitationLoading => _isInvitationLoading;
+  InvitationData? get invitationData => _invitationData;
+
+  Future<InvitationResponse?> sendInvitation() async {
+    _isInvitationLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _authRepository.sendCustomerInvitation(
+        _companyId,
+        _customerId,
+      );
+
+      if (response?.responseStatus == true && response?.responseData != null) {
+        _invitationData = response!.responseData;
+      }
+      return response;
+    } catch (e) {
+      debugPrint('Send invitation error: $e');
+      return null;
+    } finally {
+      _isInvitationLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<InvitationResponse?> getInvitationCode() async {
+    _isInvitationLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _authRepository.getCustomerInvitationCode(
+        _companyId,
+        _customerId,
+      );
+
+      if (response?.responseStatus == true && response?.responseData != null) {
+        _invitationData = response!.responseData;
+      }
+      return response;
+    } catch (e) {
+      debugPrint('Get invitation code error: $e');
+      return null;
+    } finally {
+      _isInvitationLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<AcceptInvitationResponse?> acceptInvitation(String code) async {
+    _isInvitationLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _authRepository.acceptInvitation(
+        companyId: _companyId,
+        invitationCode: code,
+        selectedCustomerId: _customerId,
+      );
+      if (response?.responseStatus == true) {
+        await loadCustomerDetail();
+      }
+      return response;
+    } catch (e) {
+      debugPrint('Accept invitation error: $e');
+      return null;
+    } finally {
+      _isInvitationLoading = false;
       notifyListeners();
     }
   }

@@ -65,47 +65,32 @@ class CustomerHeader extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
+                  if (customer.customerCompany != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.link_rounded,
+                          size: 14,
+                          color: LoginColors.success,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            customer.customerCompany!.companyName ?? '—',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: LoginColors.success,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      isActive ? 'Active' : 'Inactive',
-                      style: TextStyle(
-                        color: statusColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
+                  ],
                 ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            OutlinedButton.icon(
-              onPressed: onToggleStatus,
-              icon: Icon(
-                isActive ? Icons.block_rounded : Icons.check_circle_rounded,
-                size: 16,
-              ),
-              label: Text(isActive ? 'Deactivate' : 'Activate'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: statusColor,
-                side: BorderSide(color: statusColor.withOpacity(0.45)),
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
               ),
             ),
           ],

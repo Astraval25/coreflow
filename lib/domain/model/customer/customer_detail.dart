@@ -133,7 +133,9 @@ class CustomerDetailData {
       customerCompany: json['customerCompany'] != null
           ? CustomerCompany.fromJson(json['customerCompany'])
           : null,
-      acceptedInvitationId: json['acceptedInvitationId'],
+      acceptedInvitationId: json['acceptedInvitationId'] != null
+          ? int.tryParse(json['acceptedInvitationId'].toString())
+          : null,
       customerName: json['customerName'] ?? '',
       displayName: json['displayName'] ?? '',
       email: json['email'],

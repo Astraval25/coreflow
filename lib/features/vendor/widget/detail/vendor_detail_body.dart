@@ -1,10 +1,13 @@
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/core/widgets/link_company_section.dart';
 import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
+import 'package:coreflow/features/vendor/view_model/vendor_detail_view_model.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_address_tile.dart';
 import 'package:coreflow/features/vendor/widget/detail/body/vendor_item_section.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_financial_strip.dart';
 import 'package:flutter/material.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_info_tile.dart';
+import 'package:provider/provider.dart';
 
 class VendorDetailBody extends StatefulWidget {
   final VendorsDetailData vendor;
@@ -23,10 +26,14 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
   Widget build(BuildContext context) {
     final vendor = widget.vendor;
 
+    final vm = context.watch<VendorDetailViewModel>();
+    final isLinked = vendor.vendorCompany != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         VendorFinancialStrip(vendor: vendor),
+        _buildLinkCompanyStrip(context, vm, vendor, isLinked),
         const SizedBox(height: 10),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: _horizontal),
@@ -44,7 +51,6 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
                   _buildTabText('Basic Info', 0),
                   _buildTabText('Items', 1),
                   _buildTabText('Address', 2),
-                  _buildTabText('Company', 3),
                 ],
               ),
             ),
@@ -98,6 +104,79 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
     );
   }
 
+  Widget _buildLinkCompanyStrip(
+    BuildContext context,
+    VendorDetailViewModel vm,
+    VendorsDetailData vendor,
+    bool isLinked,
+  ) {
+    if (isLinked) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(_horizontal, 6, _horizontal, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: LoginColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: LoginColors.borderLight),
+          boxShadow: [
+            BoxShadow(
+              color: LoginColors.shadowLight.withOpacity(0.07),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: LinkCompanySection(
+          isLinked: false,
+          isLoading: vm.isInvitationLoading,
+          invitationCode: vm.invitationData?.invitationCode,
+          onGenerateCode: () async {
+            final response = await vm.sendInvitation();
+            if (context.mounted && response != null && !response.responseStatus) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(response.responseMessage),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          },
+          onGetExistingCode: () async {
+            final response = await vm.getInvitationCode();
+            if (context.mounted && response == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('No existing invitation code found'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          },
+          onAcceptCode: (code) async {
+            final response = await vm.acceptInvitation(code);
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    response?.responseStatus == true
+                        ? 'Company linked successfully'
+                        : response?.responseMessage ?? 'Failed to link company',
+                  ),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: response?.responseStatus == true
+                      ? Colors.green
+                      : Colors.red,
+                ),
+              );
+            }
+            return response?.responseStatus == true;
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildSelectedSection(VendorsDetailData vendor) {
     switch (_selectedIndex) {
       case 0:
@@ -106,8 +185,6 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
         return const VendorItemSection();
       case 2:
         return _AddressSection(vendor: vendor);
-      case 3:
-        return _CompanySection(vendor: vendor);
       default:
         return const SizedBox.shrink();
     }
@@ -238,41 +315,3 @@ class _AddressSection extends StatelessWidget {
   }
 }
 
-class _CompanySection extends StatelessWidget {
-  final VendorsDetailData vendor;
-
-  const _CompanySection({required this.vendor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SectionHeader(title: 'Company Details'),
-        Divider(height: 1, thickness: 1, color: LoginColors.border),
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              VendorInfoTile(
-                icon: Icons.business_rounded,
-                label: 'Company',
-                value: vendor.company.companyName,
-              ),
-              if (vendor.vendorCompany != null) ...[
-                VendorInfoTile(
-                  label: 'Vendor Company ID',
-                  value: vendor.vendorCompany!.companyId?.toString() ?? '—',
-                ),
-                VendorInfoTile(
-                  label: 'Vendor Company Name',
-                  value: vendor.vendorCompany!.companyName ?? '—',
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}

@@ -94,6 +94,18 @@ class AppConfig {
   static const String paymentProofFileEndpoint =
       '/api/companies/{companyId}/payments/payment-proof/{fsId}';
 
+  // Invitation endpoints
+  static const String customerInvitationEndpoint =
+      '/api/companies/{companyId}/invitations/customers/{customerId}';
+  static const String customerInvitationCodeEndpoint =
+      '/api/companies/{companyId}/invitations/customers/{customerId}/code';
+  static const String vendorInvitationEndpoint =
+      '/api/companies/{companyId}/invitations/vendors/{vendorId}';
+  static const String vendorInvitationCodeEndpoint =
+      '/api/companies/{companyId}/invitations/vendors/{vendorId}/code';
+  static const String acceptInvitationEndpoint =
+      '/api/companies/{companyId}/invitations/{invitationCode}/accept';
+
   // getters for constructing full URLs
   static String get loginUrl => '$baseUrl$loginEndpoint';
   static String get registerUrl => '$baseUrl$registerEndpoint';
@@ -239,4 +251,19 @@ class AppConfig {
 
   static String getCustomerUnpaidOrdersUrl(int companyId, int customerId) =>
       '$baseUrl${customerUnpaidOrdersEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+
+  static String getCustomerInvitationUrl(int companyId, int customerId) =>
+      '$baseUrl${customerInvitationEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+
+  static String getCustomerInvitationCodeUrl(int companyId, int customerId) =>
+      '$baseUrl${customerInvitationCodeEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+
+  static String getVendorInvitationUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorInvitationEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+
+  static String getVendorInvitationCodeUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorInvitationCodeEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+
+  static String getAcceptInvitationUrl(int companyId, String invitationCode) =>
+      '$baseUrl${acceptInvitationEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{invitationCode}', invitationCode)}';
 }

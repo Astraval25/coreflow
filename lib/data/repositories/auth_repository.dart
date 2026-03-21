@@ -5,6 +5,7 @@ import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/company/companies_response.dart';
 import 'package:coreflow/domain/model/company/company.dart';
 import 'package:coreflow/domain/model/customer/create_customer_request.dart';
+import 'package:coreflow/domain/model/invitation/invitation_response.dart';
 import 'package:coreflow/domain/model/customer/customer.dart';
 import 'package:coreflow/domain/model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
@@ -1576,6 +1577,114 @@ class AuthRepository {
     } catch (e) {
       debugPrint('Create payment received error: $e');
       return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  // ─── Invitation APIs ───
+
+  Future<InvitationResponse?> sendCustomerInvitation(
+    int companyId,
+    int customerId,
+  ) async {
+    try {
+      final url = AppConfig.getCustomerInvitationUrl(companyId, customerId);
+      final response = await _apiService.post(url, {});
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        debugPrint('Send customer invitation failed: ${response.statusCode}');
+        final data = jsonDecode(response.body);
+        return InvitationResponse.fromJson(data);
+      }
+
+      final data = jsonDecode(response.body);
+      return InvitationResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Send customer invitation error: $e');
+      return null;
+    }
+  }
+
+  Future<InvitationResponse?> getCustomerInvitationCode(
+    int companyId,
+    int customerId,
+  ) async {
+    try {
+      final url = AppConfig.getCustomerInvitationCodeUrl(companyId, customerId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        return null;
+      }
+
+      final data = jsonDecode(response.body);
+      return InvitationResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Get customer invitation code error: $e');
+      return null;
+    }
+  }
+
+  Future<InvitationResponse?> sendVendorInvitation(
+    int companyId,
+    int vendorId,
+  ) async {
+    try {
+      final url = AppConfig.getVendorInvitationUrl(companyId, vendorId);
+      final response = await _apiService.post(url, {});
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        debugPrint('Send vendor invitation failed: ${response.statusCode}');
+        final data = jsonDecode(response.body);
+        return InvitationResponse.fromJson(data);
+      }
+
+      final data = jsonDecode(response.body);
+      return InvitationResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Send vendor invitation error: $e');
+      return null;
+    }
+  }
+
+  Future<InvitationResponse?> getVendorInvitationCode(
+    int companyId,
+    int vendorId,
+  ) async {
+    try {
+      final url = AppConfig.getVendorInvitationCodeUrl(companyId, vendorId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        return null;
+      }
+
+      final data = jsonDecode(response.body);
+      return InvitationResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Get vendor invitation code error: $e');
+      return null;
+    }
+  }
+
+  Future<AcceptInvitationResponse?> acceptInvitation({
+    required int companyId,
+    required String invitationCode,
+    int? selectedVendorId,
+    int? selectedCustomerId,
+  }) async {
+    try {
+      final url = AppConfig.getAcceptInvitationUrl(companyId, invitationCode);
+      final body = <String, dynamic>{};
+      if (selectedVendorId != null) body['selectedVendorId'] = selectedVendorId;
+      if (selectedCustomerId != null) body['selectedCustomerId'] = selectedCustomerId;
+
+      final response = await _apiService.post(url, body);
+
+      final data = jsonDecode(response.body);
+      return AcceptInvitationResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Accept invitation error: $e');
+      return null;
     }
   }
 }

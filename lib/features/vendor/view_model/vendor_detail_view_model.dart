@@ -1,5 +1,6 @@
 import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
 import 'package:coreflow/domain/model/customer/customer_mapped_item.dart';
+import 'package:coreflow/domain/model/invitation/invitation_response.dart';
 import 'package:coreflow/domain/model/items/item.dart';
 import 'package:coreflow/domain/model/items/item_status_response.dart';
 import 'package:flutter/foundation.dart';
@@ -249,6 +250,83 @@ class VendorDetailViewModel extends ChangeNotifier {
     } finally {
       _isMappedItemStatusUpdating = false;
       _statusUpdatingItemId = null;
+      notifyListeners();
+    }
+  }
+
+  // ─── Invitation ───
+
+  bool _isInvitationLoading = false;
+  InvitationData? _invitationData;
+
+  bool get isInvitationLoading => _isInvitationLoading;
+  InvitationData? get invitationData => _invitationData;
+
+  Future<InvitationResponse?> sendInvitation() async {
+    _isInvitationLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _authRepository.sendVendorInvitation(
+        _companyId,
+        _vendorId,
+      );
+
+      if (response?.responseStatus == true && response?.responseData != null) {
+        _invitationData = response!.responseData;
+      }
+      return response;
+    } catch (e) {
+      debugPrint('Send vendor invitation error: $e');
+      return null;
+    } finally {
+      _isInvitationLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<InvitationResponse?> getInvitationCode() async {
+    _isInvitationLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _authRepository.getVendorInvitationCode(
+        _companyId,
+        _vendorId,
+      );
+
+      if (response?.responseStatus == true && response?.responseData != null) {
+        _invitationData = response!.responseData;
+      }
+      return response;
+    } catch (e) {
+      debugPrint('Get vendor invitation code error: $e');
+      return null;
+    } finally {
+      _isInvitationLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<AcceptInvitationResponse?> acceptInvitation(String code) async {
+    _isInvitationLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _authRepository.acceptInvitation(
+        companyId: _companyId,
+        invitationCode: code,
+        selectedVendorId: _vendorId,
+      );
+      if (response?.responseStatus == true) {
+        await loadVendorDetail();
+      }
+      return response;
+    } catch (e) {
+      debugPrint('Accept vendor invitation error: $e');
+      return null;
+    } finally {
+      _isInvitationLoading = false;
       notifyListeners();
     }
   }
