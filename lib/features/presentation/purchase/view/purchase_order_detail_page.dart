@@ -71,9 +71,18 @@ class _PurchaseOrderDetailView extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(8),
                 child: _RoundActionIcon(
-                  icon: Icons.edit_rounded,
+                  icon: (vm.orderDetail != null && vm.orderDetail!.isPaid)
+                      ? Icons.lock_outline_rounded
+                      : Icons.edit_rounded,
                   onTap: () async {
                     if (vm.orderDetail == null) return;
+                    if (vm.orderDetail!.isPaid) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Fully paid orders cannot be edited'),
+                        behavior: SnackBarBehavior.floating,
+                      ));
+                      return;
+                    }
                     final updated = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(

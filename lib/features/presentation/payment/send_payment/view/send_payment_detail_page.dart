@@ -73,9 +73,28 @@ class _SendPaymentDetailView extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(8),
                 child: _RoundActionIcon(
-                  icon: Icons.edit_rounded,
+                  icon: (vm.paymentDetail != null &&
+                          DateTime.now()
+                                  .difference(vm.paymentDetail!.paymentDate)
+                                  .inHours
+                                  .abs() >=
+                              24)
+                      ? Icons.lock_outline_rounded
+                      : Icons.edit_rounded,
                   onTap: () async {
                     if (vm.paymentDetail == null) return;
+                    final hoursDiff = DateTime.now()
+                        .difference(vm.paymentDetail!.paymentDate)
+                        .inHours
+                        .abs();
+                    if (hoursDiff >= 24) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text(
+                            'Payments can only be edited within 24 hours of creation'),
+                        behavior: SnackBarBehavior.floating,
+                      ));
+                      return;
+                    }
                     final updated = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
