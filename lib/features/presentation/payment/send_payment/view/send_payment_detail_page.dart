@@ -6,6 +6,7 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/payment/payment_detail.dart';
 import 'package:coreflow/features/presentation/payment/send_payment/viewmodel/send_payment_detail_view_model.dart';
+import 'package:coreflow/features/presentation/payment/send_payment/view/update_payment_sent_page.dart';
 import 'package:coreflow/features/presentation/purchase/view/purchase_order_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -72,8 +73,20 @@ class _SendPaymentDetailView extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(8),
                 child: _RoundActionIcon(
-                  icon: Icons.more_horiz_rounded,
-                  onTap: () {},
+                  icon: Icons.edit_rounded,
+                  onTap: () async {
+                    if (vm.paymentDetail == null) return;
+                    final updated = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => UpdatePaymentSentPage(
+                          companyId: vm.companyId,
+                          initialPayment: vm.paymentDetail!,
+                        ),
+                      ),
+                    );
+                    if (updated == true) vm.refresh();
+                  },
                 ),
               ),
             ],

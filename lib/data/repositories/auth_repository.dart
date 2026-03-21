@@ -1581,6 +1581,126 @@ class AuthRepository {
     }
   }
 
+  Future<Map<String, dynamic>> updatePurchaseOrder(
+    int companyId,
+    int orderId,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final url = AppConfig.getUpdatePurchaseOrderUrl(companyId, orderId);
+      final response = await _apiService.put(url, body);
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] == true) {
+        return {
+          'success': true,
+          'message': data['responseMessage'] ?? 'Order updated',
+          'data': data['responseData'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message':
+            data['responseMessage'] ??
+            'Failed with status ${response.statusCode}',
+      };
+    } catch (e) {
+      debugPrint('Update purchase order error: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> updateSalesOrder(
+    int companyId,
+    int orderId,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final url = AppConfig.getUpdateSalesOrderUrl(companyId, orderId);
+      final response = await _apiService.put(url, body);
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] == true) {
+        return {
+          'success': true,
+          'message': data['responseMessage'] ?? 'Order updated',
+          'data': data['responseData'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message':
+            data['responseMessage'] ??
+            'Failed with status ${response.statusCode}',
+      };
+    } catch (e) {
+      debugPrint('Update sales order error: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> updatePaymentSent(
+    int companyId,
+    int paymentId,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final url = AppConfig.getUpdatePaymentSentUrl(companyId, paymentId);
+      final response = await _apiService.put(url, body);
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] == true) {
+        return {
+          'success': true,
+          'message': data['responseMessage'] ?? 'Payment updated',
+          'data': data['responseData'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message':
+            data['responseMessage'] ??
+            'Failed with status ${response.statusCode}',
+      };
+    } catch (e) {
+      debugPrint('Update payment sent error: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> updatePaymentReceived(
+    int companyId,
+    int paymentId,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final url = AppConfig.getUpdatePaymentReceivedUrl(companyId, paymentId);
+      final response = await _apiService.put(url, body);
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] == true) {
+        return {
+          'success': true,
+          'message': data['responseMessage'] ?? 'Payment updated',
+          'data': data['responseData'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message':
+            data['responseMessage'] ??
+            'Failed with status ${response.statusCode}',
+      };
+    } catch (e) {
+      debugPrint('Update payment received error: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
   // ─── Marketplace APIs ───
 
   Future<List<MarketplaceCompany>> getAllCompanies() async {

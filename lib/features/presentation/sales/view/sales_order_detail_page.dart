@@ -6,6 +6,7 @@ import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
 import 'package:coreflow/domain/model/sales/sales_order_item.dart'
     as sales_item;
 import 'package:coreflow/features/presentation/sales/viewmodel/sales_order_detail_view_model.dart';
+import 'package:coreflow/features/presentation/sales/view/update_sales_order_page.dart';
 import 'package:coreflow/features/items/view/item_detail_view.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';
@@ -73,8 +74,20 @@ class _SalesOrderDetailView extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(8),
                 child: _RoundActionIcon(
-                  icon: Icons.more_horiz_rounded,
-                  onTap: () {},
+                  icon: Icons.edit_rounded,
+                  onTap: () async {
+                    if (vm.orderDetail == null) return;
+                    final updated = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => UpdateSalesOrderPage(
+                          companyId: vm.companyId,
+                          initialOrder: vm.orderDetail!,
+                        ),
+                      ),
+                    );
+                    if (updated == true) vm.refresh();
+                  },
                 ),
               ),
             ],

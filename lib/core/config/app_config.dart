@@ -95,6 +95,15 @@ class AppConfig {
   static const String paymentProofFileEndpoint =
       '/api/companies/{companyId}/payments/payment-proof/{fsId}';
 
+  static const String updatePurchaseOrderEndpoint =
+      '/api/companies/{companyId}/purchase/orders/{orderId}';
+  static const String updateSalesOrderEndpoint =
+      '/api/companies/{companyId}/sales/orders/{orderId}';
+  static const String updatePaymentSentEndpoint =
+      '/api/companies/{companyId}/payments-sent/{paymentId}';
+  static const String updatePaymentReceivedEndpoint =
+      '/api/companies/{companyId}/payments-received/{paymentId}';
+
   // Invitation endpoints
   static const String customerInvitationEndpoint =
       '/api/companies/{companyId}/invitations/customers/{customerId}';
@@ -253,6 +262,18 @@ class AppConfig {
 
   static String getCustomerUnpaidOrdersUrl(int companyId, int customerId) =>
       '$baseUrl${customerUnpaidOrdersEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+
+  static String getUpdatePurchaseOrderUrl(int companyId, int orderId) =>
+      '$baseUrl${updatePurchaseOrderEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{orderId}', orderId.toString())}';
+
+  static String getUpdateSalesOrderUrl(int companyId, int orderId) =>
+      '$baseUrl${updateSalesOrderEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{orderId}', orderId.toString())}';
+
+  static String getUpdatePaymentSentUrl(int companyId, int paymentId) =>
+      '$baseUrl${updatePaymentSentEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{paymentId}', paymentId.toString())}';
+
+  static String getUpdatePaymentReceivedUrl(int companyId, int paymentId) =>
+      '$baseUrl${updatePaymentReceivedEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{paymentId}', paymentId.toString())}';
 
   static String getCustomerInvitationUrl(int companyId, int customerId) =>
       '$baseUrl${customerInvitationEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
