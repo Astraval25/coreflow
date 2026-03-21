@@ -40,6 +40,7 @@ class CreatePaymentSentViewModel extends ChangeNotifier {
   bool _isLoadingOrders = false;
   bool _isSuccess = false;
   String? _errorMessage;
+  int? _createdPaymentId;
 
   // Getters
   Vendor? get selectedVendor => _selectedVendor;
@@ -55,6 +56,7 @@ class CreatePaymentSentViewModel extends ChangeNotifier {
   bool get isLoadingOrders => _isLoadingOrders;
   bool get isSuccess => _isSuccess;
   String? get errorMessage => _errorMessage;
+  int? get createdPaymentId => _createdPaymentId;
 
   double get totalAllocated =>
       _unpaidOrders.fold(0, (sum, e) => sum + e.amountApplied);
@@ -197,6 +199,10 @@ class CreatePaymentSentViewModel extends ChangeNotifier {
 
       if (result['success'] == true) {
         _isSuccess = true;
+        final data = result['data'];
+        if (data is Map<String, dynamic>) {
+          _createdPaymentId = data['paymentId'];
+        }
       } else {
         _errorMessage = result['message'] ?? 'Failed to create payment';
       }

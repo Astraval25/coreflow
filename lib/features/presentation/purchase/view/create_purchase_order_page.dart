@@ -7,6 +7,7 @@ import 'package:coreflow/domain/model/items/sellable_item.dart';
 import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/items/widget/item_section_card.dart';
+import 'package:coreflow/features/presentation/purchase/view/purchase_order_detail_page.dart';
 import 'package:coreflow/features/presentation/purchase/viewmodel/create_purchase_order_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -236,6 +237,17 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
         ),
       );
       Navigator.pop(context, true);
+      if (vm.createdOrderId != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PurchaseOrderDetailPage(
+              companyId: widget.companyId,
+              orderId: vm.createdOrderId!,
+            ),
+          ),
+        );
+      }
     }
   }
 

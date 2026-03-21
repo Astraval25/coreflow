@@ -6,6 +6,7 @@ import 'package:coreflow/domain/model/payment/payment_proof_result.dart';
 import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/presentation/payment/proof/view/payment_proof_page.dart';
+import 'package:coreflow/features/presentation/payment/send_payment/view/send_payment_detail_page.dart';
 import 'package:coreflow/features/presentation/payment/send_payment/viewmodel/create_payment_sent_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -238,6 +239,17 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
         ),
       );
       Navigator.pop(context, true);
+      if (vm.createdPaymentId != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SendPaymentDetailPage(
+              companyId: widget.companyId,
+              paymentId: vm.createdPaymentId!,
+            ),
+          ),
+        );
+      }
     }
   }
 

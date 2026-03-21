@@ -41,6 +41,7 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
   bool _isLoadingItems = false;
   bool _isSuccess = false;
   String? _errorMessage;
+  int? _createdOrderId;
 
   List<SellableItem> _availableItems = [];
 
@@ -55,6 +56,7 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
   bool get isLoadingItems => _isLoadingItems;
   bool get isSuccess => _isSuccess;
   String? get errorMessage => _errorMessage;
+  int? get createdOrderId => _createdOrderId;
   List<SellableItem> get availableItems => List.unmodifiable(_availableItems);
 
   double get subtotal =>
@@ -188,6 +190,10 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
 
       if (result['success'] == true) {
         _isSuccess = true;
+        final data = result['data'];
+        if (data is Map<String, dynamic>) {
+          _createdOrderId = data['orderId'];
+        }
       } else {
         _errorMessage = result['message'] ?? 'Failed to create order';
       }
@@ -209,6 +215,7 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
     _hasBill = true;
     _isSuccess = false;
     _errorMessage = null;
+    _createdOrderId = null;
     notifyListeners();
   }
 }

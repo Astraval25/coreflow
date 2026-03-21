@@ -6,6 +6,7 @@ import 'package:coreflow/features/customers/widget/detail/body/customer_detail_s
 import 'package:coreflow/features/customers/widget/detail/body/customer_item_section.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_financial_strip.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class CustomerDetailBody extends StatefulWidget {
@@ -31,6 +32,7 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
     return Column(
       children: [
         CustomerFinancialStrip(customer: customer),
+        _buildQuickActions(context),
         _buildLinkCompanyStrip(context, vm, customer, isLinked),
         const SizedBox(height: 10),
         Padding(
@@ -132,6 +134,73 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
       default:
         return const SizedBox.shrink();
     }
+  }
+
+  Widget _buildQuickActions(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(_horizontal, 6, _horizontal, 0),
+      child: Row(
+        children: [
+          _buildActionButton(
+            context,
+            icon: Icons.receipt_long_rounded,
+            label: 'Create Sale',
+            color: LoginColors.primary,
+            onTap: () => context.push('/sales'),
+          ),
+          const SizedBox(width: 10),
+          _buildActionButton(
+            context,
+            icon: Icons.account_balance_wallet_rounded,
+            label: 'Receive Payment',
+            color: LoginColors.success,
+            onTap: () => context.push('/pay-received'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withOpacity(0.2)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildLinkCompanyStrip(

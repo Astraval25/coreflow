@@ -6,6 +6,7 @@ import 'package:coreflow/domain/model/customer/customer.dart';
 import 'package:coreflow/domain/model/payment/payment_proof_result.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/presentation/payment/proof/view/payment_proof_page.dart';
+import 'package:coreflow/features/presentation/payment/receive_payment/view/pay_received_detail_page.dart';
 import 'package:coreflow/features/presentation/payment/receive_payment/viewmodel/create_receive_payment_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -235,6 +236,17 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
         ),
       );
       Navigator.pop(context, true);
+      if (vm.createdPaymentId != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PayReceivedDetailPage(
+              companyId: widget.companyId,
+              paymentId: vm.createdPaymentId!,
+            ),
+          ),
+        );
+      }
     }
   }
 
