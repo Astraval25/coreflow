@@ -88,7 +88,7 @@ class SendPaymentDetailViewModel extends ChangeNotifier {
   }
 
   Future<Uint8List?> fetchProofBytes() async {
-    final fsId = _paymentDetail?.fsId;
+    final fsId = _paymentDetail?.paymentProofFile;
     if (fsId == null || fsId.isEmpty) return null;
     return _repository.fetchPaymentProofBytes(companyId, fsId);
   }

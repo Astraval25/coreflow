@@ -9,6 +9,7 @@ import 'package:coreflow/features/presentation/purchase/viewmodel/purchase_order
 import 'package:coreflow/features/presentation/purchase/view/update_purchase_order_page.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:provider/provider.dart';
 
 class PurchaseOrderDetailPage extends StatelessWidget {
@@ -1187,10 +1188,10 @@ String _displaySellerCompany(PurchaseOrderDetail order) {
   if (order.sellerCompanyName.trim().isNotEmpty) {
     return order.sellerCompanyName;
   }
-  if (order.buyerCompanyName.trim().isNotEmpty) {
-    return order.buyerCompanyName;
-  }
-  return 'Company';
+  // if (order.buyerCompanyName.trim().isNotEmpty) {
+  //   return order.buyerCompanyName;
+  // }
+  return ' ';
 }
 
 String _orderLabel(PurchaseOrderDetail order) {

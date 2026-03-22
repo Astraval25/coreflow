@@ -300,7 +300,7 @@ class _CustomerDetailsCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _MetaText(
-                      label: 'Customer Company',
+                      label: 'Company',
                       value: customerCompany,
                       textAlignEnd: true,
                     ),
@@ -1200,10 +1200,10 @@ String _displayCustomerCompany(sales_detail.SalesOrderDetail order) {
   if (order.buyerCompanyName.trim().isNotEmpty) {
     return order.buyerCompanyName;
   }
-  if (order.sellerCompanyName.trim().isNotEmpty) {
-    return order.sellerCompanyName;
-  }
-  return 'Company';
+  // if (order.sellerCompanyName.trim().isNotEmpty) {
+  //   return order.sellerCompanyName;
+  // }
+  return '';
 }
 
 String _orderLabel(sales_detail.SalesOrderDetail order) {

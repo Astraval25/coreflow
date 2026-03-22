@@ -86,7 +86,7 @@ class UpdatePaymentSentViewModel extends ChangeNotifier {
         payment.referenceNumber.isNotEmpty ? payment.referenceNumber : null;
     _paymentRemarks = payment.notes.isNotEmpty ? payment.notes : null;
     _paymentDate = payment.paymentDate.toLocal();
-    _fsId = payment.fsId;
+    _fsId = payment.paymentProofFile;
 
     _allocations = payment.orderAllocations
         .map((a) => UpdatePaymentAllocationEntry(
@@ -239,7 +239,7 @@ class UpdatePaymentSentViewModel extends ChangeNotifier {
           'referenceNumber': _referenceNumber!.trim(),
         if (_paymentRemarks != null && _paymentRemarks!.trim().isNotEmpty)
           'paymentRemarks': _paymentRemarks!.trim(),
-        if (_fsId != null && _fsId!.trim().isNotEmpty) 'fsId': _fsId!.trim(),
+        if (_fsId != null && _fsId!.trim().isNotEmpty) 'paymentProofFsId': _fsId!.trim(),
         'orderAllocations': activeAllocations,
       };
 
