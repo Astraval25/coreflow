@@ -6,9 +6,9 @@ import 'package:coreflow/core/theme/colors.dart';
 
 class CreateSection extends StatelessWidget {
   final DashboardViewModel vm;
-  final VoidCallback onPlay;
+  // final VoidCallback onPlay;
 
-  const CreateSection({super.key, required this.vm, required this.onPlay});
+  const CreateSection({super.key, required this.vm}); //, required this.onPlay});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +17,7 @@ class CreateSection extends StatelessWidget {
         children: [
           const SizedBox(height: 11),
 
-          DashboardSectionHeader(title: 'Create', onTap: () {}, onPlay: onPlay),
+          DashboardSectionHeader(title: 'Create', onTap: () {}), //, onPlay: onPlay),
           const SizedBox(height: 10),
 
           GridView.count(

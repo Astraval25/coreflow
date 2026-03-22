@@ -112,7 +112,7 @@ class _DashboardViewState extends State<_DashboardView> {
                             children: [
                               CreateSection(
                                 vm: vm,
-                                onPlay: () => _openHowItWorksVideo(context),
+                                // onPlay: () => _openHowItWorksVideo(context),
                               ),
                               const SizedBox(height: 20),
                               QuickAccessSection(vm: vm),

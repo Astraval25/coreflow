@@ -248,7 +248,10 @@ class _SelectVendorCompanyItemPageState
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    _currencyFormat.format(item.baseSalesPrice),
+                                    _currencyFormat.format(
+                                      item.basePurchasePrice ??
+                                          item.baseSalesPrice,
+                                    ),
                                     style: TextStyle(
                                       fontSize: 17,
                                       fontWeight: FontWeight.w700,
@@ -325,8 +328,10 @@ class _CreateVendorItemPageState extends State<CreateVendorItemPage> {
   void initState() {
     super.initState();
     _priceController = TextEditingController(
-      text: widget.item.baseSalesPrice.toStringAsFixed(2),
+      text: (widget.item.basePurchasePrice ?? widget.item.baseSalesPrice)
+          .toStringAsFixed(2),
     );
+    _descriptionController.text = widget.item.purchaseDescription ?? '';
   }
 
   @override

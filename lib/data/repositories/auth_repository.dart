@@ -672,7 +672,9 @@ class AuthRepository {
       }
 
       final List<dynamic> data = decodedBody['responseData'] ?? [];
-      return data.map((json) => CustomerMappedItem.fromJson(json)).toList();
+      return data
+          .map((json) => CustomerMappedItem.fromVendorJson(json))
+          .toList();
     } catch (e, stack) {
       debugPrint('Get customer mapped items error: $e\n$stack');
       return [];
@@ -1077,7 +1079,7 @@ class AuthRepository {
       }
 
       final List<dynamic> data = decodedBody['responseData'] ?? [];
-      return data.map((json) => SellableItem.fromJson(json)).toList();
+      return data.map((json) => SellableItem.fromCustomerJson(json)).toList();
     } catch (e, stack) {
       debugPrint('Get customer sellable items error: $e\n$stack');
       return [];
@@ -1134,7 +1136,7 @@ class AuthRepository {
       }
 
       final List<dynamic> data = decodedBody['responseData'] ?? [];
-      return data.map((json) => SellableItem.fromJson(json)).toList();
+      return data.map((json) => SellableItem.fromVendorJson(json)).toList();
     } catch (e, stack) {
       debugPrint('Get vendor purchasable items error: $e\n$stack');
       return [];
