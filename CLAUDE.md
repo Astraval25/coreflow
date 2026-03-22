@@ -1,7 +1,13 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
+# Library Use 
+- `flutter_svg` use for alternative for icon/svg for good UI.
+- `share_plus` & `receive_sharing_intent` for sharing files and documents from outside app.
+- `video_player` for demo view show.
+- `image_picker` & `file_picker` to pick image/files.
+- `pdf` for pdf generate.
+- `shared_preferences` for storing data locally.
 ## Commands
 
 ```bash

@@ -1,10 +1,12 @@
 import 'package:coreflow/core/utils/order_share_helper.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/domain/model/customer/customer.dart';
 import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
     as sales_detail;
 import 'package:coreflow/domain/model/sales/sales_order_item.dart'
     as sales_item;
+import 'package:coreflow/features/presentation/payment/receive_payment/view/create_receive_payment_page.dart';
 import 'package:coreflow/features/presentation/sales/viewmodel/sales_order_detail_view_model.dart';
 import 'package:coreflow/features/presentation/sales/view/update_sales_order_page.dart';
 import 'package:coreflow/features/items/view/item_detail_view.dart';
@@ -791,10 +793,10 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
         );
       case 'ORDER_INVOICED':
         return (
-          label: 'Mark as Paid',
-          icon: Icons.check_circle_outline_rounded,
-          action: 'paid',
-          color: LoginColors.success,
+          label: 'Record Payment',
+          icon: Icons.payments_rounded,
+          action: 'record-payment',
+          color: LoginColors.primary,
         );
       default:
         // Non-standard status → offer "Set as Sales Order"
@@ -812,6 +814,10 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
   }
 
   Future<void> _doStatusAction(String action) async {
+    if (action == 'record-payment') {
+      await _navigateToReceivePayment();
+      return;
+    }
     final success = await widget.vm.updateStatus(action);
     if (!success && mounted && widget.vm.statusError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -820,6 +826,47 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
           behavior: SnackBarBehavior.floating,
         ),
       );
+    }
+  }
+
+  Future<void> _navigateToReceivePayment() async {
+    final order = widget.order;
+    final displayName = order.customerDisplayName.trim().isNotEmpty
+        ? order.customerDisplayName
+        : order.customerName.trim().isNotEmpty
+            ? order.customerName
+            : 'Customer';
+    final companyName = order.buyerCompanyName.trim().isNotEmpty
+        ? order.buyerCompanyName
+        : order.sellerCompanyName;
+    final companyId =
+        order.buyerCompanyId > 0 ? order.buyerCompanyId : null;
+    final pending =
+        order.pendingAmount < 0 ? 0.0 : order.pendingAmount;
+
+    final customer = Customer(
+      customerId: order.customerId,
+      displayName: displayName,
+      customerCompanyName: companyName,
+      customerCompanyId: companyId,
+      dueAmount: pending.toStringAsFixed(2),
+      isActive: true,
+    );
+
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateReceivePaymentPage(
+          companyId: widget.vm.companyId,
+          initialCustomer: customer,
+          initialOrderId: order.orderId,
+          initialAmount: pending > 0 ? pending : null,
+        ),
+      ),
+    );
+
+    if (mounted) {
+      widget.vm.refresh();
     }
   }
 

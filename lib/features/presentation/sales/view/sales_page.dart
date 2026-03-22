@@ -8,12 +8,12 @@ import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_
 import 'package:coreflow/features/presentation/sales/viewmodel/sales_order_view_model.dart';
 import 'package:coreflow/features/presentation/sales/view/create_sales_order_page.dart';
 import 'package:coreflow/features/presentation/sales/view/sales_order_detail_page.dart';
-import 'package:coreflow/features/presentation/sales/widgets/sales_body_message.dart';
 import 'package:coreflow/features/presentation/sales/widgets/sales_empty_state.dart';
 import 'package:coreflow/features/presentation/sales/widgets/sales_loading_body.dart';
 import 'package:coreflow/features/presentation/sales/widgets/sales_order_card.dart';
 import 'package:coreflow/features/presentation/sales/widgets/sales_skeleton.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 class SalesPage extends StatelessWidget {
@@ -128,18 +128,26 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
     }
 
     if (vm.errorMessage != null && vm.orders.isEmpty) {
-      return SalesBodyMessage(
-        icon: Icons.error_outline_rounded,
+      return _buildEmptyState(
         title: 'Sales & Bills',
         subtitle: vm.errorMessage!,
+        svgAsset: 'assets/svgs/empty_sales.svg',
+        actionLabel: 'Retry',
+        actionIcon: Icons.refresh_rounded,
+        onAction: () => vm.refresh(),
       );
     }
 
     if (tabFilteredOrders.isEmpty) {
-      return const SalesBodyMessage(
-        icon: Icons.receipt_long_outlined,
+      return _buildEmptyState(
         title: 'Sales & Bills',
         subtitle: 'No sales orders found.',
+        svgAsset: 'assets/svgs/empty_sales.svg',
+        actionLabel: 'Create Sales Order',
+        actionIcon: Icons.add_rounded,
+        onAction: companyId == null
+            ? null
+            : () => _openCreateOrder(companyId),
       );
     }
 
@@ -170,6 +178,18 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
     );
   }
 
+  Future<void> _openCreateOrder(int companyId) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateSalesOrderPage(companyId: companyId),
+      ),
+    );
+    if (result == true && mounted) {
+      context.read<SalesOrderViewModel>().refresh();
+    }
+  }
+
   bool _matchesSelectedTab(String orderStatus) {
     final normalizedStatus = orderStatus.trim().toUpperCase();
 
@@ -186,22 +206,97 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
 
   Widget _buildCreateButton() {
     final companyId = context.read<DashboardViewModel>().companyId;
-    return FloatingActionButton(
+    return FloatingActionButton.extended(
       backgroundColor: LoginColors.primary,
       foregroundColor: Colors.white,
       onPressed: () async {
         if (companyId == null) return;
-        final result = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CreateSalesOrderPage(companyId: companyId),
-          ),
-        );
-        if (result == true && mounted) {
-          context.read<SalesOrderViewModel>().refresh();
-        }
+        await _openCreateOrder(companyId);
       },
-      child: const Icon(Icons.add_rounded),
+      icon: const Icon(Icons.add_rounded),
+      label: const Text(
+        'Create Sales Order',
+        style: TextStyle(fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState({
+    required String title,
+    required String subtitle,
+    required String svgAsset,
+    String? actionLabel,
+    IconData actionIcon = Icons.add_rounded,
+    VoidCallback? onAction,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final height = (constraints.maxHeight - 120)
+            .clamp(0.0, double.infinity) as double;
+        return ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
+          children: [
+            SizedBox(
+              height: height,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SvgPicture.asset(
+                      svgAsset,
+                      height: 170,
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: LoginColors.textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: LoginColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (actionLabel != null) ...[
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 44,
+                        child: FilledButton.icon(
+                          onPressed: onAction,
+                          icon: Icon(actionIcon, size: 18),
+                          label: Text(
+                            actionLabel,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: LoginColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

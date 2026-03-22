@@ -71,6 +71,18 @@ class CreateReceivePaymentViewModel extends ChangeNotifier {
     await _loadUnpaidOrders(customer.customerId);
   }
 
+  Future<void> setCustomerWithOrder(
+    Customer customer, {
+    int? orderId,
+    double? amount,
+  }) async {
+    _selectedCustomer = customer;
+    _unpaidOrders = [];
+    notifyListeners();
+    await _loadUnpaidOrders(customer.customerId);
+    _applyOrderAllocation(orderId: orderId, amount: amount);
+  }
+
   Future<void> _loadUnpaidOrders(int customerId) async {
     _isLoadingOrders = true;
     notifyListeners();
@@ -85,6 +97,27 @@ class CreateReceivePaymentViewModel extends ChangeNotifier {
     }
 
     _isLoadingOrders = false;
+    notifyListeners();
+  }
+
+  void _applyOrderAllocation({int? orderId, double? amount}) {
+    if (orderId == null || _unpaidOrders.isEmpty) return;
+    final index =
+        _unpaidOrders.indexWhere((entry) => entry.order.orderId == orderId);
+    if (index == -1) return;
+
+    for (final entry in _unpaidOrders) {
+      entry.amountApplied = 0;
+    }
+
+    final balance = _unpaidOrders[index].order.balanceAmount;
+    final desired = (amount != null && amount > 0) ? amount : balance;
+    final applied = desired > balance ? balance : desired;
+
+    _unpaidOrders[index].amountApplied = applied;
+    if (amount != null || _amount == 0) {
+      _amount = applied;
+    }
     notifyListeners();
   }
 

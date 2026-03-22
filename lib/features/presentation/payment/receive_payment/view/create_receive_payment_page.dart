@@ -15,11 +15,17 @@ import 'package:provider/provider.dart';
 class CreateReceivePaymentPage extends StatelessWidget {
   final int companyId;
   final PaymentProofResult? proofResult;
+  final Customer? initialCustomer;
+  final int? initialOrderId;
+  final double? initialAmount;
 
   const CreateReceivePaymentPage({
     super.key,
     required this.companyId,
     this.proofResult,
+    this.initialCustomer,
+    this.initialOrderId,
+    this.initialAmount,
   });
 
   @override
@@ -32,6 +38,9 @@ class CreateReceivePaymentPage extends StatelessWidget {
       child: _CreateReceivePaymentView(
         companyId: companyId,
         proofResult: proofResult,
+        initialCustomer: initialCustomer,
+        initialOrderId: initialOrderId,
+        initialAmount: initialAmount,
       ),
     );
   }
@@ -40,10 +49,16 @@ class CreateReceivePaymentPage extends StatelessWidget {
 class _CreateReceivePaymentView extends StatefulWidget {
   final int companyId;
   final PaymentProofResult? proofResult;
+  final Customer? initialCustomer;
+  final int? initialOrderId;
+  final double? initialAmount;
 
   const _CreateReceivePaymentView({
     required this.companyId,
     this.proofResult,
+    this.initialCustomer,
+    this.initialOrderId,
+    this.initialAmount,
   });
 
   @override
@@ -75,9 +90,10 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
   @override
   void initState() {
     super.initState();
-    if (widget.proofResult != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final vm = context.read<CreateReceivePaymentViewModel>();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final vm = context.read<CreateReceivePaymentViewModel>();
+
+      if (widget.proofResult != null) {
         vm.setProofResult(widget.proofResult!);
         if (widget.proofResult!.amount != null) {
           _amountController.text =
@@ -88,8 +104,24 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
         if (widget.proofResult!.transactionId != null) {
           _referenceController.text = widget.proofResult!.transactionId!;
         }
-      });
-    }
+      }
+
+      if (widget.initialCustomer != null) {
+        await vm.setCustomerWithOrder(
+          widget.initialCustomer!,
+          orderId: widget.initialOrderId,
+          amount: widget.initialAmount,
+        );
+      }
+
+      if (_amountController.text.trim().isEmpty && vm.amount > 0) {
+        _amountController.text = vm.amount % 1 == 0
+            ? vm.amount.toInt().toString()
+            : vm.amount.toStringAsFixed(2);
+      }
+
+      if (mounted) setState(() {});
+    });
   }
 
   @override

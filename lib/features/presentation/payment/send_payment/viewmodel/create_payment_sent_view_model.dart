@@ -74,6 +74,18 @@ class CreatePaymentSentViewModel extends ChangeNotifier {
     await _loadUnpaidOrders(vendor.vendorId);
   }
 
+  Future<void> setVendorWithOrder(
+    Vendor vendor, {
+    int? orderId,
+    double? amount,
+  }) async {
+    _selectedVendor = vendor;
+    _unpaidOrders = [];
+    notifyListeners();
+    await _loadUnpaidOrders(vendor.vendorId);
+    _applyOrderAllocation(orderId: orderId, amount: amount);
+  }
+
   Future<void> _loadUnpaidOrders(int vendorId) async {
     _isLoadingOrders = true;
     notifyListeners();
@@ -89,6 +101,27 @@ class CreatePaymentSentViewModel extends ChangeNotifier {
     }
 
     _isLoadingOrders = false;
+    notifyListeners();
+  }
+
+  void _applyOrderAllocation({int? orderId, double? amount}) {
+    if (orderId == null || _unpaidOrders.isEmpty) return;
+    final index =
+        _unpaidOrders.indexWhere((entry) => entry.order.orderId == orderId);
+    if (index == -1) return;
+
+    for (final entry in _unpaidOrders) {
+      entry.amountApplied = 0;
+    }
+
+    final balance = _unpaidOrders[index].order.balanceAmount;
+    final desired = (amount != null && amount > 0) ? amount : balance;
+    final applied = desired > balance ? balance : desired;
+
+    _unpaidOrders[index].amountApplied = applied;
+    if (amount != null || _amount == 0) {
+      _amount = applied;
+    }
     notifyListeners();
   }
 
