@@ -115,8 +115,6 @@ class _ProfileContent extends StatelessWidget {
           children: [
             _buildHeader(userName, userRole),
             const SizedBox(height: 32),
-            _buildThemeSection(context),
-            const SizedBox(height: 24),
             _buildInfoSection(context, userEmail, userId),
             const SizedBox(height: 24),
             _buildCompanySection(context),
@@ -124,71 +122,6 @@ class _ProfileContent extends StatelessWidget {
             _buildLogoutButton(context),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildThemeSection(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: LoginColors.borderLight, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _SectionLabel(label: 'App Settings'),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: LoginColors.fieldFill,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  themeProvider.isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                  size: 18,
-                  color: LoginColors.textSecondary,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Dark Mode',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: LoginColors.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      'Switch between dark and light themes',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: LoginColors.textTertiary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Switch.adaptive(
-                value: themeProvider.isDarkMode,
-                onChanged: (_) => themeProvider.toggleTheme(),
-                activeColor: LoginColors.primary,
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

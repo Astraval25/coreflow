@@ -12,6 +12,9 @@ import 'package:coreflow/features/dashboard/dashboard_view/dashboard_page.dart';
 import 'package:coreflow/features/login/view/login_page.dart';
 import 'package:coreflow/features/profile/view_page/profile_page.dart';
 import 'package:coreflow/features/resend_otp/view/resend_otp_sreen.dart';
+import 'package:coreflow/features/settings/view/settings_page.dart';
+import 'package:coreflow/features/legal/view/privacy_policy_page.dart';
+import 'package:coreflow/features/legal/view/terms_of_service_page.dart';
 import 'package:coreflow/features/vendor/view/vendor_create_page.dart';
 import 'package:coreflow/features/vendor/view/vendor_detail_page.dart';
 import 'package:coreflow/features/vendor/view/vendor_edit_page.dart';
@@ -73,6 +76,18 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfilePage(),
+        ),
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) => const SettingsPage(),
+        ),
+        GoRoute(
+          path: '/privacy-policy',
+          builder: (context, state) => const PrivacyPolicyPage(),
+        ),
+        GoRoute(
+          path: '/terms-of-service',
+          builder: (context, state) => const TermsOfServicePage(),
         ),
         GoRoute(
           path: '/sales',
