@@ -38,10 +38,18 @@ class SalesOrderCard extends StatelessWidget {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isCompact = screenWidth < 360;
     final badgeReserve = isCompact ? 92.0 : 120.0;
+    final normalizedStatus = order.orderStatus.trim().toUpperCase();
+    final isViewed = normalizedStatus == 'ORDER_VIEWED';
+    final isOrdered = normalizedStatus == 'ORDER';
     final statusColor = order.isActive
         ? LoginColors.success
         : LoginColors.error;
     final dateText = _formatDate(order.orderDate);
+    final tickColor = isViewed
+        ? LoginColors.success
+        : isOrdered
+        ? LoginColors.textSecondary
+        : null;
 
     return Container(
       decoration: BoxDecoration(
@@ -156,10 +164,20 @@ class SalesOrderCard extends StatelessWidget {
             top: 0,
             right: 0,
             child: _SalesStatusBadge(
-              label: order.orderStatus,
+              label:
+                  (order.orderStatus == "ORDER_VIEWED" ||
+                      order.orderStatus == "ORDER")
+                  ? "NEW ORDER"
+                  : order.orderStatus,
               color: statusColor,
             ),
           ),
+          if (tickColor != null)
+            Positioned(
+              right: 10,
+              bottom: 10,
+              child: Icon(Icons.done_all_rounded, size: 24, color: tickColor),
+            ),
         ],
       ),
     );
