@@ -813,6 +813,21 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
     }
   }
 
+  ({String label, IconData icon, String action, Color color})?
+  get _revertStatusInfo {
+    switch (widget.order.orderStatus) {
+      case 'ORDER_INVOICED':
+        return (
+          label: 'Mark as Ordered',
+          icon: Icons.undo_rounded,
+          action: 'viewed',
+          color: Colors.grey.shade600,
+        );
+      default:
+        return null;
+    }
+  }
+
   Future<void> _doStatusAction(String action) async {
     if (action == 'record-payment') {
       await _navigateToReceivePayment();
@@ -873,6 +888,7 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
   @override
   Widget build(BuildContext context) {
     final info = _statusInfo;
+    final revertInfo = _revertStatusInfo;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1015,6 +1031,43 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
             ],
           ],
         ),
+
+        // Revert status button
+        if (revertInfo != null) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 40,
+            child: OutlinedButton.icon(
+              onPressed: widget.vm.isStatusUpdating
+                  ? null
+                  : () => _doStatusAction(revertInfo.action),
+              icon: widget.vm.isStatusUpdating
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(revertInfo.icon, size: 16),
+              label: Text(
+                revertInfo.label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: revertInfo.color,
+                side: BorderSide(
+                  color: revertInfo.color.withValues(alpha: 0.4),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
