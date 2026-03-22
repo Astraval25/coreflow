@@ -47,6 +47,8 @@ import 'package:coreflow/domain/model/vendors/create_vendors_request.dart';
 import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
 import 'package:coreflow/domain/model/vendors/vendors_edit_request.dart';
+import 'package:coreflow/domain/model/notification/app_notification.dart';
+import 'package:coreflow/domain/model/advertisement/advertisement.dart';
 import 'package:coreflow/domain/model/vendors/vendors_edit_response.dart';
 import 'package:coreflow/domain/model/vendors/vendors_status_response.dart';
 import 'package:coreflow/domain/model/verify_otp/verify_otp_request.dart';
@@ -1885,6 +1887,107 @@ class AuthRepository {
     } catch (e) {
       debugPrint('Accept invitation error: $e');
       return null;
+    }
+  }
+
+  // ─── Notification APIs ───
+
+  Future<({List<AppNotification> notifications, bool hasNext})> getNotifications(
+    int companyId, {
+    int page = 0,
+  }) async {
+    try {
+      final url = AppConfig.getNotificationsUrl(companyId, page: page);
+      final response = await _apiService.get(Uri.parse(url));
+
+      if (response.statusCode != 200) return (notifications: <AppNotification>[], hasNext: false);
+
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return (notifications: <AppNotification>[], hasNext: false);
+
+      final responseData = data['responseData'] as Map<String, dynamic>;
+      final list = (responseData['notifications'] as List<dynamic>?) ?? [];
+      final hasNext = responseData['hasNext'] as bool? ?? false;
+
+      return (
+        notifications: list
+            .map((json) => AppNotification.fromJson(json as Map<String, dynamic>))
+            .toList(),
+        hasNext: hasNext,
+      );
+    } catch (e) {
+      debugPrint('Get notifications error: $e');
+      return (notifications: <AppNotification>[], hasNext: false);
+    }
+  }
+
+  Future<int> getUnreadNotificationCount(int companyId) async {
+    try {
+      final url = AppConfig.getUnreadCountUrl(companyId);
+      final response = await _apiService.get(Uri.parse(url));
+
+      if (response.statusCode != 200) return 0;
+
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return 0;
+
+      final responseData = data['responseData'];
+      if (responseData is int) return responseData;
+      if (responseData is Map<String, dynamic>) {
+        return (responseData['unreadCount'] as int?) ??
+            (responseData['count'] as int?) ??
+            0;
+      }
+      return 0;
+    } catch (e) {
+      debugPrint('Get unread count error: $e');
+      return 0;
+    }
+  }
+
+  Future<bool> markNotificationRead(int companyId, int notificationId) async {
+    try {
+      final url = AppConfig.getMarkReadUrl(companyId, notificationId);
+      final response = await _apiService.patch(url, {});
+      final data = jsonDecode(response.body);
+      return data['responseStatus'] == true;
+    } catch (e) {
+      debugPrint('Mark notification read error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> markAllNotificationsRead(int companyId) async {
+    try {
+      final url = AppConfig.getMarkAllReadUrl(companyId);
+      final response = await _apiService.patch(url, {});
+      final data = jsonDecode(response.body);
+      return data['responseStatus'] == true;
+    } catch (e) {
+      debugPrint('Mark all read error: $e');
+      return false;
+    }
+  }
+
+  // ─── Advertisement APIs ───
+
+  Future<List<Advertisement>> getAdvertisements() async {
+    try {
+      final response = await _apiService.get(Uri.parse(AppConfig.adsUrl));
+
+      if (response.statusCode != 200) return [];
+
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return [];
+
+      final responseData = data['responseData'] as Map<String, dynamic>;
+      final list = (responseData['advertisements'] as List<dynamic>?) ?? [];
+      return list
+          .map((json) => Advertisement.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Get advertisements error: $e');
+      return [];
     }
   }
 }

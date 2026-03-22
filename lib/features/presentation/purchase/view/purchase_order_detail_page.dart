@@ -810,8 +810,10 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
     }
   }
 
-  Future<void> _doStatusAction() async {
-    final action = _statusAction;
+  bool get _canRevertStatus => widget.order.orderStatus == 'ORDER_INVOICED';
+
+  Future<void> _doStatusAction([String? overrideAction]) async {
+    final action = overrideAction ?? _statusAction;
     if (action == null) return;
     if (action == 'record-payment') {
       await _navigateToSendPayment();
@@ -1013,6 +1015,43 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
             ],
           ],
         ),
+
+        // Revert status button
+        if (_canRevertStatus) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 40,
+            child: OutlinedButton.icon(
+              onPressed: widget.vm.isStatusUpdating
+                  ? null
+                  : () => _doStatusAction('viewed'),
+              icon: widget.vm.isStatusUpdating
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(Icons.undo_rounded, size: 16),
+              label: const Text(
+                'Revert to Viewed',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.grey.shade600,
+                side: BorderSide(
+                  color: Colors.grey.shade600.withValues(alpha: 0.4),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

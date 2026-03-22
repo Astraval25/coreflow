@@ -1,5 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/config/app_config.dart';
+import '../../../data/services/api_services.dart';
+import '../../../domain/model/advertisement/advertisement.dart';
 import '../../../domain/model/company/company.dart';
 import '../../../data/repositories/auth_repository.dart';
 
@@ -23,6 +28,11 @@ class DashboardViewModel extends ChangeNotifier {
   Future<void>? _userDataRequest;
   Future<void>? _companiesRequest;
 
+  int _unreadNotificationCount = 0;
+  List<Advertisement> _advertisements = [];
+  final Map<String, Uint8List> _adImageCache = {};
+  bool _hasLoadedAppOpenData = false;
+
   bool get isLoading => _isLoading;
   String? get userName => _userName;
   String? get email => _email;
@@ -35,6 +45,10 @@ class DashboardViewModel extends ChangeNotifier {
   bool get isCustomersExpanded => _isCustomersExpanded;
   String get selectedMenu => _selectedMenu;
 
+  int get unreadNotificationCount => _unreadNotificationCount;
+  List<Advertisement> get advertisements => _advertisements;
+  Map<String, Uint8List> get adImageCache => _adImageCache;
+
   DashboardViewModel() {
     _initializeData();
   }
@@ -44,6 +58,9 @@ class DashboardViewModel extends ChangeNotifier {
       loadUserData().then((_) {
         if (!_hasLoadedCompanies) {
           loadCompanies();
+        }
+        if (!_hasLoadedAppOpenData && _companyId != null) {
+          _loadAppOpenData();
         }
       });
     }
@@ -130,6 +147,73 @@ class DashboardViewModel extends ChangeNotifier {
       _userDataRequest = null;
       notifyListeners();
     }
+  }
+
+  Future<void> _loadAppOpenData() async {
+    if (_hasLoadedAppOpenData || _companyId == null) return;
+    _hasLoadedAppOpenData = true;
+
+    // Load unread count and ads in parallel
+    await Future.wait([
+      _loadUnreadCount(),
+      _loadAdvertisements(),
+    ]);
+  }
+
+  Future<void> _loadUnreadCount() async {
+    if (_companyId == null) return;
+    try {
+      _unreadNotificationCount =
+          await _authRepository.getUnreadNotificationCount(_companyId!);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Load unread count error: $e');
+    }
+  }
+
+  Future<void> _loadAdvertisements() async {
+    try {
+      _advertisements = await _authRepository.getAdvertisements();
+      notifyListeners();
+      // Cache ad images
+      for (final ad in _advertisements) {
+        if (ad.fsId.isNotEmpty && !_adImageCache.containsKey(ad.fsId)) {
+          _cacheAdImage(ad.fsId);
+        }
+      }
+    } catch (e) {
+      debugPrint('Load advertisements error: $e');
+    }
+  }
+
+  Future<void> _cacheAdImage(String fsId) async {
+    try {
+      final apiService = ApiService();
+      final url = AppConfig.getFileUrl(fsId);
+      final response = await apiService.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        _adImageCache[fsId] = response.bodyBytes;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Cache ad image error: $e');
+    }
+  }
+
+  void decrementUnreadCount() {
+    if (_unreadNotificationCount > 0) {
+      _unreadNotificationCount--;
+      notifyListeners();
+    }
+  }
+
+  void clearUnreadCount() {
+    _unreadNotificationCount = 0;
+    notifyListeners();
+  }
+
+  Future<void> refreshUnreadCount() async {
+    await _loadUnreadCount();
   }
 
   Future<void> _loadCompaniesInternal() async {
