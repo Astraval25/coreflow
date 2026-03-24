@@ -9,6 +9,7 @@ class PaymentSentSummary {
   final String paymentStatus;
   final bool isActive;
   final String? referenceNumber;
+  final String? platformRef;
 
   PaymentSentSummary({
     required this.paymentId,
@@ -21,6 +22,7 @@ class PaymentSentSummary {
     required this.paymentStatus,
     required this.isActive,
     required this.referenceNumber,
+    this.platformRef,
   });
 
   factory PaymentSentSummary.fromJson(Map<String, dynamic> json) {
@@ -49,6 +51,7 @@ class PaymentSentSummary {
       paymentStatus: json['paymentStatus']?.toString() ?? '',
       isActive: (json['isActive'] ?? false) as bool,
       referenceNumber: json['referenceNumber']?.toString(),
+      platformRef: json['platformRef']?.toString(),
     );
   }
 }

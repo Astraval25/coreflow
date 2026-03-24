@@ -3,6 +3,7 @@ import 'package:coreflow/domain/model/purchase/purchase_order_item.dart';
 class PurchaseOrderDetail {
   final int orderId;
   final String orderNumber;
+  final String? platformRef;
   final DateTime orderDate;
 
   final int sellerCompanyId;
@@ -35,6 +36,7 @@ class PurchaseOrderDetail {
   PurchaseOrderDetail({
     required this.orderId,
     required this.orderNumber,
+    this.platformRef,
     required this.orderDate,
     required this.sellerCompanyId,
     required this.sellerCompanyName,
@@ -72,6 +74,7 @@ class PurchaseOrderDetail {
     return PurchaseOrderDetail(
       orderId: _asInt(json['orderId']),
       orderNumber: json['orderNumber']?.toString() ?? '',
+      platformRef: json['platformRef']?.toString(),
       orderDate: _asDate(json['orderDate']),
       sellerCompanyId: _asInt(json['sellerCompanyId']),
       sellerCompanyName: json['sellerCompanyName']?.toString() ?? '',

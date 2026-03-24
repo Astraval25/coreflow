@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:coreflow/data/repositories/company_ref_repository.dart';
 import 'package:coreflow/data/repositories/company_repository.dart';
+import 'package:coreflow/data/repositories/config_repository.dart';
 import 'package:coreflow/data/repositories/customer_repository.dart';
 import 'package:coreflow/data/repositories/invitation_repository.dart';
 import 'package:coreflow/data/repositories/item_repository.dart';
@@ -11,6 +13,9 @@ import 'package:coreflow/data/repositories/vendor_repository.dart';
 import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/company/company.dart';
 import 'package:coreflow/domain/model/company/marketplace_company.dart';
+import 'package:coreflow/domain/model/company_ref/order_ref.dart';
+import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
+import 'package:coreflow/domain/model/config/company_config.dart';
 import 'package:coreflow/domain/model/customer/create_customer_request.dart';
 import 'package:coreflow/domain/model/invitation/invitation_response.dart';
 import 'package:coreflow/domain/model/customer/customer.dart';
@@ -74,7 +79,9 @@ class AuthRepository {
   final ApiService _apiService = ApiService();
 
   // Domain-specific repositories
+  final CompanyRefRepository _companyRefRepo = CompanyRefRepository();
   final CompanyRepository _companyRepo = CompanyRepository();
+  final ConfigRepository _configRepo = ConfigRepository();
   final CustomerRepository _customerRepo = CustomerRepository();
   final VendorRepository _vendorRepo = VendorRepository();
   final ItemRepository _itemRepo = ItemRepository();
@@ -395,6 +402,19 @@ class AuthRepository {
   Future<InvitationResponse?> sendVendorInvitation(int companyId, int vendorId) => _invitationRepo.sendVendorInvitation(companyId, vendorId);
   Future<InvitationResponse?> getVendorInvitationCode(int companyId, int vendorId) => _invitationRepo.getVendorInvitationCode(companyId, vendorId);
   Future<AcceptInvitationResponse?> acceptInvitation({required int companyId, required String invitationCode, int? selectedVendorId, int? selectedCustomerId}) => _invitationRepo.acceptInvitation(companyId: companyId, invitationCode: invitationCode, selectedVendorId: selectedVendorId, selectedCustomerId: selectedCustomerId);
+
+  // ─── Company Ref (delegates to CompanyRefRepository) ───
+
+  Future<OrderRef?> getOrderRef(int companyId, int orderId) => _companyRefRepo.getOrderRef(companyId, orderId);
+  Future<bool> updateOrderRef(int companyId, int orderId, Map<String, dynamic> body) => _companyRefRepo.updateOrderRef(companyId, orderId, body);
+  Future<PaymentRef?> getPaymentRef(int companyId, int paymentId) => _companyRefRepo.getPaymentRef(companyId, paymentId);
+  Future<bool> updatePaymentRef(int companyId, int paymentId, Map<String, dynamic> body) => _companyRefRepo.updatePaymentRef(companyId, paymentId, body);
+
+  // ─── Config (delegates to ConfigRepository) ───
+
+  Future<CompanyConfig?> getCompanyConfig(int companyId) => _configRepo.getCompanyConfig(companyId);
+  Future<bool> setConfigOverride(int companyId, String configKey, String configValue) => _configRepo.setConfigOverride(companyId, configKey, configValue);
+  Future<bool> resetConfigToDefault(int companyId, String configKey) => _configRepo.resetConfigToDefault(companyId, configKey);
 
   // ─── Notification APIs ───
 

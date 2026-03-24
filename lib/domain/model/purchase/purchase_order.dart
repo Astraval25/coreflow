@@ -8,6 +8,7 @@ class PurchaseOrder {
   final double paidAmount;
   final String orderStatus;
   final bool isActive;
+  final String? platformRef;
 
   PurchaseOrder({
     required this.orderId,
@@ -19,6 +20,7 @@ class PurchaseOrder {
     required this.paidAmount,
     required this.orderStatus,
     required this.isActive,
+    this.platformRef,
   });
 
   factory PurchaseOrder.fromJson(Map<String, dynamic> json) {
@@ -37,6 +39,7 @@ class PurchaseOrder {
       paidAmount: (json['paidAmount'] ?? 0).toDouble(),
       orderStatus: json['orderStatus']?.toString() ?? '',
       isActive: (json['isActive'] ?? false) as bool,
+      platformRef: json['platformRef']?.toString(),
     );
   }
 }

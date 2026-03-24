@@ -1,6 +1,7 @@
 class PaymentDetail {
   final int paymentId;
   final String paymentNumber;
+  final String? platformRef;
   final DateTime paymentDate;
   final double amount;
   final List<int> orderIds;
@@ -22,6 +23,7 @@ class PaymentDetail {
   PaymentDetail({
     required this.paymentId,
     required this.paymentNumber,
+    this.platformRef,
     required this.paymentDate,
     required this.amount,
     required this.orderIds,
@@ -48,6 +50,7 @@ class PaymentDetail {
     return PaymentDetail(
       paymentId: _asInt(json['paymentId']),
       paymentNumber: json['paymentNumber']?.toString() ?? '',
+      platformRef: json['platformRef']?.toString(),
       paymentDate: _asDate(json['paymentDate']),
       amount: _asDouble(json['amount']),
       orderIds: parsedOrderIds,

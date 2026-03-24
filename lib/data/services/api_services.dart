@@ -146,6 +146,22 @@ class ApiService {
     });
   }
 
+  Future<http.Response> delete(String url) async {
+    debugPrint('DELETE to: $url');
+    return _makeRequest((token) async {
+      return http
+          .delete(
+            Uri.parse(url),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null && token.isNotEmpty)
+                'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(timeout);
+    });
+  }
+
   Future<http.Response> multipartPost({
     required String url,
     required Map<String, String> fields,

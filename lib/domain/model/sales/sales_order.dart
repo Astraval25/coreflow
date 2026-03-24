@@ -8,6 +8,7 @@ class SalesOrder {
   final double paidAmount;
   final String orderStatus;
   final bool isActive;
+  final String? platformRef;
 
   SalesOrder({
     required this.orderId,
@@ -19,6 +20,7 @@ class SalesOrder {
     required this.paidAmount,
     required this.orderStatus,
     required this.isActive,
+    this.platformRef,
   });
 
   factory SalesOrder.fromJson(Map<String, dynamic> json) {
@@ -65,6 +67,7 @@ class SalesOrder {
       paidAmount: asDouble(json['paidAmount']),
       orderStatus: asString(json['orderStatus']),
       isActive: asBool(json['isActive']),
+      platformRef: json['platformRef']?.toString(),
     );
   }
 }

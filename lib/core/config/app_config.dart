@@ -329,4 +329,18 @@ class AppConfig {
 
   // ─── Advertisements ───
   static String get adsUrl => '$baseUrl/api/ads';
+
+  // ─── Company Config ───
+  static String getCompanyConfigUrl(int companyId) =>
+      '$baseUrl/api/companies/$companyId/config';
+
+  static String getCompanyConfigKeyUrl(int companyId, String configKey) =>
+      '$baseUrl/api/companies/$companyId/config/$configKey';
+
+  // ─── Company Ref (Order / Payment overlays) ───
+  static String getOrderRefUrl(int companyId, int orderId) =>
+      '$baseUrl/api/companies/$companyId/orders/$orderId/ref';
+
+  static String getPaymentRefUrl(int companyId, int paymentId) =>
+      '$baseUrl/api/companies/$companyId/payments/$paymentId/ref';
 }
