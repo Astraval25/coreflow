@@ -49,6 +49,7 @@ dependencies:
   share_plus: ^9.0.0
   pdf: ^3.11.2
   path_provider: ^2.1.5
+  flutter_svg: ^2.0.10+1
 
 dev_dependencies:
   flutter_test:
@@ -70,6 +71,7 @@ flutter:
     - .env
     - assets/viedios.mp4
     - assets/
+    - assets/svgs/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

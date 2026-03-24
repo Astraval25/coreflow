@@ -151,11 +151,15 @@ class _PayReceivedContentState extends State<_PayReceivedContent> {
   Widget _buildCreateButton() {
     return Consumer<ReceivePaymentViewModel>(
       builder: (context, vm, child) {
-        return FloatingActionButton(
+        return FloatingActionButton.extended(
           backgroundColor: LoginColors.primary,
           foregroundColor: Colors.white,
           onPressed: () => _navigateToCreatePayment(vm.companyId),
-          child: const Icon(Icons.add_rounded),
+          icon: const Icon(Icons.add_rounded),
+          label: const Text(
+            'Receive Payment',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
         );
       },
     );

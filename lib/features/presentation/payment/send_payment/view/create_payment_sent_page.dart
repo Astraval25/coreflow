@@ -15,11 +15,17 @@ import 'package:provider/provider.dart';
 class CreatePaymentSentPage extends StatelessWidget {
   final int companyId;
   final PaymentProofResult? proofResult;
+  final Vendor? initialVendor;
+  final int? initialOrderId;
+  final double? initialAmount;
 
   const CreatePaymentSentPage({
     super.key,
     required this.companyId,
     this.proofResult,
+    this.initialVendor,
+    this.initialOrderId,
+    this.initialAmount,
   });
 
   @override
@@ -32,6 +38,9 @@ class CreatePaymentSentPage extends StatelessWidget {
       child: _CreatePaymentSentView(
         companyId: companyId,
         proofResult: proofResult,
+        initialVendor: initialVendor,
+        initialOrderId: initialOrderId,
+        initialAmount: initialAmount,
       ),
     );
   }
@@ -40,10 +49,16 @@ class CreatePaymentSentPage extends StatelessWidget {
 class _CreatePaymentSentView extends StatefulWidget {
   final int companyId;
   final PaymentProofResult? proofResult;
+  final Vendor? initialVendor;
+  final int? initialOrderId;
+  final double? initialAmount;
 
   const _CreatePaymentSentView({
     required this.companyId,
     this.proofResult,
+    this.initialVendor,
+    this.initialOrderId,
+    this.initialAmount,
   });
 
   @override
@@ -76,9 +91,10 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
   @override
   void initState() {
     super.initState();
-    if (widget.proofResult != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final vm = context.read<CreatePaymentSentViewModel>();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final vm = context.read<CreatePaymentSentViewModel>();
+
+      if (widget.proofResult != null) {
         vm.setProofResult(widget.proofResult!);
         if (widget.proofResult!.amount != null) {
           _amountController.text =
@@ -89,8 +105,24 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
         if (widget.proofResult!.transactionId != null) {
           _referenceController.text = widget.proofResult!.transactionId!;
         }
-      });
-    }
+      }
+
+      if (widget.initialVendor != null) {
+        await vm.setVendorWithOrder(
+          widget.initialVendor!,
+          orderId: widget.initialOrderId,
+          amount: widget.initialAmount,
+        );
+      }
+
+      if (_amountController.text.trim().isEmpty && vm.amount > 0) {
+        _amountController.text = vm.amount % 1 == 0
+            ? vm.amount.toInt().toString()
+            : vm.amount.toStringAsFixed(2);
+      }
+
+      if (mounted) setState(() {});
+    });
   }
 
   @override

@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/core/theme/theme_provider.dart';
+import 'package:coreflow/domain/model/advertisement/advertisement.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
@@ -92,20 +93,7 @@ class _DashboardViewState extends State<_DashboardView> {
                                 child: Align(
                                   alignment: Alignment.center,
                                   child: DashboardPromoBanner(
-                                    promoItems: [
-                                      _buildImageBannerItem(
-                                        context,
-                                        'assets/image1.jpeg',
-                                      ),
-                                      _buildImageBannerItem(
-                                        context,
-                                        'assets/image2.jpeg',
-                                      ),
-                                      _buildImageBannerItem(
-                                        context,
-                                        'assets/image3.jpeg',
-                                      ),
-                                    ],
+                                    promoItems: _buildBannerItems(context, vm),
                                   ),
                                 ),
                               ),
@@ -124,7 +112,7 @@ class _DashboardViewState extends State<_DashboardView> {
                             children: [
                               CreateSection(
                                 vm: vm,
-                                onPlay: () => _openHowItWorksVideo(context),
+                                // onPlay: () => _openHowItWorksVideo(context),
                               ),
                               const SizedBox(height: 20),
                               QuickAccessSection(vm: vm),
@@ -141,14 +129,36 @@ class _DashboardViewState extends State<_DashboardView> {
     );
   }
 
-  Widget _buildImageBannerItem(BuildContext context, String assetPath) {
+  List<Widget> _buildBannerItems(BuildContext context, DashboardViewModel vm) {
+    final ads = vm.advertisements;
+    final cache = vm.adImageCache;
+
+    // If we have ads with cached images, show them
+    final adWidgets = <Widget>[];
+    for (final ad in ads) {
+      if (ad.fsId.isNotEmpty && cache.containsKey(ad.fsId)) {
+        adWidgets.add(_buildAdBannerItem(context, ad, cache[ad.fsId]!));
+      }
+    }
+
+    // If we have ad banners, use them; otherwise fall back to static assets
+    if (adWidgets.isNotEmpty) return adWidgets;
+
+    return [_buildStaticBannerItem(context, 'assets/image1.jpeg')];
+  }
+
+  Widget _buildAdBannerItem(
+    BuildContext context,
+    Advertisement ad,
+    Uint8List imageBytes,
+  ) {
     return Material(
       color: LoginColors.cardBackground,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
-            assetPath,
+          Image.memory(
+            imageBytes,
             fit: BoxFit.cover,
             width: double.infinity,
             filterQuality: FilterQuality.high,
@@ -157,7 +167,7 @@ class _DashboardViewState extends State<_DashboardView> {
             right: 12,
             bottom: 12,
             child: FilledButton(
-              onPressed: () => _openBlankPage(context),
+              onPressed: () => _openAdUrl(ad.actionUrl),
               style: FilledButton.styleFrom(
                 backgroundColor: Colors.black.withValues(alpha: 0.75),
                 foregroundColor: Colors.white,
@@ -172,11 +182,54 @@ class _DashboardViewState extends State<_DashboardView> {
     );
   }
 
-  Future<void> _openBlankPage(BuildContext context) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const _BlankAdPage()),
+  Widget _buildStaticBannerItem(BuildContext context, String assetPath) {
+    return Material(
+      color: LoginColors.cardBackground,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            assetPath,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            filterQuality: FilterQuality.high,
+          ),
+          Positioned(
+            left: 16,
+            bottom: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.campaign_rounded, color: Colors.white, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Place your ad · admin@coreflow.com',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  Future<void> _openAdUrl(String url) async {
+    if (url.isEmpty) return;
+    try {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } catch (_) {}
   }
 
   Widget _buildSkeletonLayout() {
@@ -284,31 +337,32 @@ class _DashboardViewState extends State<_DashboardView> {
       actions: [
         IconButton(
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const NotificationPage()),
-            );
+            if (vm.companyId != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => NotificationPage(companyId: vm.companyId!),
+                ),
+              ).then((_) => vm.refreshUnreadCount());
+            }
           },
-          icon: Icon(
-            Icons.notifications_none_outlined,
-            color: LoginColors.textPrimary,
-            size: 26,
+          icon: Badge(
+            isLabelVisible: vm.unreadNotificationCount > 0,
+            label: Text(
+              vm.unreadNotificationCount > 99
+                  ? '99+'
+                  : vm.unreadNotificationCount.toString(),
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+            ),
+            child: Icon(
+              Icons.notifications_none_outlined,
+              color: LoginColors.textPrimary,
+              size: 26,
+            ),
           ),
         ),
         const SizedBox(width: 8),
       ],
-    );
-  }
-}
-
-class _BlankAdPage extends StatelessWidget {
-  const _BlankAdPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: LoginColors.background,
-      body: const SizedBox.expand(),
     );
   }
 }

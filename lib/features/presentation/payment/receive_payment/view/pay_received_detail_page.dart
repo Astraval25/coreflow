@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:coreflow/core/utils/payment_share_helper.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
@@ -734,13 +737,39 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
                       ),
                       Divider(height: 1, color: LoginColors.borderLight),
                       _ActionTile(
-                        icon: Icons.image_rounded,
-                        label: 'Share as Image',
-                        color: LoginColors.primary,
-                        onTap: () {
+                        icon: Icons.attachment_rounded,
+                        label: 'Share Proof with Text',
+                        color: widget.payment.paymentProofFile != null &&
+                                widget.payment.paymentProofFile!.isNotEmpty
+                            ? LoginColors.primary
+                            : LoginColors.textSecondary,
+                        onTap: () async {
                           setState(() => _shareExpanded = false);
-                          PaymentShareHelper.shareAsImage(
+                          final proofFile = widget.payment.paymentProofFile;
+                          if (proofFile == null || proofFile.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('No proof attached to share'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                            return;
+                          }
+                          final bytes = await widget.vm.fetchProofBytes();
+                          if (bytes == null || bytes.isEmpty) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Unable to load proof file'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                            return;
+                          }
+                          PaymentShareHelper.shareProofWithText(
                             widget.payment,
+                            bytes,
                             isSent: false,
                           );
                         },
@@ -1034,7 +1063,7 @@ class _ProofCardState extends State<_ProofCard> {
   }
 
   Widget _buildAction() {
-    final fsId = widget.vm.paymentDetail?.fsId;
+    final fsId = widget.vm.paymentDetail?.paymentProofFile;
     final hasProof = fsId != null && fsId.isNotEmpty;
 
     if (!hasProof) {
@@ -1090,8 +1119,39 @@ class _ProofViewerPage extends StatelessWidget {
         bytes[3] == 0x46;
   }
 
+  Future<void> _openPdf(BuildContext context) async {
+    try {
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/payment_proof.pdf');
+      await file.writeAsBytes(bytes);
+      await Share.shareXFiles([XFile(file.path)]);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to open PDF'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isPdf) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _openPdf(context);
+        Navigator.pop(context);
+      });
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -1108,43 +1168,22 @@ class _ProofViewerPage extends StatelessWidget {
           ),
         ],
       ),
-      body: _isPdf
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.picture_as_pdf_rounded,
-                      size: 64, color: Colors.white54),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'PDF proof attached',
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${(bytes.length / 1024).toStringAsFixed(1)} KB',
-                    style: const TextStyle(
-                        color: Colors.white38, fontSize: 13),
-                  ),
-                ],
-              ),
-            )
-          : InteractiveViewer(
-              minScale: 0.5,
-              maxScale: 5.0,
-              child: Center(
-                child: Image.memory(
-                  Uint8List.fromList(bytes),
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Center(
-                    child: Text(
-                      'Unable to display image',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                  ),
-                ),
+      body: InteractiveViewer(
+        minScale: 0.5,
+        maxScale: 5.0,
+        child: Center(
+          child: Image.memory(
+            Uint8List.fromList(bytes),
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Center(
+              child: Text(
+                'Unable to display image',
+                style: TextStyle(color: Colors.white70),
               ),
             ),
+          ),
+        ),
+      ),
     );
   }
 }

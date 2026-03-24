@@ -157,7 +157,7 @@ class _PaymentContentState extends State<_PaymentContent> {
   Widget _buildCreateButton() {
     final companyId =
         context.read<DashboardViewModel>().companyId;
-    return FloatingActionButton(
+    return FloatingActionButton.extended(
       backgroundColor: LoginColors.primary,
       foregroundColor: Colors.white,
       onPressed: () async {
@@ -172,7 +172,11 @@ class _PaymentContentState extends State<_PaymentContent> {
           context.read<SendPaymentViewModel>().refresh();
         }
       },
-      child: const Icon(Icons.add_rounded),
+      icon: const Icon(Icons.add_rounded),
+      label: const Text(
+        'Send Payment',
+        style: TextStyle(fontWeight: FontWeight.w700),
+      ),
     );
   }
 }

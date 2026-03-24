@@ -12,7 +12,8 @@ class PayReceivedCard extends StatelessWidget {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isCompact = screenWidth < 360;
     final badgeReserve = isCompact ? 92.0 : 120.0;
-    final statusColor = payment.isActive
+    final normalizedStatus = payment.paymentStatus.trim().toUpperCase();
+    final statusColor = normalizedStatus == 'PAID'
         ? LoginColors.success
         : LoginColors.error;
     final dateText = _formatDate(payment.paymentDate);

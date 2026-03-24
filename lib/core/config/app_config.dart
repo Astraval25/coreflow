@@ -313,4 +313,20 @@ class AppConfig {
       '$baseUrl${companyActivateEndpoint.replaceAll('{companyId}', companyId.toString())}';
   static String getCompanyDeactivateUrl(int companyId) =>
       '$baseUrl${companyDeactivateEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  // ─── Notifications ───
+  static String getNotificationsUrl(int companyId, {int page = 0}) =>
+      '$baseUrl/api/companies/$companyId/notifications?page=$page';
+
+  static String getUnreadCountUrl(int companyId) =>
+      '$baseUrl/api/companies/$companyId/notifications/unread-count';
+
+  static String getMarkReadUrl(int companyId, int notificationId) =>
+      '$baseUrl/api/companies/$companyId/notifications/$notificationId/read';
+
+  static String getMarkAllReadUrl(int companyId) =>
+      '$baseUrl/api/companies/$companyId/notifications/read-all';
+
+  // ─── Advertisements ───
+  static String get adsUrl => '$baseUrl/api/ads';
 }

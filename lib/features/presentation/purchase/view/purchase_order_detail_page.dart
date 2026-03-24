@@ -3,10 +3,13 @@ import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_item.dart';
+import 'package:coreflow/domain/model/vendors/vendors.dart';
+import 'package:coreflow/features/presentation/payment/send_payment/view/create_payment_sent_page.dart';
 import 'package:coreflow/features/presentation/purchase/viewmodel/purchase_order_detail_view_model.dart';
 import 'package:coreflow/features/presentation/purchase/view/update_purchase_order_page.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:provider/provider.dart';
 
 class PurchaseOrderDetailPage extends StatelessWidget {
@@ -763,7 +766,7 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
       case 'ORDER_VIEWED':
         return 'Mark as Invoiced';
       case 'ORDER_INVOICED':
-        return 'Mark as Paid';
+        return 'Record Payment';
       default:
         return null;
     }
@@ -776,7 +779,7 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
       case 'ORDER_VIEWED':
         return Icons.receipt_long_outlined;
       case 'ORDER_INVOICED':
-        return Icons.check_circle_outline_rounded;
+        return Icons.payments_rounded;
       default:
         return null;
     }
@@ -789,7 +792,7 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
       case 'ORDER_VIEWED':
         return 'invoiced';
       case 'ORDER_INVOICED':
-        return 'paid';
+        return 'record-payment';
       default:
         return null;
     }
@@ -802,15 +805,21 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
       case 'ORDER_VIEWED':
         return Colors.orange.shade700;
       case 'ORDER_INVOICED':
-        return LoginColors.success;
+        return LoginColors.primary;
       default:
         return LoginColors.primary;
     }
   }
 
-  Future<void> _doStatusAction() async {
-    final action = _statusAction;
+  bool get _canRevertStatus => widget.order.orderStatus == 'ORDER_INVOICED';
+
+  Future<void> _doStatusAction([String? overrideAction]) async {
+    final action = overrideAction ?? _statusAction;
     if (action == null) return;
+    if (action == 'record-payment') {
+      await _navigateToSendPayment();
+      return;
+    }
     final success = await widget.vm.updateStatus(action);
     if (!success && mounted && widget.vm.statusError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -819,6 +828,47 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
           behavior: SnackBarBehavior.floating,
         ),
       );
+    }
+  }
+
+  Future<void> _navigateToSendPayment() async {
+    final order = widget.order;
+    final displayName = order.vendorDisplayName.trim().isNotEmpty
+        ? order.vendorDisplayName
+        : order.vendorName.trim().isNotEmpty
+            ? order.vendorName
+            : 'Vendor';
+    final companyName = order.sellerCompanyName.trim().isNotEmpty
+        ? order.sellerCompanyName
+        : order.buyerCompanyName;
+    final companyId =
+        order.sellerCompanyId > 0 ? order.sellerCompanyId : null;
+    final pending =
+        order.pendingAmount < 0 ? 0.0 : order.pendingAmount;
+
+    final vendor = Vendor(
+      vendorId: order.vendorId,
+      displayName: displayName,
+      vendorCompanyName: companyName,
+      vendorCompanyId: companyId,
+      dueAmount: pending.toStringAsFixed(2),
+      isActive: true,
+    );
+
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreatePaymentSentPage(
+          companyId: widget.vm.companyId,
+          initialVendor: vendor,
+          initialOrderId: order.orderId,
+          initialAmount: pending > 0 ? pending : null,
+        ),
+      ),
+    );
+
+    if (mounted) {
+      widget.vm.refresh();
     }
   }
 
@@ -966,6 +1016,43 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
             ],
           ],
         ),
+
+        // Revert status button
+        if (_canRevertStatus) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 40,
+            child: OutlinedButton.icon(
+              onPressed: widget.vm.isStatusUpdating
+                  ? null
+                  : () => _doStatusAction('viewed'),
+              icon: widget.vm.isStatusUpdating
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(Icons.undo_rounded, size: 16),
+              label: const Text(
+                'Revert to Viewed',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.grey.shade600,
+                side: BorderSide(
+                  color: Colors.grey.shade600.withValues(alpha: 0.4),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -1101,10 +1188,10 @@ String _displaySellerCompany(PurchaseOrderDetail order) {
   if (order.sellerCompanyName.trim().isNotEmpty) {
     return order.sellerCompanyName;
   }
-  if (order.buyerCompanyName.trim().isNotEmpty) {
-    return order.buyerCompanyName;
-  }
-  return 'Company';
+  // if (order.buyerCompanyName.trim().isNotEmpty) {
+  //   return order.buyerCompanyName;
+  // }
+  return ' ';
 }
 
 String _orderLabel(PurchaseOrderDetail order) {

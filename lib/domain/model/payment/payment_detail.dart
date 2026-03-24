@@ -17,7 +17,7 @@ class PaymentDetail {
   final String referenceNumber;
   final String notes;
   final bool isActive;
-  final String? fsId;
+  final String? paymentProofFile;
 
   PaymentDetail({
     required this.paymentId,
@@ -35,7 +35,7 @@ class PaymentDetail {
     required this.referenceNumber,
     required this.notes,
     required this.isActive,
-    this.fsId,
+    this.paymentProofFile,
   }) : _orderAllocations = orderAllocations;
 
   List<PaymentOrderAllocation> get orderAllocations =>
@@ -61,9 +61,13 @@ class PaymentDetail {
       referenceNumber: json['referenceNumber']?.toString() ?? '',
       notes: json['notes']?.toString() ?? '',
       isActive: _asBool(json['isActive']),
-      fsId: json['fsId']?.toString(),
+      paymentProofFile: json['paymentProofFile']?.toString() ??
+          json['fsId']?.toString(),
     );
   }
+
+  @Deprecated('Use paymentProofFile instead.')
+  String? get fsId => paymentProofFile;
 
   static int _asInt(dynamic value) {
     if (value is int) return value;

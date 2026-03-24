@@ -26,18 +26,35 @@ class CustomerMappedItem {
   });
 
   factory CustomerMappedItem.fromJson(Map<String, dynamic> json) {
+    return CustomerMappedItem._fromJson(json, preferPurchase: false);
+  }
+
+  factory CustomerMappedItem.fromVendorJson(Map<String, dynamic> json) {
+    return CustomerMappedItem._fromJson(json, preferPurchase: true);
+  }
+
+  factory CustomerMappedItem._fromJson(
+    Map<String, dynamic> json, {
+    required bool preferPurchase,
+  }) {
+    final salesPrice = _toDouble(json['salesPrice']);
+    final purchasePrice = _toDouble(json['purchasePrice']);
+    final salesDescription = _toStringOrNull(json['salesDescription']);
+    final purchaseDescription = _toStringOrNull(
+      json['purchaseDescription'],
+    );
+
     return CustomerMappedItem(
       itemId: _toInt(json['itemId']),
       itemName: (json['itemName'] ?? '').toString(),
       itemType: (json['itemType'] ?? '').toString(),
       unit: (json['unit'] ?? '').toString(),
-      salesPrice:
-          _toDouble(json['salesPrice']) ??
-          _toDouble(json['purchasePrice']) ??
-          0,
-      salesDescription:
-          _toStringOrNull(json['salesDescription']) ??
-          _toStringOrNull(json['purchaseDescription']),
+      salesPrice: preferPurchase
+          ? (purchasePrice ?? salesPrice ?? 0)
+          : (salesPrice ?? purchasePrice ?? 0),
+      salesDescription: preferPurchase
+          ? (purchaseDescription ?? salesDescription)
+          : (salesDescription ?? purchaseDescription),
       hsnCode: _toStringOrNull(json['hsnCode']),
       taxRate: _toDouble(json['taxRate']),
       isActive: json['isActive'] == true,

@@ -44,7 +44,7 @@ class PaymentDetailsRequest {
       if (paymentRemarks != null && paymentRemarks!.trim().isNotEmpty)
         'paymentRemarks': paymentRemarks!.trim(),
       if (fsId != null && fsId!.trim().isNotEmpty)
-        'fsId': fsId!.trim(),
+        'paymentProofFsId': fsId!.trim(),
       'orderAllocations':
           orderAllocations.map((a) => a.toJson()).toList(),
     };

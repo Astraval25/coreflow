@@ -725,12 +725,9 @@ class SettingsMenuItem extends StatelessWidget {
         onTap: () {
           vm.setSelectedMenu('/settings');
           Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Settings - Coming soon'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          if (!currentLocation.startsWith('/settings')) {
+            context.go('/settings');
+          }
         },
       ),
     );
