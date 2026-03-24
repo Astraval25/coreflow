@@ -15,6 +15,7 @@ import 'package:coreflow/features/resend_otp/view/resend_otp_sreen.dart';
 import 'package:coreflow/features/vendor/view/vendor_create_page.dart';
 import 'package:coreflow/features/vendor/view/vendor_detail_page.dart';
 import 'package:coreflow/features/vendor/view/vendor_edit_page.dart';
+import 'package:coreflow/features/company/view/manage_companies_page.dart';
 import 'package:coreflow/features/marketplace/view/marketplace_page.dart';
 import 'package:coreflow/features/marketplace/view/company_profile_page.dart';
 import 'package:coreflow/features/vendor/view/vendor_page.dart';
@@ -89,6 +90,10 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/pay-received',
           builder: (context, state) => const PayReceivedPage(),
+        ),
+        GoRoute(
+          path: '/manage-companies',
+          builder: (context, state) => const ManageCompaniesPage(),
         ),
         // Customers route inside shell
         GoRoute(

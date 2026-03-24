@@ -12,6 +12,13 @@ class AppConfig {
   static const String companyEndpoint = '/api/companies/my-companies';
   static const String allCompaniesEndpoint = '/api/companies';
   static const String refreshTokenEndpoint = '/api/auth/refresh-token';
+
+  // Company CRUD endpoints
+  static const String companyDetailEndpoint = '/api/companies/{companyId}';
+  static const String companyActivateEndpoint =
+      '/api/companies/{companyId}/activate';
+  static const String companyDeactivateEndpoint =
+      '/api/companies/{companyId}/deactivate';
   static const String customersEndpoint =
       '/api/companies/{companyId}/customers';
   static const String customerDetailEndpoint =
@@ -297,4 +304,13 @@ class AppConfig {
 
   static String getAcceptInvitationUrl(int companyId, String invitationCode) =>
       '$baseUrl${acceptInvitationEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{invitationCode}', invitationCode)}';
+
+  // Company CRUD URLs
+  static String get createCompanyUrl => '$baseUrl$allCompaniesEndpoint';
+  static String getCompanyDetailUrl(int companyId) =>
+      '$baseUrl${companyDetailEndpoint.replaceAll('{companyId}', companyId.toString())}';
+  static String getCompanyActivateUrl(int companyId) =>
+      '$baseUrl${companyActivateEndpoint.replaceAll('{companyId}', companyId.toString())}';
+  static String getCompanyDeactivateUrl(int companyId) =>
+      '$baseUrl${companyDeactivateEndpoint.replaceAll('{companyId}', companyId.toString())}';
 }

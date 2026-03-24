@@ -1,6 +1,7 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class CompanyHeader extends StatelessWidget {
   final DashboardViewModel vm;
@@ -41,7 +42,7 @@ class CompanyHeader extends StatelessWidget {
   Widget _buildIconTapArea(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: _canChangeCompany ? () => _showCompaniesBottomSheet(context) : null,
+      onTap: _canChangeCompany ? () => _showManageCompanyDialog(context) : null,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -74,7 +75,7 @@ class CompanyHeader extends StatelessWidget {
   Widget _buildCompanyText(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(8),
-      onTap: _canChangeCompany ? () => _showCompaniesBottomSheet(context) : null,
+      onTap: _canChangeCompany ? () => _showManageCompanyDialog(context) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -115,10 +116,10 @@ class CompanyHeader extends StatelessWidget {
 
   Widget _buildArrowTapArea(BuildContext context) {
     if (!_canChangeCompany) return const SizedBox.shrink();
-    
+
     return InkWell(
       borderRadius: BorderRadius.circular(12),
-      onTap: () => _showCompaniesBottomSheet(context),
+      onTap: () => _showManageCompanyDialog(context),
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
@@ -134,20 +135,20 @@ class CompanyHeader extends StatelessWidget {
     );
   }
 
-  void _showCompaniesBottomSheet(BuildContext context) {
+  void _showManageCompanyDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => _CompaniesBottomSheet(vm: vm),
+      builder: (context) => _ManageCompanyBottomSheet(vm: vm),
     );
   }
 }
 
-class _CompaniesBottomSheet extends StatelessWidget {
+class _ManageCompanyBottomSheet extends StatelessWidget {
   final DashboardViewModel vm;
 
-  const _CompaniesBottomSheet({required this.vm});
+  const _ManageCompanyBottomSheet({required this.vm});
 
   @override
   Widget build(BuildContext context) {
@@ -172,14 +173,52 @@ class _CompaniesBottomSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          Text(
-            'Select Company',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: LoginColors.textPrimary,
-              letterSpacing: -0.5,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Manage Company',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: LoginColors.textPrimary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  Navigator.pop(context);
+                  context.push('/manage-companies');
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: LoginColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.settings_rounded,
+                        size: 16,
+                        color: LoginColors.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Manage',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: LoginColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
           if (vm.isCompaniesLoading)
@@ -204,7 +243,7 @@ class _CompaniesBottomSheet extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final company = vm.availableCompanies[index];
                   final isSelected = company.companyId == vm.companyId;
-                  
+
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
@@ -238,9 +277,24 @@ class _CompaniesBottomSheet extends StatelessWidget {
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
-                      trailing: isSelected 
+                      subtitle: isSelected
+                          ? Text(
+                              'Currently active',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: LoginColors.primary.withOpacity(0.7),
+                              ),
+                            )
+                          : Text(
+                              'Tap to switch',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: LoginColors.textTertiary,
+                              ),
+                            ),
+                      trailing: isSelected
                         ? const Icon(Icons.check_circle_rounded, color: LoginColors.primary, size: 22)
-                        : null,
+                        : Icon(Icons.arrow_forward_ios_rounded, size: 14, color: LoginColors.textTertiary),
                       onTap: () {
                         vm.selectCompany(company);
                         Navigator.pop(context);

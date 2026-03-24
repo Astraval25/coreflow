@@ -1,6 +1,7 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/theme/theme_provider.dart';
 import 'package:coreflow/core/share_intent/share_intent_handler.dart';
+import 'package:coreflow/core/widgets/company_switch_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -80,6 +81,10 @@ class _MainLayoutState extends State<MainLayout> {
     final useFixedDesktopSidebar =
         screenSize.width >= _desktopFrameWidth &&
         screenSize.height >= _desktopFrameHeight;
+
+    if (vm.isSwitchingCompany) {
+      return CompanySwitchLoading(companyName: vm.companyName ?? 'Company');
+    }
 
     return Scaffold(
       key: _scaffoldKey,

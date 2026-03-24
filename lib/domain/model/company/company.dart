@@ -3,6 +3,9 @@ class Company {
   final String companyName;
   final String industry;
   final String? shortName;
+  final String? pan;
+  final String? gstNo;
+  final String? hsnCode;
   final bool isActive;
 
   Company({
@@ -10,6 +13,9 @@ class Company {
     required this.companyName,
     required this.industry,
     this.shortName,
+    this.pan,
+    this.gstNo,
+    this.hsnCode,
     required this.isActive,
   });
 
@@ -19,6 +25,9 @@ class Company {
       companyName: json['companyName'] ?? '',
       industry: json['industry'] ?? '',
       shortName: json['shortName'],
+      pan: json['pan'],
+      gstNo: json['gstNo'],
+      hsnCode: json['hsnCode'],
       isActive: json['isActive'] ?? false,
     );
   }
@@ -29,7 +38,32 @@ class Company {
       'companyName': companyName,
       'industry': industry,
       'shortName': shortName,
+      'pan': pan,
+      'gstNo': gstNo,
+      'hsnCode': hsnCode,
       'isActive': isActive,
+    };
+  }
+
+  Map<String, dynamic> toCreateJson() {
+    return {
+      'companyName': companyName,
+      'industry': industry,
+      'pan': pan,
+      'gstNo': gstNo,
+      'hsnCode': hsnCode,
+      'shortName': shortName,
+    };
+  }
+
+  Map<String, dynamic> toUpdateJson() {
+    return {
+      'companyName': companyName,
+      'industry': industry,
+      'pan': pan,
+      'gstNo': gstNo,
+      'hsnCode': hsnCode,
+      'shortName': shortName,
     };
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/storage/token_storage.dart';
 import '../../../domain/model/company/company.dart';
 import '../../../data/repositories/auth_repository.dart';
 
@@ -14,6 +15,8 @@ class DashboardViewModel extends ChangeNotifier {
 
   List<Company> _availableCompanies = [];
   bool _isCompaniesLoading = false;
+
+  bool _isSwitchingCompany = false;
 
   bool _isCustomersExpanded = false;
   String _selectedMenu = 'badges';
@@ -31,6 +34,7 @@ class DashboardViewModel extends ChangeNotifier {
 
   List<Company> get availableCompanies => _availableCompanies;
   bool get isCompaniesLoading => _isCompaniesLoading;
+  bool get isSwitchingCompany => _isSwitchingCompany;
 
   bool get isCustomersExpanded => _isCustomersExpanded;
   String get selectedMenu => _selectedMenu;
@@ -76,9 +80,15 @@ class DashboardViewModel extends ChangeNotifier {
     await loadCompanies(force: true);
   }
 
-  void selectCompany(Company company) {
+  Future<void> selectCompany(Company company) async {
+    if (company.companyId == _companyId) return;
     _companyName = company.companyName;
     _companyId = company.companyId;
+    _isSwitchingCompany = true;
+    notifyListeners();
+    TokenStorage.saveSelectedCompany(company.companyId, company.companyName);
+    await Future.delayed(const Duration(seconds: 5));
+    _isSwitchingCompany = false;
     notifyListeners();
   }
 

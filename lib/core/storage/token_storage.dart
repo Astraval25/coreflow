@@ -102,6 +102,13 @@ class TokenStorage {
     return token != null;
   }
 
+  static Future<void> saveSelectedCompany(int companyId, String companyName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_companyIdKey, companyId);
+    await prefs.setString(_companyNameKey, companyName);
+    debugPrint('Saved selected company: $companyId - $companyName');
+  }
+
   static Future<void> clearAllData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
