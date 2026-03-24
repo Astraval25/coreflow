@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/payment/payment_detail.dart';
 import 'package:coreflow/features/presentation/payment/receive_payment/viewmodel/receive_payment_detail_view_model.dart';
 import 'package:coreflow/features/presentation/payment/receive_payment/view/update_receive_payment_page.dart';
@@ -161,6 +162,8 @@ class _PayReceivedDetailView extends StatelessWidget {
       children: [
         _MetaCard(payment: payment),
         const SizedBox(height: 10),
+        _PaymentRefCard(paymentRef: vm.paymentRef, vm: vm),
+        const SizedBox(height: 10),
         _TransferCard(payment: payment),
         if (payment.orderAllocations.isNotEmpty) ...[
           const SizedBox(height: 10),
@@ -288,7 +291,7 @@ class _MetaCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Payment ID: $paymentLabel',
+            'Payment: ${payment.platformRef?.isNotEmpty == true ? payment.platformRef! : paymentLabel}',
             style: TextStyle(
               color: LoginColors.textPrimary,
               fontSize: 14,
@@ -356,6 +359,250 @@ class _MetaText extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PaymentRefCard extends StatefulWidget {
+  final PaymentRef? paymentRef;
+  final ReceivePaymentDetailViewModel vm;
+
+  const _PaymentRefCard({required this.paymentRef, required this.vm});
+
+  @override
+  State<_PaymentRefCard> createState() => _PaymentRefCardState();
+}
+
+class _PaymentRefCardState extends State<_PaymentRefCard> {
+  bool _editing = false;
+  late TextEditingController _remarksCtrl;
+  late TextEditingController _statusCtrl;
+  late TextEditingController _customRefCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _remarksCtrl = TextEditingController(text: widget.paymentRef?.internalRemarks ?? '');
+    _statusCtrl = TextEditingController(text: widget.paymentRef?.internalStatus ?? '');
+    _customRefCtrl = TextEditingController(text: widget.paymentRef?.customReference ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant _PaymentRefCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_editing && oldWidget.paymentRef != widget.paymentRef) {
+      _remarksCtrl.text = widget.paymentRef?.internalRemarks ?? '';
+      _statusCtrl.text = widget.paymentRef?.internalStatus ?? '';
+      _customRefCtrl.text = widget.paymentRef?.customReference ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _remarksCtrl.dispose();
+    _statusCtrl.dispose();
+    _customRefCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final body = <String, dynamic>{};
+    final remarks = _remarksCtrl.text.trim();
+    final status = _statusCtrl.text.trim();
+    final customRef = _customRefCtrl.text.trim();
+
+    if (remarks.isNotEmpty) body['internalRemarks'] = remarks;
+    if (status.isNotEmpty) body['internalStatus'] = status;
+    if (customRef.isNotEmpty) body['customReference'] = customRef;
+
+    final success = await widget.vm.updatePaymentRef(body);
+    if (mounted) {
+      setState(() => _editing = false);
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update reference'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = widget.paymentRef;
+    final localNumber = ref?.localPaymentNumber ?? '';
+
+    return _CardBlock(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Company Reference',
+                  style: TextStyle(
+                    color: LoginColors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (!_editing)
+                InkWell(
+                  onTap: () => setState(() => _editing = true),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(Icons.edit_rounded, size: 16, color: LoginColors.primary),
+                  ),
+                ),
+            ],
+          ),
+          if (localNumber.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(Icons.numbers_rounded, size: 12, color: LoginColors.textSecondary),
+                const SizedBox(width: 4),
+                Text(
+                  localNumber,
+                  style: TextStyle(
+                    color: LoginColors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (_editing) ...[
+            const SizedBox(height: 10),
+            _RefTextField(controller: _remarksCtrl, label: 'Internal Remarks'),
+            const SizedBox(height: 8),
+            _RefTextField(controller: _statusCtrl, label: 'Internal Status'),
+            const SizedBox(height: 8),
+            _RefTextField(controller: _customRefCtrl, label: 'Custom Reference'),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    setState(() => _editing = false);
+                    _remarksCtrl.text = widget.paymentRef?.internalRemarks ?? '';
+                    _statusCtrl.text = widget.paymentRef?.internalStatus ?? '';
+                    _customRefCtrl.text = widget.paymentRef?.customReference ?? '';
+                  },
+                  child: const Text('Cancel', style: TextStyle(fontSize: 12)),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: widget.vm.isRefUpdating ? null : _save,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: LoginColors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: widget.vm.isRefUpdating
+                      ? const SizedBox(
+                          width: 14, height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Save', style: TextStyle(fontSize: 12, color: Colors.white)),
+                ),
+              ],
+            ),
+          ] else ...[
+            if (_hasRefData(ref)) ...[
+              const SizedBox(height: 8),
+              if (ref!.internalRemarks != null && ref.internalRemarks!.isNotEmpty)
+                _RefDisplayRow(label: 'Remarks', value: ref.internalRemarks!),
+              if (ref.internalStatus != null && ref.internalStatus!.isNotEmpty)
+                _RefDisplayRow(label: 'Status', value: ref.internalStatus!),
+              if (ref.customReference != null && ref.customReference!.isNotEmpty)
+                _RefDisplayRow(label: 'Custom Ref', value: ref.customReference!),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  bool _hasRefData(PaymentRef? ref) {
+    if (ref == null) return false;
+    return (ref.internalRemarks?.isNotEmpty == true) ||
+        (ref.internalStatus?.isNotEmpty == true) ||
+        (ref.customReference?.isNotEmpty == true);
+  }
+}
+
+class _RefTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+
+  const _RefTextField({required this.controller, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      style: TextStyle(fontSize: 12, color: LoginColors.textPrimary),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(fontSize: 11, color: LoginColors.textSecondary),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: LoginColors.borderLight),
+        ),
+      ),
+    );
+  }
+}
+
+class _RefDisplayRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _RefDisplayRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                color: LoginColors.textSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: LoginColors.textPrimary,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1191,9 +1438,10 @@ class _ProofViewerPage extends StatelessWidget {
 String _money(double value) => 'INR ${value.toStringAsFixed(2)}';
 
 String _paymentLabel(PaymentDetail payment) {
-  return payment.paymentNumber.trim().isNotEmpty
-      ? payment.paymentNumber
-      : payment.paymentId.toString();
+  if (payment.platformRef != null && payment.platformRef!.trim().isNotEmpty) {
+    return payment.platformRef!;
+  }
+  return '#${payment.paymentId}';
 }
 
 String _orderLabel(PaymentOrderAllocation allocation) {

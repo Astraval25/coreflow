@@ -1,4 +1,5 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/domain/model/company_ref/order_ref.dart';
 import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
     as sales_detail;
 import 'package:coreflow/domain/model/sales/sales_order_item.dart'
@@ -22,15 +23,19 @@ class SalesOrderDetailViewModel extends ChangeNotifier {
 
   SalesOrderDetailState _state = SalesOrderDetailState.initial;
   sales_detail.SalesOrderDetail? _orderDetail;
+  OrderRef? _orderRef;
   String? _errorMessage;
   bool _isDisposed = false;
   bool _isStatusUpdating = false;
   String? _statusError;
+  bool _isRefUpdating = false;
 
   SalesOrderDetailState get state => _state;
   bool get isStatusUpdating => _isStatusUpdating;
   String? get statusError => _statusError;
   sales_detail.SalesOrderDetail? get orderDetail => _orderDetail;
+  OrderRef? get orderRef => _orderRef;
+  bool get isRefUpdating => _isRefUpdating;
 
   sales_detail.SalesOrderDetail? get order => _orderDetail;
 
@@ -70,12 +75,40 @@ class SalesOrderDetailViewModel extends ChangeNotifier {
 
       _orderDetail = data;
       _updateState(SalesOrderDetailState.loaded);
+      _loadOrderRef();
     } catch (e, stack) {
       debugPrint('loadOrderDetail failed: $e\n$stack');
       _updateState(
         SalesOrderDetailState.error,
         error: 'Failed to load sales order detail.',
       );
+    }
+  }
+
+  Future<void> _loadOrderRef() async {
+    try {
+      _orderRef = await _repository.getOrderRef(companyId, orderId);
+      _notifyListenersSafely();
+    } catch (e) {
+      debugPrint('loadOrderRef failed: $e');
+    }
+  }
+
+  Future<bool> updateOrderRef(Map<String, dynamic> body) async {
+    _isRefUpdating = true;
+    _notifyListenersSafely();
+    try {
+      final success = await _repository.updateOrderRef(companyId, orderId, body);
+      if (success) {
+        await _loadOrderRef();
+      }
+      return success;
+    } catch (e) {
+      debugPrint('updateOrderRef failed: $e');
+      return false;
+    } finally {
+      _isRefUpdating = false;
+      _notifyListenersSafely();
     }
   }
 

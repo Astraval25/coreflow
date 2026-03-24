@@ -44,9 +44,9 @@ class PurchaseOrderCard extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.only(right: badgeReserve),
                   child: Text(
-                    order.orderNumber.isEmpty
-                        ? '#${order.orderId}'
-                        : order.orderNumber,
+                    order.platformRef?.isNotEmpty == true
+                        ? order.platformRef!
+                        : '#${order.orderId}',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 15,

@@ -1,4 +1,5 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/payment/payment_detail.dart';
 import 'package:flutter/foundation.dart';
 
@@ -19,16 +20,20 @@ class SendPaymentDetailViewModel extends ChangeNotifier {
 
   SendPaymentDetailState _state = SendPaymentDetailState.initial;
   PaymentDetail? _paymentDetail;
+  PaymentRef? _paymentRef;
   String? _errorMessage;
   bool _isDisposed = false;
   bool _isStatusUpdating = false;
   String? _statusError;
+  bool _isRefUpdating = false;
 
   SendPaymentDetailState get state => _state;
   PaymentDetail? get paymentDetail => _paymentDetail;
+  PaymentRef? get paymentRef => _paymentRef;
   String? get errorMessage => _errorMessage;
   bool get isStatusUpdating => _isStatusUpdating;
   String? get statusError => _statusError;
+  bool get isRefUpdating => _isRefUpdating;
 
   bool get isLoading => _state == SendPaymentDetailState.loading;
   bool get hasData => _state == SendPaymentDetailState.loaded;
@@ -52,12 +57,40 @@ class SendPaymentDetailViewModel extends ChangeNotifier {
 
       _paymentDetail = data;
       _updateState(SendPaymentDetailState.loaded);
+      _loadPaymentRef();
     } catch (e, stack) {
       debugPrint('loadPaymentDetail failed: $e\n$stack');
       _updateState(
         SendPaymentDetailState.error,
         error: 'Failed to load payment detail.',
       );
+    }
+  }
+
+  Future<void> _loadPaymentRef() async {
+    try {
+      _paymentRef = await _repository.getPaymentRef(companyId, paymentId);
+      _notifyListenersSafely();
+    } catch (e) {
+      debugPrint('loadPaymentRef failed: $e');
+    }
+  }
+
+  Future<bool> updatePaymentRef(Map<String, dynamic> body) async {
+    _isRefUpdating = true;
+    _notifyListenersSafely();
+    try {
+      final success = await _repository.updatePaymentRef(companyId, paymentId, body);
+      if (success) {
+        await _loadPaymentRef();
+      }
+      return success;
+    } catch (e) {
+      debugPrint('updatePaymentRef failed: $e');
+      return false;
+    } finally {
+      _isRefUpdating = false;
+      _notifyListenersSafely();
     }
   }
 

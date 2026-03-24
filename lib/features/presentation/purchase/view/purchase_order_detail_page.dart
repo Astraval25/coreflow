@@ -1,6 +1,7 @@
 import 'package:coreflow/core/utils/order_share_helper.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/domain/model/company_ref/order_ref.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_item.dart';
 import 'package:coreflow/domain/model/vendors/vendors.dart';
@@ -150,6 +151,8 @@ class _PurchaseOrderDetailView extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 8, 14, 20),
       children: [
         _CustomerDetailsCard(order: order),
+        const SizedBox(height: 10),
+        _CompanyRefCard(orderRef: vm.orderRef, vm: vm),
         const SizedBox(height: 10),
         _ItemDetailsCard(items: items, companyId: vm.companyId),
         const SizedBox(height: 10),
@@ -397,6 +400,262 @@ class _MetaText extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CompanyRefCard extends StatefulWidget {
+  final OrderRef? orderRef;
+  final PurchaseOrderDetailViewModel vm;
+
+  const _CompanyRefCard({required this.orderRef, required this.vm});
+
+  @override
+  State<_CompanyRefCard> createState() => _CompanyRefCardState();
+}
+
+class _CompanyRefCardState extends State<_CompanyRefCard> {
+  bool _editing = false;
+  late TextEditingController _remarksCtrl;
+  late TextEditingController _statusCtrl;
+  late TextEditingController _tagsCtrl;
+  late TextEditingController _customRefCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _remarksCtrl = TextEditingController(text: widget.orderRef?.internalRemarks ?? '');
+    _statusCtrl = TextEditingController(text: widget.orderRef?.internalStatus ?? '');
+    _tagsCtrl = TextEditingController(text: widget.orderRef?.internalTags ?? '');
+    _customRefCtrl = TextEditingController(text: widget.orderRef?.customReference ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant _CompanyRefCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_editing && oldWidget.orderRef != widget.orderRef) {
+      _remarksCtrl.text = widget.orderRef?.internalRemarks ?? '';
+      _statusCtrl.text = widget.orderRef?.internalStatus ?? '';
+      _tagsCtrl.text = widget.orderRef?.internalTags ?? '';
+      _customRefCtrl.text = widget.orderRef?.customReference ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _remarksCtrl.dispose();
+    _statusCtrl.dispose();
+    _tagsCtrl.dispose();
+    _customRefCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final body = <String, dynamic>{};
+    final remarks = _remarksCtrl.text.trim();
+    final status = _statusCtrl.text.trim();
+    final tags = _tagsCtrl.text.trim();
+    final customRef = _customRefCtrl.text.trim();
+
+    if (remarks.isNotEmpty) body['internalRemarks'] = remarks;
+    if (status.isNotEmpty) body['internalStatus'] = status;
+    if (tags.isNotEmpty) body['internalTags'] = tags;
+    if (customRef.isNotEmpty) body['customReference'] = customRef;
+
+    final success = await widget.vm.updateOrderRef(body);
+    if (mounted) {
+      setState(() => _editing = false);
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update reference'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = widget.orderRef;
+    final localNumber = ref?.localOrderNumber ?? '';
+
+    return _CardBlock(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Company Reference',
+                  style: TextStyle(
+                    color: LoginColors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (!_editing)
+                InkWell(
+                  onTap: () => setState(() => _editing = true),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(Icons.edit_rounded, size: 16, color: LoginColors.primary),
+                  ),
+                ),
+            ],
+          ),
+          if (localNumber.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(Icons.numbers_rounded, size: 12, color: LoginColors.textSecondary),
+                const SizedBox(width: 4),
+                Text(
+                  localNumber,
+                  style: TextStyle(
+                    color: LoginColors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (_editing) ...[
+            const SizedBox(height: 10),
+            _RefTextField(controller: _remarksCtrl, label: 'Internal Remarks'),
+            const SizedBox(height: 8),
+            _RefTextField(controller: _statusCtrl, label: 'Internal Status'),
+            const SizedBox(height: 8),
+            _RefTextField(controller: _tagsCtrl, label: 'Tags (comma-separated)'),
+            const SizedBox(height: 8),
+            _RefTextField(controller: _customRefCtrl, label: 'Custom Reference'),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    setState(() => _editing = false);
+                    _remarksCtrl.text = widget.orderRef?.internalRemarks ?? '';
+                    _statusCtrl.text = widget.orderRef?.internalStatus ?? '';
+                    _tagsCtrl.text = widget.orderRef?.internalTags ?? '';
+                    _customRefCtrl.text = widget.orderRef?.customReference ?? '';
+                  },
+                  child: const Text('Cancel', style: TextStyle(fontSize: 12)),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: widget.vm.isRefUpdating ? null : _save,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: LoginColors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: widget.vm.isRefUpdating
+                      ? const SizedBox(
+                          width: 14, height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Save', style: TextStyle(fontSize: 12, color: Colors.white)),
+                ),
+              ],
+            ),
+          ] else ...[
+            if (_hasRefData(ref)) ...[
+              const SizedBox(height: 8),
+              if (ref!.internalRemarks != null && ref.internalRemarks!.isNotEmpty)
+                _RefDisplayRow(label: 'Remarks', value: ref.internalRemarks!),
+              if (ref.internalStatus != null && ref.internalStatus!.isNotEmpty)
+                _RefDisplayRow(label: 'Status', value: ref.internalStatus!),
+              if (ref.internalTags != null && ref.internalTags!.isNotEmpty)
+                _RefDisplayRow(label: 'Tags', value: ref.internalTags!),
+              if (ref.customReference != null && ref.customReference!.isNotEmpty)
+                _RefDisplayRow(label: 'Custom Ref', value: ref.customReference!),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  bool _hasRefData(OrderRef? ref) {
+    if (ref == null) return false;
+    return (ref.internalRemarks?.isNotEmpty == true) ||
+        (ref.internalStatus?.isNotEmpty == true) ||
+        (ref.internalTags?.isNotEmpty == true) ||
+        (ref.customReference?.isNotEmpty == true);
+  }
+}
+
+class _RefTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+
+  const _RefTextField({required this.controller, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      style: TextStyle(fontSize: 12, color: LoginColors.textPrimary),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(fontSize: 11, color: LoginColors.textSecondary),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: LoginColors.borderLight),
+        ),
+      ),
+    );
+  }
+}
+
+class _RefDisplayRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _RefDisplayRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                color: LoginColors.textSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: LoginColors.textPrimary,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1195,9 +1454,10 @@ String _displaySellerCompany(PurchaseOrderDetail order) {
 }
 
 String _orderLabel(PurchaseOrderDetail order) {
-  return order.orderNumber.trim().isNotEmpty
-      ? order.orderNumber
-      : order.orderId.toString();
+  if (order.platformRef != null && order.platformRef!.trim().isNotEmpty) {
+    return order.platformRef!;
+  }
+  return '#${order.orderId}';
 }
 
 int _overdueDays(DateTime orderDate) {

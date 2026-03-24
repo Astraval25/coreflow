@@ -37,7 +37,9 @@ class PayReceivedCard extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.only(right: badgeReserve),
                   child: Text(
-                    paymentIdText,
+                    payment.platformRef?.isNotEmpty == true
+                        ? payment.platformRef!
+                        : paymentIdText,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 15,

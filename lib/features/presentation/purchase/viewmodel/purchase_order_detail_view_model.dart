@@ -1,4 +1,5 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/domain/model/company_ref/order_ref.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
 import 'package:flutter/foundation.dart';
 
@@ -19,16 +20,20 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
 
   PurchaseOrderDetailState _state = PurchaseOrderDetailState.initial;
   PurchaseOrderDetail? _orderDetail;
+  OrderRef? _orderRef;
   String? _errorMessage;
   bool _isDisposed = false;
   bool _isStatusUpdating = false;
   String? _statusError;
+  bool _isRefUpdating = false;
 
   PurchaseOrderDetailState get state => _state;
   PurchaseOrderDetail? get orderDetail => _orderDetail;
+  OrderRef? get orderRef => _orderRef;
   String? get errorMessage => _errorMessage;
   bool get isStatusUpdating => _isStatusUpdating;
   String? get statusError => _statusError;
+  bool get isRefUpdating => _isRefUpdating;
 
   bool get isLoading => _state == PurchaseOrderDetailState.loading;
   bool get hasData => _state == PurchaseOrderDetailState.loaded;
@@ -52,6 +57,7 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
 
       _orderDetail = data;
       _updateState(PurchaseOrderDetailState.loaded);
+      _loadOrderRef();
 
       if (data.orderStatus == 'ORDER') {
         _autoMarkViewed();
@@ -74,6 +80,33 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Auto mark viewed failed: $e');
+    }
+  }
+
+  Future<void> _loadOrderRef() async {
+    try {
+      _orderRef = await _repository.getOrderRef(companyId, orderId);
+      _notifyListenersSafely();
+    } catch (e) {
+      debugPrint('loadOrderRef failed: $e');
+    }
+  }
+
+  Future<bool> updateOrderRef(Map<String, dynamic> body) async {
+    _isRefUpdating = true;
+    _notifyListenersSafely();
+    try {
+      final success = await _repository.updateOrderRef(companyId, orderId, body);
+      if (success) {
+        await _loadOrderRef();
+      }
+      return success;
+    } catch (e) {
+      debugPrint('updateOrderRef failed: $e');
+      return false;
+    } finally {
+      _isRefUpdating = false;
+      _notifyListenersSafely();
     }
   }
 
