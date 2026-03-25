@@ -1449,12 +1449,7 @@ String _displaySellerCompany(PurchaseOrderDetail order) {
   return ' ';
 }
 
-String _orderLabel(PurchaseOrderDetail order) {
-  if (order.platformRef != null && order.platformRef!.trim().isNotEmpty) {
-    return order.platformRef!;
-  }
-  return '#${order.orderId}';
-}
+
 
 int _overdueDays(DateTime orderDate) {
   final now = DateTime.now();

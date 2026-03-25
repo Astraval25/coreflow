@@ -1436,13 +1436,6 @@ class _ProofViewerPage extends StatelessWidget {
 
 String _money(double value) => 'INR ${value.toStringAsFixed(2)}';
 
-String _paymentLabel(PaymentDetail payment) {
-  if (payment.platformRef != null && payment.platformRef!.trim().isNotEmpty) {
-    return payment.platformRef!;
-  }
-  return '#${payment.paymentId}';
-}
-
 String _orderLabel(PaymentOrderAllocation allocation) {
   return allocation.orderNumber.trim().isNotEmpty
       ? allocation.orderNumber

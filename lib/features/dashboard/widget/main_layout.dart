@@ -78,6 +78,7 @@ class _MainLayoutState extends State<MainLayout> {
     final vm = context.watch<DashboardViewModel>();
     _syncShareCompanyId(vm.companyId);
     final screenSize = MediaQuery.sizeOf(context);
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     final useFixedDesktopSidebar =
         screenSize.width >= _desktopFrameWidth &&
         screenSize.height >= _desktopFrameHeight;
@@ -107,9 +108,9 @@ class _MainLayoutState extends State<MainLayout> {
               ),
             )
           : Padding(
-              padding: const EdgeInsets.only(
-                bottom: 80,
-              ), // Reserve space for the floating nav bar
+              padding: EdgeInsets.only(
+                bottom: 80 + bottomInset,
+              ), // Reserve space for the floating nav bar + system nav
               child: widget.child,
             ),
       bottomNavigationBar: useFixedDesktopSidebar
@@ -120,8 +121,8 @@ class _MainLayoutState extends State<MainLayout> {
               tween: Tween<double>(begin: 0, end: selectedIndex.toDouble()),
               builder: (context, animValue, child) {
                 return Container(
-                  height: 90, // Slightly reduced height/compact
-                  padding: const EdgeInsets.only(bottom: 0),
+                  height: 90 + bottomInset, // Add safe area for 3-button nav
+                  padding: EdgeInsets.only(bottom: bottomInset),
                   child: Stack(
                     alignment: Alignment.bottomCenter,
                     children: [
