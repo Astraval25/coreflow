@@ -14,6 +14,7 @@ import 'package:coreflow/features/presentation/purchase/widgets/purchase_skeleto
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 class PurchasePage extends StatelessWidget {
   const PurchasePage({super.key});
@@ -73,38 +74,48 @@ class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
 
     return Consumer<PurchaseOrderViewModel>(
       builder: (context, vm, child) {
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: LoginColors.background,
-          drawerEnableOpenDragGesture: true,
-          drawer: AppDrawer(vm: dashboardVm),
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-          floatingActionButton: _buildCreateButton(),
-          appBar: SearchableEntityAppBar(
-            isSearchOpen: false,
-            onSearchToggle: () {},
-            searchQuery: '',
-            searchController: _disabledSearchController,
-            onSearchChanged: (_) {},
-            onClearSearch: () {},
-            scaffoldKey: _scaffoldKey,
-            title: '',
-            searchHint: '',
-            showSearchAction: false,
-            tabs: const [
-              SearchableEntityTab(label: 'Orders'),
-              SearchableEntityTab(label: 'Bills'),
-              SearchableEntityTab(label: 'Paid Orders'),
-            ],
-            selectedTabIndex: _selectedTopTab.index,
-            onTabSelected: (index) {
-              setState(() => _selectedTopTab = _PurchaseTopTab.values[index]);
-            },
+        return WillPopScope(
+          onWillPop: _handleWillPop,
+          child: Scaffold(
+            key: _scaffoldKey,
+            backgroundColor: LoginColors.background,
+            drawerEnableOpenDragGesture: false,
+            drawer: AppDrawer(vm: dashboardVm),
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.endFloat,
+            floatingActionButton: _buildCreateButton(),
+            appBar: SearchableEntityAppBar(
+              isSearchOpen: false,
+              onSearchToggle: () {},
+              searchQuery: '',
+              searchController: _disabledSearchController,
+              onSearchChanged: (_) {},
+              onClearSearch: () {},
+              scaffoldKey: _scaffoldKey,
+              title: '',
+              searchHint: '',
+              showSearchAction: false,
+              tabs: const [
+                SearchableEntityTab(label: 'Orders'),
+                SearchableEntityTab(label: 'Bills'),
+                SearchableEntityTab(label: 'Paid Orders'),
+              ],
+              selectedTabIndex: _selectedTopTab.index,
+              onTabSelected: (index) {
+                setState(() => _selectedTopTab = _PurchaseTopTab.values[index]);
+              },
+            ),
+            body:
+                RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
           ),
-          body: RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
         );
       },
     );
+  }
+
+  Future<bool> _handleWillPop() async {
+    context.go('/dashboard');
+    return false;
   }
 
   Widget _buildBody(PurchaseOrderViewModel vm) {

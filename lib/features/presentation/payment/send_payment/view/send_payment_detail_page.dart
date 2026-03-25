@@ -65,7 +65,10 @@ class _SendPaymentDetailView extends StatelessWidget {
                 ),
               ),
             ),
-            title: _PaymentAppBarTitle(payment: vm.paymentDetail),
+            title: _PaymentAppBarTitle(
+              payment: vm.paymentDetail,
+              paymentRef: vm.paymentRef,
+            ),
             leading: Padding(
               padding: const EdgeInsets.all(8),
               child: _RoundActionIcon(
@@ -162,8 +165,6 @@ class _SendPaymentDetailView extends StatelessWidget {
       children: [
         _MetaCard(payment: payment),
         const SizedBox(height: 10),
-        _PaymentRefCard(paymentRef: vm.paymentRef, vm: vm),
-        const SizedBox(height: 10),
         _TransferCard(payment: payment),
         if (payment.orderAllocations.isNotEmpty) ...[
           const SizedBox(height: 10),
@@ -232,8 +233,9 @@ class _CardBlock extends StatelessWidget {
 
 class _PaymentAppBarTitle extends StatelessWidget {
   final PaymentDetail? payment;
+  final PaymentRef? paymentRef;
 
-  const _PaymentAppBarTitle({required this.payment});
+  const _PaymentAppBarTitle({required this.payment, this.paymentRef});
 
   @override
   Widget build(BuildContext context) {
@@ -248,12 +250,12 @@ class _PaymentAppBarTitle extends StatelessWidget {
       );
     }
 
-    final label = _paymentLabel(payment!);
+    final localNumber = paymentRef?.localPaymentNumber ?? '';
 
     return Column(
       children: [
         Text(
-          'Payment $label',
+          localNumber.isNotEmpty ? localNumber : 'Payment Detail',
           style: TextStyle(
             color: DashboardColors.textWhite,
             fontSize: 14,
@@ -281,16 +283,13 @@ class _MetaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final paymentLabel = payment.paymentNumber.trim().isNotEmpty
-        ? payment.paymentNumber
-        : payment.paymentId.toString();
-
+  
     return _CardBlock(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Payment: ${payment.platformRef?.isNotEmpty == true ? payment.platformRef! : paymentLabel}',
+            'Payment Details',
             style: TextStyle(
               color: LoginColors.textPrimary,
               fontSize: 14,
@@ -1438,12 +1437,6 @@ class _StateMessage extends StatelessWidget {
 
 String _money(double value) => 'INR ${value.toStringAsFixed(2)}';
 
-String _paymentLabel(PaymentDetail payment) {
-  if (payment.platformRef != null && payment.platformRef!.trim().isNotEmpty) {
-    return payment.platformRef!;
-  }
-  return '#${payment.paymentId}';
-}
 
 String _orderLabel(PaymentOrderAllocation allocation) {
   return allocation.orderNumber.trim().isNotEmpty

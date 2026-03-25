@@ -65,7 +65,7 @@ class _SalesOrderDetailView extends StatelessWidget {
                 ),
               ),
             ),
-            title: _OrderAppBarTitle(order: vm.order),
+            title: _OrderAppBarTitle(order: vm.order, orderRef: vm.orderRef),
             leading: Padding(
               padding: const EdgeInsets.all(8),
               child: _RoundActionIcon(
@@ -154,8 +154,6 @@ class _SalesOrderDetailView extends StatelessWidget {
       children: [
         _CustomerDetailsCard(order: order),
         const SizedBox(height: 10),
-        _CompanyRefCard(orderRef: vm.orderRef, vm: vm),
-        const SizedBox(height: 10),
         _ItemDetailsCard(items: items, companyId: vm.companyId),
         const SizedBox(height: 10),
         _PaymentSummaryCard(order: order),
@@ -211,8 +209,9 @@ class _CardBlock extends StatelessWidget {
 
 class _OrderAppBarTitle extends StatelessWidget {
   final sales_detail.SalesOrderDetail? order;
+  final OrderRef? orderRef;
 
-  const _OrderAppBarTitle({required this.order});
+  const _OrderAppBarTitle({required this.order, this.orderRef});
 
   @override
   Widget build(BuildContext context) {
@@ -227,24 +226,22 @@ class _OrderAppBarTitle extends StatelessWidget {
       );
     }
 
-    final orderLabel = _orderLabel(order!);
+    final localNumber = orderRef?.localOrderNumber ?? '';
     final overdueDays = _overdueDays(order!.orderDate);
     final overdueText = overdueDays > 0
         ? 'Overdue by $overdueDays day${overdueDays == 1 ? '' : 's'}'
         : 'Overdue by 0 days';
 
     return Column(
-      // mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Order $orderLabel',
+          localNumber.isNotEmpty ? localNumber : 'Order Detail',
           style: TextStyle(
             color: DashboardColors.textWhite,
-            fontSize: 14,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
           ),
         ),
-        // const SizedBox(height: 2),
         Text(
           overdueText,
           style: TextStyle(
@@ -1469,12 +1466,6 @@ String _displayCustomerCompany(sales_detail.SalesOrderDetail order) {
   return '';
 }
 
-String _orderLabel(sales_detail.SalesOrderDetail order) {
-  if (order.platformRef != null && order.platformRef!.trim().isNotEmpty) {
-    return order.platformRef!;
-  }
-  return '#${order.orderId}';
-}
 
 int _overdueDays(DateTime orderDate) {
   final now = DateTime.now();

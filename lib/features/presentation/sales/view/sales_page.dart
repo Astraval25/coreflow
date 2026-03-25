@@ -15,6 +15,7 @@ import 'package:coreflow/features/presentation/sales/widgets/sales_skeleton.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 class SalesPage extends StatelessWidget {
   const SalesPage({super.key});
@@ -77,41 +78,50 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
         final filteredOrders = vm.filteredOrders;
         final companyId = dashboardVm.companyId;
 
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: LoginColors.background,
-          drawerEnableOpenDragGesture: true,
-          drawer: AppDrawer(vm: dashboardVm),
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-          floatingActionButton: _buildCreateButton(),
-          appBar: SearchableEntityAppBar(
-            isSearchOpen: false,
-            onSearchToggle: () {},
-            searchQuery: '',
-            searchController: _disabledSearchController,
-            onSearchChanged: (_) {},
-            onClearSearch: () {},
-            scaffoldKey: _scaffoldKey,
-            title: '',
-            searchHint: '',
-            showSearchAction: false,
-            tabs: const [
-              SearchableEntityTab(label: 'Orders'),
-              SearchableEntityTab(label: 'Invoices'),
-              SearchableEntityTab(label: 'Paid Orders'),
-            ],
-            selectedTabIndex: _selectedTopTab.index,
-            onTabSelected: (index) {
-              setState(() => _selectedTopTab = _SalesTopTab.values[index]);
-            },
-          ),
-          body: RefreshIndicator(
-            onRefresh: vm.refresh,
-            child: _buildBody(vm, filteredOrders, companyId),
+        return WillPopScope(
+          onWillPop: _handleWillPop,
+          child: Scaffold(
+            key: _scaffoldKey,
+            backgroundColor: LoginColors.background,
+            drawerEnableOpenDragGesture: false,
+            drawer: AppDrawer(vm: dashboardVm),
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.endFloat,
+            floatingActionButton: _buildCreateButton(),
+            appBar: SearchableEntityAppBar(
+              isSearchOpen: false,
+              onSearchToggle: () {},
+              searchQuery: '',
+              searchController: _disabledSearchController,
+              onSearchChanged: (_) {},
+              onClearSearch: () {},
+              scaffoldKey: _scaffoldKey,
+              title: '',
+              searchHint: '',
+              showSearchAction: false,
+              tabs: const [
+                SearchableEntityTab(label: 'Orders'),
+                SearchableEntityTab(label: 'Invoices'),
+                SearchableEntityTab(label: 'Paid Orders'),
+              ],
+              selectedTabIndex: _selectedTopTab.index,
+              onTabSelected: (index) {
+                setState(() => _selectedTopTab = _SalesTopTab.values[index]);
+              },
+            ),
+            body: RefreshIndicator(
+              onRefresh: vm.refresh,
+              child: _buildBody(vm, filteredOrders, companyId),
+            ),
           ),
         );
       },
     );
+  }
+
+  Future<bool> _handleWillPop() async {
+    context.go('/dashboard');
+    return false;
   }
 
   Widget _buildBody(

@@ -74,45 +74,55 @@ class _PaymentContentState extends State<_PaymentContent> {
 
     return Consumer<SendPaymentViewModel>(
       builder: (context, vm, child) {
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: LoginColors.background,
-          drawerEnableOpenDragGesture: true,
-          drawer: AppDrawer(vm: dashboardVm),
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-          floatingActionButton: _buildCreateButton(),
-          appBar: SearchableEntityAppBar(
-            isSearchOpen: false,
-            onSearchToggle: () {},
-            searchQuery: '',
-            searchController: _disabledSearchController,
-            onSearchChanged: (_) {},
-            onClearSearch: () {},
-            scaffoldKey: _scaffoldKey,
-            title: '',
-            searchHint: '',
-            showSearchAction: false,
-            tabs: const [
-              SearchableEntityTab(label: 'Sent'),
-              SearchableEntityTab(label: 'Received'),
-            ],
-            selectedTabIndex: _selectedTopTab.index,
-            onTabSelected: (index) {
-              if (index == _PaymentTopTab.payments.index) {
-                setState(
-                  () => _selectedTopTab = _PaymentTopTab.payments,
-                );
-                return;
-              }
-              if (index == _PaymentTopTab.received.index) {
-                context.go('/pay-received');
-              }
-            },
+        return WillPopScope(
+          onWillPop: _handleWillPop,
+          child: Scaffold(
+            key: _scaffoldKey,
+            backgroundColor: LoginColors.background,
+            drawerEnableOpenDragGesture: false,
+            drawer: AppDrawer(vm: dashboardVm),
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.endFloat,
+            floatingActionButton: _buildCreateButton(),
+            appBar: SearchableEntityAppBar(
+              isSearchOpen: false,
+              onSearchToggle: () {},
+              searchQuery: '',
+              searchController: _disabledSearchController,
+              onSearchChanged: (_) {},
+              onClearSearch: () {},
+              scaffoldKey: _scaffoldKey,
+              title: '',
+              searchHint: '',
+              showSearchAction: false,
+              tabs: const [
+                SearchableEntityTab(label: 'Sent'),
+                SearchableEntityTab(label: 'Received'),
+              ],
+              selectedTabIndex: _selectedTopTab.index,
+              onTabSelected: (index) {
+                if (index == _PaymentTopTab.payments.index) {
+                  setState(
+                    () => _selectedTopTab = _PaymentTopTab.payments,
+                  );
+                  return;
+                }
+                if (index == _PaymentTopTab.received.index) {
+                  context.go('/pay-received');
+                }
+              },
+            ),
+            body:
+                RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
           ),
-          body: RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
         );
       },
     );
+  }
+
+  Future<bool> _handleWillPop() async {
+    context.go('/dashboard');
+    return false;
   }
 
   Widget _buildBody(SendPaymentViewModel vm) {

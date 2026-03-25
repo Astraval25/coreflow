@@ -171,7 +171,7 @@ class LoginScreen extends StatelessWidget {
                               ? null
                               : () async {
                                   final Uri url = Uri.parse(
-                                    'https://coreflow.astraval.com/register',
+                                    'https://coreflow.astraval.com/signup',
                                   );
                                   if (!await launchUrl(
                                     url,
