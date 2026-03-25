@@ -6,6 +6,8 @@ import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/items/sellable_item.dart';
 import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/features/vendor/view_model/vendor_detail_view_model.dart';
+import 'package:coreflow/features/vendor/widget/detail/body/vendor_item_pages.dart';
 import 'package:coreflow/features/items/widget/item_section_card.dart';
 import 'package:coreflow/features/presentation/purchase/view/purchase_order_detail_page.dart';
 import 'package:coreflow/features/presentation/purchase/viewmodel/create_purchase_order_view_model.dart';
@@ -109,6 +111,10 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
       builder: (_) => _ItemPickerSheet(
         items: items,
         existingItemIds: vm.orderItems.map((e) => e.item.itemId).toSet(),
+        companyId: widget.companyId,
+        vendorId: vm.selectedVendor!.vendorId,
+        hostContext: context,
+        onItemsUpdated: vm.reloadPurchasableItems,
         onItemSelected: (item) async {
           Navigator.pop(context);
           final canEdit = !vm.vendorHasCompany;
@@ -263,7 +269,7 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
       backgroundColor: LoginColors.background,
       appBar: AppBar(
         title: Text(
-          'Create Purchase Order',
+          'New Purchase',
           style: TextStyle(
             color: LoginColors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -1179,11 +1185,19 @@ class _ItemPickerSheet extends StatefulWidget {
   final List<SellableItem> items;
   final Set<int> existingItemIds;
   final ValueChanged<SellableItem> onItemSelected;
+  final int companyId;
+  final int vendorId;
+  final BuildContext hostContext;
+  final Future<void> Function()? onItemsUpdated;
 
   const _ItemPickerSheet({
     required this.items,
     required this.existingItemIds,
     required this.onItemSelected,
+    required this.companyId,
+    required this.vendorId,
+    required this.hostContext,
+    this.onItemsUpdated,
   });
 
   @override
@@ -1210,6 +1224,30 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
 
   bool get _hasBaseItems =>
       widget.items.any((i) => i.source == 'ITEM_BASE');
+  bool get _hasVendorItems =>
+      widget.items.any((i) => i.source != 'ITEM_BASE');
+
+  Future<void> _openCreateVendorItemFlow() async {
+    Navigator.of(context).pop();
+
+    final created = await Navigator.of(widget.hostContext).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => SelectVendorCompanyItemPage(
+          viewModel: VendorDetailViewModel(
+            companyId: widget.companyId,
+            vendorId: widget.vendorId,
+          ),
+        ),
+      ),
+    );
+
+    if (!widget.hostContext.mounted || created != true) return;
+    await widget.onItemsUpdated?.call();
+    if (!widget.hostContext.mounted) return;
+    ScaffoldMessenger.of(widget.hostContext).showSnackBar(
+      const SnackBar(content: Text('Vendor item created successfully')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1286,10 +1324,39 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.all(24),
-                        child: Text(
-                          'No items found',
-                          style: TextStyle(
-                              color: LoginColors.textTertiary),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _hasVendorItems
+                                  ? 'No items found'
+                                  : 'No vendor-specific items found',
+                              style: TextStyle(
+                                color: LoginColors.textTertiary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.icon(
+                                onPressed: _openCreateVendorItemFlow,
+                                icon: const Icon(Icons.add_circle_outline),
+                                label: const Text('Create Vendor Item'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: LoginColors.primary,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ),
+                            if (!_showAll && _hasBaseItems) ...[
+                              const SizedBox(height: 8),
+                              TextButton(
+                                onPressed: () => setState(() => _showAll = true),
+                                child: const Text('Show All Items'),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     )

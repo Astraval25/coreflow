@@ -344,6 +344,7 @@ class CustomerRepository {
       }
 
       final List<dynamic> data = decodedBody['responseData'] ?? [];
+      debugPrint('Sellable items responseData: ${jsonEncode(data)}');
       return data.map((json) => SellableItem.fromJson(json)).toList();
     } catch (e, stack) {
       debugPrint('Get customer sellable items error: $e\n$stack');

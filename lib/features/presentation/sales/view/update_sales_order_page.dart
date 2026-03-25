@@ -4,6 +4,8 @@ import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/customer/customer.dart';
 import 'package:coreflow/domain/model/items/sellable_item.dart';
 import 'package:coreflow/domain/model/sales/sales_order_detail.dart';
+import 'package:coreflow/features/customers/view_model/customer_detail_view_model.dart';
+import 'package:coreflow/features/customers/widget/detail/body/customer_item_pages.dart';
 import 'package:coreflow/features/items/widget/item_section_card.dart';
 import 'package:coreflow/features/presentation/sales/viewmodel/update_sales_order_view_model.dart';
 import 'package:flutter/material.dart';
@@ -119,6 +121,10 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
       builder: (_) => _ItemPickerSheet(
         items: items,
         existingItemIds: vm.orderItems.map((e) => e.itemId).toSet(),
+        companyId: widget.companyId,
+        customerId: vm.selectedCustomer!.customerId,
+        hostContext: context,
+        onItemsUpdated: vm.reloadSellableItems,
         onItemSelected: (item) async {
           Navigator.pop(context);
           final result = await _showItemDetailDialog(
@@ -1047,11 +1053,19 @@ class _ItemPickerSheet extends StatefulWidget {
   final List<SellableItem> items;
   final Set<int> existingItemIds;
   final ValueChanged<SellableItem> onItemSelected;
+  final int companyId;
+  final int customerId;
+  final BuildContext hostContext;
+  final Future<void> Function()? onItemsUpdated;
 
   const _ItemPickerSheet({
     required this.items,
     required this.existingItemIds,
     required this.onItemSelected,
+    required this.companyId,
+    required this.customerId,
+    required this.hostContext,
+    this.onItemsUpdated,
   });
 
   @override
@@ -1066,6 +1080,28 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openCreateCustomerItemFlow() async {
+    Navigator.of(context).pop();
+
+    final created = await Navigator.of(widget.hostContext).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => SelectCompanyItemPage(
+          viewModel: CustomerDetailViewModel(
+            companyId: widget.companyId,
+            customerId: widget.customerId,
+          ),
+        ),
+      ),
+    );
+
+    if (!widget.hostContext.mounted || created != true) return;
+    await widget.onItemsUpdated?.call();
+    if (!widget.hostContext.mounted) return;
+    ScaffoldMessenger.of(widget.hostContext).showSnackBar(
+      const SnackBar(content: Text('Customer item created successfully')),
+    );
   }
 
   @override
@@ -1134,17 +1170,41 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
               ),
             ),
           ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: filtered.isEmpty
-                ? Center(
-                    child: Text(
-                      'No items found',
-                      style: TextStyle(
-                          fontSize: 13, color: LoginColors.textTertiary),
-                    ),
-                  )
-                : ListView.separated(
+            const SizedBox(height: 8),
+            Expanded(
+              child: filtered.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'No items found',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: LoginColors.textTertiary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.icon(
+                                onPressed: _openCreateCustomerItemFlow,
+                                icon: const Icon(Icons.add_circle_outline),
+                                label:
+                                    const Text('Create Customer Item'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: LoginColors.primary,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
                     controller: scrollController,
                     itemCount: filtered.length,
                     separatorBuilder: (_, __) =>

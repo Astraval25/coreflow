@@ -4,6 +4,8 @@ import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/items/sellable_item.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
 import 'package:coreflow/domain/model/vendors/vendors.dart';
+import 'package:coreflow/features/vendor/view_model/vendor_detail_view_model.dart';
+import 'package:coreflow/features/vendor/widget/detail/body/vendor_item_pages.dart';
 import 'package:coreflow/features/items/widget/item_section_card.dart';
 import 'package:coreflow/features/presentation/purchase/viewmodel/update_purchase_order_view_model.dart';
 import 'package:flutter/material.dart';
@@ -120,6 +122,10 @@ class _UpdatePurchaseOrderViewState extends State<_UpdatePurchaseOrderView> {
       builder: (_) => _ItemPickerSheet(
         items: items,
         existingItemIds: vm.orderItems.map((e) => e.itemId).toSet(),
+        companyId: widget.companyId,
+        vendorId: vm.selectedVendor!.vendorId,
+        hostContext: context,
+        onItemsUpdated: vm.reloadPurchasableItems,
         onItemSelected: (item) async {
           Navigator.pop(context);
           final canEdit = !vm.vendorHasCompany;
@@ -1075,11 +1081,19 @@ class _ItemPickerSheet extends StatefulWidget {
   final List<SellableItem> items;
   final Set<int> existingItemIds;
   final ValueChanged<SellableItem> onItemSelected;
+  final int companyId;
+  final int vendorId;
+  final BuildContext hostContext;
+  final Future<void> Function()? onItemsUpdated;
 
   const _ItemPickerSheet({
     required this.items,
     required this.existingItemIds,
     required this.onItemSelected,
+    required this.companyId,
+    required this.vendorId,
+    required this.hostContext,
+    this.onItemsUpdated,
   });
 
   @override
@@ -1094,6 +1108,28 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openCreateVendorItemFlow() async {
+    Navigator.of(context).pop();
+
+    final created = await Navigator.of(widget.hostContext).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => SelectVendorCompanyItemPage(
+          viewModel: VendorDetailViewModel(
+            companyId: widget.companyId,
+            vendorId: widget.vendorId,
+          ),
+        ),
+      ),
+    );
+
+    if (!widget.hostContext.mounted || created != true) return;
+    await widget.onItemsUpdated?.call();
+    if (!widget.hostContext.mounted) return;
+    ScaffoldMessenger.of(widget.hostContext).showSnackBar(
+      const SnackBar(content: Text('Vendor item created successfully')),
+    );
   }
 
   @override
@@ -1163,16 +1199,39 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
             ),
           ),
           const SizedBox(height: 8),
-          Expanded(
-            child: filtered.isEmpty
-                ? Center(
-                    child: Text(
-                      'No items found',
-                      style: TextStyle(
-                          fontSize: 13, color: LoginColors.textTertiary),
-                    ),
-                  )
-                : ListView.separated(
+            Expanded(
+              child: filtered.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'No items found',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: LoginColors.textTertiary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.icon(
+                                onPressed: _openCreateVendorItemFlow,
+                                icon: const Icon(Icons.add_circle_outline),
+                                label: const Text('Create Vendor Item'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: LoginColors.primary,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
                     controller: scrollController,
                     itemCount: filtered.length,
                     separatorBuilder: (_, __) =>

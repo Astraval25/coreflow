@@ -139,6 +139,12 @@ class UpdatePurchaseOrderViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> reloadPurchasableItems() async {
+    final vendor = _selectedVendor;
+    if (vendor == null) return;
+    await _loadPurchasableItems(vendor.vendorId);
+  }
+
   void addItemFromCatalog(SellableItem item) {
     final existing = _orderItems.indexWhere((e) => e.itemId == item.itemId);
     if (existing != -1) return;

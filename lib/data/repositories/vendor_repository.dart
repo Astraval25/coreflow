@@ -325,6 +325,7 @@ class VendorRepository {
       }
 
       final List<dynamic> data = decodedBody['responseData'] ?? [];
+      debugPrint('Purchasable items responseData: ${jsonEncode(data)}');
       return data.map((json) => SellableItem.fromJson(json)).toList();
     } catch (e, stack) {
       debugPrint('Get vendor purchasable items error: $e\n$stack');

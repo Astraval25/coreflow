@@ -102,6 +102,12 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> reloadSellableItems() async {
+    final customer = _selectedCustomer;
+    if (customer == null) return;
+    await _loadSellableItems(customer.customerId);
+  }
+
   void addOrderItem(SellableItem item) {
     final existing =
         _orderItems.indexWhere((e) => e.item.itemId == item.itemId);

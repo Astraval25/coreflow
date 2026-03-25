@@ -143,7 +143,7 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
         title: 'Sales & Bills',
         subtitle: 'No sales orders found.',
         svgAsset: 'assets/svgs/empty_sales.svg',
-        actionLabel: 'Create Sales Order',
+        actionLabel: 'New Sales',
         actionIcon: Icons.add_rounded,
         onAction: companyId == null
             ? null
@@ -215,7 +215,7 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
       },
       icon: const Icon(Icons.add_rounded),
       label: const Text(
-        'Create Sales Order',
+        'New Sales',
         style: TextStyle(fontWeight: FontWeight.w700),
       ),
     );

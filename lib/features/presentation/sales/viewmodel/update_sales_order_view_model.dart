@@ -133,6 +133,12 @@ class UpdateSalesOrderViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> reloadSellableItems() async {
+    final customer = _selectedCustomer;
+    if (customer == null) return;
+    await _loadSellableItems(customer.customerId);
+  }
+
   void addItemFromCatalog(SellableItem item) {
     final existing = _orderItems.indexWhere((e) => e.itemId == item.itemId);
     if (existing != -1) return;

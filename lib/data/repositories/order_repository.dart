@@ -40,7 +40,6 @@ class OrderRepository {
             'Failed with status ${response.statusCode}',
       };
     } catch (e) {
-      debugPrint('Create sales order error: $e');
       return {'success': false, 'message': 'Error: $e'};
     }
   }
@@ -191,7 +190,6 @@ class OrderRepository {
             'Failed with status ${response.statusCode}',
       };
     } catch (e) {
-      debugPrint('Create purchase order error: $e');
       return {'success': false, 'message': 'Error: $e'};
     }
   }

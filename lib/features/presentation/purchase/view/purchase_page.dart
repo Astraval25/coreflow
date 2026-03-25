@@ -132,7 +132,7 @@ class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
         title: 'Purchase & Expenses',
         subtitle: 'No purchase orders found.',
         svgAsset: 'assets/svgs/empty_purchase.svg',
-        actionLabel: 'Create Purchase Order',
+        actionLabel: 'New Purchase',
         actionIcon: Icons.add_rounded,
         onAction: () => _openCreateOrder(vm.companyId),
       );
@@ -202,7 +202,7 @@ class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
       },
       icon: const Icon(Icons.add_rounded),
       label: const Text(
-        'Create Purchase Order',
+        'New Purchase',
         style: TextStyle(fontWeight: FontWeight.w700),
       ),
     );
