@@ -78,7 +78,10 @@ class _MainLayoutState extends State<MainLayout> {
     final vm = context.watch<DashboardViewModel>();
     _syncShareCompanyId(vm.companyId);
     final screenSize = MediaQuery.sizeOf(context);
-    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    final mediaQuery = MediaQuery.of(context);
+    final bottomInset = mediaQuery.viewPadding.bottom;
+    final keyboardInset = mediaQuery.viewInsets.bottom;
+    final isKeyboardVisible = keyboardInset > 0;
     final useFixedDesktopSidebar =
         screenSize.width >= _desktopFrameWidth &&
         screenSize.height >= _desktopFrameHeight;
@@ -109,11 +112,11 @@ class _MainLayoutState extends State<MainLayout> {
             )
           : Padding(
               padding: EdgeInsets.only(
-                bottom: 80 + bottomInset,
-              ), // Reserve space for the floating nav bar + system nav
+                bottom: isKeyboardVisible ? 12 : 80 + bottomInset,
+              ), // Reduce padding when keyboard is open
               child: widget.child,
             ),
-      bottomNavigationBar: useFixedDesktopSidebar
+      bottomNavigationBar: useFixedDesktopSidebar || isKeyboardVisible
           ? null
           : TweenAnimationBuilder<double>(
               duration: const Duration(milliseconds: 350),
