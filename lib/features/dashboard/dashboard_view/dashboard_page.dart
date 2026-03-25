@@ -298,6 +298,7 @@ class _DashboardViewState extends State<_DashboardView> {
     );
   }
 
+  // ignore: unused_element
   Future<void> _openHowItWorksVideo(BuildContext context) async {
     if (!mounted) return;
     await Navigator.push(

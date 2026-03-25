@@ -237,7 +237,7 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
     _advanceController.text = data.dueAmount?.toString() ?? '';
     _languageController.text = data.lang ?? 'en';
 
-    _billingSameAsShipping = data.sameAsBillingAddress ?? false;
+    _billingSameAsShipping = data.sameAsBillingAddress;
 
     // Billing
     final billing = data.billingAddress;

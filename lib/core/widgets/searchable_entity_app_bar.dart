@@ -42,7 +42,7 @@ class SearchableEntityAppBar extends StatelessWidget
 
   @override
   Size get preferredSize {
-    final hasTabs = tabs != null && tabs!.isNotEmpty;
+    // final hasTabs = tabs != null && tabs!.isNotEmpty;
     final extraHeight = showSearchAction && isSearchOpen ? _searchBarHeight : 0;
     return Size.fromHeight(kToolbarHeight + extraHeight);
   }

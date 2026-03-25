@@ -236,7 +236,7 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
                     ),
                     _buildDetailRow(
                       'PAN',
-                      "Verified" ?? 'Not Verified',
+                      "Verified",
                       valueColor: company.pan == null
                           ? LoginColors.textTertiary
                           : null,

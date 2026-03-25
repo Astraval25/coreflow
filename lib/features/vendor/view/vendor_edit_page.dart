@@ -238,7 +238,7 @@ class _VendorEditScreenState extends State<VendorEditScreen> {
     _advanceController.text = data.dueAmount?.toString() ?? '';
     _languageController.text = data.lang ?? 'en';
 
-    _billingSameAsShipping = data.sameAsBillingAddress ?? false;
+    _billingSameAsShipping = data.sameAsBillingAddress;
 
     // Billing
     final billing = data.billingAddress;

@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import '../view_model/login_view_model.dart';
 import '../../../core/widgets/custom_textfield.dart';
 import '../../../core/widgets/custom_button.dart';
-import 'package:go_router/go_router.dart';
+// import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -161,6 +163,34 @@ class LoginScreen extends StatelessWidget {
                         //     ),
                         //   ),
                         // ),
+                        
+                        const SizedBox(height: 24),
+
+                        TextButton(
+                          onPressed: viewModel.isLoading
+                              ? null
+                              : () async {
+                                  final Uri url = Uri.parse(
+                                    'https://coreflow.astraval.com/register',
+                                  );
+                                  if (!await launchUrl(
+                                    url,
+                                    mode: LaunchMode.externalApplication,
+                                  )) {
+                                    throw 'Could not launch $url';
+                                  }
+                                },
+                          child: Text(
+                            'Register',
+                            style: TextStyle(
+                              color: viewModel.isLoading
+                                  ? Colors.grey
+                                  : LoginColors.primary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
 
                         const SizedBox(height: 40),
                       ],

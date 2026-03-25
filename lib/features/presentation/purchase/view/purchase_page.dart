@@ -219,7 +219,7 @@ class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final height = (constraints.maxHeight - 120)
-            .clamp(0.0, double.infinity) as double;
+            .clamp(0.0, double.infinity);
         return ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),

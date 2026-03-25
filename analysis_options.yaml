@@ -9,7 +9,7 @@
 # packages, and plugins designed to encourage good coding practices.
 analyzer:
   errors:
-    empty_constructor_bodies: ignore ignore ignore ignore
+    empty_constructor_bodies: ignore
     dead_code: ignore
     use_super_parameters: ignore
 include: package:flutter_lints/flutter.yaml

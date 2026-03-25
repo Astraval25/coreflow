@@ -62,7 +62,7 @@ class ItemDetailSections extends StatelessWidget {
             children: [
               ItemDetailInfoRow(
                 label: 'HSN Code',
-                value: item.hsnCode ?? '-',
+                value: item.hsnCode,
                 icon: Icons.qr_code_2_rounded,
                 color: const Color(0xFF6366F1),
               ),

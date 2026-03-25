@@ -389,6 +389,7 @@ class SubMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ignore: unused_local_variable
     final vm = context.watch<DashboardViewModel>();
     final currentLocation = GoRouterState.of(context).matchedLocation;
     final normalizedMenuKey = menuKey.replaceFirst('/', '');
@@ -499,6 +500,7 @@ class SubMenuItem extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _QuickAddTile extends StatelessWidget {
   final String title;
   final IconData icon;

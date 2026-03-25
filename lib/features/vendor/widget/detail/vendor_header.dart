@@ -16,8 +16,8 @@ class VendorHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isActive = vendor.isActive;
-    final statusColor = isActive ? LoginColors.success : LoginColors.error;
+    // final isActive = vendor.isActive;
+    // final statusColor = isActive ? LoginColors.success : LoginColors.error;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(_horizontalPadding, 16, _horizontalPadding, 10),

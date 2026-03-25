@@ -16,8 +16,8 @@ class CustomerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isActive = customer.isActive;
-    final statusColor = isActive ? LoginColors.success : LoginColors.error;
+    // final isActive = customer.isActive;
+    // final statusColor = isActive ? LoginColors.success : LoginColors.error;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(

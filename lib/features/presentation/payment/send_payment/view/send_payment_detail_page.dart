@@ -613,19 +613,19 @@ class _TransferCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final allocationOrders = payment.orderAllocations
-        .map((allocation) => _orderLabel(allocation))
-        .toList();
-    final orderIdsText = allocationOrders.isNotEmpty
-        ? allocationOrders.join(', ')
-        : payment.orderIds.isEmpty
-            ? ''
-            : payment.orderIds.map((id) => '#$id').join(', ');
+    // final allocationOrders = payment.orderAllocations
+    //     .map((allocation) => _orderLabel(allocation))
+    //     .toList();
+    // final orderIdsText = allocationOrders.isNotEmpty
+    //     ? allocationOrders.join(', ')
+    //     : payment.orderIds.isEmpty
+    //         ? ''
+    //         : payment.orderIds.map((id) => '#$id').join(', ');
     final mode = payment.modeOfPayment.trim();
-    final reference = payment.referenceNumber.trim();
+    // final reference = payment.referenceNumber.trim();
     final hasMode = mode.isNotEmpty;
-    final hasReference = reference.isNotEmpty;
-    final hasOrders = orderIdsText.isNotEmpty;
+    // final hasReference = reference.isNotEmpty;
+    // final hasOrders = orderIdsText.isNotEmpty;
 
     return _CardBlock(
       child: Column(
