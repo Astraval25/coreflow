@@ -13,6 +13,7 @@ import 'package:coreflow/features/presentation/payment/send_payment/widgets/paym
 import 'package:coreflow/features/presentation/payment/send_payment/widgets/payment_loading_body.dart';
 import 'package:coreflow/features/presentation/payment/send_payment/widgets/payment_skeleton.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class PaymentPage extends StatelessWidget {
@@ -92,12 +93,20 @@ class _PaymentContentState extends State<_PaymentContent> {
             searchHint: '',
             showSearchAction: false,
             tabs: const [
-              SearchableEntityTab(label: 'Payments'),
-              // SearchableEntityTab(label: 'Paid Orders'),
+              SearchableEntityTab(label: 'Sent'),
+              SearchableEntityTab(label: 'Received'),
             ],
             selectedTabIndex: _selectedTopTab.index,
             onTabSelected: (index) {
-              setState(() => _selectedTopTab = _PaymentTopTab.values[index]);
+              if (index == _PaymentTopTab.payments.index) {
+                setState(
+                  () => _selectedTopTab = _PaymentTopTab.payments,
+                );
+                return;
+              }
+              if (index == _PaymentTopTab.received.index) {
+                context.go('/pay-received');
+              }
             },
           ),
           body: RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
@@ -181,4 +190,4 @@ class _PaymentContentState extends State<_PaymentContent> {
   }
 }
 
-enum _PaymentTopTab { payments, paidOrders }
+enum _PaymentTopTab { payments, received }

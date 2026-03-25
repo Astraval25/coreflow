@@ -13,6 +13,7 @@ import 'package:coreflow/features/presentation/payment/receive_payment/widgets/p
 import 'package:coreflow/features/presentation/payment/receive_payment/widgets/pay_received_loading_body.dart';
 import 'package:coreflow/features/presentation/payment/receive_payment/widgets/pay_received_skeleton.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class PayReceivedPage extends StatelessWidget {
@@ -58,7 +59,7 @@ class _PayReceivedContentState extends State<_PayReceivedContent> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _disabledSearchController =
       TextEditingController();
-  int _selectedTabIndex = 0;
+  int _selectedTabIndex = 1;
 
   @override
   void dispose() {
@@ -92,11 +93,15 @@ class _PayReceivedContentState extends State<_PayReceivedContent> {
             searchHint: '',
             showSearchAction: false,
             tabs: const [
+              SearchableEntityTab(label: 'Sent'),
               SearchableEntityTab(label: 'Received'),
-              // SearchableEntityTab(label: 'Paid Orders'),
             ],
             selectedTabIndex: _selectedTabIndex,
             onTabSelected: (index) {
+              if (index == 0) {
+                context.go('/payment');
+                return;
+              }
               setState(() => _selectedTabIndex = index);
             },
           ),

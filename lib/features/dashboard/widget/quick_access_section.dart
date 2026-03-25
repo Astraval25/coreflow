@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:coreflow/core/theme/colors.dart';
 import 'dashboard_widgets.dart';
 import '../dashboard_view_model/dashboard_view_model.dart';
 
@@ -24,38 +25,37 @@ class QuickAccessSection extends StatelessWidget {
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
             children: [
-              DashboardGridItem(
-                icon: Icons.receipt_long_outlined,
-                label: 'Sales',
-                color: Colors.blue,
-                onTap: () => context.go('/sales'),
-              ),
-              DashboardGridItem(
-                icon: Icons.inventory_2_outlined,
-                label: 'Purchase',
-                color: Colors.orange,
-                onTap: () => context.go('/purchase'),
-              ),
-              DashboardGridItem(
-                icon: Icons.payments_outlined,
-                label: 'Payment',
-                color: Colors.green,
-                onTap: () => context.go('/payment'),
-              ),
-              DashboardGridItem(
-                icon: Icons.account_balance_wallet_outlined,
-                label: 'Received',
-                color: Colors.purple,
-                onTap: () => context.go('/pay-received'),
-              ),
+              // form now we keep only customers, vendors, items and marketplace in quick access. rest can be accessed from menu
+            // DashboardGridItem(   
+            //   icon: Icons.receipt_long_outlined,
+            //   label: 'Sales',
+            //   color: Colors.blue,
+            //   onTap: () => _goIfCompany(context, '/sales'),
+            // ),
+            // DashboardGridItem(
+            //   icon: Icons.inventory_2_outlined,
+            //   label: 'Purchase',
+            //   color: Colors.orange,
+            //   onTap: () => _goIfCompany(context, '/purchase'),
+            // ),
+            // DashboardGridItem(
+            //   icon: Icons.payments_outlined,
+            //   label: 'Payment',
+            //   color: Colors.green,
+            //   onTap: () => _goIfCompany(context, '/payment'),
+            // ),
+            // DashboardGridItem(
+            //   icon: Icons.account_balance_wallet_outlined,
+            //   label: 'Received',
+            //   color: Colors.purple,
+            //   onTap: () => _goIfCompany(context, '/pay-received'),
+            // ),
               DashboardGridItem(
                 icon: Icons.groups_outlined,
                 label: 'Customers',
                 color: Colors.indigo,
                 onTap: () {
-                  if (vm.companyId != null) {
-                    context.push('/customers/${vm.companyId}');
-                  }
+                _pushIfCompany(context, '/customers/${vm.companyId}');
                 },
               ),
               DashboardGridItem(
@@ -63,9 +63,7 @@ class QuickAccessSection extends StatelessWidget {
                 label: 'Vendors',
                 color: Colors.teal,
                 onTap: () {
-                  if (vm.companyId != null) {
-                    context.push('/vendors/${vm.companyId}');
-                  }
+                _pushIfCompany(context, '/vendors/${vm.companyId}');
                 },
               ),
               DashboardGridItem(
@@ -73,9 +71,7 @@ class QuickAccessSection extends StatelessWidget {
                 label: 'Items',
                 color: Colors.deepPurple,
                 onTap: () {
-                  if (vm.companyId != null) {
-                    context.push('/items/${vm.companyId}');
-                  }
+                _pushIfCompany(context, '/items/${vm.companyId}');
                 },
               ),
               DashboardGridItem(
@@ -87,6 +83,34 @@ class QuickAccessSection extends StatelessWidget {
             ],
           ),
         ],
+    );
+  }
+
+  // ignore: unused_element
+  void _goIfCompany(BuildContext context, String route) {
+    if (vm.companyId == null) {
+      _showSelectCompany(context);
+      return;
+    }
+    context.go(route);
+  }
+
+  void _pushIfCompany(BuildContext context, String route) {
+    if (vm.companyId == null) {
+      _showSelectCompany(context);
+      return;
+    }
+    context.push(route);
+  }
+
+  void _showSelectCompany(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Please select a company first.'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: LoginColors.primary,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
     );
   }
 }
