@@ -13,6 +13,8 @@ class CustomerEditViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool _isSaving = false;
   String? _error;
+  int _creationStep = 0;
+  Function(int)? onStepChanged;
 
   CustomerEditViewModel(this._authRepository);
 
@@ -21,6 +23,7 @@ class CustomerEditViewModel extends ChangeNotifier {
   String? get error => _error;
   CustomerDetailData? get customerDetails => _customerDetails;
   CustomerEditResponse? get editResponse => _editResponse;
+  int get creationStep => _creationStep;
 
   set customerDetails(CustomerDetailData? value) {
     _customerDetails = value;
@@ -135,6 +138,80 @@ class CustomerEditViewModel extends ChangeNotifier {
     } catch (e) {
       _error = 'Error creating customer: ${e.toString()}';
       return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  Future<Map<String, dynamic>> createCustomerWithItems(
+    int companyId,
+    CreateCustomerRequest request,
+    List<Map<String, dynamic>> items,
+  ) async {
+    try {
+      _isSaving = true;
+      _error = null;
+      _editResponse = null;
+      _creationStep = 0;
+      if (onStepChanged != null) onStepChanged!(0);
+      notifyListeners();
+
+      debugPrint('Creating customer for companyId: $companyId');
+
+      final response = await _authRepository.createCustomer(companyId, request);
+
+      _editResponse = response;
+
+      if (response == null || !response.responseStatus) {
+        _error = response?.responseMessage ?? 'Failed to create customer';
+        return {'success': false, 'step': 0};
+      }
+
+      final customerId = response.responseData?['customerId'];
+      if (customerId == null) {
+        _error = 'Customer created but ID not returned';
+        return {'success': false, 'step': 0};
+      }
+
+      debugPrint('Customer created with ID: $customerId');
+      _creationStep = 1;
+      if (onStepChanged != null) onStepChanged!(1);
+      notifyListeners();
+
+      if (items.isEmpty) {
+        _creationStep = 2;
+        if (onStepChanged != null) onStepChanged!(2);
+        notifyListeners();
+        return {'success': true, 'step': 2, 'customerId': customerId};
+      }
+
+      for (int i = 0; i < items.length; i++) {
+        final item = items[i];
+        debugPrint('Creating customer item ${i + 1}/${items.length}');
+        
+        final itemResponse = await _authRepository.createCustomerItem(
+          companyId: companyId,
+          customerId: customerId,
+          itemId: item['itemId'],
+          salesPrice: item['salesPrice'],
+          salesDescription: item['salesDescription'],
+        );
+
+        if (itemResponse == null || !itemResponse.responseStatus) {
+          _error = 'Failed to create customer item ${i + 1}';
+          return {'success': false, 'step': 1, 'customerId': customerId};
+        }
+      }
+
+      debugPrint('All customer items created successfully');
+      _creationStep = 2;
+      if (onStepChanged != null) onStepChanged!(2);
+      notifyListeners();
+      return {'success': true, 'step': 2, 'customerId': customerId};
+    } catch (e) {
+      _error = 'Error: ${e.toString()}';
+      return {'success': false, 'step': 0};
     } finally {
       _isSaving = false;
       notifyListeners();
