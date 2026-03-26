@@ -1,6 +1,9 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
 import 'package:coreflow/domain/model/vendors/create_vendors_request.dart';
+import 'package:coreflow/domain/model/items/item.dart';
+import 'package:coreflow/core/widgets/item_selector_page.dart';
+import 'package:coreflow/core/widgets/process_loading_screen.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/features/vendor/view_model/vendor_edit_view_model.dart';
 import 'package:coreflow/features/vendor/widget/edit_create/billing_address_card.dart';
@@ -8,6 +11,7 @@ import 'package:coreflow/features/vendor/widget/edit_create/save_customer_button
 import 'package:coreflow/features/vendor/widget/edit_create/shipping_address_card.dart';
 import 'package:coreflow/features/vendor/widget/edit_create/vendor_info_def_section.dart';
 import 'package:coreflow/features/vendor/widget/edit_create/vendor_info_section.dart';
+import 'package:coreflow/features/items/widget/item_section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
@@ -47,6 +51,11 @@ class VendorCreateScreen extends StatefulWidget {
 class _VendorCreateScreenState extends State<VendorCreateScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _sameAsShippingAddress = false;
+  List<Map<String, dynamic>> _selectedItems = [];
+  final Map<int, TextEditingController> _itemPriceControllers = {};
+  final Map<int, TextEditingController> _itemDescControllers = {};
+  int _currentStep = 0;
+  bool _isCreating = false;
 
   final _languageController = TextEditingController(text: 'en');
 
@@ -134,6 +143,20 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
     for (final c in shippingControllers) {
       c.addListener(_updateSameAsBillingFromData);
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final viewModel = Provider.of<VendorEditViewModel>(
+        context,
+        listen: false,
+      );
+      viewModel.onStepChanged = (step) {
+        if (mounted) {
+          setState(() {
+            _currentStep = step;
+          });
+        }
+      };
+    });
   }
 
   void _syncDisplayNameIfNotEdited() {
@@ -143,6 +166,67 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
         TextPosition(offset: _displayNameController.text.length),
       );
     }
+  }
+
+  Future<void> _addVendorItem() async {
+    final excludeIds = _selectedItems.map((e) => e['itemId'] as int).toList();
+
+    final selectedItem = await Navigator.push<Item>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ItemSelectorPage(
+          companyId: widget.companyId,
+          excludeItemIds: excludeIds,
+        ),
+      ),
+    );
+
+    if (selectedItem != null) {
+      final itemId = selectedItem.itemId;
+      
+      // Create controllers for this item
+      _itemPriceControllers[itemId] = TextEditingController(
+        text: selectedItem.basePurchasePrice?.toString() ?? '0',
+      );
+      _itemDescControllers[itemId] = TextEditingController(
+        text: selectedItem.purchaseDescription ?? '',
+      );
+
+      setState(() {
+        _selectedItems.add({
+          'itemId': itemId,
+          'itemName': selectedItem.itemName,
+          'purchasePrice': selectedItem.basePurchasePrice ?? 0.0,
+          'purchaseDescription': selectedItem.purchaseDescription,
+        });
+      });
+    }
+  }
+
+  void _updateItemPrice(int index, double price) {
+    setState(() {
+      _selectedItems[index]['purchasePrice'] = price;
+    });
+  }
+
+  void _updateItemDescription(int index, String? description) {
+    setState(() {
+      _selectedItems[index]['purchaseDescription'] = description;
+    });
+  }
+
+  void _removeVendorItem(int index) {
+    final itemId = _selectedItems[index]['itemId'] as int;
+    
+    // Dispose controllers
+    _itemPriceControllers[itemId]?.dispose();
+    _itemDescControllers[itemId]?.dispose();
+    _itemPriceControllers.remove(itemId);
+    _itemDescControllers.remove(itemId);
+    
+    setState(() {
+      _selectedItems.removeAt(index);
+    });
   }
 
   @override
@@ -191,6 +275,14 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
     _shippingPincodeController.dispose();
     _shippingPhoneController.dispose();
     _shippingEmailController.dispose();
+
+    // Dispose item controllers
+    for (final controller in _itemPriceControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _itemDescControllers.values) {
+      controller.dispose();
+    }
 
     super.dispose();
   }
@@ -286,12 +378,57 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
             ),
     );
 
-    final success = await viewModel.createNewVendor(widget.companyId, request);
-    if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vendor created successfully')),
-      );
-      context.pop(true);
+    if (_selectedItems.isEmpty) {
+      final success = await viewModel.createNewVendor(widget.companyId, request);
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vendor created successfully')),
+        );
+        context.pop(true);
+      }
+      return;
+    }
+
+    setState(() {
+      _isCreating = true;
+      _currentStep = 0;
+    });
+
+    await Future.delayed(Duration(milliseconds: 100));
+
+    final result = await viewModel.createVendorWithItems(
+      widget.companyId,
+      request,
+      _selectedItems,
+    );
+
+    if (mounted) {
+      if (result['success']) {
+        await Future.delayed(Duration(milliseconds: 800));
+        
+        if (mounted) {
+          setState(() {
+            _isCreating = false;
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Vendor and items created successfully'),
+            ),
+          );
+          context.pop(true);
+        }
+      } else {
+        setState(() {
+          _isCreating = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(viewModel.error ?? 'Failed to create vendor'),
+          ),
+        );
+      }
     }
   }
 
@@ -324,6 +461,14 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isCreating) {
+      return ProcessLoadingScreen(
+        steps: const ['Creating vendor', 'Creating vendor items', 'Done'],
+        currentStep: _currentStep,
+        title: 'Creating Vendor',
+      );
+    }
+
     return Consumer2<VendorEditViewModel, DashboardViewModel>(
       builder: (context, editVM, dashboardVM, _) {
         return Scaffold(
@@ -453,6 +598,119 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
                           ),
                         ),
                         const SizedBox(height: 21),
+
+                        // Vendor Items
+                        ItemSectionCard(
+                          title: 'Vendor Items',
+                          icon: Icons.inventory_2_outlined,
+                          iconColor: LoginColors.primary,
+                          children: [
+                            FilledButton.icon(
+                              onPressed: _addVendorItem,
+                              icon: const Icon(Icons.add, size: 18),
+                              label: const Text('Add Vendor Item'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: LoginColors.primary,
+                              ),
+                            ),
+                            if (_selectedItems.isNotEmpty) ...[
+                              const SizedBox(height: 16),
+                              ..._selectedItems.asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final item = entry.value;
+                                final itemId = item['itemId'] as int;
+
+                                return Container(
+                                  key: ValueKey(itemId),
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: LoginColors.background,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: LoginColors.borderLight,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              item['itemName'],
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                color: LoginColors.textPrimary,
+                                                fontSize: 15,
+                                              ),
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: Icon(
+                                              Icons.delete,
+                                              color: LoginColors.error,
+                                              size: 20,
+                                            ),
+                                            onPressed: () => _removeVendorItem(index),
+                                            padding: EdgeInsets.zero,
+                                            constraints: BoxConstraints(),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      TextFormField(
+                                        controller: _itemPriceControllers[itemId],
+                                        decoration: InputDecoration(
+                                          labelText: 'Purchase Price',
+                                          prefixText: '₹',
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 12,
+                                          ),
+                                        ),
+                                        keyboardType: TextInputType.number,
+                                        onChanged: (value) {
+                                          final price = double.tryParse(value);
+                                          if (price != null) {
+                                            _updateItemPrice(index, price);
+                                          }
+                                        },
+                                      ),
+                                      const SizedBox(height: 12),
+                                      TextFormField(
+                                        controller: _itemDescControllers[itemId],
+                                        decoration: InputDecoration(
+                                          labelText: 'Purchase Description',
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 12,
+                                          ),
+                                        ),
+                                        maxLines: 2,
+                                        onChanged: (value) {
+                                          _updateItemDescription(
+                                            index,
+                                            value.trim().isEmpty ? null : value.trim(),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ],
+                          ],
+                        ),
+
+                        const SizedBox(height: 21),
+
                         _buildSectionContainer(
                           child: ExpansionTile(
                             title: _buildSectionHeader(

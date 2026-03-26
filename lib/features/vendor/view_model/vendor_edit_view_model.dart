@@ -13,6 +13,8 @@ class VendorEditViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool _isSaving = false;
   String? _error;
+  int _creationStep = 0;
+  Function(int)? onStepChanged;
 
   VendorEditViewModel(this._authRepository);
 
@@ -21,6 +23,7 @@ class VendorEditViewModel extends ChangeNotifier {
   String? get error => _error;
   VendorsDetailData? get vendorDetails => _vendorDetails;
   VendorsEditResponse? get editResponse => _editResponse;
+  int get creationStep => _creationStep;
 
   set vendorDetails(VendorsDetailData? value) {
     _vendorDetails = value;
@@ -129,6 +132,80 @@ class VendorEditViewModel extends ChangeNotifier {
     } catch (e) {
       _error = 'Error creating vendor: ${e.toString()}';
       return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  Future<Map<String, dynamic>> createVendorWithItems(
+    int companyId,
+    CreateVendorsRequest request,
+    List<Map<String, dynamic>> items,
+  ) async {
+    try {
+      _isSaving = true;
+      _error = null;
+      _editResponse = null;
+      _creationStep = 0;
+      if (onStepChanged != null) onStepChanged!(0);
+      notifyListeners();
+
+      debugPrint('Creating vendor for companyId: $companyId');
+
+      final response = await _authRepository.createVendor(companyId, request);
+
+      _editResponse = response;
+
+      if (response == null || !response.responseStatus) {
+        _error = response?.responseMessage ?? 'Failed to create vendor';
+        return {'success': false, 'step': 0};
+      }
+
+      final vendorId = response.responseData?['vendorId'];
+      if (vendorId == null) {
+        _error = 'Vendor created but ID not returned';
+        return {'success': false, 'step': 0};
+      }
+
+      debugPrint('Vendor created with ID: $vendorId');
+      _creationStep = 1;
+      if (onStepChanged != null) onStepChanged!(1);
+      notifyListeners();
+
+      if (items.isEmpty) {
+        _creationStep = 2;
+        if (onStepChanged != null) onStepChanged!(2);
+        notifyListeners();
+        return {'success': true, 'step': 2, 'vendorId': vendorId};
+      }
+
+      for (int i = 0; i < items.length; i++) {
+        final item = items[i];
+        debugPrint('Creating vendor item ${i + 1}/${items.length}');
+        
+        final itemResponse = await _authRepository.createVendorItem(
+          companyId: companyId,
+          vendorId: vendorId,
+          itemId: item['itemId'],
+          purchasePrice: item['purchasePrice'],
+          purchaseDescription: item['purchaseDescription'],
+        );
+
+        if (itemResponse == null || !itemResponse.responseStatus) {
+          _error = 'Failed to create vendor item ${i + 1}';
+          return {'success': false, 'step': 1, 'vendorId': vendorId};
+        }
+      }
+
+      debugPrint('All vendor items created successfully');
+      _creationStep = 2;
+      if (onStepChanged != null) onStepChanged!(2);
+      notifyListeners();
+      return {'success': true, 'step': 2, 'vendorId': vendorId};
+    } catch (e) {
+      _error = 'Error: ${e.toString()}';
+      return {'success': false, 'step': 0};
     } finally {
       _isSaving = false;
       notifyListeners();
