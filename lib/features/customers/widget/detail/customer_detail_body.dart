@@ -137,6 +137,9 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
   }
 
   Widget _buildQuickActions(BuildContext context) {
+    final vm = context.read<CustomerDetailViewModel>();
+    final customer = widget.customer;
+    
     return Padding(
       padding: const EdgeInsets.fromLTRB(_horizontal, 6, _horizontal, 0),
       child: Row(
@@ -146,7 +149,20 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
             icon: Icons.receipt_long_rounded,
             label: 'Create Sale',
             color: LoginColors.primary,
-            onTap: () => context.push('/sales'),
+            onTap: () => context.push(
+              '/sales/${vm.companyId}/create',
+              extra: {
+                'preSelectedCustomer': {
+                  'customerId': customer.customerId,
+                  'displayName': customer.customerName,
+                  'customerCompanyName': customer.customerCompany?.companyName ?? '',
+                  'customerCompanyId': customer.customerCompany?.companyId,
+                  'email': customer.email,
+                  'isActive': customer.isActive,
+                  'dueAmount': '',
+                }
+              },
+            ),
           ),
           const SizedBox(width: 10),
           _buildActionButton(
@@ -154,7 +170,20 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
             icon: Icons.account_balance_wallet_rounded,
             label: 'Receive Payment',
             color: LoginColors.success,
-            onTap: () => context.push('/pay-received'),
+            onTap: () => context.push(
+              '/pay-received/${vm.companyId}/create',
+              extra: {
+                'preSelectedCustomer': {
+                  'customerId': customer.customerId,
+                  'displayName': customer.customerName,
+                  'customerCompanyName': customer.customerCompany?.companyName ?? '',
+                  'customerCompanyId': customer.customerCompany?.companyId,
+                  'email': customer.email,
+                  'isActive': customer.isActive,
+                  'dueAmount': '',
+                }
+              },
+            ),
           ),
         ],
       ),

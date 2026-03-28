@@ -18,6 +18,7 @@ class CreateReceivePaymentPage extends StatelessWidget {
   final Customer? initialCustomer;
   final int? initialOrderId;
   final double? initialAmount;
+  final Map<String, dynamic>? preSelectedCustomer;
 
   const CreateReceivePaymentPage({
     super.key,
@@ -26,10 +27,16 @@ class CreateReceivePaymentPage extends StatelessWidget {
     this.initialCustomer,
     this.initialOrderId,
     this.initialAmount,
+    this.preSelectedCustomer,
   });
 
   @override
   Widget build(BuildContext context) {
+    Customer? customer = initialCustomer;
+    if (customer == null && preSelectedCustomer != null) {
+      customer = Customer.fromJson(preSelectedCustomer!);
+    }
+    
     return ChangeNotifierProvider(
       create: (_) => CreateReceivePaymentViewModel(
         repository: AuthRepository(),
@@ -38,7 +45,7 @@ class CreateReceivePaymentPage extends StatelessWidget {
       child: _CreateReceivePaymentView(
         companyId: companyId,
         proofResult: proofResult,
-        initialCustomer: initialCustomer,
+        initialCustomer: customer,
         initialOrderId: initialOrderId,
         initialAmount: initialAmount,
       ),

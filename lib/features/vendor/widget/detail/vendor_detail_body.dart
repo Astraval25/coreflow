@@ -107,6 +107,9 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
   }
 
   Widget _buildQuickActions(BuildContext context) {
+    final vm = context.read<VendorDetailViewModel>();
+    final vendor = widget.vendor;
+    
     return Padding(
       padding: const EdgeInsets.fromLTRB(_horizontal, 6, _horizontal, 0),
       child: Row(
@@ -116,7 +119,20 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             icon: Icons.shopping_cart_rounded,
             label: 'Create Purchase',
             color: LoginColors.primary,
-            onTap: () => context.push('/purchase'),
+            onTap: () => context.push(
+              '/purchase/${vm.companyId}/create',
+              extra: {
+                'preSelectedVendor': {
+                  'vendorId': vendor.vendorId,
+                  'displayName': vendor.vendorName,
+                  'vendorCompanyName': vendor.vendorCompany?.companyName ?? '',
+                  'vendorCompanyId': vendor.vendorCompany?.companyId,
+                  'email': vendor.email,
+                  'isActive': vendor.isActive,
+                  'dueAmount': '',
+                }
+              },
+            ),
           ),
           const SizedBox(width: 10),
           _buildActionButton(
@@ -124,7 +140,20 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             icon: Icons.payment_rounded,
             label: 'Make Payment',
             color: LoginColors.success,
-            onTap: () => context.push('/payment'),
+            onTap: () => context.push(
+              '/payment/${vm.companyId}/create',
+              extra: {
+                'preSelectedVendor': {
+                  'vendorId': vendor.vendorId,
+                  'displayName': vendor.vendorName,
+                  'vendorCompanyName': vendor.vendorCompany?.companyName ?? '',
+                  'vendorCompanyId': vendor.vendorCompany?.companyId,
+                  'email': vendor.email,
+                  'isActive': vendor.isActive,
+                  'dueAmount': '',
+                }
+              },
+            ),
           ),
         ],
       ),

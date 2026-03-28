@@ -25,9 +25,13 @@ import 'package:coreflow/features/vendor/view/vendor_page.dart';
 import 'package:coreflow/features/verify_otp/view/verify_otp_screen.dart';
 import 'package:coreflow/features/dashboard/widget/main_layout.dart';
 import 'package:coreflow/features/presentation/sales/view/sales_page.dart';
+import 'package:coreflow/features/presentation/sales/view/create_sales_order_page.dart';
 import 'package:coreflow/features/presentation/purchase/view/purchase_page.dart';
+import 'package:coreflow/features/presentation/purchase/view/create_purchase_order_page.dart';
 import 'package:coreflow/features/presentation/payment/send_payment/view/payment_page.dart';
+import 'package:coreflow/features/presentation/payment/send_payment/view/create_payment_sent_page.dart';
 import 'package:coreflow/features/presentation/payment/receive_payment/view/pay_received_page.dart';
+import 'package:coreflow/features/presentation/payment/receive_payment/view/create_receive_payment_page.dart';
 import 'package:coreflow/features/splash/view/splash_page.dart';
 import 'package:go_router/go_router.dart';
 
@@ -99,16 +103,60 @@ final GoRouter router = GoRouter(
           builder: (context, state) => const SalesPage(),
         ),
         GoRoute(
+          path: '/sales/:companyId/create',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            final extra = state.extra as Map<String, dynamic>?;
+            return CreateSalesOrderPage(
+              companyId: companyId,
+              preSelectedCustomer: extra?['preSelectedCustomer'] as Map<String, dynamic>?,
+            );
+          },
+        ),
+        GoRoute(
           path: '/purchase',
           builder: (context, state) => const PurchasePage(),
+        ),
+        GoRoute(
+          path: '/purchase/:companyId/create',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            final extra = state.extra as Map<String, dynamic>?;
+            return CreatePurchaseOrderPage(
+              companyId: companyId,
+              preSelectedVendor: extra?['preSelectedVendor'] as Map<String, dynamic>?,
+            );
+          },
         ),
         GoRoute(
           path: '/payment',
           builder: (context, state) => const PaymentPage(),
         ),
         GoRoute(
+          path: '/payment/:companyId/create',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            final extra = state.extra as Map<String, dynamic>?;
+            return CreatePaymentSentPage(
+              companyId: companyId,
+              preSelectedVendor: extra?['preSelectedVendor'] as Map<String, dynamic>?,
+            );
+          },
+        ),
+        GoRoute(
           path: '/pay-received',
           builder: (context, state) => const PayReceivedPage(),
+        ),
+        GoRoute(
+          path: '/pay-received/:companyId/create',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            final extra = state.extra as Map<String, dynamic>?;
+            return CreateReceivePaymentPage(
+              companyId: companyId,
+              preSelectedCustomer: extra?['preSelectedCustomer'] as Map<String, dynamic>?,
+            );
+          },
         ),
         GoRoute(
           path: '/manage-companies',

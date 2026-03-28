@@ -16,8 +16,13 @@ import 'package:provider/provider.dart';
 
 class CreatePurchaseOrderPage extends StatelessWidget {
   final int companyId;
+  final Map<String, dynamic>? preSelectedVendor;
 
-  const CreatePurchaseOrderPage({super.key, required this.companyId});
+  const CreatePurchaseOrderPage({
+    super.key,
+    required this.companyId,
+    this.preSelectedVendor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,15 +31,22 @@ class CreatePurchaseOrderPage extends StatelessWidget {
         repository: AuthRepository(),
         companyId: companyId,
       ),
-      child: _CreatePurchaseOrderView(companyId: companyId),
+      child: _CreatePurchaseOrderView(
+        companyId: companyId,
+        preSelectedVendor: preSelectedVendor,
+      ),
     );
   }
 }
 
 class _CreatePurchaseOrderView extends StatefulWidget {
   final int companyId;
+  final Map<String, dynamic>? preSelectedVendor;
 
-  const _CreatePurchaseOrderView({required this.companyId});
+  const _CreatePurchaseOrderView({
+    required this.companyId,
+    this.preSelectedVendor,
+  });
 
   @override
   State<_CreatePurchaseOrderView> createState() =>
@@ -48,6 +60,18 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
   final _taxController = TextEditingController();
   final _discountController = TextEditingController();
   final _deliveryController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.preSelectedVendor != null) {
+        final vm = context.read<CreatePurchaseOrderViewModel>();
+        final vendor = Vendor.fromJson(widget.preSelectedVendor!);
+        vm.setVendor(vendor);
+      }
+    });
+  }
 
   @override
   void dispose() {

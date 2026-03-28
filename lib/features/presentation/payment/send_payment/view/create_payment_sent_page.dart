@@ -18,6 +18,7 @@ class CreatePaymentSentPage extends StatelessWidget {
   final Vendor? initialVendor;
   final int? initialOrderId;
   final double? initialAmount;
+  final Map<String, dynamic>? preSelectedVendor;
 
   const CreatePaymentSentPage({
     super.key,
@@ -26,10 +27,16 @@ class CreatePaymentSentPage extends StatelessWidget {
     this.initialVendor,
     this.initialOrderId,
     this.initialAmount,
+    this.preSelectedVendor,
   });
 
   @override
   Widget build(BuildContext context) {
+    Vendor? vendor = initialVendor;
+    if (vendor == null && preSelectedVendor != null) {
+      vendor = Vendor.fromJson(preSelectedVendor!);
+    }
+    
     return ChangeNotifierProvider(
       create: (_) => CreatePaymentSentViewModel(
         repository: AuthRepository(),
@@ -38,7 +45,7 @@ class CreatePaymentSentPage extends StatelessWidget {
       child: _CreatePaymentSentView(
         companyId: companyId,
         proofResult: proofResult,
-        initialVendor: initialVendor,
+        initialVendor: vendor,
         initialOrderId: initialOrderId,
         initialAmount: initialAmount,
       ),

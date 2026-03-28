@@ -1,6 +1,5 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 
 class ProcessLoadingScreen extends StatelessWidget {
   final List<String> steps;
@@ -16,7 +15,6 @@ class ProcessLoadingScreen extends StatelessWidget {
     this.showProgress = true,
   });
 
-  @Preview(name: 'Process Loading Screen')
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,7 +83,6 @@ class ProcessLoadingScreen extends StatelessWidget {
               ...List.generate(steps.length, (index) {
                 final isCompleted = index < currentStep;
                 final isCurrent = index == currentStep;
-                final isPending = index > currentStep;
 
                 return Padding(
                   padding: EdgeInsets.only(
