@@ -330,6 +330,91 @@ class AppConfig {
   // ─── Advertisements ───
   static String get adsUrl => '$baseUrl/api/ads';
 
+  // ─── Analytics / Dashboard ───
+  static String getDashboardKpiUrl(
+    int companyId,
+    String startDate,
+    String endDate,
+  ) =>
+      '$baseUrl/api/companies/$companyId/analytics/dashboard/kpi?startDate=$startDate&endDate=$endDate';
+
+  static String getCashFlowUrl(
+    int companyId,
+    String startDate,
+    String endDate,
+  ) =>
+      '$baseUrl/api/companies/$companyId/analytics/dashboard/cash-flow?startDate=$startDate&endDate=$endDate';
+
+  static String getRevenueExpenseUrl(
+    int companyId,
+    String startDate,
+    String endDate,
+  ) =>
+      '$baseUrl/api/companies/$companyId/analytics/dashboard/revenue-expense?startDate=$startDate&endDate=$endDate';
+
+  static String getSalesSummaryUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/sales/summary?startDate=$s&endDate=$e';
+
+  static String getPurchaseSummaryUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/purchase/summary?startDate=$s&endDate=$e';
+
+  static String getSalesOrderFrequencyUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/sales/order-frequency?startDate=$s&endDate=$e';
+
+  static String getPurchaseOrderFrequencyUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/purchase/order-frequency?startDate=$s&endDate=$e';
+
+  static String getSalesPaymentFrequencyUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/sales/payment-frequency?startDate=$s&endDate=$e';
+
+  static String getPurchasePaymentFrequencyUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/purchase/payment-frequency?startDate=$s&endDate=$e';
+
+  static String getSalesItemFrequencyUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/sales/item-frequency?startDate=$s&endDate=$e';
+
+  static String getPurchaseItemFrequencyUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/purchase/item-frequency?startDate=$s&endDate=$e';
+
+  static String getSalesRunningOrderAmountUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/sales/running-order-amount?startDate=$s&endDate=$e';
+
+  static String getPurchaseRunningOrderAmountUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/purchase/running-order-amount?startDate=$s&endDate=$e';
+
+  static String getSalesRunningPaymentAmountUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/sales/running-payment-amount?startDate=$s&endDate=$e';
+
+  static String getPurchaseRunningPaymentAmountUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/purchase/running-payment-amount?startDate=$s&endDate=$e';
+
+  static String getSalesByCustomerUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/sales/by-customer?startDate=$s&endDate=$e';
+
+  static String getPurchaseByVendorUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/purchase/by-vendor?startDate=$s&endDate=$e';
+
+  static String getSalesByItemUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/sales/by-item?startDate=$s&endDate=$e';
+
+  static String getPurchaseByItemUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/purchase/by-item?startDate=$s&endDate=$e';
+
+  static String getProfitByItemUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/profit/by-item?startDate=$s&endDate=$e';
+
+  static String getTopSellingItemsUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/dashboard/top-selling-items?startDate=$s&endDate=$e';
+
+  static String getTopProfitableItemsUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/dashboard/top-profitable-items?startDate=$s&endDate=$e';
+
+  static String getPaymentModeDistributionUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/dashboard/payment-mode-distribution?startDate=$s&endDate=$e';
+
+  static String getMonthlyTrendUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/dashboard/monthly-trend?startDate=$s&endDate=$e';
+
   // ─── Company Config ───
   static String getCompanyConfigUrl(int companyId) =>
       '$baseUrl/api/companies/$companyId/config';

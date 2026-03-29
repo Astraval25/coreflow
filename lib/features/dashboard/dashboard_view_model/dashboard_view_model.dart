@@ -6,6 +6,9 @@ import '../../../core/config/app_config.dart';
 import '../../../core/storage/token_storage.dart';
 import '../../../data/services/api_services.dart';
 import '../../../domain/model/advertisement/advertisement.dart';
+import '../../../domain/model/analytics/cash_flow.dart';
+import '../../../domain/model/analytics/dashboard_kpi.dart';
+import '../../../domain/model/analytics/revenue_expense.dart';
 import '../../../domain/model/company/company.dart';
 import '../../../data/repositories/auth_repository.dart';
 
@@ -36,6 +39,12 @@ class DashboardViewModel extends ChangeNotifier {
   final Map<String, Uint8List> _adImageCache = {};
   bool _hasLoadedAppOpenData = false;
 
+  // Analytics
+  DashboardKpi? _kpi;
+  List<CashFlowEntry> _cashFlow = [];
+  List<RevenueExpenseEntry> _revenueExpense = [];
+  bool _isAnalyticsLoading = false;
+
   bool get isLoading => _isLoading;
   String? get userName => _userName;
   String? get email => _email;
@@ -52,6 +61,11 @@ class DashboardViewModel extends ChangeNotifier {
   int get unreadNotificationCount => _unreadNotificationCount;
   List<Advertisement> get advertisements => _advertisements;
   Map<String, Uint8List> get adImageCache => _adImageCache;
+
+  DashboardKpi? get kpi => _kpi;
+  List<CashFlowEntry> get cashFlow => _cashFlow;
+  List<RevenueExpenseEntry> get revenueExpense => _revenueExpense;
+  bool get isAnalyticsLoading => _isAnalyticsLoading;
 
   DashboardViewModel() {
     _initializeData();
@@ -163,11 +177,45 @@ class DashboardViewModel extends ChangeNotifier {
     if (_hasLoadedAppOpenData || _companyId == null) return;
     _hasLoadedAppOpenData = true;
 
-    // Load unread count and ads in parallel
     await Future.wait([
       _loadUnreadCount(),
       _loadAdvertisements(),
+      _loadAnalytics(),
     ]);
+  }
+
+  Future<void> _loadAnalytics() async {
+    if (_companyId == null) return;
+    _isAnalyticsLoading = true;
+    notifyListeners();
+
+    final now = DateTime.now();
+    final start =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-01';
+    final lastDay = DateTime(now.year, now.month + 1, 0).day;
+    final end =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-$lastDay';
+
+    try {
+      final results = await Future.wait([
+        _authRepository.getDashboardKpi(_companyId!, start, end),
+        _authRepository.getCashFlow(_companyId!, start, end),
+        _authRepository.getRevenueExpense(_companyId!, start, end),
+      ]);
+      _kpi = results[0] as DashboardKpi?;
+      _cashFlow = results[1] as List<CashFlowEntry>;
+      _revenueExpense = results[2] as List<RevenueExpenseEntry>;
+    } catch (e) {
+      debugPrint('_loadAnalytics error: $e');
+    } finally {
+      _isAnalyticsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> refreshAnalytics() async {
+    _hasLoadedAppOpenData = false;
+    await _loadAnalytics();
   }
 
   Future<void> _loadUnreadCount() async {

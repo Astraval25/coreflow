@@ -672,12 +672,9 @@ class ReportMenuItem extends StatelessWidget {
         onTap: () {
           vm.setSelectedMenu('/report');
           Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Report - Coming soon'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          if (vm.companyId != null) {
+            context.push('/report/${vm.companyId}');
+          }
         },
       ),
     );

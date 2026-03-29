@@ -14,6 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 import 'package:coreflow/features/dashboard/widget/create_section.dart';
+import 'package:coreflow/features/dashboard/widget/dashboard_analytics_section.dart';
 import 'package:coreflow/features/dashboard/widget/quick_access_section.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -116,7 +117,13 @@ class _DashboardViewState extends State<_DashboardView> {
                               ),
                               const SizedBox(height: 20),
                               QuickAccessSection(vm: vm),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 4),
+                              DashboardAnalyticsSection(
+                                kpi: vm.kpi,
+                                cashFlow: vm.cashFlow,
+                                revenueExpense: vm.revenueExpense,
+                                isLoading: vm.isAnalyticsLoading,
+                              ),
                             ],
                           ),
                         ),

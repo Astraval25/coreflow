@@ -32,6 +32,7 @@ import 'package:coreflow/features/presentation/payment/send_payment/view/payment
 import 'package:coreflow/features/presentation/payment/send_payment/view/create_payment_sent_page.dart';
 import 'package:coreflow/features/presentation/payment/receive_payment/view/pay_received_page.dart';
 import 'package:coreflow/features/presentation/payment/receive_payment/view/create_receive_payment_page.dart';
+import 'package:coreflow/features/analytics/view/report_list_page.dart';
 import 'package:coreflow/features/splash/view/splash_page.dart';
 import 'package:go_router/go_router.dart';
 
@@ -161,6 +162,13 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/manage-companies',
           builder: (context, state) => const ManageCompaniesPage(),
+        ),
+        GoRoute(
+          path: '/report/:companyId',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            return ReportListPage(companyId: companyId);
+          },
         ),
         // Customers route inside shell
         GoRoute(

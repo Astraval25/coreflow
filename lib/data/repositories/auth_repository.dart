@@ -55,6 +55,17 @@ import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
 import 'package:coreflow/domain/model/vendors/vendors_edit_request.dart';
 import 'package:coreflow/domain/model/notification/app_notification.dart';
 import 'package:coreflow/domain/model/advertisement/advertisement.dart';
+import 'package:coreflow/domain/model/analytics/dashboard_kpi.dart';
+import 'package:coreflow/domain/model/analytics/cash_flow.dart';
+import 'package:coreflow/domain/model/analytics/revenue_expense.dart';
+import 'package:coreflow/domain/model/analytics/sales_summary.dart';
+import 'package:coreflow/domain/model/analytics/order_frequency.dart';
+import 'package:coreflow/domain/model/analytics/item_frequency.dart';
+import 'package:coreflow/domain/model/analytics/running_amount.dart';
+import 'package:coreflow/domain/model/analytics/party_analytics.dart';
+import 'package:coreflow/domain/model/analytics/item_analytics.dart';
+import 'package:coreflow/domain/model/analytics/payment_mode.dart';
+import 'package:coreflow/domain/model/analytics/monthly_trend.dart';
 import 'package:coreflow/domain/model/vendors/vendors_edit_response.dart';
 import 'package:coreflow/domain/model/vendors/vendors_status_response.dart';
 import 'package:coreflow/domain/model/verify_otp/verify_otp_request.dart';
@@ -515,5 +526,280 @@ class AuthRepository {
       debugPrint('Get advertisements error: $e');
       return [];
     }
+  }
+
+  // ─── Analytics ───
+
+  Future<DashboardKpi?> getDashboardKpi(
+    int companyId,
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final url = AppConfig.getDashboardKpiUrl(companyId, startDate, endDate);
+      final response = await _apiService.get(Uri.parse(url));
+      if (response.statusCode != 200) return null;
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return null;
+      return DashboardKpi.fromJson(
+        data['responseData'] as Map<String, dynamic>,
+      );
+    } catch (e) {
+      debugPrint('Get dashboard KPI error: $e');
+      return null;
+    }
+  }
+
+  Future<List<CashFlowEntry>> getCashFlow(
+    int companyId,
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final url = AppConfig.getCashFlowUrl(companyId, startDate, endDate);
+      final response = await _apiService.get(Uri.parse(url));
+      if (response.statusCode != 200) return [];
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return [];
+      final list = data['responseData'] as List<dynamic>;
+      return list
+          .map((e) => CashFlowEntry.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Get cash flow error: $e');
+      return [];
+    }
+  }
+
+  Future<List<RevenueExpenseEntry>> getRevenueExpense(
+    int companyId,
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final url =
+          AppConfig.getRevenueExpenseUrl(companyId, startDate, endDate);
+      final response = await _apiService.get(Uri.parse(url));
+      if (response.statusCode != 200) return [];
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return [];
+      final list = data['responseData'] as List<dynamic>;
+      return list
+          .map((e) => RevenueExpenseEntry.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Get revenue vs expense error: $e');
+      return [];
+    }
+  }
+
+  Future<SalesSummary?> getSalesSummary(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getSalesSummaryUrl(c, s, e)));
+      if (r.statusCode != 200) return null;
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return null;
+      return SalesSummary.fromJson(d['responseData'] as Map<String, dynamic>);
+    } catch (err) { debugPrint('getSalesSummary: $err'); return null; }
+  }
+
+  Future<PurchaseSummary?> getPurchaseSummary(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getPurchaseSummaryUrl(c, s, e)));
+      if (r.statusCode != 200) return null;
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return null;
+      return PurchaseSummary.fromJson(d['responseData'] as Map<String, dynamic>);
+    } catch (err) { debugPrint('getPurchaseSummary: $err'); return null; }
+  }
+
+  Future<List<OrderFrequencyEntry>> getSalesOrderFrequency(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getSalesOrderFrequencyUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => OrderFrequencyEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getSalesOrderFrequency: $err'); return []; }
+  }
+
+  Future<List<OrderFrequencyEntry>> getPurchaseOrderFrequency(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getPurchaseOrderFrequencyUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => OrderFrequencyEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getPurchaseOrderFrequency: $err'); return []; }
+  }
+
+  Future<List<PaymentFrequencyEntry>> getSalesPaymentFrequency(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getSalesPaymentFrequencyUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => PaymentFrequencyEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getSalesPaymentFrequency: $err'); return []; }
+  }
+
+  Future<List<PaymentFrequencyEntry>> getPurchasePaymentFrequency(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getPurchasePaymentFrequencyUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => PaymentFrequencyEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getPurchasePaymentFrequency: $err'); return []; }
+  }
+
+  Future<List<ItemFrequencyEntry>> getSalesItemFrequency(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getSalesItemFrequencyUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => ItemFrequencyEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getSalesItemFrequency: $err'); return []; }
+  }
+
+  Future<List<ItemFrequencyEntry>> getPurchaseItemFrequency(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getPurchaseItemFrequencyUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => ItemFrequencyEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getPurchaseItemFrequency: $err'); return []; }
+  }
+
+  Future<List<RunningAmountEntry>> getSalesRunningOrderAmount(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getSalesRunningOrderAmountUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => RunningAmountEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getSalesRunningOrderAmount: $err'); return []; }
+  }
+
+  Future<List<RunningAmountEntry>> getPurchaseRunningOrderAmount(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getPurchaseRunningOrderAmountUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => RunningAmountEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getPurchaseRunningOrderAmount: $err'); return []; }
+  }
+
+  Future<List<RunningAmountEntry>> getSalesRunningPaymentAmount(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getSalesRunningPaymentAmountUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => RunningAmountEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getSalesRunningPaymentAmount: $err'); return []; }
+  }
+
+  Future<List<RunningAmountEntry>> getPurchaseRunningPaymentAmount(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getPurchaseRunningPaymentAmountUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => RunningAmountEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getPurchaseRunningPaymentAmount: $err'); return []; }
+  }
+
+  Future<List<PartyAnalyticsEntry>> getSalesByCustomer(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getSalesByCustomerUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => PartyAnalyticsEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getSalesByCustomer: $err'); return []; }
+  }
+
+  Future<List<PartyAnalyticsEntry>> getPurchaseByVendor(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getPurchaseByVendorUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => PartyAnalyticsEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getPurchaseByVendor: $err'); return []; }
+  }
+
+  Future<List<ItemAnalyticsEntry>> getSalesByItem(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getSalesByItemUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => ItemAnalyticsEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getSalesByItem: $err'); return []; }
+  }
+
+  Future<List<ItemAnalyticsEntry>> getPurchaseByItem(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getPurchaseByItemUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => ItemAnalyticsEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getPurchaseByItem: $err'); return []; }
+  }
+
+  Future<List<ProfitByItemEntry>> getProfitByItem(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getProfitByItemUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => ProfitByItemEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getProfitByItem: $err'); return []; }
+  }
+
+  Future<List<ItemAnalyticsEntry>> getTopSellingItems(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getTopSellingItemsUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => ItemAnalyticsEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getTopSellingItems: $err'); return []; }
+  }
+
+  Future<List<ItemAnalyticsEntry>> getTopProfitableItems(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getTopProfitableItemsUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => ItemAnalyticsEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getTopProfitableItems: $err'); return []; }
+  }
+
+  Future<List<PaymentModeEntry>> getPaymentModeDistribution(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getPaymentModeDistributionUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => PaymentModeEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getPaymentModeDistribution: $err'); return []; }
+  }
+
+  Future<List<MonthlyTrendEntry>> getMonthlyTrend(int c, String s, String e) async {
+    try {
+      final r = await _apiService.get(Uri.parse(AppConfig.getMonthlyTrendUrl(c, s, e)));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List).map((x) => MonthlyTrendEntry.fromJson(x)).toList();
+    } catch (err) { debugPrint('getMonthlyTrend: $err'); return []; }
   }
 }
