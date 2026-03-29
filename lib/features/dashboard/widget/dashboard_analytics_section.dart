@@ -73,7 +73,7 @@ List<double> _niceTicks(double max, int count) {
 
 // ─── Section Root ─────────────────────────────────────────────────────────────
 
-class DashboardAnalyticsSection extends StatelessWidget {
+class DashboardAnalyticsSection extends StatefulWidget {
   final DashboardKpi? kpi;
   final List<CashFlowEntry> cashFlow;
   final List<RevenueExpenseEntry> revenueExpense;
@@ -90,16 +90,94 @@ class DashboardAnalyticsSection extends StatelessWidget {
   });
 
   @override
+  State<DashboardAnalyticsSection> createState() => _DashboardAnalyticsSectionState();
+}
+
+class _DashboardAnalyticsSectionState extends State<DashboardAnalyticsSection> {
+  PeriodOption _selectedPeriod = PeriodOption.currentYear;
+  bool _periodLoading = false;
+
+  Future<void> _applyPeriod(PeriodOption option) async {
+    setState(() {
+      _selectedPeriod = option;
+      _periodLoading = true;
+    });
+    final dates = _periodDates(option);
+    await widget.onPeriodChanged?.call(dates.$1, dates.$2);
+    if (mounted) {
+      setState(() => _periodLoading = false);
+    }
+  }
+
+  void _showPeriodSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: LoginColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: PeriodOption.values.map((option) {
+              final isSelected = option == _selectedPeriod;
+              return ListTile(
+                title: Text(
+                  option.label,
+                  style: TextStyle(
+                    color: isSelected
+                        ? LoginColors.primary
+                        : LoginColors.textPrimary,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+                trailing: isSelected
+                    ? Icon(Icons.check, color: LoginColors.primary, size: 20)
+                    : null,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _applyPeriod(option);
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (isLoading) return const _AnalyticsSkeleton();
-    if (kpi == null && cashFlow.isEmpty && revenueExpense.isEmpty) {
+    if (widget.isLoading) return const _AnalyticsSkeleton();
+    if (widget.kpi == null && widget.cashFlow.isEmpty && widget.revenueExpense.isEmpty) {
       return const SizedBox.shrink();
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 16),
-        if (kpi != null)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Analytics',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: LoginColors.textPrimary)),
+              GestureDetector(
+                onTap: _periodLoading ? null : _showPeriodSelector,
+                child: _periodLoading
+                    ? _periodBadgeLoading()
+                    : _periodBadge(_selectedPeriod.label),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (widget.kpi != null)
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -116,18 +194,15 @@ class DashboardAnalyticsSection extends StatelessWidget {
                 ),
               ],
             ),
-            child: _FinancialSummarySection(kpi: kpi!),
+            child: _FinancialSummarySection(kpi: widget.kpi!),
           ),
-        if (cashFlow.isNotEmpty || onPeriodChanged != null) ...[
+        if (widget.cashFlow.isNotEmpty || widget.onPeriodChanged != null) ...[
           const SizedBox(height: 16),
-          _CashFlowSection(entries: cashFlow, onPeriodChanged: onPeriodChanged),
+          _CashFlowSection(entries: widget.cashFlow),
         ],
-        if (revenueExpense.isNotEmpty || onPeriodChanged != null) ...[
+        if (widget.revenueExpense.isNotEmpty || widget.onPeriodChanged != null) ...[
           const SizedBox(height: 16),
-          _IncomeExpenseSection(
-            entries: revenueExpense,
-            onPeriodChanged: onPeriodChanged,
-          ),
+          _IncomeExpenseSection(entries: widget.revenueExpense),
         ],
         const SizedBox(height: 8),
       ],
@@ -339,8 +414,7 @@ enum PeriodOption {
 
 class _CashFlowSection extends StatefulWidget {
   final List<CashFlowEntry> entries;
-  final Future<void> Function(String start, String end)? onPeriodChanged;
-  const _CashFlowSection({required this.entries, this.onPeriodChanged});
+  const _CashFlowSection({required this.entries});
 
   @override
   State<_CashFlowSection> createState() => _CashFlowSectionState();
@@ -349,8 +423,6 @@ class _CashFlowSection extends StatefulWidget {
 class _CashFlowSectionState extends State<_CashFlowSection> {
   int? _selectedIdx;
   Timer? _dismissTimer;
-  PeriodOption _selectedPeriod = PeriodOption.currentYear;
-  bool _periodLoading = false;
 
   @override
   void dispose() {
@@ -364,53 +436,6 @@ class _CashFlowSectionState extends State<_CashFlowSection> {
     _dismissTimer = Timer(const Duration(seconds: 4), () {
       if (mounted) setState(() => _selectedIdx = null);
     });
-  }
-
-  Future<void> _applyPeriod(PeriodOption option) async {
-    setState(() {
-      _selectedPeriod = option;
-      _periodLoading = true;
-    });
-    final dates = _periodDates(option);
-    await widget.onPeriodChanged?.call(dates.$1, dates.$2);
-    if (mounted) setState(() => _periodLoading = false);
-  }
-
-  void _showPeriodSelector() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: LoginColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: PeriodOption.values.map((option) {
-            final isSelected = option == _selectedPeriod;
-            return ListTile(
-              title: Text(
-                option.label,
-                style: TextStyle(
-                  color: isSelected
-                      ? LoginColors.primary
-                      : LoginColors.textPrimary,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                ),
-              ),
-              trailing: isSelected
-                  ? Icon(Icons.check, color: LoginColors.primary, size: 20)
-                  : null,
-              onTap: () {
-                Navigator.pop(ctx);
-                _applyPeriod(option);
-              },
-            );
-          }).toList(),
-        ),
-      ),
-    );
   }
 
   @override
@@ -445,24 +470,15 @@ class _CashFlowSectionState extends State<_CashFlowSection> {
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(children: [
-                  Icon(Icons.radio_button_checked_outlined,
-                      size: 16, color: LoginColors.textSecondary),
-                  const SizedBox(width: 6),
-                  Text('Cash Flow',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: LoginColors.textPrimary)),
-                ]),
-                GestureDetector(
-                  onTap: _periodLoading ? null : _showPeriodSelector,
-                  child: _periodLoading
-                      ? _periodBadgeLoading()
-                      : _periodBadge(_selectedPeriod.label),
-                ),
+                Icon(Icons.radio_button_checked_outlined,
+                    size: 16, color: LoginColors.textSecondary),
+                const SizedBox(width: 6),
+                Text('Cash Flow',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: LoginColors.textPrimary)),
               ],
             ),
           ),
@@ -803,65 +819,13 @@ class _CashFlowLinePainter extends CustomPainter {
 
 class _IncomeExpenseSection extends StatefulWidget {
   final List<RevenueExpenseEntry> entries;
-  final Future<void> Function(String start, String end)? onPeriodChanged;
-  const _IncomeExpenseSection({required this.entries, this.onPeriodChanged});
+  const _IncomeExpenseSection({required this.entries});
 
   @override
   State<_IncomeExpenseSection> createState() => _IncomeExpenseSectionState();
 }
 
 class _IncomeExpenseSectionState extends State<_IncomeExpenseSection> {
-  PeriodOption _selectedPeriod = PeriodOption.currentYear;
-  bool _periodLoading = false;
-
-  Future<void> _applyPeriod(PeriodOption option) async {
-    setState(() {
-      _selectedPeriod = option;
-      _periodLoading = true;
-    });
-    final dates = _periodDates(option);
-    await widget.onPeriodChanged?.call(dates.$1, dates.$2);
-    if (mounted) setState(() => _periodLoading = false);
-  }
-
-  void _showPeriodSelector() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: LoginColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: PeriodOption.values.map((option) {
-            final isSelected = option == _selectedPeriod;
-            return ListTile(
-              title: Text(
-                option.label,
-                style: TextStyle(
-                  color: isSelected
-                      ? LoginColors.primary
-                      : LoginColors.textPrimary,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                ),
-              ),
-              trailing: isSelected
-                  ? Icon(Icons.check, color: LoginColors.primary, size: 20)
-                  : null,
-              onTap: () {
-                Navigator.pop(ctx);
-                _applyPeriod(option);
-              },
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
     final entries = widget.entries;
     final maxVal = entries
@@ -894,25 +858,16 @@ class _IncomeExpenseSectionState extends State<_IncomeExpenseSection> {
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(children: [
-                  Icon(Icons.info_outline_rounded,
-                      size: 16, color: LoginColors.textSecondary),
-                  const SizedBox(width: 6),
-                    Text(
-                      'Income Vs Expense',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: LoginColors.textPrimary)),
-                ]),
-                GestureDetector(
-                  onTap: _periodLoading ? null : _showPeriodSelector,
-                  child: _periodLoading
-                      ? _periodBadgeLoading()
-                      : _periodBadge(_selectedPeriod.label),
-                ),
+                Icon(Icons.info_outline_rounded,
+                    size: 16, color: LoginColors.textSecondary),
+                const SizedBox(width: 6),
+                Text(
+                  'Income Vs Expense',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: LoginColors.textPrimary)),
               ],
             ),
           ),

@@ -200,11 +200,14 @@ class DashboardViewModel extends ChangeNotifier {
     notifyListeners();
 
     final now = DateTime.now();
+    final fyStart = now.month >= 4
+        ? DateTime(now.year, 4, 1)
+        : DateTime(now.year - 1, 4, 1);
+    final fyEnd = DateTime(fyStart.year + 1, 3, 31);
     final start =
-        '${now.year}-${now.month.toString().padLeft(2, '0')}-01';
-    final lastDay = DateTime(now.year, now.month + 1, 0).day;
+        '${fyStart.year}-${fyStart.month.toString().padLeft(2, '0')}-${fyStart.day.toString().padLeft(2, '0')}';
     final end =
-        '${now.year}-${now.month.toString().padLeft(2, '0')}-$lastDay';
+        '${fyEnd.year}-${fyEnd.month.toString().padLeft(2, '0')}-${fyEnd.day.toString().padLeft(2, '0')}';
 
     try {
       final results = await Future.wait([
