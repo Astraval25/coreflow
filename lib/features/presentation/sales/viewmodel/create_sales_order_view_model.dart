@@ -32,6 +32,7 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
   // State
   Customer? _selectedCustomer;
   final List<OrderItemEntry> _orderItems = [];
+  DateTime _orderDate = DateTime.now();
   double _taxAmount = 0;
   double _discountAmount = 0;
   double _deliveryCharge = 0;
@@ -48,6 +49,7 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
   // Getters
   Customer? get selectedCustomer => _selectedCustomer;
   List<OrderItemEntry> get orderItems => List.unmodifiable(_orderItems);
+  DateTime get orderDate => _orderDate;
   double get taxAmount => _taxAmount;
   double get discountAmount => _discountAmount;
   double get deliveryCharge => _deliveryCharge;
@@ -167,6 +169,11 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setOrderDate(DateTime value) {
+    _orderDate = value;
+    notifyListeners();
+  }
+
   Future<void> submitOrder() async {
     if (!canSubmit) return;
 
@@ -178,6 +185,7 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
     try {
       final request = CreateSalesOrderRequest(
         customerId: _selectedCustomer!.customerId,
+        orderDate: _orderDate,
         taxAmount: _taxAmount > 0 ? _taxAmount : null,
         discountAmount: _discountAmount > 0 ? _discountAmount : null,
         deliveryCharge: _deliveryCharge > 0 ? _deliveryCharge : null,
@@ -215,6 +223,7 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
     _selectedCustomer = null;
     _orderItems.clear();
     _availableItems = [];
+    _orderDate = DateTime.now();
     _taxAmount = 0;
     _discountAmount = 0;
     _deliveryCharge = 0;

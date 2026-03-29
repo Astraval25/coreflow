@@ -34,6 +34,7 @@ class CreatePurchaseOrderViewModel extends ChangeNotifier {
   // State
   Vendor? _selectedVendor;
   final List<PurchaseOrderItemEntry> _orderItems = [];
+  DateTime _orderDate = DateTime.now();
   double _taxAmount = 0;
   double _discountAmount = 0;
   double _deliveryCharge = 0;
@@ -51,6 +52,7 @@ class CreatePurchaseOrderViewModel extends ChangeNotifier {
   Vendor? get selectedVendor => _selectedVendor;
   List<PurchaseOrderItemEntry> get orderItems =>
       List.unmodifiable(_orderItems);
+  DateTime get orderDate => _orderDate;
   double get taxAmount => _taxAmount;
   double get discountAmount => _discountAmount;
   double get deliveryCharge => _deliveryCharge;
@@ -177,6 +179,11 @@ class CreatePurchaseOrderViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setOrderDate(DateTime value) {
+    _orderDate = value;
+    notifyListeners();
+  }
+
   Future<void> submitOrder() async {
     if (!canSubmit) return;
 
@@ -188,6 +195,7 @@ class CreatePurchaseOrderViewModel extends ChangeNotifier {
     try {
       final request = CreatePurchaseOrderRequest(
         vendorId: _selectedVendor!.vendorId,
+        orderDate: _orderDate,
         taxAmount: _taxAmount > 0 ? _taxAmount : null,
         discountAmount: _discountAmount > 0 ? _discountAmount : null,
         deliveryCharge: _deliveryCharge > 0 ? _deliveryCharge : null,
@@ -226,6 +234,7 @@ class CreatePurchaseOrderViewModel extends ChangeNotifier {
     _selectedVendor = null;
     _orderItems.clear();
     _availableItems = [];
+    _orderDate = DateTime.now();
     _taxAmount = 0;
     _discountAmount = 0;
     _deliveryCharge = 0;

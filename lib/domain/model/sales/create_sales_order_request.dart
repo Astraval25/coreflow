@@ -1,5 +1,6 @@
 class CreateSalesOrderRequest {
   final int customerId;
+  final DateTime orderDate;
   final double? taxAmount;
   final double? discountAmount;
   final double? deliveryCharge;
@@ -8,6 +9,7 @@ class CreateSalesOrderRequest {
 
   CreateSalesOrderRequest({
     required this.customerId,
+    required this.orderDate,
     this.taxAmount,
     this.discountAmount,
     this.deliveryCharge,
@@ -18,6 +20,7 @@ class CreateSalesOrderRequest {
   Map<String, dynamic> toJson() {
     return {
       'customerId': customerId,
+      'orderDate': orderDate.toIso8601String(),
       'taxAmount': taxAmount ?? 0.0,
       'discountAmount': discountAmount ?? 0,
       'deliveryCharge': deliveryCharge ?? 0.0,

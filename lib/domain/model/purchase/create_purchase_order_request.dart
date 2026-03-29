@@ -1,5 +1,6 @@
 class CreatePurchaseOrderRequest {
   final int vendorId;
+  final DateTime orderDate;
   final double? taxAmount;
   final double? discountAmount;
   final double? deliveryCharge;
@@ -8,6 +9,7 @@ class CreatePurchaseOrderRequest {
 
   CreatePurchaseOrderRequest({
     required this.vendorId,
+    required this.orderDate,
     this.taxAmount,
     this.discountAmount,
     this.deliveryCharge,
@@ -18,6 +20,7 @@ class CreatePurchaseOrderRequest {
   Map<String, dynamic> toJson() {
     return {
       'vendorId': vendorId,
+      'orderDate': orderDate.toIso8601String(),
       'taxAmount': taxAmount ?? 0.0,
       'discountAmount': discountAmount ?? 0,
       'deliveryCharge': deliveryCharge ?? 0.0,

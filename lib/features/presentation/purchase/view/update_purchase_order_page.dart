@@ -9,6 +9,7 @@ import 'package:coreflow/features/vendor/widget/detail/body/vendor_item_pages.da
 import 'package:coreflow/features/items/widget/item_section_card.dart';
 import 'package:coreflow/features/presentation/purchase/viewmodel/update_purchase_order_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class UpdatePurchaseOrderPage extends StatelessWidget {
@@ -84,6 +85,24 @@ class _UpdatePurchaseOrderViewState extends State<_UpdatePurchaseOrderView> {
     );
     if (vendor != null && mounted) {
       context.read<UpdatePurchaseOrderViewModel>().setVendor(vendor);
+    }
+  }
+
+  Future<void> _selectOrderDate() async {
+    final vm = context.read<UpdatePurchaseOrderViewModel>();
+    final minDate = DateTime(2000);
+    final maxDate = DateTime.now().add(const Duration(days: 3650));
+    final initialDate = vm.orderDate.isBefore(minDate)
+        ? minDate
+        : (vm.orderDate.isAfter(maxDate) ? maxDate : vm.orderDate);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: minDate,
+      lastDate: maxDate,
+    );
+    if (picked != null && mounted) {
+      vm.setOrderDate(picked);
     }
   }
 
@@ -700,6 +719,40 @@ class _UpdatePurchaseOrderViewState extends State<_UpdatePurchaseOrderView> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Column(
               children: [
+                InkWell(
+                  onTap: _selectOrderDate,
+                  borderRadius: BorderRadius.circular(10),
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Order Date',
+                      labelStyle: TextStyle(
+                          fontSize: 13, color: LoginColors.textSecondary),
+                      prefixIcon: Icon(Icons.calendar_today_rounded,
+                          size: 18, color: LoginColors.textTertiary),
+                      filled: true,
+                      fillColor: LoginColors.fieldFill,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: LoginColors.borderLight),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: LoginColors.borderLight),
+                      ),
+                    ),
+                    child: Text(
+                      DateFormat('dd MMM yyyy').format(vm.orderDate),
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: LoginColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
                 _SummaryRow(label: 'Subtotal', value: subtotal),
                 const SizedBox(height: 10),
                 _EditableSummaryRow(
