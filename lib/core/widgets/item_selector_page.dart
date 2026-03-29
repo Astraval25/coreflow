@@ -299,7 +299,7 @@ class _ItemTile extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          ' • ₹${item.baseSalesPrice.toStringAsFixed(2)}',
+                          ' • ${item.baseSalesPrice.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 12.5,
                             color: LoginColors.textSecondary,

@@ -23,7 +23,7 @@ String _full(double v) {
     }
     buf.write(intPart[i]);
   }
-  return '$neg₹$buf.$dec';
+  return '$neg$buf.$dec';
 }
 
 String _axisLabel(double v) {
@@ -78,6 +78,7 @@ class DashboardAnalyticsSection extends StatelessWidget {
   final List<CashFlowEntry> cashFlow;
   final List<RevenueExpenseEntry> revenueExpense;
   final bool isLoading;
+  final Future<void> Function(String start, String end)? onPeriodChanged;
 
   const DashboardAnalyticsSection({
     super.key,
@@ -85,6 +86,7 @@ class DashboardAnalyticsSection extends StatelessWidget {
     required this.cashFlow,
     required this.revenueExpense,
     required this.isLoading,
+    this.onPeriodChanged,
   });
 
   @override
@@ -97,14 +99,35 @@ class DashboardAnalyticsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 16),
-        if (kpi != null) _FinancialSummarySection(kpi: kpi!),
-        if (cashFlow.isNotEmpty) ...[
+        if (kpi != null)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: LoginColors.cardBackground,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: LoginColors.border.withValues(alpha: 0.5),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: LoginColors.shadowLight.withValues(alpha: 0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: _FinancialSummarySection(kpi: kpi!),
+          ),
+        if (cashFlow.isNotEmpty || onPeriodChanged != null) ...[
           const SizedBox(height: 16),
-          _CashFlowSection(entries: cashFlow),
+          _CashFlowSection(entries: cashFlow, onPeriodChanged: onPeriodChanged),
         ],
-        if (revenueExpense.isNotEmpty) ...[
+        if (revenueExpense.isNotEmpty || onPeriodChanged != null) ...[
           const SizedBox(height: 16),
-          _IncomeExpenseSection(entries: revenueExpense),
+          _IncomeExpenseSection(
+            entries: revenueExpense,
+            onPeriodChanged: onPeriodChanged,
+          ),
         ],
         const SizedBox(height: 8),
       ],
@@ -127,7 +150,7 @@ class _FinancialSummarySection extends StatelessWidget {
         Expanded(
           flex: 3,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
             decoration: BoxDecoration(
               color: const Color(0xFFEEF2FF),
               borderRadius: BorderRadius.circular(14),
@@ -148,11 +171,11 @@ class _FinancialSummarySection extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF1E293B))),
                   ),
-                  const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                   const Icon(Icons.keyboard_arrow_down_rounded,
                       size: 16, color: Color(0xFF64748B)),
                 ]),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
                 Text('Total Payables',
                     style: TextStyle(
                         fontSize: 12, color: LoginColors.textSecondary)),
@@ -165,7 +188,7 @@ class _FinancialSummarySection extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF1E293B))),
                   ),
-                  const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                   const Icon(Icons.keyboard_arrow_down_rounded,
                       size: 16, color: Color(0xFF64748B)),
                 ]),
@@ -181,14 +204,14 @@ class _FinancialSummarySection extends StatelessWidget {
             children: [
               _CountCard(
                 count: kpi.totalSalesOrders,
-                label: 'Sales Orders',
+                label: 'Sales',
                 bgColor: const Color(0xFFFFF1F2),
                 borderColor: const Color(0xFFFECDD3),
               ),
               const SizedBox(height: 8),
               _CountCard(
                 count: kpi.totalPurchaseOrders,
-                label: 'Purchase Orders',
+                label: 'Purchase',
                 bgColor: const Color(0xFFFFF7ED),
                 borderColor: const Color(0xFFFED7AA),
               ),
@@ -249,11 +272,75 @@ class _CountCard extends StatelessWidget {
   }
 }
 
+// ─── Period Options ──────────────────────────────────────────────────────────
+
+enum PeriodOption {
+  currentMonth('This Month'),
+  currentQuarter('This Quarter'),
+  currentHalf('This Half'),
+  currentYear('This Financial Year'),
+  previousYear('Prev Financial Year');
+
+  final String label;
+  const PeriodOption(this.label);
+}
+
+/// Returns (startDate, endDate) as 'YYYY-MM-DD' strings for a given period.
+(String, String) _periodDates(PeriodOption option) {
+  final now = DateTime.now();
+  String fmt(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  // Indian financial year: April 1 – March 31
+  final fyStart = now.month >= 4
+      ? DateTime(now.year, 4, 1)
+      : DateTime(now.year - 1, 4, 1);
+  final fyEnd = DateTime(fyStart.year + 1, 3, 31);
+  final prevFyStart = DateTime(fyStart.year - 1, 4, 1);
+  final prevFyEnd = DateTime(fyStart.year, 3, 31);
+
+  switch (option) {
+    case PeriodOption.currentMonth:
+      return (
+        fmt(DateTime(now.year, now.month, 1)),
+        fmt(DateTime(now.year, now.month + 1, 0)),
+      );
+    case PeriodOption.currentQuarter:
+      // Q within FY: Apr-Jun, Jul-Sep, Oct-Dec, Jan-Mar
+      final monthInFy = (now.month - 4 + 12) % 12; // 0-11
+      final q = monthInFy ~/ 3; // 0-3
+      final qStartMonth = (q * 3 + 4 - 1) % 12 + 1;
+      final qStartYear = qStartMonth <= 3 ? fyStart.year + 1 : fyStart.year;
+      final qStart = DateTime(qStartYear, qStartMonth, 1);
+      final qEnd = DateTime(qStartYear, qStartMonth + 3, 0);
+      return (fmt(qStart), fmt(qEnd));
+    case PeriodOption.currentHalf:
+      // H1: Apr-Sep, H2: Oct-Mar
+      final isH1 = now.month >= 4 && now.month <= 9;
+      if (isH1) {
+        return (
+          fmt(DateTime(fyStart.year, 4, 1)),
+          fmt(DateTime(fyStart.year, 9, 30)),
+        );
+      } else {
+        return (
+          fmt(DateTime(fyStart.year, 10, 1)),
+          fmt(DateTime(fyStart.year + 1, 3, 31)),
+        );
+      }
+    case PeriodOption.currentYear:
+      return (fmt(fyStart), fmt(fyEnd));
+    case PeriodOption.previousYear:
+      return (fmt(prevFyStart), fmt(prevFyEnd));
+  }
+}
+
 // ─── Cash Flow Section ────────────────────────────────────────────────────────
 
 class _CashFlowSection extends StatefulWidget {
   final List<CashFlowEntry> entries;
-  const _CashFlowSection({required this.entries});
+  final Future<void> Function(String start, String end)? onPeriodChanged;
+  const _CashFlowSection({required this.entries, this.onPeriodChanged});
 
   @override
   State<_CashFlowSection> createState() => _CashFlowSectionState();
@@ -262,6 +349,8 @@ class _CashFlowSection extends StatefulWidget {
 class _CashFlowSectionState extends State<_CashFlowSection> {
   int? _selectedIdx;
   Timer? _dismissTimer;
+  PeriodOption _selectedPeriod = PeriodOption.currentYear;
+  bool _periodLoading = false;
 
   @override
   void dispose() {
@@ -275,6 +364,53 @@ class _CashFlowSectionState extends State<_CashFlowSection> {
     _dismissTimer = Timer(const Duration(seconds: 4), () {
       if (mounted) setState(() => _selectedIdx = null);
     });
+  }
+
+  Future<void> _applyPeriod(PeriodOption option) async {
+    setState(() {
+      _selectedPeriod = option;
+      _periodLoading = true;
+    });
+    final dates = _periodDates(option);
+    await widget.onPeriodChanged?.call(dates.$1, dates.$2);
+    if (mounted) setState(() => _periodLoading = false);
+  }
+
+  void _showPeriodSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: LoginColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: PeriodOption.values.map((option) {
+            final isSelected = option == _selectedPeriod;
+            return ListTile(
+              title: Text(
+                option.label,
+                style: TextStyle(
+                  color: isSelected
+                      ? LoginColors.primary
+                      : LoginColors.textPrimary,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+              trailing: isSelected
+                  ? Icon(Icons.check, color: LoginColors.primary, size: 20)
+                  : null,
+              onTap: () {
+                Navigator.pop(ctx);
+                _applyPeriod(option);
+              },
+            );
+          }).toList(),
+        ),
+      ),
+    );
   }
 
   @override
@@ -321,7 +457,12 @@ class _CashFlowSectionState extends State<_CashFlowSection> {
                           fontWeight: FontWeight.w700,
                           color: LoginColors.textPrimary)),
                 ]),
-                _periodBadge('This Month'),
+                GestureDetector(
+                  onTap: _periodLoading ? null : _showPeriodSelector,
+                  child: _periodLoading
+                      ? _periodBadgeLoading()
+                      : _periodBadge(_selectedPeriod.label),
+                ),
               ],
             ),
           ),
@@ -617,7 +758,7 @@ class _CashFlowLinePainter extends CustomPainter {
     for (int i = 0; i < entries.length; i++) {
       final x = xOf(i);
       final y = yOf(entries[i].closingBalance);
-      if (i == 0) linePath.moveTo(x, y); else linePath.lineTo(x, y);
+      if (i == 0) { linePath.moveTo(x, y); } else { linePath.lineTo(x, y); }
     }
     canvas.drawPath(linePath, linePaint);
 
@@ -662,14 +803,63 @@ class _CashFlowLinePainter extends CustomPainter {
 
 class _IncomeExpenseSection extends StatefulWidget {
   final List<RevenueExpenseEntry> entries;
-  const _IncomeExpenseSection({required this.entries});
+  final Future<void> Function(String start, String end)? onPeriodChanged;
+  const _IncomeExpenseSection({required this.entries, this.onPeriodChanged});
 
   @override
   State<_IncomeExpenseSection> createState() => _IncomeExpenseSectionState();
 }
 
 class _IncomeExpenseSectionState extends State<_IncomeExpenseSection> {
-  bool _accrual = true;
+  PeriodOption _selectedPeriod = PeriodOption.currentYear;
+  bool _periodLoading = false;
+
+  Future<void> _applyPeriod(PeriodOption option) async {
+    setState(() {
+      _selectedPeriod = option;
+      _periodLoading = true;
+    });
+    final dates = _periodDates(option);
+    await widget.onPeriodChanged?.call(dates.$1, dates.$2);
+    if (mounted) setState(() => _periodLoading = false);
+  }
+
+  void _showPeriodSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: LoginColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: PeriodOption.values.map((option) {
+            final isSelected = option == _selectedPeriod;
+            return ListTile(
+              title: Text(
+                option.label,
+                style: TextStyle(
+                  color: isSelected
+                      ? LoginColors.primary
+                      : LoginColors.textPrimary,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+              trailing: isSelected
+                  ? Icon(Icons.check, color: LoginColors.primary, size: 20)
+                  : null,
+              onTap: () {
+                Navigator.pop(ctx);
+                _applyPeriod(option);
+              },
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -710,33 +900,18 @@ class _IncomeExpenseSectionState extends State<_IncomeExpenseSection> {
                   Icon(Icons.info_outline_rounded,
                       size: 16, color: LoginColors.textSecondary),
                   const SizedBox(width: 6),
-                  Text('Income and Expense',
+                    Text(
+                      'Income Vs Expense',
                       style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: LoginColors.textPrimary)),
                 ]),
-                _periodBadge('This Month'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          // Accrual / Cash tabs
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _TabButton(
-                  label: 'Accrual',
-                  selected: _accrual,
-                  onTap: () => setState(() => _accrual = true),
-                ),
-                const SizedBox(width: 8),
-                _TabButton(
-                  label: 'Cash',
-                  selected: !_accrual,
-                  onTap: () => setState(() => _accrual = false),
+                GestureDetector(
+                  onTap: _periodLoading ? null : _showPeriodSelector,
+                  child: _periodLoading
+                      ? _periodBadgeLoading()
+                      : _periodBadge(_selectedPeriod.label),
                 ),
               ],
             ),
@@ -827,39 +1002,6 @@ class _IncomeExpenseSectionState extends State<_IncomeExpenseSection> {
   }
 }
 
-class _TabButton extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _TabButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected ? LoginColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: selected ? LoginColors.primary : LoginColors.border,
-          ),
-        ),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: selected ? Colors.white : LoginColors.textSecondary)),
-      ),
-    );
-  }
-}
 
 class _IncomeExpenseBarPainter extends CustomPainter {
   final List<RevenueExpenseEntry> entries;
@@ -952,6 +1094,21 @@ Widget _periodBadge(String text) {
         Icon(Icons.keyboard_arrow_down_rounded,
             size: 14, color: LoginColors.textSecondary),
       ],
+    ),
+  );
+}
+
+Widget _periodBadgeLoading() {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      border: Border.all(color: LoginColors.border),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: const SizedBox(
+      width: 12,
+      height: 12,
+      child: CircularProgressIndicator(strokeWidth: 1.5),
     ),
   );
 }

@@ -24,7 +24,7 @@ class _SelectCompanyItemPageState extends State<SelectCompanyItemPage> {
   late Future<List<Item>> _itemsFuture;
   final NumberFormat _currencyFormat = NumberFormat.currency(
     locale: 'en_IN',
-    symbol: '₹',
+    symbol: '',
     decimalDigits: 2,
   );
 
@@ -472,7 +472,7 @@ class _CreateCustomerItemPageState extends State<CreateCustomerItemPage> {
                   decimal: true,
                 ),
                 prefixIcon: Icons.sell_outlined,
-                prefixText: '₹ ',
+                prefixText: ' ',
                 helperText: 'Enter customer-specific selling price',
                 validator: (value) {
                   final v = (value ?? '').trim();
@@ -690,7 +690,7 @@ class _UpdateCustomerItemPageState extends State<UpdateCustomerItemPage> {
                   decimal: true,
                 ),
                 prefixIcon: Icons.sell_outlined,
-                prefixText: '₹ ',
+                prefixText: ' ',
                 helperText: 'Update customer-specific selling price',
                 validator: (value) {
                   final v = (value ?? '').trim();

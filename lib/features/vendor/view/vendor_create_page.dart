@@ -663,7 +663,7 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
                                         controller: _itemPriceControllers[itemId],
                                         decoration: InputDecoration(
                                           labelText: 'Purchase Price',
-                                          prefixText: '₹',
+                                          prefixText: '',
                                           border: OutlineInputBorder(
                                             borderRadius: BorderRadius.circular(8),
                                           ),

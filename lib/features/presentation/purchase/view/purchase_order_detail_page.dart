@@ -1416,7 +1416,7 @@ class _StateMessage extends StatelessWidget {
   }
 }
 
-String _money(double value) => ' ₹${value.toStringAsFixed(2)}';
+String _money(double value) => ' ${value.toStringAsFixed(2)}';
 
 String _trimNumber(double value) {
   final rounded = value.roundToDouble();

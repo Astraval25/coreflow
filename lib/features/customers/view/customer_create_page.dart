@@ -661,7 +661,7 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
                                         controller: _itemPriceControllers[itemId],
                                         decoration: InputDecoration(
                                           labelText: 'Sales Price',
-                                          prefixText: '₹',
+                                          prefixText: '',
                                           border: OutlineInputBorder(
                                             borderRadius: BorderRadius.circular(
                                               8,

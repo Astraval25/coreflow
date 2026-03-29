@@ -15,7 +15,7 @@ class ItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat.currency(
       locale: 'en_IN',
-      symbol: '₹',
+      symbol: '',
       decimalDigits: 2,
     );
 

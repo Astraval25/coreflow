@@ -107,8 +107,18 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
-    await loadUserData(force: true);
-    await loadCompanies(force: true);
+    _hasLoadedAppOpenData = false;
+    await Future.wait([
+      loadUserData(force: true),
+      loadCompanies(force: true),
+    ]);
+    if (_companyId != null) {
+      await Future.wait([
+        _loadUnreadCount(),
+        _loadAdvertisements(),
+        _loadAnalytics(),
+      ]);
+    }
   }
 
   Future<void> selectCompany(Company company) async {
@@ -216,6 +226,27 @@ class DashboardViewModel extends ChangeNotifier {
   Future<void> refreshAnalytics() async {
     _hasLoadedAppOpenData = false;
     await _loadAnalytics();
+  }
+
+  Future<void> loadAnalyticsForPeriod(String startDate, String endDate) async {
+    if (_companyId == null) return;
+    _isAnalyticsLoading = true;
+    notifyListeners();
+    try {
+      final results = await Future.wait([
+        _authRepository.getDashboardKpi(_companyId!, startDate, endDate),
+        _authRepository.getCashFlow(_companyId!, startDate, endDate),
+        _authRepository.getRevenueExpense(_companyId!, startDate, endDate),
+      ]);
+      _kpi = results[0] as DashboardKpi?;
+      _cashFlow = results[1] as List<CashFlowEntry>;
+      _revenueExpense = results[2] as List<RevenueExpenseEntry>;
+    } catch (e) {
+      debugPrint('loadAnalyticsForPeriod error: $e');
+    } finally {
+      _isAnalyticsLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> _loadUnreadCount() async {

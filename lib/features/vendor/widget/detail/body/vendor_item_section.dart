@@ -36,6 +36,9 @@ class VendorItemSection extends StatelessWidget {
     final tertiaryText = colorScheme.onSurface.withOpacity(0.58);
     final activeStatusColor = LoginColors.success;
     final inactiveStatusColor = LoginColors.error;
+    final vendorCompany = vm.vendor?.vendorCompany;
+    final isVendorLinked = vendorCompany?.companyId != null;
+    final vendorCompanyName = vendorCompany?.companyName?.trim();
 
     final content = vm.isMappedItemsLoading
         ? const Padding(
@@ -60,7 +63,11 @@ class VendorItemSection extends StatelessWidget {
                 border: Border.all(color: borderColor),
               ),
               child: Text(
-                'No mapped items found.',
+                isVendorLinked
+                    ? (vendorCompanyName != null && vendorCompanyName.isNotEmpty
+                        ? 'No items added yet. Please contact $vendorCompanyName to add items.'
+                        : 'No items added yet. Please contact the vendor company to add items.')
+                    : 'No mapped items found.',
                 style: TextStyle(color: secondaryText, fontSize: 14),
               ),
             ),
@@ -75,19 +82,24 @@ class VendorItemSection extends StatelessWidget {
               final item = vm.mappedItems[index];
               final itemType = item.itemType.trim().toUpperCase();
               final unit = item.unit.trim();
+              final canEdit = item.editable;
 
               return InkWell(
                 borderRadius: BorderRadius.circular(18),
-                onTap: () async {
-                  final updated = await Navigator.of(context).push<bool>(
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          UpdateVendorItemPage(viewModel: vm, item: item),
-                    ),
-                  );
-                  if (!context.mounted || updated != true) return;
-                  await vm.loadMappedItems();
-                },
+                onTap: canEdit
+                    ? () async {
+                        final updated = await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(
+                            builder: (_) => UpdateVendorItemPage(
+                              viewModel: vm,
+                              item: item,
+                            ),
+                          ),
+                        );
+                        if (!context.mounted || updated != true) return;
+                        await vm.loadMappedItems();
+                      }
+                    : null,
                 child: Stack(
                   children: [
                     Container(
@@ -256,7 +268,7 @@ class VendorItemSection extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (item.salesDescription != null)
+                    if (item.salesDescription != null && canEdit)
                       Positioned(
                         bottom: 10,
                         right: 10,
@@ -315,22 +327,23 @@ class VendorItemSection extends StatelessWidget {
                   ],
                 ),
               ),
-              FilledButton.icon(
-                onPressed: () => _openAddItemFlow(context, vm),
-                icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
-                label: const Text('Add Item'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: LoginColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+              if (!isVendorLinked)
+                FilledButton.icon(
+                  onPressed: () => _openAddItemFlow(context, vm),
+                  icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+                  label: const Text('Add Item'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: LoginColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

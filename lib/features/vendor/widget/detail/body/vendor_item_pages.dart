@@ -26,7 +26,7 @@ class _SelectVendorCompanyItemPageState
   late Future<List<Item>> _itemsFuture;
   final NumberFormat _currencyFormat = NumberFormat.currency(
     locale: 'en_IN',
-    symbol: '₹',
+    symbol: '',
     decimalDigits: 2,
   );
 
@@ -485,7 +485,7 @@ class _CreateVendorItemPageState extends State<CreateVendorItemPage> {
                   decimal: true,
                 ),
                 prefixIcon: Icons.sell_outlined,
-                prefixText: '₹ ',
+                prefixText: ' ',
                 helperText: 'Enter vendor-specific price',
                 validator: _priceValidator,
               ),
@@ -700,7 +700,7 @@ class _UpdateVendorItemPageState extends State<UpdateVendorItemPage> {
                   decimal: true,
                 ),
                 prefixIcon: Icons.sell_outlined,
-                prefixText: '₹ ',
+                prefixText: ' ',
                 helperText: 'Update vendor-specific price',
                 validator: _priceValidator,
               ),

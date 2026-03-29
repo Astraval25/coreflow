@@ -1285,7 +1285,7 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
                               )
                             : null,
                         trailing: Text(
-                          '₹${item.price.toStringAsFixed(2)}',
+                          '${item.price.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,

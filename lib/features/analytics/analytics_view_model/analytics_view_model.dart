@@ -101,10 +101,10 @@ class AnalyticsViewModel extends ChangeNotifier {
   final int companyId;
 
   AnalyticsViewModel({required this.companyId}) {
-    _applyDateRange(AnalyticsDateRange.thisMonth);
+    _applyDateRange(AnalyticsDateRange.thisYear);
   }
 
-  AnalyticsDateRange _selectedRange = AnalyticsDateRange.thisMonth;
+  AnalyticsDateRange _selectedRange = AnalyticsDateRange.thisYear;
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now();
   bool _isLoading = false;

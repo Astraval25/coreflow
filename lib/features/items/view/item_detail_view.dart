@@ -123,7 +123,7 @@ class _ItemDetailContentState extends State<_ItemDetailContent> {
     final item = vm.itemResponse?.responseData;
     final currencyFormat = NumberFormat.currency(
       locale: 'en_IN',
-      symbol: '₹',
+      symbol: '',
       decimalDigits: 2,
     );
 
