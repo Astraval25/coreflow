@@ -219,7 +219,10 @@ class DashboardViewModel extends ChangeNotifier {
       _cashFlow = results[1] as List<CashFlowEntry>;
       _revenueExpense = results[2] as List<RevenueExpenseEntry>;
     } catch (e) {
-      debugPrint('_loadAnalytics error: $e');
+      debugPrint('Analytics load error: $e');
+      _kpi = null;
+      _cashFlow = [];
+      _revenueExpense = [];
     } finally {
       _isAnalyticsLoading = false;
       notifyListeners();
@@ -245,7 +248,10 @@ class DashboardViewModel extends ChangeNotifier {
       _cashFlow = results[1] as List<CashFlowEntry>;
       _revenueExpense = results[2] as List<RevenueExpenseEntry>;
     } catch (e) {
-      debugPrint('loadAnalyticsForPeriod error: $e');
+      debugPrint('Analytics period load error: $e');
+      _kpi = null;
+      _cashFlow = [];
+      _revenueExpense = [];
     } finally {
       _isAnalyticsLoading = false;
       notifyListeners();

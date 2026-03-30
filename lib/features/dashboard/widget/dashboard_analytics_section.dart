@@ -5,6 +5,8 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/domain/model/analytics/cash_flow.dart';
 import 'package:coreflow/domain/model/analytics/dashboard_kpi.dart';
 import 'package:coreflow/domain/model/analytics/revenue_expense.dart';
+import 'package:coreflow/features/analytics/view/report_detail_page.dart';
+import 'package:coreflow/features/analytics/analytics_view_model/analytics_view_model.dart';
 
 // ─── Formatting ───────────────────────────────────────────────────────────────
 
@@ -71,6 +73,26 @@ List<double> _niceTicks(double max, int count) {
   return List.generate(count, (i) => step * i);
 }
 
+List<double> _niceTicksRange(double min, double max, int count) {
+  if (count <= 1) return [min];
+  final step = (max - min) / (count - 1);
+  return List.generate(count, (i) => min + step * i);
+}
+
+({double min, double max, List<double> ticks}) _niceRange(
+    double min, double max, int count) {
+  if (min >= 0) {
+    final niceMax = _niceMax(max);
+    return (min: 0, max: niceMax, ticks: _niceTicksRange(0, niceMax, count));
+  }
+  if (max <= 0) {
+    final niceMin = -_niceMax(min.abs());
+    return (min: niceMin, max: 0, ticks: _niceTicksRange(niceMin, 0, count));
+  }
+  final maxAbs = math.max(min.abs(), max.abs());
+  final nice = _niceMax(maxAbs);
+  return (min: -nice, max: nice, ticks: _niceTicksRange(-nice, nice, count));
+}
 // ─── Section Root ─────────────────────────────────────────────────────────────
 
 class DashboardAnalyticsSection extends StatefulWidget {
@@ -79,6 +101,7 @@ class DashboardAnalyticsSection extends StatefulWidget {
   final List<RevenueExpenseEntry> revenueExpense;
   final bool isLoading;
   final Future<void> Function(String start, String end)? onPeriodChanged;
+  final int companyId;
 
   const DashboardAnalyticsSection({
     super.key,
@@ -87,6 +110,7 @@ class DashboardAnalyticsSection extends StatefulWidget {
     required this.revenueExpense,
     required this.isLoading,
     this.onPeriodChanged,
+    required this.companyId,
   });
 
   @override
@@ -194,7 +218,7 @@ class _DashboardAnalyticsSectionState extends State<DashboardAnalyticsSection> {
                 ),
               ],
             ),
-            child: _FinancialSummarySection(kpi: widget.kpi!),
+            child: _FinancialSummarySection(kpi: widget.kpi!, companyId: widget.companyId),
           ),
         if (widget.cashFlow.isNotEmpty || widget.onPeriodChanged != null) ...[
           const SizedBox(height: 16),
@@ -214,7 +238,8 @@ class _DashboardAnalyticsSectionState extends State<DashboardAnalyticsSection> {
 
 class _FinancialSummarySection extends StatelessWidget {
   final DashboardKpi kpi;
-  const _FinancialSummarySection({required this.kpi});
+  final int companyId;
+  const _FinancialSummarySection({required this.kpi, required this.companyId});
 
   @override
   Widget build(BuildContext context) {
@@ -238,35 +263,57 @@ class _FinancialSummarySection extends StatelessWidget {
                     style: TextStyle(
                         fontSize: 12, color: LoginColors.textSecondary)),
                 const SizedBox(height: 2),
-                Row(children: [
-                  Flexible(
-                    child: Text(_full(kpi.outstandingReceivables),
-                        style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E293B))),
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReportDetailPage(
+                        reportType: ReportType.salesByCustomer,
+                        companyId: companyId,
+                      ),
+                    ),
                   ),
-                    const SizedBox(width: 6),
-                  const Icon(Icons.keyboard_arrow_down_rounded,
-                      size: 16, color: Color(0xFF64748B)),
-                ]),
+                  child: Row(children: [
+                    Flexible(
+                      child: Text(_full(kpi.outstandingReceivables),
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1E293B))),
+                    ),
+                      const SizedBox(width: 6),
+                    const Icon(Icons.keyboard_arrow_down_rounded,
+                        size: 16, color: Color(0xFF64748B)),
+                  ]),
+                ),
                 const SizedBox(height: 20),
                 Text('Total Payables',
                     style: TextStyle(
                         fontSize: 12, color: LoginColors.textSecondary)),
                 const SizedBox(height: 2),
-                Row(children: [
-                  Flexible(
-                    child: Text(_full(kpi.outstandingPayables),
-                        style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E293B))),
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReportDetailPage(
+                        reportType: ReportType.purchaseByVendor,
+                        companyId: companyId,
+                      ),
+                    ),
                   ),
-                    const SizedBox(width: 6),
-                  const Icon(Icons.keyboard_arrow_down_rounded,
-                      size: 16, color: Color(0xFF64748B)),
-                ]),
+                  child: Row(children: [
+                    Flexible(
+                      child: Text(_full(kpi.outstandingPayables),
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1E293B))),
+                    ),
+                      const SizedBox(width: 6),
+                    const Icon(Icons.keyboard_arrow_down_rounded,
+                        size: 16, color: Color(0xFF64748B)),
+                  ]),
+                ),
               ],
             ),
           ),
@@ -282,6 +329,7 @@ class _FinancialSummarySection extends StatelessWidget {
                 label: 'Sales',
                 bgColor: const Color(0xFFFFF1F2),
                 borderColor: const Color(0xFFFECDD3),
+                companyId: companyId,
               ),
               const SizedBox(height: 8),
               _CountCard(
@@ -289,6 +337,7 @@ class _FinancialSummarySection extends StatelessWidget {
                 label: 'Purchase',
                 bgColor: const Color(0xFFFFF7ED),
                 borderColor: const Color(0xFFFED7AA),
+                companyId: companyId,
               ),
             ],
           ),
@@ -303,45 +352,63 @@ class _CountCard extends StatelessWidget {
   final String label;
   final Color bgColor;
   final Color borderColor;
+  final int companyId;
 
   const _CountCard({
     required this.count,
     required this.label,
     required this.bgColor,
     required this.borderColor,
+    required this.companyId,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(count.toString(),
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1E293B))),
-                const SizedBox(height: 2),
-                Text(label,
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                    maxLines: 2),
-              ],
+    return GestureDetector(
+      onTap: () {
+        final reportType = label == 'Sales' 
+            ? ReportType.salesSummary 
+            : ReportType.purchaseSummary;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ReportDetailPage(
+              reportType: reportType,
+              companyId: companyId,
             ),
           ),
-          const Icon(Icons.chevron_right, size: 16, color: Color(0xFF94A3B8)),
-        ],
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(count.toString(),
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1E293B))),
+                  const SizedBox(height: 2),
+                  Text(label,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                      maxLines: 2),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 16, color: Color(0xFF94A3B8)),
+          ],
+        ),
       ),
     );
   }
@@ -441,10 +508,50 @@ class _CashFlowSectionState extends State<_CashFlowSection> {
   @override
   Widget build(BuildContext context) {
     final entries = widget.entries;
+    if (entries.isEmpty) {
+      return Container(
+        decoration: BoxDecoration(
+          color: LoginColors.cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: LoginColors.border.withValues(alpha: 0.5)),
+          boxShadow: [
+            BoxShadow(
+              color: LoginColors.shadowLight.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.radio_button_checked_outlined,
+                    size: 16, color: LoginColors.textSecondary),
+                const SizedBox(width: 6),
+                Text('Cash Flow',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: LoginColors.textPrimary)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text('No cash flow data',
+                style: TextStyle(
+                    fontSize: 12, color: LoginColors.textSecondary)),
+          ],
+        ),
+      );
+    }
+
+    final minClose =
+        entries.map((e) => e.closingBalance).reduce(math.min);
     final maxClose =
-        entries.map((e) => e.closingBalance).fold<double>(0, math.max);
-    final chartMax = _niceMax(maxClose);
-    final ticks = _niceTicks(chartMax, 5);
+        entries.map((e) => e.closingBalance).reduce(math.max);
+    final range = _niceRange(minClose, maxClose, 5);
 
     final first = entries.first;
     final last = entries.last;
@@ -494,7 +601,7 @@ class _CashFlowSectionState extends State<_CashFlowSection> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
-                    children: ticks.reversed
+                    children: range.ticks.reversed
                         .map((t) => Padding(
                               padding: const EdgeInsets.only(right: 4),
                               child: Text(_axisLabel(t),
@@ -526,8 +633,9 @@ class _CashFlowSectionState extends State<_CashFlowSection> {
                             CustomPaint(
                               painter: _CashFlowLinePainter(
                                 entries: entries,
-                                chartMax: chartMax,
-                                ticks: ticks,
+                                chartMin: range.min,
+                                chartMax: range.max,
+                                ticks: range.ticks,
                                 selectedIndex: _selectedIdx,
                               ),
                               child: const SizedBox.expand(),
@@ -705,12 +813,14 @@ class _SummaryRow extends StatelessWidget {
 
 class _CashFlowLinePainter extends CustomPainter {
   final List<CashFlowEntry> entries;
+  final double chartMin;
   final double chartMax;
   final List<double> ticks;
   final int? selectedIndex;
 
   const _CashFlowLinePainter({
     required this.entries,
+    required this.chartMin,
     required this.chartMax,
     required this.ticks,
     this.selectedIndex,
@@ -718,7 +828,7 @@ class _CashFlowLinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (entries.isEmpty || chartMax == 0) return;
+    if (entries.isEmpty || chartMax == chartMin) return;
 
     const labelH = 18.0;
     final chartH = size.height - labelH;
@@ -728,7 +838,7 @@ class _CashFlowLinePainter extends CustomPainter {
       ..color = LoginColors.border.withValues(alpha: 0.6)
       ..strokeWidth = 0.5;
     for (final tick in ticks) {
-      final gy = chartH - (tick / chartMax) * chartH;
+      final gy = chartH - ((tick - chartMin) / (chartMax - chartMin)) * chartH;
       canvas.drawLine(Offset(0, gy), Offset(size.width, gy), gridPaint);
     }
 
@@ -737,7 +847,11 @@ class _CashFlowLinePainter extends CustomPainter {
       return i * size.width / (entries.length - 1);
     }
 
-    double yOf(double val) => chartH - (val.clamp(0, chartMax) / chartMax) * chartH;
+    double yOf(double val) =>
+        chartH -
+        ((val.clamp(chartMin, chartMax) - chartMin) /
+                (chartMax - chartMin)) *
+            chartH;
 
     // Fill
     if (entries.length >= 2) {
@@ -812,7 +926,10 @@ class _CashFlowLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_CashFlowLinePainter old) =>
-      old.entries != entries || old.selectedIndex != selectedIndex;
+      old.entries != entries ||
+      old.selectedIndex != selectedIndex ||
+      old.chartMin != chartMin ||
+      old.chartMax != chartMax;
 }
 
 // ─── Income & Expense Section ─────────────────────────────────────────────────

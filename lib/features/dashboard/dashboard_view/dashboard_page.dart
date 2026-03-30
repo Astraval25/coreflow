@@ -150,6 +150,7 @@ class _DashboardViewState extends State<_DashboardView>
                                 revenueExpense: vm.revenueExpense,
                                 isLoading: vm.isAnalyticsLoading,
                                 onPeriodChanged: vm.loadAnalyticsForPeriod,
+                                companyId: vm.companyId ?? 0,
                               ),
                             ],
                           ),
