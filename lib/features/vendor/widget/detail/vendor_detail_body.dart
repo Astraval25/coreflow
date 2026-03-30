@@ -67,7 +67,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
               border: Border.all(color: LoginColors.borderLight),
               boxShadow: [
                 BoxShadow(
-                  color: LoginColors.shadowLight.withOpacity(0.06),
+                  color: LoginColors.shadowLight.withValues(alpha: 0.06),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
@@ -174,9 +174,9 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.08),
+            color: color.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: color.withOpacity(0.2)),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -219,7 +219,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
           border: Border.all(color: LoginColors.borderLight),
           boxShadow: [
             BoxShadow(
-              color: LoginColors.shadowLight.withOpacity(0.07),
+              color: LoginColors.shadowLight.withValues(alpha:0.07),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -234,6 +234,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             if (context.mounted && response != null && !response.responseStatus) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
+                  duration: Duration(seconds: 1),
                   content: Text(response.responseMessage),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -245,6 +246,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             if (context.mounted && response == null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
+                  duration: Duration(seconds: 1),
                   content: Text('No existing invitation code found'),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -256,6 +258,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
+                  duration: Duration(seconds: 1),
                   content: Text(
                     response?.responseStatus == true
                         ? 'Company linked successfully'
@@ -314,7 +317,7 @@ class _SectionHeader extends StatelessWidget {
             height: 3,
             width: 50,
             decoration: BoxDecoration(
-              color: LoginColors.textPrimary.withOpacity(0.6),
+              color: LoginColors.textPrimary.withValues(alpha:0.6),
               borderRadius: BorderRadius.circular(2),
             ),
           ),

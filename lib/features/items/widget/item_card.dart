@@ -27,15 +27,15 @@ class ItemCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
       elevation: 1.5,
       color: LoginColors.surface,
-      shadowColor: LoginColors.shadowLight.withOpacity(0.15),
+      shadowColor: LoginColors.shadowLight.withValues(alpha: 0.15),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: LoginColors.borderLight, width: 0.8),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        splashColor: LoginColors.primaryLight.withOpacity(0.12),
-        highlightColor: LoginColors.primaryLight.withOpacity(0.06),
+        splashColor: LoginColors.primaryLight.withValues(alpha:0.12),
+        highlightColor: LoginColors.primaryLight.withValues(alpha:0.06),
         onTap: () async {
           final companyId = context.read<ItemsViewModel>().companyId;
           final result = await Navigator.push<bool>(
@@ -129,7 +129,7 @@ class ItemCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(

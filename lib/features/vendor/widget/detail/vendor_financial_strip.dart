@@ -29,7 +29,7 @@ class VendorFinancialStrip extends StatelessWidget {
           border: Border.all(color: LoginColors.borderLight),
           boxShadow: [
             BoxShadow(
-              color: LoginColors.shadowLight.withOpacity(0.07),
+              color: LoginColors.shadowLight.withValues(alpha: 0.07),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -41,7 +41,7 @@ class VendorFinancialStrip extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: balanceColor.withOpacity(0.12),
+                color: balanceColor.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(

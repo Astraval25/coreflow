@@ -22,7 +22,7 @@ class LoadingView extends StatelessWidget {
               border: Border.all(color: LoginColors.borderLight, width: 0.8),
               boxShadow: [
                 BoxShadow(
-                  color: LoginColors.shadowLight.withOpacity(0.08),
+                  color: LoginColors.shadowLight.withValues(alpha: 0.08),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),

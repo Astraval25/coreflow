@@ -34,7 +34,7 @@ class CustomerHeader extends StatelessWidget {
           border: Border.all(color: LoginColors.borderLight),
           boxShadow: [
             BoxShadow(
-              color: LoginColors.shadowLight.withOpacity(0.08),
+              color: LoginColors.shadowLight.withValues(alpha: 0.08),
               blurRadius: 14,
               offset: const Offset(0, 4),
             ),
@@ -44,7 +44,7 @@ class CustomerHeader extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 30,
-              backgroundColor: LoginColors.primary.withOpacity(0.14),
+              backgroundColor: LoginColors.primary.withValues(alpha:0.14),
               child: Icon(
                 Icons.person_rounded,
                 size: 32,
@@ -98,7 +98,7 @@ class CustomerHeader extends StatelessWidget {
                           Icon(
                             Icons.arrow_forward_ios_rounded,
                             size: 12,
-                            color: LoginColors.success.withOpacity(0.6),
+                            color: LoginColors.success.withValues(alpha: 0.6),
                           ),
                         ],
                       ),

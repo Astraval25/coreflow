@@ -40,7 +40,7 @@ class CustomerInfoTile extends StatelessWidget {
               width: 30,
               height: 30,
               decoration: BoxDecoration(
-                color: LoginColors.primary.withOpacity(0.1),
+                color: LoginColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 16, color: LoginColors.primary),

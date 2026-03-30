@@ -60,6 +60,7 @@ class PaymentBodyMessage extends StatelessWidget {
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
+                              duration: Duration(seconds: 1),
                               content:
                                   Text('Create payment entry coming soon.'),
                             ),

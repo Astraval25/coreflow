@@ -146,7 +146,7 @@ class _ItemDetailContentState extends State<_ItemDetailContent> {
               elevation: 0,
               title: AnimatedOpacity(
                 opacity: _showCollapsedTitle ? 1 : 0,
-                duration: const Duration(milliseconds: 180),
+                duration: Duration(milliseconds: 180),
                 child: _CollapsedItemTitle(
                   item: item,
                   isLoadingImage: vm.isLoadingImage,
@@ -157,7 +157,7 @@ class _ItemDetailContentState extends State<_ItemDetailContent> {
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.arrow_back_rounded, size: 20),
@@ -176,7 +176,7 @@ class _ItemDetailContentState extends State<_ItemDetailContent> {
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha:0.2),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.more_vert_rounded, size: 20),
@@ -235,7 +235,7 @@ class _ItemDetailContentState extends State<_ItemDetailContent> {
                       child: SafeArea(
                         bottom: false,
                         child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 180),
+                          duration: Duration(milliseconds: 180),
                           opacity: collapsed ? 0 : 1,
                           child: item == null
                               ? const SizedBox.shrink()
@@ -298,7 +298,7 @@ class _CollapsedItemTitle extends StatelessWidget {
           child: Container(
             width: 28,
             height: 28,
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white.withValues(alpha: 0.2),
             child: isLoadingImage
                 ? const Center(
                     child: SizedBox(

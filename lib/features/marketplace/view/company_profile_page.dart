@@ -95,7 +95,7 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.18),
+                color: Colors.white.withValues(alpha: 0.18),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -125,7 +125,7 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
                     const SizedBox(height: 30),
                     CircleAvatar(
                       radius: 40,
-                      backgroundColor: Colors.white.withOpacity(0.2),
+                      backgroundColor: Colors.white.withValues(alpha:0.2),
                       child: Text(
                         initial,
                         style: const TextStyle(
@@ -155,7 +155,7 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Colors.white.withValues(alpha:0.15),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -274,9 +274,9 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha:0.2)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -313,7 +313,7 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
         border: Border.all(color: LoginColors.borderLight),
         boxShadow: [
           BoxShadow(
-            color: LoginColors.shadowLight.withOpacity(0.06),
+            color: LoginColors.shadowLight.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 3),
           ),
@@ -329,7 +329,7 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: LoginColors.primary.withOpacity(0.1),
+                    color: LoginColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, size: 18, color: LoginColors.primary),

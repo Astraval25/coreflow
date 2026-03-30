@@ -190,10 +190,10 @@ class _PaymentProofViewState extends State<_PaymentProofView> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: LoginColors.error.withOpacity(0.08),
+                  color: LoginColors.error.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                   border:
-                      Border.all(color: LoginColors.error.withOpacity(0.3)),
+                      Border.all(color: LoginColors.error.withValues(alpha:0.3)),
                 ),
                 child: Row(
                   children: [
@@ -319,7 +319,7 @@ class _PaymentProofViewState extends State<_PaymentProofView> {
               width: double.infinity,
               height: 120,
               decoration: BoxDecoration(
-                color: LoginColors.primary.withOpacity(0.08),
+                color: LoginColors.primary.withValues(alpha: 0.08),
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(16)),
               ),

@@ -90,7 +90,7 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
   Future<void> _selectOrderDate() async {
     final vm = context.read<UpdateSalesOrderViewModel>();
     final minDate = DateTime(2000);
-    final maxDate = DateTime.now().add(const Duration(days: 3650));
+    final maxDate = DateTime.now().add(Duration(days: 3650));
     final initialDate = vm.orderDate.isBefore(minDate)
         ? minDate
         : (vm.orderDate.isAfter(maxDate) ? maxDate : vm.orderDate);
@@ -109,24 +109,34 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
     final vm = context.read<UpdateSalesOrderViewModel>();
 
     if (vm.selectedCustomer == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Please select a customer first'),
-        backgroundColor: LoginColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(seconds: 1),
+          content: const Text('Please select a customer first'),
+          backgroundColor: LoginColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
       return;
     }
 
     final items = vm.availableItems;
 
     if (items.isEmpty && !vm.isLoadingItems) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('No sellable items available for this customer'),
-        backgroundColor: LoginColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(seconds: 1),
+          content: const Text('No sellable items available for this customer'),
+          backgroundColor: LoginColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
       return;
     }
 
@@ -210,22 +220,32 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
     final vm = context.read<UpdateSalesOrderViewModel>();
 
     if (vm.selectedCustomer == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Please select a customer'),
-        backgroundColor: LoginColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(seconds: 1),
+          content: const Text('Please select a customer'),
+          backgroundColor: LoginColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
       return;
     }
 
     if (vm.orderItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Please add at least one item'),
-        backgroundColor: LoginColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(seconds: 1),
+          content: const Text('Please add at least one item'),
+          backgroundColor: LoginColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
       return;
     }
 
@@ -236,16 +256,23 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
     await vm.submitUpdate();
 
     if (vm.isSuccess && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Row(children: [
-          Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-          SizedBox(width: 10),
-          Text('Sales Order Updated Successfully'),
-        ]),
-        backgroundColor: LoginColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(seconds: 1),
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+              SizedBox(width: 10),
+              Text('Sales Order Updated Successfully'),
+            ],
+          ),
+          backgroundColor: LoginColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
       Navigator.pop(context, true);
     }
   }
@@ -344,8 +371,10 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
                       style: FilledButton.styleFrom(
                         backgroundColor: LoginColors.primary,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor:
-                            LoginColors.primary.withOpacity(0.4),
+                        disabledBackgroundColor: LoginColors.primary
+                            .withValues(
+                          alpha: 0.4,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -358,15 +387,19 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: LoginColors.error.withOpacity(0.08),
+                        color: LoginColors.error.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: LoginColors.error.withOpacity(0.3)),
+                          color: LoginColors.error.withValues(alpha:0.3),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline_rounded,
-                              color: LoginColors.error, size: 20),
+                          Icon(
+                            Icons.error_outline_rounded,
+                            color: LoginColors.error,
+                            size: 20,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -388,7 +421,7 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
           ),
           if (vm.isLoading)
             Container(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],
@@ -416,8 +449,11 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
                 children: [
-                  Icon(Icons.person_rounded,
-                      color: LoginColors.primary, size: 18),
+                  Icon(
+                    Icons.person_rounded,
+                    color: LoginColors.primary,
+                    size: 18,
+                  ),
                   const SizedBox(width: 10),
                   Text(
                     'Customer',
@@ -443,8 +479,9 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundColor:
-                              LoginColors.primary.withOpacity(0.15),
+                          backgroundColor: LoginColors.primary.withValues(alpha:
+                            0.15,
+                          ),
                           child: Text(
                             customer.displayName.isNotEmpty
                                 ? customer.displayName[0].toUpperCase()
@@ -480,23 +517,34 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
                             ],
                           ),
                         ),
-                        Icon(Icons.chevron_right_rounded,
-                            color: LoginColors.textTertiary, size: 22),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: LoginColors.textTertiary,
+                          size: 22,
+                        ),
                       ],
                     )
                   : Row(
                       children: [
-                        Icon(Icons.person_outline_rounded,
-                            color: LoginColors.textTertiary, size: 20),
+                        Icon(
+                          Icons.person_outline_rounded,
+                          color: LoginColors.textTertiary,
+                          size: 20,
+                        ),
                         const SizedBox(width: 10),
                         Text(
                           'Select a customer',
                           style: TextStyle(
-                              fontSize: 14, color: LoginColors.textTertiary),
+                            fontSize: 14,
+                            color: LoginColors.textTertiary,
+                          ),
                         ),
                         const Spacer(),
-                        Icon(Icons.chevron_right_rounded,
-                            color: LoginColors.textTertiary, size: 22),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: LoginColors.textTertiary,
+                          size: 22,
+                        ),
                       ],
                     ),
             ),
@@ -519,13 +567,18 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
             child: Center(
               child: Column(
                 children: [
-                  Icon(Icons.add_shopping_cart_rounded,
-                      size: 36, color: LoginColors.textTertiary),
+                  Icon(
+                    Icons.add_shopping_cart_rounded,
+                    size: 36,
+                    color: LoginColors.textTertiary,
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'No items added yet',
                     style: TextStyle(
-                        color: LoginColors.textTertiary, fontSize: 13),
+                      color: LoginColors.textTertiary,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -538,19 +591,23 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
               children: [
                 const SizedBox(width: 28),
                 Expanded(
-                  child: Text('Item',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: LoginColors.textTertiary,
-                      )),
-                ),
-                Text('Amount',
+                  child: Text(
+                    'Item',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: LoginColors.textTertiary,
-                    )),
+                    ),
+                  ),
+                ),
+                Text(
+                  'Amount',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: LoginColors.textTertiary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -572,13 +629,15 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.add_rounded, size: 20),
-              label:
-                  Text(vm.isLoadingItems ? 'Loading Items...' : 'Add Item'),
+              label: Text(vm.isLoadingItems ? 'Loading Items...' : 'Add Item'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: LoginColors.primary,
-                side: BorderSide(color: LoginColors.primary.withOpacity(0.4)),
+                side: BorderSide(
+                  color: LoginColors.primary.withValues(alpha: 0.4),
+                ),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
           ),
@@ -611,8 +670,11 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
               borderRadius: BorderRadius.circular(4),
               child: Padding(
                 padding: const EdgeInsets.only(right: 8, top: 1),
-                child: Icon(Icons.close_rounded,
-                    size: 16, color: LoginColors.error),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 16,
+                  color: LoginColors.error,
+                ),
               ),
             ),
             Expanded(
@@ -633,7 +695,9 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
                   Text(
                     '$qtyStr x $priceStr',
                     style: TextStyle(
-                        fontSize: 12.5, color: LoginColors.textSecondary),
+                      fontSize: 12.5,
+                      color: LoginColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -672,8 +736,11 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
             padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
             child: Row(
               children: [
-                Icon(Icons.summarize_rounded,
-                    color: LoginColors.primary, size: 18),
+                Icon(
+                  Icons.summarize_rounded,
+                  color: LoginColors.primary,
+                  size: 18,
+                ),
                 const SizedBox(width: 10),
                 Text(
                   'Order Summary',
@@ -716,14 +783,21 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
                     decoration: InputDecoration(
                       labelText: 'Order Date',
                       labelStyle: TextStyle(
-                          fontSize: 13, color: LoginColors.textSecondary),
-                      prefixIcon: Icon(Icons.calendar_today_rounded,
-                          size: 18, color: LoginColors.textTertiary),
+                        fontSize: 13,
+                        color: LoginColors.textSecondary,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.calendar_today_rounded,
+                        size: 18,
+                        color: LoginColors.textTertiary,
+                      ),
                       filled: true,
                       fillColor: LoginColors.fieldFill,
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide(color: LoginColors.borderLight),
@@ -815,13 +889,15 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
   void initState() {
     super.initState();
     _qtyController = TextEditingController(
-        text: widget.initialQty % 1 == 0
-            ? widget.initialQty.toInt().toString()
-            : widget.initialQty.toString());
+      text: widget.initialQty % 1 == 0
+          ? widget.initialQty.toInt().toString()
+          : widget.initialQty.toString(),
+    );
     _priceController = TextEditingController(
-        text: widget.initialPrice % 1 == 0
-            ? widget.initialPrice.toInt().toString()
-            : widget.initialPrice.toString());
+      text: widget.initialPrice % 1 == 0
+          ? widget.initialPrice.toInt().toString()
+          : widget.initialPrice.toString(),
+    );
     _descController = TextEditingController(text: widget.initialDesc ?? '');
   }
 
@@ -841,7 +917,10 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
     Navigator.pop(
       context,
       _ItemDetailResult(
-          qty: qty, price: price, description: desc.isEmpty ? null : desc),
+        qty: qty,
+        price: price,
+        description: desc.isEmpty ? null : desc,
+      ),
     );
   }
 
@@ -849,7 +928,11 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+        20,
+        16,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
       child: Form(
         key: _formKey,
         child: Column(
@@ -923,12 +1006,15 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
                   backgroundColor: LoginColors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: Text(
                   widget.isEdit ? 'Update Item' : 'Add Item',
                   style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w600),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -966,10 +1052,12 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
         filled: true,
         fillColor: enabled
             ? LoginColors.fieldFill
-            : LoginColors.fieldFill.withOpacity(0.5),
+            : LoginColors.fieldFill.withValues(alpha:0.5),
         isDense: true,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: LoginColors.borderLight),
@@ -980,8 +1068,9 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide:
-              BorderSide(color: LoginColors.borderLight.withOpacity(0.5)),
+          borderSide: BorderSide(
+            color: LoginColors.borderLight.withValues(alpha:0.5),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -1029,8 +1118,7 @@ class _EditableSummaryRow extends StatelessWidget {
           child: TextField(
             controller: controller,
             onChanged: onChanged,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             textAlign: TextAlign.right,
             style: TextStyle(
               fontSize: 14,
@@ -1039,18 +1127,26 @@ class _EditableSummaryRow extends StatelessWidget {
             ),
             decoration: InputDecoration(
               hintText: '0.00',
-              hintStyle:
-                  TextStyle(fontSize: 14, color: LoginColors.textTertiary),
+              hintStyle: TextStyle(
+                fontSize: 14,
+                color: LoginColors.textTertiary,
+              ),
               isDense: true,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 6,
+              ),
               border: UnderlineInputBorder(
-                borderSide:
-                    BorderSide(color: LoginColors.borderLight, width: 0.8),
+                borderSide: BorderSide(
+                  color: LoginColors.borderLight,
+                  width: 0.8,
+                ),
               ),
               enabledBorder: UnderlineInputBorder(
-                borderSide:
-                    BorderSide(color: LoginColors.borderLight, width: 0.8),
+                borderSide: BorderSide(
+                  color: LoginColors.borderLight,
+                  width: 0.8,
+                ),
               ),
               focusedBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: LoginColors.primary, width: 1.2),
@@ -1070,8 +1166,11 @@ class _SummaryRow extends StatelessWidget {
   final double value;
   final bool isBold;
 
-  const _SummaryRow(
-      {required this.label, required this.value, this.isBold = false});
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    this.isBold = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1083,8 +1182,7 @@ class _SummaryRow extends StatelessWidget {
           style: TextStyle(
             fontSize: isBold ? 15 : 14,
             fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
-            color:
-                isBold ? LoginColors.textPrimary : LoginColors.textSecondary,
+            color: isBold ? LoginColors.textPrimary : LoginColors.textSecondary,
           ),
         ),
         Text(
@@ -1153,16 +1251,21 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
     await widget.onItemsUpdated?.call();
     if (!widget.hostContext.mounted) return;
     ScaffoldMessenger.of(widget.hostContext).showSnackBar(
-      const SnackBar(content: Text('Customer item created successfully')),
+      const SnackBar(
+        duration: Duration(seconds: 1),
+        content: Text('Customer item created successfully'),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final filtered = widget.items
-        .where((i) =>
-            !widget.existingItemIds.contains(i.itemId) &&
-            i.itemName.toLowerCase().contains(_query.toLowerCase()))
+        .where(
+          (i) =>
+              !widget.existingItemIds.contains(i.itemId) &&
+              i.itemName.toLowerCase().contains(_query.toLowerCase()),
+        )
         .toList();
 
     return DraggableScrollableSheet(
@@ -1198,15 +1301,22 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
                 hintText: 'Search items...',
-                hintStyle:
-                    TextStyle(fontSize: 13, color: LoginColors.textTertiary),
-                prefixIcon: Icon(Icons.search_rounded,
-                    size: 20, color: LoginColors.textTertiary),
+                hintStyle: TextStyle(
+                  fontSize: 13,
+                  color: LoginColors.textTertiary,
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  size: 20,
+                  color: LoginColors.textTertiary,
+                ),
                 filled: true,
                 fillColor: LoginColors.fieldFill,
                 isDense: true,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(color: LoginColors.borderLight),
@@ -1217,47 +1327,48 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide:
-                      BorderSide(color: LoginColors.primary, width: 1.2),
+                  borderSide: BorderSide(
+                    color: LoginColors.primary,
+                    width: 1.2,
+                  ),
                 ),
               ),
             ),
           ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: filtered.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'No items found',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: LoginColors.textTertiary,
+          const SizedBox(height: 8),
+          Expanded(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'No items found',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: LoginColors.textTertiary,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              onPressed: _openCreateCustomerItemFlow,
+                              icon: const Icon(Icons.add_circle_outline),
+                              label: const Text('Create Customer Item'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: LoginColors.primary,
+                                foregroundColor: Colors.white,
                               ),
                             ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              child: FilledButton.icon(
-                                onPressed: _openCreateCustomerItemFlow,
-                                icon: const Icon(Icons.add_circle_outline),
-                                label:
-                                    const Text('Create Customer Item'),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: LoginColors.primary,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    )
-                  : ListView.separated(
+                    ),
+                  )
+                : ListView.separated(
                     controller: scrollController,
                     itemCount: filtered.length,
                     separatorBuilder: (_, __) =>
@@ -1278,8 +1389,9 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
                             ? Text(
                                 item.description,
                                 style: TextStyle(
-                                    fontSize: 12,
-                                    color: LoginColors.textSecondary),
+                                  fontSize: 12,
+                                  color: LoginColors.textSecondary,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               )

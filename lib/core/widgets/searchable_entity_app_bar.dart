@@ -128,7 +128,7 @@ class SearchableEntityAppBar extends StatelessWidget
           mainAxisSize: MainAxisSize.min,
           children: [
             AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
+              duration: Duration(milliseconds: 250),
               child: showSearchAction && isSearchOpen
                   ? SizedBox(
                       height: _searchBarHeight,

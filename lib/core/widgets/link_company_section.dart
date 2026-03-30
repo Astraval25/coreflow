@@ -73,7 +73,7 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
 
   Widget _buildCompactHeader() {
     const gold = Color(0xFFD4AF37);
-    final goldSoft = gold.withOpacity(0.12);
+    final goldSoft = gold.withValues(alpha: 0.12);
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _headerPressed = true),
@@ -81,24 +81,24 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
       onTapCancel: () => setState(() => _headerPressed = false),
       onTap: () => setState(() => _expanded = !_expanded),
       child: AnimatedScale(
-        duration: const Duration(milliseconds: 120),
+        duration: Duration(milliseconds: 120),
         scale: _headerPressed ? 0.98 : 1,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+          duration: Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [goldSoft, goldSoft.withOpacity(0.04)],
+              colors: [goldSoft, goldSoft.withValues(alpha: 0.04)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: gold.withOpacity(0.4)),
+            border: Border.all(color: gold.withValues(alpha: 0.4)),
             boxShadow: _headerPressed
                 ? []
                 : [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -145,12 +145,12 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
               ),
               const SizedBox(width: 8),
               AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
+                duration: Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: gold.withOpacity(_expanded ? 0.18 : 0.1),
+                  color: gold.withValues(alpha: _expanded ? 0.18 : 0.1),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: gold.withOpacity(0.5)),
+                  border: Border.all(color: gold.withValues(alpha: 0.5)),
                 ),
                 child: Row(
                   children: [
@@ -165,7 +165,7 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
                     const SizedBox(width: 4),
                     AnimatedRotation(
                       turns: _expanded ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 180),
+                      duration: Duration(milliseconds: 180),
                       child: Icon(
                         Icons.keyboard_arrow_down_rounded,
                         size: 16,
@@ -189,7 +189,7 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
       decoration: BoxDecoration(
         color: LoginColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: gold.withOpacity(0.4)),
+        border: Border.all(color: gold.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,7 +393,7 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
                 width: 30,
                 height: 30,
                 decoration: BoxDecoration(
-                  color: gold.withOpacity(0.16),
+                  color: gold.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.input_rounded, size: 16, color: gold),
@@ -488,11 +488,11 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: gold.withOpacity(0.5)),
+                    borderSide: BorderSide(color: gold.withValues(alpha:0.5)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: gold.withOpacity(0.5)),
+                    borderSide: BorderSide(color: gold.withValues(alpha: 0.5)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -515,6 +515,7 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
                         if (code.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
+                              duration: Duration(seconds: 1),
                               content: Text('Please enter a code'),
                               behavior: SnackBarBehavior.floating,
                             ),
@@ -588,10 +589,10 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
     Clipboard.setData(ClipboardData(text: code));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        duration: Duration(seconds: 1),
         content: const Text('Code copied to clipboard'),
         backgroundColor: LoginColors.primary,
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
       ),
     );
   }

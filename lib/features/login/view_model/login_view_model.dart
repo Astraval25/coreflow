@@ -85,14 +85,14 @@ class LoginViewModel extends ChangeNotifier {
         final landingUrl = _landingUrl!.toLowerCase();
         if (landingUrl.contains('/verify')) {
           final email = Uri.encodeComponent(emailController.text.trim());
-          await Future.delayed(const Duration(milliseconds: 500));
+          await Future.delayed(Duration(milliseconds: 500));
           if (context.mounted) {
             context.go('/resend-otp?email=$email');
           }
           return;
         }
 
-        await Future.delayed(const Duration(milliseconds: 500));
+        await Future.delayed(Duration(milliseconds: 500));
         if (context.mounted) context.go(_landingUrl!);
       } else {
         _errorMessage = response?.responseMessage ?? '$_errorMessage';
@@ -102,7 +102,7 @@ class LoginViewModel extends ChangeNotifier {
             errorMsg.contains('verify') ||
             errorMsg.contains('resend')) {
           final email = Uri.encodeComponent(emailController.text.trim());
-          Future.delayed(const Duration(milliseconds: 1000), () {
+          Future.delayed(Duration(milliseconds: 1000), () {
             if (context.mounted) {
               context.go('/resend-otp?email=$email');
             }

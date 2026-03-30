@@ -65,7 +65,7 @@ class _SelectCompanyItemPageState extends State<SelectCompanyItemPage> {
           icon: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.menu_rounded, size: 22),
@@ -164,7 +164,7 @@ class _SelectCompanyItemPageState extends State<SelectCompanyItemPage> {
                       margin: EdgeInsets.zero,
                       elevation: 1.5,
                       color: LoginColors.surface,
-                      shadowColor: LoginColors.shadowLight.withOpacity(0.15),
+                      shadowColor: LoginColors.shadowLight.withValues(alpha:0.15),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                         side: BorderSide(
@@ -174,8 +174,11 @@ class _SelectCompanyItemPageState extends State<SelectCompanyItemPage> {
                       ),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16),
-                        splashColor: LoginColors.primaryLight.withOpacity(0.12),
-                        highlightColor: LoginColors.primaryLight.withOpacity(
+                        splashColor: LoginColors.primaryLight.withValues(
+                          alpha: 0.12,
+                        ),
+                        highlightColor: LoginColors.primaryLight.withValues(
+                          alpha:
                           0.06,
                         ),
                         onTap: () async {
@@ -281,7 +284,7 @@ class _SelectCompanyItemPageState extends State<SelectCompanyItemPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -340,7 +343,10 @@ class _CreateCustomerItemPageState extends State<CreateCustomerItemPage> {
     final price = double.tryParse(_priceController.text.trim());
     if (price == null || price <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid sales price')),
+        const SnackBar(
+          duration: Duration(seconds: 1),
+          content: Text('Enter a valid sales price'),
+        ),
       );
       return;
     }
@@ -361,6 +367,7 @@ class _CreateCustomerItemPageState extends State<CreateCustomerItemPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        duration: Duration(seconds: 1),
         content: Text(
           widget.viewModel.errorMessage ?? 'Failed to create customer item',
         ),
@@ -373,8 +380,8 @@ class _CreateCustomerItemPageState extends State<CreateCustomerItemPage> {
     final dashboardVm = context.watch<DashboardViewModel>();
     final colorScheme = Theme.of(context).colorScheme;
     final textPrimary = colorScheme.onSurface;
-    final textSecondary = colorScheme.onSurface.withOpacity(0.72);
-    final border = colorScheme.outlineVariant.withOpacity(0.7);
+    final textSecondary = colorScheme.onSurface.withValues(alpha:0.72);
+    final border = colorScheme.outlineVariant.withValues(alpha:0.7);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -393,7 +400,7 @@ class _CreateCustomerItemPageState extends State<CreateCustomerItemPage> {
           icon: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha:0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.menu_rounded, size: 22),
@@ -558,7 +565,10 @@ class _UpdateCustomerItemPageState extends State<UpdateCustomerItemPage> {
     final price = double.tryParse(_priceController.text.trim());
     if (price == null || price <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid sales price')),
+        const SnackBar(
+          duration: Duration(seconds: 1),
+          content: Text('Enter a valid sales price'),
+        ),
       );
       return;
     }
@@ -577,8 +587,9 @@ class _UpdateCustomerItemPageState extends State<UpdateCustomerItemPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar( 
       SnackBar(
+        duration: Duration(seconds: 1),
         content: Text(
           widget.viewModel.errorMessage ?? 'Failed to update customer item',
         ),
@@ -591,8 +602,8 @@ class _UpdateCustomerItemPageState extends State<UpdateCustomerItemPage> {
     final dashboardVm = context.watch<DashboardViewModel>();
     final colorScheme = Theme.of(context).colorScheme;
     final textPrimary = colorScheme.onSurface;
-    final textSecondary = colorScheme.onSurface.withOpacity(0.72);
-    final border = colorScheme.outlineVariant.withOpacity(0.7);
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.72);
+    final border = colorScheme.outlineVariant.withValues(alpha: 0.7);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -611,7 +622,7 @@ class _UpdateCustomerItemPageState extends State<UpdateCustomerItemPage> {
           icon: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.menu_rounded, size: 22),

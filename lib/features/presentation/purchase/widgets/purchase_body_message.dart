@@ -56,6 +56,7 @@ class PurchaseBodyMessage extends StatelessWidget {
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
+                      duration: Duration(seconds: 1),
                       content: Text('Create purchase order coming soon.'),
                     ),
                   );

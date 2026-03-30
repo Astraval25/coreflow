@@ -42,7 +42,7 @@ class _DashboardViewState extends State<_DashboardView>
   bool _isRefreshing = false;
   late final AnimationController _refreshController = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 800),
+    duration: Duration(milliseconds: 800),
   );
 
   @override
@@ -111,7 +111,9 @@ class _DashboardViewState extends State<_DashboardView>
                                   boxShadow: [
                                     BoxShadow(
                                       color: LoginColors.shadowLight
-                                          .withOpacity(0.12),
+                                          .withValues(
+                                        alpha: 0.12,
+                                      ),
                                       blurRadius: 18,
                                       offset: const Offset(0, 8),
                                     ),

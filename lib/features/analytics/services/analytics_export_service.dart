@@ -82,7 +82,12 @@ class AnalyticsExportService {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('PDF export failed: $e')));
+        ).showSnackBar(
+          SnackBar(
+            duration: Duration(seconds: 1),
+            content: Text('PDF export failed: $e'),
+          ),
+        );
       }
     }
   }
@@ -118,7 +123,12 @@ class AnalyticsExportService {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('CSV export failed: $e')));
+        ).showSnackBar(
+          SnackBar(
+            duration: Duration(seconds: 1),
+            content: Text('CSV export failed: $e'),
+          ),
+        );
       }
     }
   }

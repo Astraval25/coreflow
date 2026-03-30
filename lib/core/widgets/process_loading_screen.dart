@@ -30,7 +30,7 @@ class ProcessLoadingScreen extends StatelessWidget {
             border: Border.all(color: LoginColors.borderLight, width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: LoginColors.shadowLight.withOpacity(0.1),
+                color: LoginColors.shadowLight.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: Offset(0, 10),
               ),
@@ -43,7 +43,7 @@ class ProcessLoadingScreen extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: LoginColors.primary.withOpacity(0.1),
+                    color: LoginColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: SizedBox(
@@ -97,9 +97,9 @@ class ProcessLoadingScreen extends StatelessWidget {
                         height: 40,
                         decoration: BoxDecoration(
                           color: isCompleted
-                              ? Colors.green.withOpacity(0.15)
+                              ? Colors.green.withValues(alpha: 0.15)
                               : isCurrent
-                              ? LoginColors.primary.withOpacity(0.15)
+                              ? LoginColors.primary.withValues(alpha: 0.15)
                               : LoginColors.background,
                           shape: BoxShape.circle,
                           border: Border.all(
@@ -178,7 +178,7 @@ class ProcessLoadingScreen extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
+                            color: Colors.green.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -197,7 +197,7 @@ class ProcessLoadingScreen extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: LoginColors.primary.withOpacity(0.1),
+                            color: LoginColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(

@@ -144,7 +144,7 @@ class _ProfileContent extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: LoginColors.primary.withOpacity(0.1),
+            color: LoginColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
@@ -267,12 +267,12 @@ class _AvatarWithGradient extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [color, color.withOpacity(0.8)],
+          colors: [color, color.withValues(alpha:0.8)],
         ),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.2),
+            color: color.withValues(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -411,7 +411,7 @@ class _ErrorContent extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: TextStyle(color: LoginColors.error.withOpacity(0.8)),
+            style: TextStyle(color: LoginColors.error.withValues(alpha: 0.8)),
           ),
           const SizedBox(height: 32),
           SizedBox(

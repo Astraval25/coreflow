@@ -26,7 +26,7 @@ class DashboardMenuItem extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: isSelected
-                ? LoginColors.primary.withOpacity(0.12)
+                ? LoginColors.primary.withValues(alpha: 0.12)
                 : LoginColors.fieldFill,
             borderRadius: BorderRadius.circular(10),
           ),
@@ -308,7 +308,7 @@ class ManageExpansion extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: isExpanded
-                  ? LoginColors.primary.withOpacity(0.1)
+                  ? LoginColors.primary.withValues(alpha: 0.1)
                   : LoginColors.fieldFill,
               borderRadius: BorderRadius.circular(10),
             ),
@@ -398,7 +398,7 @@ class SubMenuItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
-        color: isSelected ? iconColor.withOpacity(0.08) : Colors.transparent,
+        color: isSelected ? iconColor.withValues(alpha:0.08) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
@@ -407,14 +407,14 @@ class SubMenuItem extends StatelessWidget {
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
             color: isSelected
-                ? iconColor.withOpacity(0.12)
-                : iconColor.withOpacity(0.05),
+                ? iconColor.withValues(alpha: 0.12)
+                : iconColor.withValues(alpha: 0.05),
             shape: BoxShape.circle,
           ),
           child: Icon(
             icon,
             size: 16,
-            color: isSelected ? iconColor : iconColor.withOpacity(0.7),
+            color: isSelected ? iconColor : iconColor.withValues(alpha: 0.7),
           ),
         ),
         title: Text(
@@ -432,7 +432,7 @@ class SubMenuItem extends StatelessWidget {
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? iconColor.withOpacity(0.15)
+                        ? iconColor.withValues(alpha: 0.15)
                         : LoginColors.fieldFill,
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -484,7 +484,7 @@ class SubMenuItem extends StatelessWidget {
     if (!context.mounted) return;
 
     Navigator.pop(context);
-    await Future.delayed(const Duration(milliseconds: 80));
+    await Future.delayed(Duration(milliseconds: 80));
 
     final path = switch (menuKeys) {
       '/vendoradd' => '/vendors/$companyId/add',
@@ -524,7 +524,9 @@ class _QuickAddTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
-        color: isSelected ? iconColor.withOpacity(0.08) : Colors.transparent,
+        color: isSelected
+            ? iconColor.withValues(alpha: 0.08)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
@@ -533,14 +535,14 @@ class _QuickAddTile extends StatelessWidget {
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
             color: isSelected
-                ? iconColor.withOpacity(0.12)
-                : iconColor.withOpacity(0.05),
+                ? iconColor.withValues(alpha: 0.12)
+                : iconColor.withValues(alpha: 0.05),
             shape: BoxShape.circle,
           ),
           child: Icon(
             icon,
             size: 16,
-            color: isSelected ? iconColor : iconColor.withOpacity(0.7),
+            color: isSelected ? iconColor : iconColor.withValues(alpha: 0.7),
           ),
         ),
         title: Text(
@@ -596,7 +598,7 @@ class MarketplaceMenuItem extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: isSelected
-                ? LoginColors.primary.withOpacity(0.12)
+                ? LoginColors.primary.withValues(alpha: 0.12)
                 : LoginColors.fieldFill,
             borderRadius: BorderRadius.circular(10),
           ),
@@ -648,7 +650,7 @@ class ReportMenuItem extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: isSelected
-                ? LoginColors.primary.withOpacity(0.12)
+                ? LoginColors.primary.withValues(alpha: 0.12)
                 : LoginColors.fieldFill,
             borderRadius: BorderRadius.circular(10),
           ),
@@ -700,7 +702,7 @@ class SettingsMenuItem extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: isSelected
-                ? LoginColors.primary.withOpacity(0.12)
+                ? LoginColors.primary.withValues(alpha: 0.12)
                 : LoginColors.fieldFill,
             borderRadius: BorderRadius.circular(10),
           ),
@@ -745,7 +747,7 @@ class _MenuTileContainer extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 12),
       decoration: BoxDecoration(
         color: isSelected
-            ? LoginColors.primary.withOpacity(0.08)
+            ? LoginColors.primary.withValues(alpha: 0.08)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),

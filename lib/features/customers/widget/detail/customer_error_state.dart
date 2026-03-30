@@ -22,7 +22,7 @@ class CustomerErrorState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: LoginColors.error.withOpacity(0.08),
+                color: LoginColors.error.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(

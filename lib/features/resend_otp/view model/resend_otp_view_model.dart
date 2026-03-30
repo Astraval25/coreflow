@@ -52,10 +52,10 @@ class ResendOtpViewModel extends ChangeNotifier {
       final response = await _authRepository
           .resendOtp(request)
           .timeout(
-            const Duration(seconds: 8),
+            Duration(seconds: 8),
             onTimeout: () => throw TimeoutException(
               'Request timeout',
-              const Duration(seconds: 4),
+              Duration(seconds: 4),
             ),
           );
 
@@ -63,7 +63,7 @@ class ResendOtpViewModel extends ChangeNotifier {
         _successMessage = response.responseMessage ?? 'OTP resent successfully';
         notifyListeners();
 
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(Duration(seconds: 1));
         if (context.mounted) {
           final email = Uri.encodeComponent(emailController.text.trim());
           context.go('/verify?email=$email');

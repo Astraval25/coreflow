@@ -74,7 +74,7 @@ class ItemDetailErrorView extends StatelessWidget {
             Icon(
               Icons.error_outline_rounded,
               size: 64,
-              color: LoginColors.error.withOpacity(0.7),
+              color: LoginColors.error.withValues(alpha: 0.7),
             ),
             const SizedBox(height: 16),
             Text(

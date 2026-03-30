@@ -30,15 +30,15 @@ class VendorListItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 6),
       elevation: 1.5,
       color: LoginColors.surface,
-      shadowColor: LoginColors.shadowLight.withOpacity(0.15),
+      shadowColor: LoginColors.shadowLight.withValues(alpha: 0.15),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: LoginColors.borderLight, width: 0.8),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        splashColor: LoginColors.primaryLight.withOpacity(0.12),
-        highlightColor: LoginColors.primaryLight.withOpacity(0.06),
+        splashColor: LoginColors.primaryLight.withValues(alpha:0.12),
+        highlightColor: LoginColors.primaryLight.withValues(alpha:0.06),
         onTap: () async {
           await context.push('/vendors/$companyId/${vendor.vendorId}');
           if (context.mounted) {
@@ -61,8 +61,8 @@ class VendorListItem extends StatelessWidget {
                   child: CircleAvatar(
                     radius: 26,
                     backgroundColor: vendor.vendorCompanyId != null
-                        ? LoginColors.success.withOpacity(0.15)
-                        : primaryColor.withOpacity(0.15),
+                        ? LoginColors.success.withValues(alpha: 0.15)
+                        : primaryColor.withValues(alpha: 0.15),
                     child: Text(
                       avatarText,
                       style: TextStyle(
@@ -153,13 +153,13 @@ class VendorListItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color.withOpacity(0.7)),
+          Icon(icon, size: 12, color: color.withValues(alpha:0.7)),
           const SizedBox(width: 4),
           Flexible(
             child: Text(

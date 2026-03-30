@@ -27,7 +27,7 @@ class ItemImageUploader extends StatelessWidget {
           color: LoginColors.fieldFill,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: LoginColors.primary.withOpacity(0.2),
+            color: LoginColors.primary.withValues(alpha: 0.2),
             width: 1.5,
             style: BorderStyle.solid,
           ),
@@ -69,7 +69,7 @@ class ItemImageUploader extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -90,7 +90,7 @@ class ItemImageUploader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: LoginColors.primary.withOpacity(0.08),
+            color: LoginColors.primary.withValues(alpha: 0.08),
             shape: BoxShape.circle,
           ),
           child: const Icon(

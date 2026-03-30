@@ -30,13 +30,13 @@ class _DashboardPromoBannerState extends State<DashboardPromoBanner> {
   }
 
   void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _timer = Timer.periodic(Duration(seconds: 5), (timer) {
       if (widget.promoItems.isEmpty) return;
       if (_controller.hasClients) {
         _currentPage++;
         _controller.animateToPage(
           _currentPage,
-          duration: const Duration(milliseconds: 400),
+          duration: Duration(milliseconds: 400),
           curve: Curves.easeIn,
         );
       }
@@ -64,7 +64,7 @@ class _DashboardPromoBannerState extends State<DashboardPromoBanner> {
         color: LoginColors.cardBackground,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -104,12 +104,12 @@ class _DashboardPromoBannerState extends State<DashboardPromoBanner> {
             final targetPage = _currentPage - (_currentPage % itemCount) + index;
             _controller.animateToPage(
               targetPage,
-              duration: const Duration(milliseconds: 600),
+              duration: Duration(milliseconds: 600),
               curve: Curves.easeOutCubic,
             );
           },
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 400),
+            duration: Duration(milliseconds: 400),
             margin: const EdgeInsets.symmetric(horizontal: 3),
             width: isActive ? 24 : 6,
             height: 6,
@@ -117,7 +117,7 @@ class _DashboardPromoBannerState extends State<DashboardPromoBanner> {
               borderRadius: BorderRadius.circular(3),
               color: isActive
                   ? Colors.black87
-                  : Colors.black.withOpacity(0.15),
+                  : Colors.black.withValues(alpha: 0.15),
             ),
           ),
         );
@@ -152,7 +152,7 @@ class PromoCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: backgroundColor,
             gradient: LinearGradient(
-              colors: [backgroundColor, backgroundColor.withOpacity(0.8)],
+              colors: [backgroundColor, backgroundColor.withValues(alpha: 0.8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -172,7 +172,7 @@ class PromoCard extends StatelessWidget {
                         vertical: isCompact ? 2 : 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.3),
+                        color: Colors.white.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -207,7 +207,7 @@ class PromoCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: isCompact ? 10 : 12,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1E293B).withOpacity(0.7),
+                          color: const Color(0xFF1E293B).withValues(alpha: 0.7),
                           height: 1.2,
                         ),
                       ),
@@ -335,12 +335,12 @@ class DashboardGridItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: LoginColors.shadowLight.withOpacity(0.1),
+                  color: LoginColors.shadowLight.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
               ],
-              border: Border.all(color: LoginColors.border.withOpacity(0.1)),
+              border: Border.all(color: LoginColors.border.withValues(alpha:0.1)),
             ),
             child: Icon(icon, color: color ?? LoginColors.primary, size: 26),
           ),

@@ -87,7 +87,7 @@ class _ItemsViewBodyState extends State<ItemsViewBody> {
           _buildTopToggleTabs(context),
           Expanded(
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 280),
+              duration: Duration(milliseconds: 280),
               switchInCurve: Curves.easeOutCubic,
               switchOutCurve: Curves.easeInCubic,
               transitionBuilder: (child, animation) {
@@ -160,7 +160,7 @@ class _ItemsViewBodyState extends State<ItemsViewBody> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(

@@ -22,7 +22,7 @@ class CompanyHeader extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: LoginColors.shadowLight.withOpacity(0.06),
+            color: LoginColors.shadowLight.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -57,7 +57,7 @@ class CompanyHeader extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: LoginColors.primary.withOpacity(0.2),
+              color: LoginColors.primary.withValues(alpha:0.2),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -194,7 +194,7 @@ class _ManageCompanyBottomSheet extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: LoginColors.primary.withOpacity(0.08),
+                    color: LoginColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -247,10 +247,14 @@ class _ManageCompanyBottomSheet extends StatelessWidget {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: isSelected ? LoginColors.primary.withOpacity(0.06) : LoginColors.fieldFill,
+                      color: isSelected
+                          ? LoginColors.primary.withValues(alpha:0.06)
+                          : LoginColors.fieldFill,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isSelected ? LoginColors.primary.withOpacity(0.12) : Colors.transparent,
+                        color: isSelected
+                            ? LoginColors.primary.withValues(alpha:0.12)
+                            : Colors.transparent,
                         width: 1,
                       ),
                     ),
@@ -282,7 +286,7 @@ class _ManageCompanyBottomSheet extends StatelessWidget {
                               'Currently active',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: LoginColors.primary.withOpacity(0.7),
+                                color: LoginColors.primary.withValues(alpha:0.7),
                               ),
                             )
                           : Text(

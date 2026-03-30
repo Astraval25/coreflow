@@ -83,7 +83,9 @@ class _SalesOrderDetailView extends StatelessWidget {
                   onTap: () async {
                     if (vm.orderDetail == null) return;
                     if (vm.orderDetail!.isPaid) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          duration: Duration(seconds: 1),
                         content: Text('Fully paid orders cannot be edited'),
                         behavior: SnackBarBehavior.floating,
                       ));
@@ -173,7 +175,7 @@ class _RoundActionIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: DashboardColors.textWhite.withOpacity(0.18),
+      color: DashboardColors.textWhite.withValues(alpha: 0.18),
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
@@ -245,7 +247,7 @@ class _OrderAppBarTitle extends StatelessWidget {
         Text(
           overdueText,
           style: TextStyle(
-            color: DashboardColors.textWhite.withOpacity(0.85),
+            color: DashboardColors.textWhite.withValues(alpha: 0.85),
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -471,6 +473,7 @@ class _CompanyRefCardState extends State<_CompanyRefCard> {
       if (!success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
+            duration: Duration(seconds: 1),
             content: Text('Failed to update reference'),
             behavior: SnackBarBehavior.floating,
           ),
@@ -1097,6 +1100,7 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
     if (!success && mounted && widget.vm.statusError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          duration: Duration(seconds: 1),
           content: Text(widget.vm.statusError!),
           behavior: SnackBarBehavior.floating,
         ),
@@ -1155,7 +1159,7 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
       children: [
         // Share options dropdown
         AnimatedSize(
-          duration: const Duration(milliseconds: 200),
+          duration: Duration(milliseconds: 200),
           curve: Curves.easeInOut,
           child: _shareExpanded
               ? Container(

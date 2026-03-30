@@ -47,7 +47,7 @@ class TokenStorage {
       await prefs.setString(_roleCodeKey, roleCode!);
     }
 
-    await Future.delayed(const Duration(milliseconds: 50));
+    await Future.delayed(Duration(milliseconds: 50));
     final verifyPrefs = await SharedPreferences.getInstance(); 
     final savedToken = verifyPrefs.getString(_tokenKey);
     final savedRefresh = verifyPrefs.getString(_refreshTokenKey);

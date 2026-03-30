@@ -124,7 +124,9 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: LoginColors.primary,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: LoginColors.primary.withOpacity(0.5),
+                    disabledBackgroundColor: LoginColors.primary.withValues(
+                      alpha: 0.5,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -250,6 +252,7 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          duration: Duration(seconds: 1),
           content: Text(
             isEditing ? 'Company updated successfully' : 'Company created successfully',
           ),
@@ -260,6 +263,7 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          duration: Duration(seconds: 1),
           content: Text(vm.errorMessage ?? 'Operation failed'),
           backgroundColor: LoginColors.error,
         ),

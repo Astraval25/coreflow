@@ -18,22 +18,22 @@ class VendorItemSection extends StatelessWidget {
         : const Color(0xFF6D64D8);
     final boxSurface = isDark
         ? Color.alphaBlend(
-            const Color.fromARGB(255, 71, 84, 104).withOpacity(0.78),
+            const Color.fromARGB(255, 71, 84, 104).withValues(alpha: 0.78),
             colorScheme.surface,
           )
         : const Color(0xFFF2F3F6);
     final boxFill = isDark
         ? Color.alphaBlend(
-            const Color(0xFF2E3340).withOpacity(0.78),
+            const Color(0xFF2E3340).withValues(alpha: 0.78),
             colorScheme.surface,
           )
         : const Color(0xFFEEF0F4);
     final borderColor = isDark
-        ? colorScheme.outlineVariant.withOpacity(0.55)
+        ? colorScheme.outlineVariant.withValues(alpha: 0.55)
         : const Color(0xFFE7E9EF);
     final primaryText = colorScheme.onSurface;
-    final secondaryText = colorScheme.onSurface.withOpacity(0.72);
-    final tertiaryText = colorScheme.onSurface.withOpacity(0.58);
+    final secondaryText = colorScheme.onSurface.withValues(alpha: 0.72);
+    final tertiaryText = colorScheme.onSurface.withValues(alpha: 0.58);
     final activeStatusColor = LoginColors.success;
     final inactiveStatusColor = LoginColors.error;
     final vendorCompany = vm.vendor?.vendorCompany;
@@ -146,6 +146,9 @@ class VendorItemSection extends StatelessWidget {
                                               context,
                                             ).showSnackBar(
                                               SnackBar(
+                                                duration: Duration(
+                                                  seconds: 1,
+                                                ),
                                                 content: Text(
                                                   ok
                                                       ? (shouldActivate
@@ -163,14 +166,17 @@ class VendorItemSection extends StatelessWidget {
                                           : inactiveStatusColor,
                                       side: BorderSide(
                                         color: item.isActive
-                                            ? activeStatusColor.withOpacity(0.5)
-                                            : inactiveStatusColor.withOpacity(
+                                            ? activeStatusColor.withValues(alpha:0.5)
+                                            : inactiveStatusColor.withValues(alpha:
                                                 0.5,
                                               ),
                                       ),
                                       backgroundColor: item.isActive
-                                          ? activeStatusColor.withOpacity(0.10)
-                                          : inactiveStatusColor.withOpacity(
+                                          ? activeStatusColor.withValues(
+                                              alpha: 0.10,
+                                            )
+                                          : inactiveStatusColor.withValues(
+                                              alpha:
                                               0.08,
                                             ),
                                       shape: const StadiumBorder(),
@@ -277,9 +283,9 @@ class VendorItemSection extends StatelessWidget {
                           height: 28,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: accentPurple.withOpacity(0.14),
+                            color: accentPurple.withValues(alpha:0.14),
                             border: Border.all(
-                              color: accentPurple.withOpacity(0.24),
+                              color: accentPurple.withValues(alpha:0.24),
                             ),
                           ),
                           alignment: Alignment.center,
@@ -320,7 +326,7 @@ class VendorItemSection extends StatelessWidget {
                       height: 3,
                       width: 50,
                       decoration: BoxDecoration(
-                        color: LoginColors.textPrimary.withOpacity(0.6),
+                        color: LoginColors.textPrimary.withValues(alpha:0.6),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -370,7 +376,10 @@ class VendorItemSection extends StatelessWidget {
     await vm.loadMappedItems();
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Vendor item created successfully')),
+      const SnackBar(
+        duration: Duration(seconds: 1),
+        content: Text('Vendor item created successfully'),
+      ),
     );
   }
 }
@@ -384,12 +393,12 @@ class VendorItemSkeletonCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final boxSurface = isDark
         ? Color.alphaBlend(
-            const Color(0xFF262A34).withOpacity(0.78),
+            const Color(0xFF262A34).withValues(alpha: 0.78),
             colorScheme.surface,
           )
         : const Color(0xFFF2F3F6);
     final borderColor = isDark
-        ? colorScheme.outlineVariant.withOpacity(0.55)
+        ? colorScheme.outlineVariant.withValues(alpha: 0.55)
         : const Color(0xFFE7E9EF);
 
     return Container(
@@ -434,9 +443,9 @@ class ItemMetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.12),
+        color: accent.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withOpacity(0.18)),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
       child: Text(
         label,
@@ -474,7 +483,7 @@ class DetailLine extends StatelessWidget {
           width: 26,
           height: 26,
           decoration: BoxDecoration(
-            color: accent.withOpacity(0.14),
+            color: accent.withValues(alpha: 0.14),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, size: 14, color: accent),
@@ -485,7 +494,7 @@ class DetailLine extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              color: colorScheme.onSurface.withOpacity(0.72),
+              color: colorScheme.onSurface.withValues(alpha:0.72),
               fontSize: 12.5,
               fontWeight: FontWeight.w600,
             ),

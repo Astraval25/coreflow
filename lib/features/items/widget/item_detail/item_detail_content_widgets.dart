@@ -136,7 +136,7 @@ class ItemDetailAppBarHeader extends StatelessWidget {
           child: Container(
             width: 92,
             height: 92,
-            color: Colors.white.withOpacity(0.15),
+            color: Colors.white.withValues(alpha: 0.15),
             child: isLoadingImage
                 ? const Center(
                     child: SizedBox(
@@ -221,7 +221,7 @@ class ItemDetailHeaderChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.18),
+        color: color.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -256,7 +256,7 @@ class ItemDetailInfoRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: color.withOpacity(0.7)),
+          Icon(icon, size: 18, color: color.withValues(alpha: 0.7)),
           const SizedBox(width: 12),
           Text(
             label,

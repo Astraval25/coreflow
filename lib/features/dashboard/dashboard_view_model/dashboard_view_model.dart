@@ -128,7 +128,7 @@ class DashboardViewModel extends ChangeNotifier {
     _isSwitchingCompany = true;
     notifyListeners();
     TokenStorage.saveSelectedCompany(company.companyId, company.companyName);
-    await Future.delayed(const Duration(seconds: 5));
+    await Future.delayed(Duration(seconds: 5));
     _isSwitchingCompany = false;
     notifyListeners();
   }

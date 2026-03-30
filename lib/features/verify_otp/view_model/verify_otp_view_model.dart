@@ -75,7 +75,7 @@ class VerifyOtpViewModel extends ChangeNotifier {
       if (response != null && response.responseStatus) {
         _successMessage = response.responseMessage;
         notifyListeners();
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future.delayed(Duration(milliseconds: 100));
         if (context.mounted) {
           context.go('/login');
         }
@@ -128,7 +128,7 @@ class VerifyOtpViewModel extends ChangeNotifier {
     _canResend = false;
     _timer?.cancel();
 
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (_resendTimer > 0) {
         _resendTimer--;
         notifyListeners();

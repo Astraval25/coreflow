@@ -17,13 +17,13 @@ class ErrorState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: LoginColors.error.withOpacity(0.08),
+                color: LoginColors.error.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.error_outline_rounded,
                 size: 64,
-                color: LoginColors.error.withOpacity(0.75),
+                color: LoginColors.error.withValues(alpha:0.75),
               ),
             ),
             const SizedBox(height: 24),

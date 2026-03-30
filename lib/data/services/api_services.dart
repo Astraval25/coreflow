@@ -9,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/storage/token_storage.dart';
 
 class ApiService {
-  static const Duration timeout = Duration(seconds: 30);
+  static Duration timeout = Duration(seconds: 30);
   static bool _isRefreshing = false;
   static Completer<String?>? _tokenRefreshCompleter;
 

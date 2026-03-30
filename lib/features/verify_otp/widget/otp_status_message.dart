@@ -20,9 +20,9 @@ class OtpStatusMessage extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: base.withOpacity(0.08),
+        color: base.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: base.withOpacity(0.3)),
+        border: Border.all(color: base.withValues(alpha:0.3)),
       ),
       child: Row(
         children: [

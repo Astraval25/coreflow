@@ -154,15 +154,15 @@ class _CompanyListItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 6),
       elevation: 1.5,
       color: LoginColors.surface,
-      shadowColor: LoginColors.shadowLight.withOpacity(0.15),
+      shadowColor: LoginColors.shadowLight.withValues(alpha: 0.15),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: LoginColors.borderLight, width: 0.8),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        splashColor: LoginColors.primaryLight.withOpacity(0.12),
-        highlightColor: LoginColors.primaryLight.withOpacity(0.06),
+        splashColor: LoginColors.primaryLight.withValues(alpha: 0.12),
+        highlightColor: LoginColors.primaryLight.withValues(alpha: 0.06),
         onTap: () => context.push('/marketplace/${company.companyId}'),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -170,7 +170,7 @@ class _CompanyListItem extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 26,
-                backgroundColor: LoginColors.primary.withOpacity(0.12),
+                backgroundColor: LoginColors.primary.withValues(alpha: 0.12),
                 child: Text(
                   initial,
                   style: TextStyle(
@@ -218,8 +218,8 @@ class _CompanyListItem extends StatelessWidget {
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: company.isGstVerified
-                      ? LoginColors.success.withOpacity(0.12)
-                      : LoginColors.textTertiary.withOpacity(0.1),
+                      ? LoginColors.success.withValues(alpha:0.12)
+                      : LoginColors.textTertiary.withValues(alpha:0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(

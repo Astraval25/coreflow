@@ -55,9 +55,9 @@ class LoginColors {
 
   // SHADOW COLORS
   static Color get shadowLight =>
-      _isDark ? Colors.black.withOpacity(0.3) : const Color(0xFFCBD5E1);
+      _isDark ? Colors.black.withValues(alpha: 0.3) : const Color(0xFFCBD5E1);
   static Color get shadowDark =>
-      _isDark ? Colors.black.withOpacity(0.5) : const Color(0xFF334155);
+      _isDark ? Colors.black.withValues(alpha:0.5) : const Color(0xFF334155);
 }
 
 class DashboardColors {
@@ -68,7 +68,7 @@ class DashboardColors {
   static Color get dashboardBg => LoginColors.background;
   static Color get sidebarBg => LoginColors.surface;
   static Color get cardBg => LoginColors.cardBackground;
-  static Color get cardBorder => LoginColors.border.withOpacity(0.5);
+  static Color get cardBorder => LoginColors.border.withValues(alpha:0.5);
 
   static Color get textPrimary => LoginColors.textPrimary;
   static Color get textSecondary => LoginColors.textSecondary;
@@ -77,5 +77,5 @@ class DashboardColors {
   static const Color headerGradientStart = Color(0xFF6366F1);
   static const Color headerGradientEnd = Color(0xFF4F46E5);
 
-  static Color get addIcon => LoginColors.textTertiary.withOpacity(0.2);
+  static Color get addIcon => LoginColors.textTertiary.withValues(alpha:0.2);
 }

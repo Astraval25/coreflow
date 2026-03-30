@@ -13,7 +13,7 @@ class VerifyOtpHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: LoginColors.primary.withOpacity(0.12),
+            color: LoginColors.primary.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
           child: Icon(

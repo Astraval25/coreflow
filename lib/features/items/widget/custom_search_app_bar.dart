@@ -57,7 +57,7 @@ class CustomSearchAppBar extends StatelessWidget
         preferredSize:
             Size.fromHeight(isSearchOpen ? _searchBarHeight : 0),
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 250),
+          duration: Duration(milliseconds: 250),
           child: isSearchOpen
               ? SizedBox(
                   height: _searchBarHeight,

@@ -180,7 +180,9 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
     await vm.submitUpdate();
 
     if (vm.isSuccess && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(seconds: 1),
         content: const Row(children: [
           Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
           SizedBox(width: 10),
@@ -195,7 +197,9 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: Duration(seconds: 1),
       content: Text(message),
       backgroundColor: LoginColors.error,
       behavior: SnackBarBehavior.floating,
@@ -298,7 +302,9 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                         backgroundColor: LoginColors.primary,
                         foregroundColor: Colors.white,
                         disabledBackgroundColor:
-                            LoginColors.primary.withOpacity(0.4),
+                            LoginColors.primary.withValues(
+                          alpha: 0.4,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -311,10 +317,11 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: LoginColors.error.withOpacity(0.08),
+                        color: LoginColors.error.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: LoginColors.error.withOpacity(0.3)),
+                          color: LoginColors.error.withValues(alpha:0.3),
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -341,7 +348,7 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
           ),
           if (vm.isLoading)
             Container(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],
@@ -396,7 +403,7 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                         CircleAvatar(
                           radius: 20,
                           backgroundColor:
-                              LoginColors.primary.withOpacity(0.15),
+                              LoginColors.primary.withValues(alpha:0.15),
                           child: Text(
                             customer.displayName.isNotEmpty
                                 ? customer.displayName[0].toUpperCase()
@@ -799,7 +806,7 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       decoration: BoxDecoration(
-        color: hasAmount ? LoginColors.primary.withOpacity(0.04) : null,
+        color: hasAmount ? LoginColors.primary.withValues(alpha: 0.04) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -250,7 +250,7 @@ class AuthRepository {
                 headers: {'Content-Type': 'application/json'},
                 body: jsonEncode(bodies[i]),
               )
-              .timeout(const Duration(seconds: 10));
+              .timeout(Duration(seconds: 10));
 
           debugPrint(
             'Refresh try ${i + 1} (${bodies[i].keys.first}): ${response.statusCode}',

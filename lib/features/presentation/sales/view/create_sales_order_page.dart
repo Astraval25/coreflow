@@ -1,6 +1,7 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/customer_selector_page.dart';
+import 'package:coreflow/core/widgets/success_popup.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/customer/customer.dart';
 import 'package:coreflow/domain/model/items/sellable_item.dart';
@@ -95,7 +96,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
   Future<void> _selectOrderDate() async {
     final vm = context.read<CreateSalesOrderViewModel>();
     final minDate = DateTime(2000);
-    final maxDate = DateTime.now().add(const Duration(days: 3650));
+    final maxDate = DateTime.now().add(Duration(days: 3650));
     final initialDate = vm.orderDate.isBefore(minDate)
         ? minDate
         : (vm.orderDate.isAfter(maxDate) ? maxDate : vm.orderDate);
@@ -116,6 +117,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     if (vm.selectedCustomer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          duration: Duration(seconds: 1),
           content: const Text('Please select a customer first'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -131,6 +133,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     if (items.isEmpty && !vm.isLoadingItems) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          duration: Duration(seconds: 1),
           content: const Text('No sellable items available for this customer'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -223,6 +226,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     if (vm.selectedCustomer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          duration: Duration(seconds: 1),
           content: const Text('Please select a customer'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -236,6 +240,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     if (vm.orderItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          duration: Duration(seconds: 1),
           content: const Text('Please add at least one item'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -256,25 +261,15 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     await vm.submitOrder();
 
     if (vm.isSuccess && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-              SizedBox(width: 10),
-              Text('Sales Order Created Successfully'),
-            ],
-          ),
-          backgroundColor: LoginColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
+      final navigator = Navigator.of(context);
+      await showSuccessPopup(
+        context: context,
+        message: 'Sales Order Created Successfully',
       );
-      Navigator.pop(context, true);
+      if (!mounted) return;
+      navigator.pop(true);
       if (vm.createdOrderId != null) {
-        Navigator.push(
-          context,
+        navigator.push(
           MaterialPageRoute(
             builder: (_) => SalesOrderDetailPage(
               companyId: widget.companyId,
@@ -391,7 +386,9 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
                         backgroundColor: LoginColors.primary,
                         foregroundColor: Colors.white,
                         disabledBackgroundColor:
-                            LoginColors.primary.withOpacity(0.4),
+                            LoginColors.primary.withValues(
+                          alpha: 0.4,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -405,10 +402,11 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: LoginColors.error.withOpacity(0.08),
+                        color: LoginColors.error.withValues(alpha:0.08),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: LoginColors.error.withOpacity(0.3)),
+                          color: LoginColors.error.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -435,7 +433,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
           ),
           if (vm.isLoading)
             Container(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],
@@ -493,7 +491,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundColor: LoginColors.primary.withOpacity(
+                          backgroundColor: LoginColors.primary.withValues(alpha:
                             0.15,
                           ),
                           child: Text(
@@ -645,7 +643,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: LoginColors.primary,
                 side:
-                    BorderSide(color: LoginColors.primary.withOpacity(0.4)),
+                    BorderSide(color: LoginColors.primary.withValues(alpha:0.4)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -1242,8 +1240,11 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
     if (!widget.hostContext.mounted || created != true) return;
     await widget.onItemsUpdated?.call();
     if (!widget.hostContext.mounted) return;
-    ScaffoldMessenger.of(widget.hostContext).showSnackBar(
-      const SnackBar(content: Text('Customer item created successfully')),
+    ScaffoldMessenger.of(widget.hostContext).showSnackBar( 
+      const SnackBar(
+        duration: Duration(seconds: 1),
+        content: Text('Customer item created successfully'),
+      ),
     );
   }
 
@@ -1430,7 +1431,7 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
           const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       leading: CircleAvatar(
         radius: 18,
-        backgroundColor: LoginColors.primary.withOpacity(0.12),
+        backgroundColor: LoginColors.primary.withValues(alpha: 0.12),
         child: Text(
           item.itemName.isNotEmpty
               ? item.itemName[0].toUpperCase()

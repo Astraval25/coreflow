@@ -26,7 +26,7 @@ class _SkeletonState extends State<Skeleton> with SingleTickerProviderStateMixin
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: Duration(milliseconds: 1500),
     )..repeat();
 
     _animation = Tween<double>(begin: -2, end: 2).animate(
@@ -54,9 +54,9 @@ class _SkeletonState extends State<Skeleton> with SingleTickerProviderStateMixin
               begin: Alignment(_animation.value - 1, -1),
               end: Alignment(_animation.value + 1, 1),
               colors: [
-                LoginColors.surface.withOpacity(0.5),
-                LoginColors.surface.withOpacity(0.8),
-                LoginColors.surface.withOpacity(0.5),
+                LoginColors.surface.withValues(alpha: 0.5),
+                LoginColors.surface.withValues(alpha: 0.8),
+                LoginColors.surface.withValues(alpha: 0.5),
               ],
               stops: const [0.1, 0.5, 0.9],
             ),

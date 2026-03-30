@@ -153,11 +153,11 @@ class _CompanyCard extends StatelessWidget {
         border: Border.all(
           color: company.isActive
               ? LoginColors.border
-              : LoginColors.error.withOpacity(0.2),
+              : LoginColors.error.withValues(alpha: 0.2),
         ),
         boxShadow: [
           BoxShadow(
-            color: LoginColors.shadowLight.withOpacity(0.04),
+            color: LoginColors.shadowLight.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -171,8 +171,8 @@ class _CompanyCard extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: company.isActive
-                    ? LoginColors.primary.withOpacity(0.08)
-                    : LoginColors.error.withOpacity(0.08),
+                    ? LoginColors.primary.withValues(alpha: 0.08)
+                    : LoginColors.error.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -208,8 +208,8 @@ class _CompanyCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: company.isActive
-                        ? LoginColors.success.withOpacity(0.1)
-                        : LoginColors.error.withOpacity(0.1),
+                        ? LoginColors.success.withValues(alpha: 0.1)
+                        : LoginColors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -332,6 +332,7 @@ class _CompanyCard extends StatelessWidget {
               if (context.mounted && !success) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
+                    duration: Duration(seconds: 1),
                     content: Text(vm.errorMessage ?? 'Operation failed'),
                     backgroundColor: LoginColors.error,
                   ),

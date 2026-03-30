@@ -119,7 +119,7 @@ class _MainLayoutState extends State<MainLayout> {
       bottomNavigationBar: useFixedDesktopSidebar || isKeyboardVisible
           ? null
           : TweenAnimationBuilder<double>(
-              duration: const Duration(milliseconds: 350),
+              duration: Duration(milliseconds: 350),
               curve: Curves.easeOutCubic,
               tween: Tween<double>(begin: 0, end: selectedIndex.toDouble()),
               builder: (context, animValue, child) {
@@ -254,7 +254,9 @@ class _MainLayoutState extends State<MainLayout> {
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color: LoginColors.primary.withOpacity(0.4),
+                                  color: LoginColors.primary.withValues(
+                                    alpha: 0.4,
+                                  ),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),

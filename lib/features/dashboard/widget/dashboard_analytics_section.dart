@@ -500,7 +500,7 @@ class _CashFlowSectionState extends State<_CashFlowSection> {
   void _selectPoint(int idx) {
     _dismissTimer?.cancel();
     setState(() => _selectedIdx = idx);
-    _dismissTimer = Timer(const Duration(seconds: 4), () {
+    _dismissTimer = Timer(Duration(seconds: 4), () {
       if (mounted) setState(() => _selectedIdx = null);
     });
   }

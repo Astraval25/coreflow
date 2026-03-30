@@ -32,7 +32,7 @@ class CustomerSectionHeader extends StatelessWidget {
             height: 3,
             width: 50,
             decoration: BoxDecoration(
-              color: LoginColors.textPrimary.withOpacity(0.6),
+              color: LoginColors.textPrimary.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(2),
             ),
           ),

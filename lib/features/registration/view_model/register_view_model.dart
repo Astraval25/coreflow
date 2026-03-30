@@ -132,7 +132,7 @@ class RegisterViewModel extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        await Future.delayed(const Duration(seconds: 2));
+        await Future.delayed(Duration(seconds: 2));
         if (context.mounted) {
           final email = emailController.text.trim();
           context.go('/verify?email=${Uri.encodeComponent(email)}');

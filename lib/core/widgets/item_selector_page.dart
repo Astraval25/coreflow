@@ -247,15 +247,15 @@ class _ItemTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 5),
       elevation: 1,
       color: LoginColors.surface,
-      shadowColor: LoginColors.shadowLight.withOpacity(0.12),
+      shadowColor: LoginColors.shadowLight.withValues(alpha: 0.12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(color: LoginColors.borderLight, width: 0.8),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        splashColor: LoginColors.primaryLight.withOpacity(0.12),
-        highlightColor: LoginColors.primaryLight.withOpacity(0.06),
+        splashColor: LoginColors.primaryLight.withValues(alpha: 0.12),
+        highlightColor: LoginColors.primaryLight.withValues(alpha: 0.06),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -263,7 +263,7 @@ class _ItemTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: primaryColor.withOpacity(0.15),
+                backgroundColor: primaryColor.withValues(alpha: 0.15),
                 child: Text(
                   avatarText,
                   style: TextStyle(

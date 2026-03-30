@@ -105,7 +105,7 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
                       await viewModel.loadVendor(widget.companyId);
                     },
                     child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 260),
+                      duration: Duration(milliseconds: 260),
                       switchInCurve: Curves.easeOutCubic,
                       switchOutCurve: Curves.easeInCubic,
                       transitionBuilder: (child, animation) {

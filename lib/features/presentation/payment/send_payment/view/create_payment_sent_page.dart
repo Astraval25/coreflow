@@ -1,5 +1,6 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
+import 'package:coreflow/core/widgets/success_popup.dart';
 import 'package:coreflow/core/widgets/vendor_selector_page.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/payment/payment_proof_result.dart';
@@ -262,25 +263,15 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
     await vm.submitPayment();
 
     if (vm.isSuccess && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-              SizedBox(width: 10),
-              Text('Payment Sent Successfully'),
-            ],
-          ),
-          backgroundColor: LoginColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
+      final navigator = Navigator.of(context);
+      await showSuccessPopup(
+        context: context,
+        message: 'Payment Sent Successfully',
       );
-      Navigator.pop(context, true);
+      if (!mounted) return;
+      navigator.pop(true);
       if (vm.createdPaymentId != null) {
-        Navigator.push(
-          context,
+        navigator.push(
           MaterialPageRoute(
             builder: (_) => SendPaymentDetailPage(
               companyId: widget.companyId,
@@ -295,6 +286,7 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        duration: Duration(seconds: 1),
         content: Text(message),
         backgroundColor: LoginColors.error,
         behavior: SnackBarBehavior.floating,
@@ -410,7 +402,9 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
                         backgroundColor: LoginColors.primary,
                         foregroundColor: Colors.white,
                         disabledBackgroundColor:
-                            LoginColors.primary.withOpacity(0.4),
+                            LoginColors.primary.withValues(
+                          alpha: 0.4,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -423,10 +417,11 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: LoginColors.error.withOpacity(0.08),
+                        color: LoginColors.error.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: LoginColors.error.withOpacity(0.3)),
+                          color: LoginColors.error.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -453,7 +448,7 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
           ),
           if (vm.isLoading)
             Container(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],
@@ -483,7 +478,7 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: LoginColors.success.withOpacity(0.12),
+                        color: LoginColors.success.withValues(alpha:0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -558,7 +553,7 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: LoginColors.primary.withOpacity(0.1),
+                        color: LoginColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -654,7 +649,7 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
                         CircleAvatar(
                           radius: 20,
                           backgroundColor:
-                              LoginColors.primary.withOpacity(0.15),
+                              LoginColors.primary.withValues(alpha:0.15),
                           child: Text(
                             vendor.displayName.isNotEmpty
                                 ? vendor.displayName[0].toUpperCase()
@@ -1188,7 +1183,7 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       decoration: BoxDecoration(
-        color: hasAmount ? LoginColors.primary.withOpacity(0.04) : null,
+        color: hasAmount ? LoginColors.primary.withValues(alpha:0.04) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -22,7 +22,7 @@ class _SplashPageState extends State<SplashPage>
     super.initState();
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: Duration(milliseconds: 1200),
     )..repeat(reverse: true);
     _initialize();
   }

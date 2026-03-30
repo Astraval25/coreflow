@@ -94,6 +94,7 @@ class _CreateItemViewState extends State<CreateItemView> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          duration: Duration(seconds: 1),
           content: const Row(
             children: [
               Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
@@ -151,6 +152,7 @@ class _CreateItemViewState extends State<CreateItemView> {
     if (vm.isSuccess && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          duration: Duration(seconds: 1),
           content: const Row(
             children: [
               Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),

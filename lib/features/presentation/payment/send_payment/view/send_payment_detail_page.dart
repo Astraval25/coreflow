@@ -95,7 +95,9 @@ class _SendPaymentDetailView extends StatelessWidget {
                         .inHours
                         .abs();
                     if (hoursDiff >= 24) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          duration: Duration(seconds: 1),
                         content: Text(
                             'Payments can only be edited within 24 hours of creation'),
                         behavior: SnackBarBehavior.floating,
@@ -197,7 +199,7 @@ class _RoundActionIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: DashboardColors.textWhite.withOpacity(0.18),
+      color: DashboardColors.textWhite.withValues(alpha: 0.18),
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
@@ -265,7 +267,7 @@ class _PaymentAppBarTitle extends StatelessWidget {
         Text(
           _formatDate(payment!.paymentDate),
           style: TextStyle(
-            color: DashboardColors.textWhite.withOpacity(0.85),
+            color: DashboardColors.textWhite.withValues(alpha: 0.85),
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -419,6 +421,7 @@ class _PaymentRefCardState extends State<_PaymentRefCard> {
       if (!success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
+            duration: Duration(seconds: 1),
             content: Text('Failed to update reference'),
             behavior: SnackBarBehavior.floating,
           ),
@@ -1020,8 +1023,9 @@ class _ProofViewerPage extends StatelessWidget {
       await Share.shareXFiles([XFile(file.path)]);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar( 
           const SnackBar(
+            duration: Duration(seconds: 1),
             content: Text('Unable to open PDF'),
             behavior: SnackBarBehavior.floating,
           ),
@@ -1140,6 +1144,7 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
     if (!success && mounted && widget.vm.statusError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          duration: Duration(seconds: 1),
           content: Text(widget.vm.statusError!),
           behavior: SnackBarBehavior.floating,
         ),
@@ -1156,7 +1161,7 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
       children: [
         // Share options dropdown
         AnimatedSize(
-          duration: const Duration(milliseconds: 200),
+          duration: Duration(milliseconds: 200),
           curve: Curves.easeInOut,
           child: _shareExpanded
               ? Container(
@@ -1195,6 +1200,7 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
                           if (proofFile == null || proofFile.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
+                                duration: Duration(seconds: 1),
                                 content: Text('No proof attached to share'),
                                 behavior: SnackBarBehavior.floating,
                               ),
@@ -1206,6 +1212,7 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
+                                  duration: Duration(seconds: 1),
                                   content: Text('Unable to load proof file'),
                                   behavior: SnackBarBehavior.floating,
                                 ),

@@ -178,7 +178,7 @@ class _NotificationPageState extends State<NotificationPage> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: _vm.notifications.length + (_vm.hasNext ? 1 : 0),
-              separatorBuilder: (_, __) =>
+              separatorBuilder: (_, _) =>
                   Divider(height: 1, color: LoginColors.borderLight),
               itemBuilder: (context, index) {
                 if (index == _vm.notifications.length) {

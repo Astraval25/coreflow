@@ -185,7 +185,7 @@ class _TermsOfServiceBody extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: LoginColors.primary.withOpacity(0.1),
+                  color: LoginColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -289,10 +289,10 @@ class _TermsOfServiceBody extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: LoginColors.primary.withOpacity(0.05),
+        color: LoginColors.primary.withValues(alpha:0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: LoginColors.primary.withOpacity(0.2),
+          color: LoginColors.primary.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -304,7 +304,7 @@ class _TermsOfServiceBody extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: LoginColors.primary.withOpacity(0.1),
+                  color: LoginColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(

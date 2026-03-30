@@ -31,12 +31,12 @@ class StatusToggleTabs extends StatelessWidget {
           color: LoginColors.surfaceSecondary,
           borderRadius: BorderRadius.circular(26),
           border: Border.all(
-            color: LoginColors.border.withOpacity(0.5),
+            color: LoginColors.border.withValues(alpha: 0.5),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: LoginColors.shadowLight.withOpacity(0.05),
+              color: LoginColors.shadowLight.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -50,7 +50,7 @@ class StatusToggleTabs extends StatelessWidget {
               children: [
                 // ── Luxury Sliding Background ──
                 AnimatedPositioned(
-                  duration: const Duration(milliseconds: 240),
+                  duration: Duration(milliseconds: 240),
                   curve: Curves.easeOutCubic,
                   left: isActiveSelected ? 4 : 4 + toggleWidth,
                   top: 4,
@@ -64,7 +64,7 @@ class StatusToggleTabs extends StatelessWidget {
                         BoxShadow(
                           color:
                               (isActiveSelected ? activeColor : inactiveColor)
-                                  .withOpacity(0.15),
+                                  .withValues(alpha: 0.15),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -74,7 +74,7 @@ class StatusToggleTabs extends StatelessWidget {
                         end: Alignment.bottomRight,
                         colors: [
                           LoginColors.surface,
-                          LoginColors.surface.withOpacity(0.95),
+                          LoginColors.surface.withValues(alpha: 0.95),
                         ],
                       ),
                     ),
@@ -131,24 +131,24 @@ class _StatusTabItem extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
         onTap: onTap,
-        splashColor: color.withOpacity(0.08),
-        highlightColor: color.withOpacity(0.04),
+        splashColor: color.withValues(alpha: 0.08),
+        highlightColor: color.withValues(alpha: 0.04),
         child: Center(
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
+                duration: Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
                 width: isSelected ? 7 : 6,
                 height: isSelected ? 7 : 6,
                 decoration: BoxDecoration(
-                  color: isSelected ? color : color.withOpacity(0.35),
+                  color: isSelected ? color : color.withValues(alpha: 0.35),
                   shape: BoxShape.circle,
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: color.withOpacity(0.45),
+                            color: color.withValues(alpha:0.45),
                             blurRadius: 5,
                             spreadRadius: 1,
                           ),
@@ -159,7 +159,7 @@ class _StatusTabItem extends StatelessWidget {
               const SizedBox(width: 8),
 
               AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 220),
+                duration: Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
                 style: TextStyle(
                   fontSize: 14,

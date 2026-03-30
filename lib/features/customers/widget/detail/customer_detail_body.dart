@@ -83,7 +83,7 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         backgroundColor: isSelected
-            ? const Color.fromARGB(255, 255, 255, 255).withOpacity(0.1)
+            ? const Color.fromARGB(255, 255, 255, 255).withValues(alpha: 0.1)
             : const Color.fromARGB(0, 255, 255, 255), // background on select
         foregroundColor: const Color.fromARGB(
           0,
@@ -107,7 +107,7 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
           ),
           const SizedBox(height: 1),
           AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
+            duration: Duration(milliseconds: 120),
             curve: Curves.easeInOut,
             height: 3,
             width: isSelected ? 44 : 0,
@@ -204,9 +204,9 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.08),
+            color: color.withValues(alpha:0.08),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: color.withOpacity(0.2)),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -249,7 +249,7 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
           border: Border.all(color: LoginColors.borderLight),
           boxShadow: [
             BoxShadow(
-              color: LoginColors.shadowLight.withOpacity(0.07),
+              color: LoginColors.shadowLight.withValues(alpha:0.07),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -264,6 +264,7 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
             if (context.mounted && response != null && !response.responseStatus) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
+                  duration: Duration(seconds: 1),
                   content: Text(response.responseMessage),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -275,6 +276,7 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
             if (context.mounted && response == null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
+                  duration: Duration(seconds: 1),
                   content: Text('No existing invitation code found'),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -284,8 +286,9 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
           onAcceptCode: (code) async {
             final response = await vm.acceptInvitation(code);
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
+              ScaffoldMessenger.of(context).showSnackBar( 
                 SnackBar(
+                  duration: Duration(seconds: 1),
                   content: Text(
                     response?.responseStatus == true
                         ? 'Company linked successfully'
