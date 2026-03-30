@@ -9,8 +9,8 @@ class ActiveVendorViewModel extends ChangeNotifier {
 
   int _companyId = 0;
 
-  List<Vendor> _activeVendor = [];
-  List<Vendor> _inactiveVendor = [];
+  final List<Vendor> _activeVendor = [];
+  final List<Vendor> _inactiveVendor = [];
 
   bool _isLoading = false;
   String? _error;

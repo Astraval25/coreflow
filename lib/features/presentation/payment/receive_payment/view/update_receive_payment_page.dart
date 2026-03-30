@@ -69,8 +69,12 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
     _amountController.dispose();
     _referenceController.dispose();
     _remarksController.dispose();
-    for (final c in _allocAmountControllers) c.dispose();
-    for (final c in _allocRemarksControllers) c.dispose();
+    for (final c in _allocAmountControllers) {
+      c.dispose();
+    }
+    for (final c in _allocRemarksControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -82,14 +86,13 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
     _referenceController = TextEditingController(
       text: vm.referenceNumber ?? '',
     );
-    _remarksController = TextEditingController(
-      text: vm.paymentRemarks ?? '',
-    );
+    _remarksController = TextEditingController(text: vm.paymentRemarks ?? '');
     _initialized = true;
   }
 
   void _syncAllocationControllers(
-      List<UpdateReceivePaymentAllocationEntry> allocations) {
+    List<UpdateReceivePaymentAllocationEntry> allocations,
+  ) {
     while (_allocAmountControllers.length > allocations.length) {
       _allocAmountControllers.removeLast().dispose();
       _allocRemarksControllers.removeLast().dispose();
@@ -97,13 +100,15 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
     while (_allocAmountControllers.length < allocations.length) {
       final idx = _allocAmountControllers.length;
       final entry = allocations[idx];
-      _allocAmountControllers.add(TextEditingController(
-        text: entry.amountApplied > 0
-            ? (entry.amountApplied % 1 == 0
-                ? entry.amountApplied.toInt().toString()
-                : entry.amountApplied.toStringAsFixed(2))
-            : '',
-      ));
+      _allocAmountControllers.add(
+        TextEditingController(
+          text: entry.amountApplied > 0
+              ? (entry.amountApplied % 1 == 0
+                    ? entry.amountApplied.toInt().toString()
+                    : entry.amountApplied.toStringAsFixed(2))
+              : '',
+        ),
+      );
       _allocRemarksControllers.add(
         TextEditingController(text: entry.remarks ?? ''),
       );
@@ -111,10 +116,13 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
   }
 
   void _syncAllocationAmountsFromVm(
-      List<UpdateReceivePaymentAllocationEntry> allocations) {
-    for (int i = 0;
-        i < allocations.length && i < _allocAmountControllers.length;
-        i++) {
+    List<UpdateReceivePaymentAllocationEntry> allocations,
+  ) {
+    for (
+      int i = 0;
+      i < allocations.length && i < _allocAmountControllers.length;
+      i++
+    ) {
       final v = allocations[i].amountApplied;
       final text = v > 0
           ? (v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2))
@@ -170,7 +178,8 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
 
     if (vm.totalAllocated > amount) {
       _showError(
-          'Total allocated (${vm.totalAllocated.toStringAsFixed(2)}) exceeds amount');
+        'Total allocated (${vm.totalAllocated.toStringAsFixed(2)}) exceeds amount',
+      );
       return;
     }
 
@@ -183,15 +192,20 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: Duration(seconds: 1),
-        content: const Row(children: [
-          Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-          SizedBox(width: 10),
-          Text('Payment Updated Successfully'),
-        ]),
-        backgroundColor: LoginColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ));
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+              SizedBox(width: 10),
+              Text('Payment Updated Successfully'),
+            ],
+          ),
+          backgroundColor: LoginColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
       Navigator.pop(context, true);
     }
   }
@@ -200,11 +214,12 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         duration: Duration(seconds: 1),
-      content: Text(message),
-      backgroundColor: LoginColors.error,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ));
+        content: Text(message),
+        backgroundColor: LoginColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 
   @override
@@ -247,9 +262,10 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
               label: Text(
                 vm.isLoading ? 'Saving' : 'Save',
                 style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.4),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.4,
+                ),
               ),
               onPressed: vm.isLoading ? null : _submit,
               style: FilledButton.styleFrom(
@@ -273,10 +289,12 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                   const SizedBox(height: 20),
                   _buildPaymentDetailsSection(vm),
                   const SizedBox(height: 20),
-                  Builder(builder: (_) {
-                    _syncAllocationControllers(vm.allocations);
-                    return _buildOrderAllocationsSection(vm);
-                  }),
+                  Builder(
+                    builder: (_) {
+                      _syncAllocationControllers(vm.allocations);
+                      return _buildOrderAllocationsSection(vm);
+                    },
+                  ),
                   const SizedBox(height: 28),
                   SizedBox(
                     width: double.infinity,
@@ -296,13 +314,14 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                       label: Text(
                         vm.isLoading ? 'Updating Payment...' : 'Update Payment',
                         style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       style: FilledButton.styleFrom(
                         backgroundColor: LoginColors.primary,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor:
-                            LoginColors.primary.withValues(
+                        disabledBackgroundColor: LoginColors.primary.withValues(
                           alpha: 0.4,
                         ),
                         shape: RoundedRectangleBorder(
@@ -320,13 +339,16 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                         color: LoginColors.error.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: LoginColors.error.withValues(alpha:0.3),
+                          color: LoginColors.error.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline_rounded,
-                              color: LoginColors.error, size: 20),
+                          Icon(
+                            Icons.error_outline_rounded,
+                            color: LoginColors.error,
+                            size: 20,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -376,8 +398,11 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
                 children: [
-                  Icon(Icons.person_rounded,
-                      color: LoginColors.primary, size: 18),
+                  Icon(
+                    Icons.person_rounded,
+                    color: LoginColors.primary,
+                    size: 18,
+                  ),
                   const SizedBox(width: 10),
                   Text(
                     'Customer',
@@ -391,10 +416,11 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
               ),
             ),
             Divider(
-                color: LoginColors.borderLight,
-                height: 16,
-                indent: 16,
-                endIndent: 16),
+              color: LoginColors.borderLight,
+              height: 16,
+              indent: 16,
+              endIndent: 16,
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
               child: customer != null
@@ -402,8 +428,9 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundColor:
-                              LoginColors.primary.withValues(alpha:0.15),
+                          backgroundColor: LoginColors.primary.withValues(
+                            alpha: 0.15,
+                          ),
                           child: Text(
                             customer.displayName.isNotEmpty
                                 ? customer.displayName[0].toUpperCase()
@@ -420,36 +447,53 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(customer.displayName,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: LoginColors.textPrimary,
-                                  )),
+                              Text(
+                                customer.displayName,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: LoginColors.textPrimary,
+                                ),
+                              ),
                               if (customer.customerCompanyName.isNotEmpty)
-                                Text(customer.customerCompanyName,
-                                    style: TextStyle(
-                                        fontSize: 12.5,
-                                        color: LoginColors.textSecondary)),
+                                Text(
+                                  customer.customerCompanyName,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    color: LoginColors.textSecondary,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
-                        Icon(Icons.chevron_right_rounded,
-                            color: LoginColors.textTertiary, size: 22),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: LoginColors.textTertiary,
+                          size: 22,
+                        ),
                       ],
                     )
                   : Row(
                       children: [
-                        Icon(Icons.person_outline_rounded,
-                            color: LoginColors.textTertiary, size: 20),
+                        Icon(
+                          Icons.person_outline_rounded,
+                          color: LoginColors.textTertiary,
+                          size: 20,
+                        ),
                         const SizedBox(width: 10),
-                        Text('Select a customer',
-                            style: TextStyle(
-                                fontSize: 14,
-                                color: LoginColors.textTertiary)),
+                        Text(
+                          'Select a customer',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: LoginColors.textTertiary,
+                          ),
+                        ),
                         const Spacer(),
-                        Icon(Icons.chevron_right_rounded,
-                            color: LoginColors.textTertiary, size: 22),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: LoginColors.textTertiary,
+                          size: 22,
+                        ),
                       ],
                     ),
             ),
@@ -474,8 +518,11 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
               children: [
-                Icon(Icons.payment_rounded,
-                    color: LoginColors.primary, size: 18),
+                Icon(
+                  Icons.payment_rounded,
+                  color: LoginColors.primary,
+                  size: 18,
+                ),
                 const SizedBox(width: 10),
                 Text(
                   'Payment Details',
@@ -496,10 +543,13 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                 // Amount
                 TextFormField(
                   controller: _amountController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  style:
-                      TextStyle(fontSize: 15, color: LoginColors.textPrimary),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: LoginColors.textPrimary,
+                  ),
                   onChanged: (v) {
                     final amount = double.tryParse(v.trim()) ?? 0;
                     vm.setAmount(amount);
@@ -516,12 +566,15 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                     suffixIcon: Tooltip(
                       message: 'Auto-split to orders',
                       child: IconButton(
-                        icon: Icon(Icons.auto_fix_high_rounded,
-                            size: 20, color: LoginColors.primary),
+                        icon: Icon(
+                          Icons.auto_fix_high_rounded,
+                          size: 20,
+                          color: LoginColors.primary,
+                        ),
                         onPressed: () {
                           final amount =
                               double.tryParse(_amountController.text.trim()) ??
-                                  0;
+                              0;
                           if (amount > 0) {
                             vm.setAmount(amount);
                             vm.autoSplitAmount();
@@ -546,7 +599,9 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                     child: Text(
                       DateFormat('dd MMM yyyy').format(vm.paymentDate),
                       style: TextStyle(
-                          fontSize: 15, color: LoginColors.textPrimary),
+                        fontSize: 15,
+                        color: LoginColors.textPrimary,
+                      ),
                     ),
                   ),
                 ),
@@ -558,13 +613,18 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                     if (v != null) vm.setModeOfPayment(v);
                   },
                   items: _paymentModes
-                      .map((m) => DropdownMenuItem(
-                            value: m,
-                            child: Text(m.replaceAll('_', ' '),
-                                style: TextStyle(
-                                    fontSize: 15,
-                                    color: LoginColors.textPrimary)),
-                          ))
+                      .map(
+                        (m) => DropdownMenuItem(
+                          value: m,
+                          child: Text(
+                            m.replaceAll('_', ' '),
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: LoginColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      )
                       .toList(),
                   decoration: _fieldDecoration(
                     label: 'Mode of Payment',
@@ -576,8 +636,10 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                 TextFormField(
                   controller: _referenceController,
                   keyboardType: TextInputType.text,
-                  style:
-                      TextStyle(fontSize: 15, color: LoginColors.textPrimary),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: LoginColors.textPrimary,
+                  ),
                   decoration: _fieldDecoration(
                     label: 'Reference Number (optional)',
                     icon: Icons.tag_rounded,
@@ -585,8 +647,11 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                         ? Tooltip(
                             message: 'Auto-fill customer name',
                             child: IconButton(
-                              icon: Icon(Icons.person_pin_rounded,
-                                  size: 20, color: LoginColors.primary),
+                              icon: Icon(
+                                Icons.person_pin_rounded,
+                                size: 20,
+                                color: LoginColors.primary,
+                              ),
                               onPressed: () {
                                 _referenceController.text =
                                     'Received from ${vm.selectedCustomer!.displayName}';
@@ -602,8 +667,10 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                   controller: _remarksController,
                   keyboardType: TextInputType.text,
                   maxLines: 2,
-                  style:
-                      TextStyle(fontSize: 15, color: LoginColors.textPrimary),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: LoginColors.textPrimary,
+                  ),
                   decoration: _fieldDecoration(
                     label: 'Remarks (optional)',
                     icon: Icons.notes_rounded,
@@ -632,8 +699,11 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
               children: [
-                Icon(Icons.receipt_long_rounded,
-                    color: LoginColors.primary, size: 18),
+                Icon(
+                  Icons.receipt_long_rounded,
+                  color: LoginColors.primary,
+                  size: 18,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -665,13 +735,18 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline_rounded,
-                      size: 16, color: LoginColors.textTertiary),
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: LoginColors.textTertiary,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'Select a customer to see unpaid orders',
                     style: TextStyle(
-                        fontSize: 13, color: LoginColors.textTertiary),
+                      fontSize: 13,
+                      color: LoginColors.textTertiary,
+                    ),
                   ),
                 ],
               ),
@@ -687,13 +762,18 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.check_circle_outline_rounded,
-                        size: 36, color: LoginColors.textTertiary),
+                    Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 36,
+                      color: LoginColors.textTertiary,
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       'No orders to allocate',
                       style: TextStyle(
-                          color: LoginColors.textTertiary, fontSize: 13),
+                        color: LoginColors.textTertiary,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -706,32 +786,38 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                 children: [
                   Expanded(
                     flex: 3,
-                    child: Text('Order',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: LoginColors.textTertiary,
-                        )),
+                    child: Text(
+                      'Order',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: LoginColors.textTertiary,
+                      ),
+                    ),
                   ),
                   Expanded(
                     flex: 2,
-                    child: Text('Balance',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: LoginColors.textTertiary,
-                        )),
+                    child: Text(
+                      'Balance',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: LoginColors.textTertiary,
+                      ),
+                    ),
                   ),
                   Expanded(
                     flex: 2,
-                    child: Text('Allocate',
-                        textAlign: TextAlign.right,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: LoginColors.textTertiary,
-                        )),
+                    child: Text(
+                      'Allocate',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: LoginColors.textTertiary,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -842,11 +928,14 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                 flex: 2,
                 child: TextField(
                   controller: amountCtrl,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   textAlign: TextAlign.right,
-                  style:
-                      TextStyle(fontSize: 13, color: LoginColors.textPrimary),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: LoginColors.textPrimary,
+                  ),
                   onChanged: (v) {
                     final amount = double.tryParse(v.trim()) ?? 0;
                     vm.updateAllocationAmount(index, amount);
@@ -862,8 +951,7 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
             TextField(
               controller: remarksCtrl,
               keyboardType: TextInputType.text,
-              style:
-                  TextStyle(fontSize: 12, color: LoginColors.textSecondary),
+              style: TextStyle(fontSize: 12, color: LoginColors.textSecondary),
               onChanged: (v) => vm.updateAllocationRemarks(index, v.trim()),
               decoration: inputDecoration.copyWith(
                 hintText: 'Allocation remarks (optional)',
@@ -882,15 +970,13 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
   }) {
     return InputDecoration(
       labelText: label,
-      labelStyle:
-          TextStyle(fontSize: 13, color: LoginColors.textSecondary),
+      labelStyle: TextStyle(fontSize: 13, color: LoginColors.textSecondary),
       prefixIcon: Icon(icon, size: 18, color: LoginColors.textTertiary),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: LoginColors.fieldFill,
       isDense: true,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide(color: LoginColors.borderLight),

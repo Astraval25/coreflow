@@ -78,6 +78,7 @@ class VendorFinancialStrip extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
+              // ignore: unnecessary_string_interpolations
               '${amount.abs().toStringAsFixed(2)}',
               style: TextStyle(
                 fontWeight: FontWeight.w800,

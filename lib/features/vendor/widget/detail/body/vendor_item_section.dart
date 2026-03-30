@@ -77,7 +77,7 @@ class VendorItemSection extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
             itemCount: vm.mappedItems.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final item = vm.mappedItems[index];
               final itemType = item.itemType.trim().toUpperCase();

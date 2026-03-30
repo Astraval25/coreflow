@@ -50,7 +50,7 @@ class ItemImageUploader extends StatelessWidget {
         Image.network(
           existingImageUrl!,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildPlaceholder(),
+          errorBuilder: (_, _, _) => _buildPlaceholder(),
         ),
       );
     }

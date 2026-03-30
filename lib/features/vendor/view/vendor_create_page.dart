@@ -51,7 +51,7 @@ class VendorCreateScreen extends StatefulWidget {
 class _VendorCreateScreenState extends State<VendorCreateScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _sameAsShippingAddress = false;
-  List<Map<String, dynamic>> _selectedItems = [];
+  final List<Map<String, dynamic>> _selectedItems = [];
   final Map<int, TextEditingController> _itemPriceControllers = {};
   final Map<int, TextEditingController> _itemDescControllers = {};
   int _currentStep = 0;
@@ -709,7 +709,7 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
                                     ],
                                   ),
                                 );
-                              }).toList(),
+                              }),
                             ],
                           ],
                         ),

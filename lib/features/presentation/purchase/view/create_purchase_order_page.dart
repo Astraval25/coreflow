@@ -709,7 +709,7 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
                   width: 32,
                   height: 32,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
@@ -1524,7 +1524,7 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
                 width: 36,
                 height: 36,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => CircleAvatar(
+                errorBuilder: (_, _, _) => CircleAvatar(
                   radius: 18,
                   backgroundColor:
                       LoginColors.primary.withValues(alpha: 0.12),

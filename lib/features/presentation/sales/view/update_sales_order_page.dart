@@ -1371,7 +1371,7 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
                 : ListView.separated(
                     controller: scrollController,
                     itemCount: filtered.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (_, _) =>
                         Divider(height: 1, color: LoginColors.borderLight),
                     itemBuilder: (_, i) {
                       final item = filtered[i];

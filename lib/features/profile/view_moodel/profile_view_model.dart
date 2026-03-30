@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
@@ -132,10 +131,5 @@ class ProfileViewModel extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
     }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 }

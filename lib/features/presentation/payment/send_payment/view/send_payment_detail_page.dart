@@ -1072,7 +1072,7 @@ class _ProofViewerPage extends StatelessWidget {
           child: Image.memory(
             Uint8List.fromList(bytes),
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => const Center(
+            errorBuilder: (_, _, _) => const Center(
               child: Text(
                 'Unable to display image',
                 style: TextStyle(color: Colors.white70),
