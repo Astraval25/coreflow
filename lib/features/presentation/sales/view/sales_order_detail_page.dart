@@ -106,7 +106,13 @@ class _SalesOrderDetailView extends StatelessWidget {
               ),
             ],
           ),
-          body: RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
+          body: Stack(
+            children: [
+              RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
+              if (!vm.isLoading && !vm.hasError && !vm.isNoData && vm.order != null)
+                _BottomOptionsPanel(order: vm.order!, vm: vm),
+            ],
+          ),
         );
       },
     );
@@ -152,15 +158,13 @@ class _SalesOrderDetailView extends StatelessWidget {
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 20),
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 90),
       children: [
         _CustomerDetailsCard(order: order),
         const SizedBox(height: 10),
         _ItemDetailsCard(items: items, companyId: vm.companyId),
         const SizedBox(height: 10),
         _PaymentSummaryCard(order: order),
-        const SizedBox(height: 14),
-        _BottomActionsBar(order: order, vm: vm),
       ],
     );
   }
@@ -1002,41 +1006,21 @@ OrderShareData _salesOrderToShareData(sales_detail.SalesOrderDetail order) {
   );
 }
 
-class _BottomActionsBar extends StatefulWidget {
+class _BottomOptionsPanel extends StatefulWidget {
   final sales_detail.SalesOrderDetail order;
   final SalesOrderDetailViewModel vm;
 
-  const _BottomActionsBar({required this.order, required this.vm});
+  const _BottomOptionsPanel({required this.order, required this.vm});
 
   @override
-  State<_BottomActionsBar> createState() => _BottomActionsBarState();
+  State<_BottomOptionsPanel> createState() => _BottomOptionsPanelState();
 }
 
-class _BottomActionsBarState extends State<_BottomActionsBar> {
-  bool _shareExpanded = false;
+class _BottomOptionsPanelState extends State<_BottomOptionsPanel> {
+  bool _expanded = false;
   bool _sharing = false;
 
   OrderShareData get _data => _salesOrderToShareData(widget.order);
-
-  Future<void> _shareText() async {
-    if (_sharing) return;
-    setState(() {
-      _sharing = true;
-      _shareExpanded = false;
-    });
-    await OrderShareHelper.shareText(_data);
-    if (mounted) setState(() => _sharing = false);
-  }
-
-  Future<void> _sharePdf() async {
-    if (_sharing) return;
-    setState(() {
-      _sharing = true;
-      _shareExpanded = false;
-    });
-    await OrderShareHelper.shareAsPdf(_data);
-    if (mounted) setState(() => _sharing = false);
-  }
 
   ({String label, IconData icon, String action, Color color})? get _statusInfo {
     switch (widget.order.orderStatus) {
@@ -1062,7 +1046,6 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
           color: LoginColors.primary,
         );
       default:
-        // Non-standard status → offer "Set as Sales Order"
         if (widget.order.orderStatus.isNotEmpty &&
             !const ['ORDER_PAYED'].contains(widget.order.orderStatus)) {
           return (
@@ -1081,7 +1064,7 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
     switch (widget.order.orderStatus) {
       case 'ORDER_INVOICED':
         return (
-          label: 'Mark as Ordered',
+          label: 'Revert to Ordered',
           icon: Icons.undo_rounded,
           action: 'viewed',
           color: Colors.grey.shade600,
@@ -1100,7 +1083,7 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
     if (!success && mounted && widget.vm.statusError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: const Duration(seconds: 1),
           content: Text(widget.vm.statusError!),
           behavior: SnackBarBehavior.floating,
         ),
@@ -1149,190 +1132,228 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
     }
   }
 
+  Future<void> _shareText() async {
+    if (_sharing) return;
+    setState(() {
+      _sharing = true;
+      _expanded = false;
+    });
+    await OrderShareHelper.shareText(_data);
+    if (mounted) setState(() => _sharing = false);
+  }
+
+  Future<void> _sharePdf() async {
+    if (_sharing) return;
+    setState(() {
+      _sharing = true;
+      _expanded = false;
+    });
+    await OrderShareHelper.shareAsPdf(_data);
+    if (mounted) setState(() => _sharing = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final info = _statusInfo;
     final revertInfo = _revertStatusInfo;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Share options dropdown
-        AnimatedSize(
-          duration: Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          child: _shareExpanded
-              ? Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: LoginColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: LoginColors.borderLight),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _ActionTile(
-                        icon: Icons.text_fields_rounded,
-                        label: 'Share as Text',
-                        color: LoginColors.primary,
-                        onTap: _shareText,
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: GestureDetector(
+        onVerticalDragEnd: (details) {
+          if (details.primaryVelocity != null) {
+            if (details.primaryVelocity! < -200) {
+              setState(() => _expanded = true);
+            } else if (details.primaryVelocity! > 200) {
+              setState(() => _expanded = false);
+            }
+          }
+        },
+        child: Material(
+          color: LoginColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          elevation: 8,
+          shadowColor: Colors.black26,
+          child: AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              alignment: Alignment.bottomCenter,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ── Drag handle ──
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 10, bottom: 6),
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: LoginColors.textSecondary.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                      Divider(height: 1, color: LoginColors.borderLight),
+                    ),
+                  ),
+
+                  // ── Main action buttons row ──
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                    child: Row(
+                      children: [
+                        // Share button
+                        Expanded(
+                          child: SizedBox(
+                            height: 44,
+                            child: OutlinedButton.icon(
+                              onPressed: _sharing ? null : _sharePdf,
+                              icon: _sharing
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.share_rounded, size: 18),
+                              label: const Text(
+                                'Share',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: LoginColors.primary,
+                                side: BorderSide(
+                                  color: LoginColors.primary
+                                      .withValues(alpha: 0.4),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Status action button
+                        if (info != null) ...[
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: SizedBox(
+                              height: 44,
+                              child: FilledButton.icon(
+                                onPressed: widget.vm.isStatusUpdating
+                                    ? null
+                                    : () => _doStatusAction(info.action),
+                                icon: widget.vm.isStatusUpdating
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Icon(info.icon, size: 18),
+                                label: Text(
+                                  info.label,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: info.color,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+
+                        // More options toggle
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: OutlinedButton(
+                            onPressed: () =>
+                                setState(() => _expanded = !_expanded),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              foregroundColor: LoginColors.textPrimary,
+                              side: BorderSide(color: LoginColors.borderLight),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              backgroundColor: _expanded
+                                  ? LoginColors.primary.withValues(alpha: 0.08)
+                                  : null,
+                            ),
+                            child: Icon(
+                              _expanded
+                                  ? Icons.close_rounded
+                                  : Icons.more_horiz_rounded,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ── Expanded more options ──
+                  if (_expanded) ...[
+                    Divider(height: 1, color: LoginColors.borderLight),
+                    _ActionTile(
+                      icon: Icons.text_fields_rounded,
+                      label: 'Share as Text',
+                      color: LoginColors.primary,
+                      onTap: _shareText,
+                    ),
+                    Divider(
+                      height: 1,
+                      indent: 44,
+                      color: LoginColors.borderLight,
+                    ),
+                    _ActionTile(
+                      icon: Icons.picture_as_pdf_rounded,
+                      label: _data.isBillStatus
+                          ? 'Share Bill PDF'
+                          : 'Share Order PDF',
+                      color: LoginColors.primary,
+                      onTap: _sharePdf,
+                    ),
+                    if (revertInfo != null) ...[
+                      Divider(
+                        height: 1,
+                        indent: 44,
+                        color: LoginColors.borderLight,
+                      ),
                       _ActionTile(
-                        icon: Icons.picture_as_pdf_rounded,
-                        label: _data.isBillStatus
-                            ? 'Share Bill PDF'
-                            : 'Share Order PDF',
-                        color: LoginColors.primary,
-                        onTap: _sharePdf,
+                        icon: revertInfo.icon,
+                        label: revertInfo.label,
+                        color: revertInfo.color,
+                        onTap: widget.vm.isStatusUpdating
+                            ? () {}
+                            : () {
+                                setState(() => _expanded = false);
+                                _doStatusAction(revertInfo.action);
+                              },
                       ),
                     ],
-                  ),
-                )
-              : const SizedBox.shrink(),
-        ),
-
-        // Status error
-        if (widget.vm.statusError != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              widget.vm.statusError!,
-              style: TextStyle(
-                color: LoginColors.error,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+                  ],
+                ],
               ),
             ),
           ),
-
-        // Action buttons row
-        Row(
-          children: [
-            // Share button
-            Expanded(
-              child: SizedBox(
-                height: 44,
-                child: OutlinedButton.icon(
-                  onPressed: _sharing
-                      ? null
-                      : () => setState(
-                          () => _shareExpanded = !_shareExpanded),
-                  icon: _sharing
-                      ? SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: LoginColors.primary,
-                          ),
-                        )
-                      : Icon(
-                          _shareExpanded
-                              ? Icons.close_rounded
-                              : Icons.share_rounded,
-                          size: 18,
-                        ),
-                  label: Text(
-                    _shareExpanded ? 'Close' : 'Share',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: LoginColors.primary,
-                    side: BorderSide(
-                      color: LoginColors.primary.withValues(alpha: 0.4),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Status action button
-            if (info != null) ...[
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: SizedBox(
-                  height: 44,
-                  child: FilledButton.icon(
-                    onPressed: widget.vm.isStatusUpdating
-                        ? null
-                        : () => _doStatusAction(info.action),
-                    icon: widget.vm.isStatusUpdating
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Icon(info.icon, size: 18),
-                    label: Text(
-                      info.label,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: info.color,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
         ),
-
-        // Revert status button
-        if (revertInfo != null) ...[
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            height: 40,
-            child: OutlinedButton.icon(
-              onPressed: widget.vm.isStatusUpdating
-                  ? null
-                  : () => _doStatusAction(revertInfo.action),
-              icon: widget.vm.isStatusUpdating
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Icon(revertInfo.icon, size: 16),
-              label: Text(
-                revertInfo.label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: revertInfo.color,
-                side: BorderSide(
-                  color: revertInfo.color.withValues(alpha: 0.4),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ],
     );
   }
 }

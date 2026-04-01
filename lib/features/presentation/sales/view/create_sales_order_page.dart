@@ -890,9 +890,12 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
   void initState() {
     super.initState();
     _qtyController = TextEditingController(
-        text: widget.initialQty % 1 == 0
-            ? widget.initialQty.toInt().toString()
-            : widget.initialQty.toString());
+      text: widget.initialQty == 0
+          ? ''
+          : (widget.initialQty % 1 == 0
+                ? widget.initialQty.toInt().toString()
+                : widget.initialQty.toString()),
+    );
     _priceController = TextEditingController(
         text: widget.initialPrice % 1 == 0
             ? widget.initialPrice.toInt().toString()
