@@ -1,4 +1,5 @@
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -40,7 +41,7 @@ class EmptyCustomersView extends StatelessWidget {
                 const SizedBox(height: 26),
 
                 ElevatedButton.icon(
-                  onPressed: () => context.push('/customers/$companyId/add'),
+                  onPressed: () => context.push(CfRoutes.customerCreate(companyId)),
                   icon: const Icon(Icons.add_rounded, size: 18),
                   label: Text(
                     isSearching ? 'Add Customer' : 'Add First Customer',

@@ -26,6 +26,9 @@ flutter build ios        # Build iOS (macOS only)
 
 This is a Flutter app using **MVVM + Provider** for state management and **go_router** for navigation.
 
+### Routing Structure 
+check the file: lib\routing\ROUTING-STRUCTURE.md
+
 ### Layer structure
 
 ```

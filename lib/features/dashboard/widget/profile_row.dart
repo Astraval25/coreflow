@@ -1,5 +1,7 @@
+import 'package:coreflow/core/storage/token_storage.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -22,9 +24,13 @@ class ProfileRow extends StatelessWidget {
         ),
       ),
       child: InkWell(
-        onTap: () {
+        onTap: () async {
           Navigator.pop(context);
-          context.push('/profile');
+          final authData = await TokenStorage.getFullAuthData();
+          final userId = int.tryParse(authData?['userId']?.toString() ?? '');
+          if (userId != null && context.mounted) {
+            context.push(CfRoutes.profile(userId));
+          }
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(

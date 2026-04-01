@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/resend_otp/resend_otp_request.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -66,7 +67,7 @@ class ResendOtpViewModel extends ChangeNotifier {
         await Future.delayed(Duration(seconds: 1));
         if (context.mounted) {
           final email = Uri.encodeComponent(emailController.text.trim());
-          context.go('/verify?email=$email');
+          context.go('${CfRoutes.verifyBase}?email=$email');
         }
         return;
       } else {

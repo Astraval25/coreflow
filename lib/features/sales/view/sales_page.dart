@@ -12,6 +12,7 @@ import 'package:coreflow/features/sales/widgets/sales_empty_state.dart';
 import 'package:coreflow/features/sales/widgets/sales_loading_body.dart';
 import 'package:coreflow/features/sales/widgets/sales_order_card.dart';
 import 'package:coreflow/features/sales/widgets/sales_skeleton.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -120,7 +121,8 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
   }
 
   Future<bool> _handleWillPop() async {
-    context.go('/dashboard');
+    final vm = context.read<DashboardViewModel>();
+    if (vm.companyId != null) context.go(CfRoutes.dashboard(vm.companyId!));
     return false;
   }
 

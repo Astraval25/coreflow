@@ -1,3 +1,4 @@
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -42,7 +43,7 @@ class CustomerListItem extends StatelessWidget {
         splashColor: LoginColors.primaryLight.withValues(alpha:0.12),
         highlightColor: LoginColors.primaryLight.withValues(alpha:0.06),
         onTap: () async {
-          await context.push('/customers/$companyId/${customer.customerId}');
+          await context.push(CfRoutes.customerDetail(companyId, customer.customerId));
           if (context.mounted) {
             context.read<ActiveCustomersViewModel>().refresh();
           }
@@ -56,7 +57,7 @@ class CustomerListItem extends StatelessWidget {
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: customer.customerCompanyId != null
-                    ? () => context.push('/marketplace/${customer.customerCompanyId}')
+                    ? () => context.push(CfRoutes.marketplaceCompany(customer.customerCompanyId!))
                     : null,
                 child: Padding(
                   padding: const EdgeInsets.only(right: 0),

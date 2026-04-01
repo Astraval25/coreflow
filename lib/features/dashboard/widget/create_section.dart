@@ -1,3 +1,4 @@
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:coreflow/core/theme/colors.dart';
@@ -58,7 +59,7 @@ class CreateSection extends StatelessWidget {
                 label: 'Customer',
                 onTap: () {
                   if (vm.companyId != null) {
-                    context.push('/customers/${vm.companyId}/add');
+                    context.push(CfRoutes.customerCreate(vm.companyId!));
                   }
                 },
               ),
@@ -67,7 +68,7 @@ class CreateSection extends StatelessWidget {
                 label: 'Vendor',
                 onTap: () {
                   if (vm.companyId != null) {
-                    context.push('/vendors/${vm.companyId}/add');
+                    context.push(CfRoutes.vendorCreate(vm.companyId!));
                   }
                 },
               ),
@@ -76,7 +77,7 @@ class CreateSection extends StatelessWidget {
                 label: 'Item',
                 onTap: () {
                   if (vm.companyId != null) {
-                    context.push('/items/${vm.companyId}/add');
+                    context.push(CfRoutes.itemCreate(vm.companyId!));
                   }
                 },
               ),

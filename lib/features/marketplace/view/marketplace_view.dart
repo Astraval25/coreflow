@@ -4,6 +4,7 @@ import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/domain/model/company/marketplace_company.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/marketplace/view_model/marketplace_view_model.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -163,7 +164,7 @@ class _CompanyListItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         splashColor: LoginColors.primaryLight.withValues(alpha: 0.12),
         highlightColor: LoginColors.primaryLight.withValues(alpha: 0.06),
-        onTap: () => context.push('/marketplace/${company.companyId}'),
+        onTap: () => context.push(CfRoutes.marketplaceCompany(company.companyId)),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(

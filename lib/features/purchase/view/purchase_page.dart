@@ -11,6 +11,7 @@ import 'package:coreflow/features/purchase/widgets/purchase_empty_state.dart';
 import 'package:coreflow/features/purchase/widgets/purchase_loading_body.dart';
 import 'package:coreflow/features/purchase/widgets/purchase_order_card.dart';
 import 'package:coreflow/features/purchase/widgets/purchase_skeleton.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -114,7 +115,8 @@ class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
   }
 
   Future<bool> _handleWillPop() async {
-    context.go('/dashboard');
+    final vm = context.read<DashboardViewModel>();
+    if (vm.companyId != null) context.go(CfRoutes.dashboard(vm.companyId!));
     return false;
   }
 

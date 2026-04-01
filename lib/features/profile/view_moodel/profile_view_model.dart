@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
@@ -97,13 +98,13 @@ class ProfileViewModel extends ChangeNotifier {
       await _authRepository.clearAuthData();
 
       if (context.mounted) {
-        context.go('/login');
+        context.go(CfRoutes.login);
       }
     } catch (e) {
       debugPrint('Logout error: $e');
       _setError('Logout failed');
       if (context.mounted) {
-        context.go('/login');
+        context.go(CfRoutes.login);
       }
     } finally {
       _setLoading(false);

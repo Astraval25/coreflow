@@ -1,4 +1,5 @@
 import 'package:coreflow/domain/model/register/register_request.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import 'package:go_router/go_router.dart';
@@ -135,7 +136,7 @@ class RegisterViewModel extends ChangeNotifier {
         await Future.delayed(Duration(seconds: 2));
         if (context.mounted) {
           final email = emailController.text.trim();
-          context.go('/verify?email=${Uri.encodeComponent(email)}');
+          context.go('${CfRoutes.verifyBase}?email=${Uri.encodeComponent(email)}');
         }
       } else {
         _errorMessage = response?.responseMessage ?? '$_errorMessage';

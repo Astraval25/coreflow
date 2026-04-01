@@ -12,6 +12,7 @@ import 'package:coreflow/features/payment/receive_payment/widgets/pay_received_c
 import 'package:coreflow/features/payment/receive_payment/widgets/pay_received_empty_state.dart';
 import 'package:coreflow/features/payment/receive_payment/widgets/pay_received_loading_body.dart';
 import 'package:coreflow/features/payment/receive_payment/widgets/pay_received_skeleton.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -102,7 +103,10 @@ class _PayReceivedContentState extends State<_PayReceivedContent> {
               selectedTabIndex: _selectedTabIndex,
               onTabSelected: (index) {
                 if (index == 0) {
-                  context.go('/payment');
+                  final dashVm = context.read<DashboardViewModel>();
+                  if (dashVm.companyId != null) {
+                    context.go(CfRoutes.paymentMade(dashVm.companyId!));
+                  }
                   return;
                 }
                 setState(() => _selectedTabIndex = index);
@@ -117,7 +121,8 @@ class _PayReceivedContentState extends State<_PayReceivedContent> {
   }
 
   Future<bool> _handleWillPop() async {
-    context.go('/dashboard');
+    final dashVm = context.read<DashboardViewModel>();
+    if (dashVm.companyId != null) context.go(CfRoutes.dashboard(dashVm.companyId!));
     return false;
   }
 

@@ -1,5 +1,6 @@
 import 'package:coreflow/domain/model/login/login_request.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -87,13 +88,19 @@ class LoginViewModel extends ChangeNotifier {
           final email = Uri.encodeComponent(emailController.text.trim());
           await Future.delayed(Duration(milliseconds: 500));
           if (context.mounted) {
-            context.go('/resend-otp?email=$email');
+            context.go('${CfRoutes.resendOtp}?email=$email');
           }
           return;
         }
 
         await Future.delayed(Duration(milliseconds: 500));
-        if (context.mounted) context.go(_landingUrl!);
+        if (context.mounted) {
+          final dashVm = context.read<DashboardViewModel>();
+          final companyId = dashVm.companyId;
+          if (companyId != null) {
+            context.go(CfRoutes.dashboard(companyId));
+          }
+        }
       } else {
         _errorMessage = response?.responseMessage ?? '$_errorMessage';
 
@@ -104,7 +111,7 @@ class LoginViewModel extends ChangeNotifier {
           final email = Uri.encodeComponent(emailController.text.trim());
           Future.delayed(Duration(milliseconds: 1000), () {
             if (context.mounted) {
-              context.go('/resend-otp?email=$email');
+              context.go('${CfRoutes.resendOtp}?email=$email');
             }
           });
         }

@@ -1,4 +1,5 @@
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:coreflow/domain/model/customer/customer_detail.dart';
@@ -72,7 +73,7 @@ class CustomerHeader extends StatelessWidget {
                       onTap: () {
                         final companyId = customer.customerCompany!.companyId;
                         if (companyId != null) {
-                          context.push('/marketplace/$companyId');
+                          context.push(CfRoutes.marketplaceCompany(companyId));
                         }
                       },
                       child: Row(

@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
@@ -155,7 +156,7 @@ class DashboardViewModel extends ChangeNotifier {
     _companiesRequest = null;
 
     if (!context.mounted) return;
-    context.go('/login');
+    context.go(CfRoutes.login);
   }
 
   Future<void> _loadUserDataInternal() async {

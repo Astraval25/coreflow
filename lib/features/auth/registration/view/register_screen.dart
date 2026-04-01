@@ -1,3 +1,4 @@
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_model/register_view_model.dart';
@@ -215,7 +216,7 @@ class RegisterScreen extends StatelessWidget {
 
                       Center(
                         child: TextButton(
-                          onPressed: () => context.go('/login'),
+                          onPressed: () => context.go(CfRoutes.login),
                           child: const Text('Already have account? Login'),
                         ),
                       ),

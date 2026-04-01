@@ -1,5 +1,6 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -189,7 +190,7 @@ class _ManageCompanyBottomSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 onTap: () {
                   Navigator.pop(context);
-                  context.push('/manage-companies');
+                  context.push(CfRoutes.companyList);
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

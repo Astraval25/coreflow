@@ -1,3 +1,4 @@
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -33,7 +34,7 @@ class _SplashPageState extends State<SplashPage>
     if (!mounted) return;
 
     if (!isLoggedIn) {
-      if (mounted) context.go('/login');
+      if (mounted) context.go(CfRoutes.login);
       return;
     }
 
@@ -49,14 +50,11 @@ class _SplashPageState extends State<SplashPage>
 
     if (!mounted) return;
 
-    final authData = await _authRepo.getAuthData();
-    final landingUrl = authData?['landingUrl'] as String?;
-
-    if (!mounted) return;
-    if (landingUrl != null && landingUrl.isNotEmpty) {
-      context.go(landingUrl.startsWith('/') ? landingUrl : '/$landingUrl');
+    final companyId = dashVm.companyId;
+    if (companyId != null) {
+      context.go(CfRoutes.dashboard(companyId));
     } else {
-      context.go('/dashboard');
+      context.go(CfRoutes.login);
     }
   }
 
@@ -71,48 +69,26 @@ class _SplashPageState extends State<SplashPage>
     return Scaffold(
       backgroundColor: LoginColors.background,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            FadeTransition(
-              opacity: Tween<double>(
-                begin: 0.4,
-                end: 1.0,
-              ).animate(_pulseController),
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: LoginColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.hub_rounded,
-                  size: 40,
-                  color: LoginColors.primary,
-                ),
+        child: FadeTransition(
+          opacity: Tween<double>(
+            begin: 0.4,
+            end: 1.0,
+          ).animate(_pulseController),
+          child: Container(
+            width: 180,
+            height: 180,
+            decoration: BoxDecoration(
+              color: LoginColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Image.asset(
+                'assets/icons/app_icon.png',
+                fit: BoxFit.contain,
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
-              'CoreFlow',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: LoginColors.textPrimary,
-                letterSpacing: -0.5,
-              ),
-            ),
-            // const SizedBox(height: 32),
-            // SizedBox(
-            //   width: 28,
-            //   height: 28,
-            //   child: CircularProgressIndicator(
-            //     strokeWidth: 3,
-            //     color: LoginColors.primary,
-            //   ),
-            // ),
-          ],
+          ),
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/theme/theme_provider.dart';
 import 'package:coreflow/core/share_intent/share_intent_handler.dart';
 import 'package:coreflow/core/widgets/company_switch_loading.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -42,31 +43,35 @@ class _MainLayoutState extends State<MainLayout> {
 
   int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).matchedLocation;
-    if (location.startsWith('/dashboard')) return 0;
-    if (location.startsWith('/sales')) return 1;
-    if (location.startsWith('/purchase') || location.startsWith('/items'))
-      return 2;
-    if (location.startsWith('/payment')) return 3;
-    if (location.startsWith('/pay-received')) return 4;
+    final section = CfRoutes.getCompanySection(location);
+    if (section == null) return 0;
+    if (section.startsWith('dashboard')) return 0;
+    if (section.startsWith('sales')) return 1;
+    if (section.startsWith('purchase') || section.startsWith('items')) return 2;
+    if (section.startsWith('payment-made')) return 3;
+    if (section.startsWith('payment-received')) return 4;
     return 0;
   }
 
   void _onItemTapped(int index, BuildContext context) {
+    final vm = context.read<DashboardViewModel>();
+    final companyId = vm.companyId;
+    if (companyId == null) return;
     switch (index) {
       case 0:
-        context.go('/dashboard');
+        context.go(CfRoutes.dashboard(companyId));
         break;
       case 1:
-        context.go('/sales');
+        context.go(CfRoutes.sales(companyId));
         break;
       case 2:
-        context.go('/purchase');
+        context.go(CfRoutes.purchase(companyId));
         break;
       case 3:
-        context.go('/payment');
+        context.go(CfRoutes.paymentMade(companyId));
         break;
       case 4:
-        context.go('/pay-received');
+        context.go(CfRoutes.paymentReceived(companyId));
         break;
     }
   }

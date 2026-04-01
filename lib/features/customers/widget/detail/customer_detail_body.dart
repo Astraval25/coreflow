@@ -5,6 +5,7 @@ import 'package:coreflow/features/customers/view_model/customer_detail_view_mode
 import 'package:coreflow/features/customers/widget/detail/body/customer_detail_sections.dart';
 import 'package:coreflow/features/customers/widget/detail/body/customer_item_section.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_financial_strip.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -150,7 +151,7 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
             label: 'Create Sale',
             color: LoginColors.primary,
             onTap: () => context.push(
-              '/sales/${vm.companyId}/create',
+              CfRoutes.salesCreate(vm.companyId),
               extra: {
                 'preSelectedCustomer': {
                   'customerId': customer.customerId,
@@ -171,7 +172,7 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
             label: 'Receive Payment',
             color: LoginColors.success,
             onTap: () => context.push(
-              '/pay-received/${vm.companyId}/create',
+              CfRoutes.paymentReceivedCreate(vm.companyId),
               extra: {
                 'preSelectedCustomer': {
                   'customerId': customer.customerId,
