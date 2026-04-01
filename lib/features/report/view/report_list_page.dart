@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/features/analytics/analytics_view_model/analytics_view_model.dart';
-import 'package:coreflow/features/analytics/view/report_detail_page.dart';
+import 'package:coreflow/features/report/analytics_view_model/analytics_view_model.dart';
+import 'package:coreflow/features/report/view/report_detail_page.dart';
 
 class ReportListPage extends StatelessWidget {
   final int companyId;

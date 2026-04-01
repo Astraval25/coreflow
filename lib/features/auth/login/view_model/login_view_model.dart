@@ -3,7 +3,7 @@ import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../../data/repositories/auth_repository.dart';
+import '../../../../data/repositories/auth_repository.dart';
 
 class LoginViewModel extends ChangeNotifier {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();

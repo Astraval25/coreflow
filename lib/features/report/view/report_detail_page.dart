@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/features/analytics/analytics_view_model/analytics_view_model.dart';
-import 'package:coreflow/features/analytics/view/report_result_page.dart';
+import 'package:coreflow/features/report/analytics_view_model/analytics_view_model.dart';
+import 'package:coreflow/features/report/view/report_result_page.dart';
 
 class ReportDetailPage extends StatelessWidget {
   final ReportType reportType;

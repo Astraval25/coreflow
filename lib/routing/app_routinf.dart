@@ -6,10 +6,10 @@ import 'package:coreflow/features/dashboard/dashboard_view/notification_page.dar
 import 'package:coreflow/features/items/view/create_item_screen.dart';
 import 'package:coreflow/features/items/view/item_detail_view.dart';
 import 'package:coreflow/features/items/view/items_view.dart';
-import 'package:coreflow/features/registration/view/register_screen.dart';
+import 'package:coreflow/features/auth/registration/view/register_screen.dart';
 import 'package:coreflow/features/customers/view/customers_page.dart';
 import 'package:coreflow/features/dashboard/dashboard_view/dashboard_page.dart';
-import 'package:coreflow/features/login/view/login_page.dart';
+import 'package:coreflow/features/auth/login/view/login_page.dart';
 import 'package:coreflow/features/profile/view_page/profile_page.dart';
 import 'package:coreflow/features/resend_otp/view/resend_otp_sreen.dart';
 import 'package:coreflow/features/settings/view/settings_page.dart';
@@ -32,7 +32,7 @@ import 'package:coreflow/features/payment/send_payment/view/payment_page.dart';
 import 'package:coreflow/features/payment/send_payment/view/create_payment_sent_page.dart';
 import 'package:coreflow/features/payment/receive_payment/view/pay_received_page.dart';
 import 'package:coreflow/features/payment/receive_payment/view/create_receive_payment_page.dart';
-import 'package:coreflow/features/analytics/view/report_list_page.dart';
+import 'package:coreflow/features/report/view/report_list_page.dart';
 import 'package:coreflow/features/splash/view/splash_page.dart';
 import 'package:go_router/go_router.dart';
 

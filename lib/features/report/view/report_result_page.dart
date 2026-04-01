@@ -12,8 +12,8 @@ import 'package:coreflow/domain/model/analytics/party_analytics.dart';
 import 'package:coreflow/domain/model/analytics/payment_mode.dart';
 import 'package:coreflow/domain/model/analytics/revenue_expense.dart';
 import 'package:coreflow/domain/model/analytics/running_amount.dart';
-import 'package:coreflow/features/analytics/analytics_view_model/analytics_view_model.dart';
-import 'package:coreflow/features/analytics/services/analytics_export_service.dart';
+import 'package:coreflow/features/report/analytics_view_model/analytics_view_model.dart';
+import 'package:coreflow/features/report/services/analytics_export_service.dart';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

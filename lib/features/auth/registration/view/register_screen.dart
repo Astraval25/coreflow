@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_model/register_view_model.dart';
-import '../../../core/widgets/custom_textfield.dart';
-import '../../../core/widgets/custom_button.dart';
+import '../../../../core/widgets/custom_textfield.dart';
+import '../../../../core/widgets/custom_button.dart';
 import 'package:go_router/go_router.dart';
 
 class RegisterScreen extends StatelessWidget {
