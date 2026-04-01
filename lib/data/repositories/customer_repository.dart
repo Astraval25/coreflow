@@ -172,9 +172,9 @@ class CustomerRepository {
       final url = AppConfig.getCustomerMappedItemsUrl(companyId, customerId);
       final response = await _apiService.get(Uri.parse(url));
 
-      debugPrint(
-        'GET /customers/$customerId/items/mapped response status: ${response.statusCode}',
-      );
+      // debugPrint(
+      //   'GET /customers/$customerId/items/mapped response status: ${response.statusCode}',
+      // );
 
       if (response.statusCode != 200) {
         debugPrint('Get customer mapped items failed: ${response.statusCode}');
@@ -323,9 +323,9 @@ class CustomerRepository {
           AppConfig.getCustomerSellableItemsUrl(companyId, customerId);
       final response = await _apiService.get(Uri.parse(url));
 
-      debugPrint(
-        'GET /customers/$customerId/items/sellable status: ${response.statusCode}',
-      );
+      // debugPrint(
+      //   'GET /customers/$customerId/items/sellable status: ${response.statusCode}',
+      // );
 
       if (response.statusCode != 200 && response.statusCode != 202) {
         debugPrint(

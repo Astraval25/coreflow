@@ -80,7 +80,7 @@ class ApiService {
   }
 
   Future<http.Response> post(String url, Map<String, dynamic> data) async {
-    // debugPrint('POST to: $url');
+    debugPrint('POST to: $url');
     return _makeRequest((token) async {
       return http
           .post(
@@ -97,7 +97,7 @@ class ApiService {
   }
 
   Future<http.Response> get(Uri url) async {
-    // debugPrint('GET to: ${url.path}');
+    debugPrint('GET to: ${url.path}');
     return _makeRequest((token) async {
       return http
           .get(
@@ -113,7 +113,7 @@ class ApiService {
   }
 
   Future<http.Response> put(String url, Map<String, dynamic> data) async {
-    // debugPrint('PUT to: $url');
+    debugPrint('PUT to: $url');
     return _makeRequest((token) async {
       return http
           .put(
@@ -130,7 +130,7 @@ class ApiService {
   }
 
   Future<http.Response> patch(String url, Map<String, dynamic> data) async {
-    // debugPrint('PATCH to: $url');
+    debugPrint('PATCH to: $url');
     return _makeRequest((token) async {
       return http
           .patch(
@@ -147,7 +147,7 @@ class ApiService {
   }
 
   Future<http.Response> delete(String url) async {
-    // debugPrint('DELETE to: $url');
+    debugPrint ('DELETE to: $url');
     return _makeRequest((token) async {
       return http
           .delete(

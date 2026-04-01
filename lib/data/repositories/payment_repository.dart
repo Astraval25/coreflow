@@ -21,9 +21,9 @@ class PaymentRepository {
       final url = AppConfig.getPaymentDetailUrl(companyId, paymentId);
       final response = await _apiService.get(Uri.parse(url));
 
-      debugPrint(
-        'GET /companies/$companyId/payments/$paymentId status: ${response.statusCode}',
-      );
+      // debugPrint(
+      //   'GET /companies/$companyId/payments/$paymentId status: ${response.statusCode}',
+      // );
 
       if (response.statusCode != 200 && response.statusCode != 202) {
         return null;
@@ -61,9 +61,9 @@ class PaymentRepository {
       final url = AppConfig.getPaymentsSentSummaryUrl(companyId);
       final response = await _apiService.get(Uri.parse(url));
 
-      debugPrint(
-        'GET /companies/$companyId/payments-sent/summary status: ${response.statusCode}',
-      );
+      // debugPrint(
+      //   'GET /companies/$companyId/payments-sent/summary status: ${response.statusCode}',
+      // );
 
       if (response.statusCode != 200 && response.statusCode != 202) {
         debugPrint('Get payments sent summary failed: ${response.statusCode}');
@@ -99,9 +99,9 @@ class PaymentRepository {
       final url = AppConfig.getPaymentsReceivedSummaryUrl(companyId);
       final response = await _apiService.get(Uri.parse(url));
 
-      debugPrint(
-        'GET /companies/$companyId/payments-received/summary status: ${response.statusCode}',
-      );
+      // debugPrint(
+      //   'GET /companies/$companyId/payments-received/summary status: ${response.statusCode}',
+      // );
 
       if (response.statusCode != 200 && response.statusCode != 202) {
         debugPrint(
@@ -141,9 +141,9 @@ class PaymentRepository {
       final url = AppConfig.getVendorUnpaidOrdersUrl(companyId, vendorId);
       final response = await _apiService.get(Uri.parse(url));
 
-      debugPrint(
-        'GET /companies/$companyId/vendor/$vendorId/unpaid-orders status: ${response.statusCode}',
-      );
+      // debugPrint(
+      //   'GET /companies/$companyId/vendor/$vendorId/unpaid-orders status: ${response.statusCode}',
+      // );
 
       if (response.statusCode != 200 && response.statusCode != 202) {
         return [];
@@ -226,9 +226,9 @@ class PaymentRepository {
         fileFieldName: 'file',
       );
 
-      debugPrint(
-        'POST /companies/$companyId/payments/payment-proof status: ${response.statusCode}',
-      );
+      // debugPrint(
+      //   'POST /companies/$companyId/payments/payment-proof status: ${response.statusCode}',
+      // );
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final proofResponse = PaymentProofResponse.fromJson(data);
@@ -253,9 +253,9 @@ class PaymentRepository {
       final url = AppConfig.getCustomerUnpaidOrdersUrl(companyId, customerId);
       final response = await _apiService.get(Uri.parse(url));
 
-      debugPrint(
-        'GET /companies/$companyId/customer/$customerId/unpaid-orders status: ${response.statusCode}',
-      );
+      // debugPrint(
+      //   'GET /companies/$companyId/customer/$customerId/unpaid-orders status: ${response.statusCode}',
+      // );
 
       if (response.statusCode != 200 && response.statusCode != 202) {
         return [];
