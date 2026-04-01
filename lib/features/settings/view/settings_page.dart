@@ -1,5 +1,7 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/theme/theme_provider.dart';
+import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -51,7 +53,8 @@ class SettingsPage extends StatelessWidget {
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/dashboard');
+      final vm = context.read<DashboardViewModel>();
+      if (vm.companyId != null) context.go(CfRoutes.dashboard(vm.companyId!));
     }
   }
 }
@@ -166,7 +169,7 @@ class _SettingsBody extends StatelessWidget {
             icon: Icons.privacy_tip_outlined,
             label: 'Privacy Policy',
             value: '',
-            onTap: () => _navigateToPage(context, '/privacy-policy'),
+            onTap: () => _navigateToPage(context, CfRoutes.privacyPolicy),
             showArrow: true,
           ),
           const _Divider(),
@@ -174,7 +177,7 @@ class _SettingsBody extends StatelessWidget {
             icon: Icons.description_outlined,
             label: 'Terms of Service',
             value: '',
-            onTap: () => _navigateToPage(context, '/terms-of-service'),
+            onTap: () => _navigateToPage(context, CfRoutes.termsOfService),
             showArrow: true,
           ),
         ],

@@ -1,6 +1,7 @@
 import 'package:coreflow/core/widgets/custom_button.dart';
 import 'package:coreflow/core/widgets/custom_textfield.dart';
 import 'package:coreflow/features/resend_otp/view%20model/resend_otp_view_model.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -100,7 +101,7 @@ class ResendOtpScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 19),
                     TextButton(
-                      onPressed: () => context.go('/login'),
+                      onPressed: () => context.go(CfRoutes.login),
                       child: const Text('Back to Login'),
                     ),
                   ],

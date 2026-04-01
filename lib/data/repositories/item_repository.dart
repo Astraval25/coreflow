@@ -18,7 +18,7 @@ class ItemRepository {
       final url = AppConfig.getItemsUrl(companyId);
       final response = await _apiService.get(Uri.parse(url));
 
-      debugPrint('GET /items response status: ${response.statusCode}');
+      // debugPrint('GET /items response status: ${response.statusCode}');
 
       if (response.statusCode != 200) {
         debugPrint('Get items failed: ${response.statusCode}');

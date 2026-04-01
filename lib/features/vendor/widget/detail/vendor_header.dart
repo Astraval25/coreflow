@@ -1,5 +1,6 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -67,7 +68,7 @@ class VendorHeader extends StatelessWidget {
                       onTap: () {
                         final companyId = vendor.vendorCompany!.companyId;
                         if (companyId != null) {
-                          context.push('/marketplace/$companyId');
+                          context.push(CfRoutes.marketplaceCompany(companyId));
                         }
                       },
                       child: Row(

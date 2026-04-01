@@ -1,3 +1,4 @@
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:coreflow/core/theme/colors.dart';
@@ -55,7 +56,7 @@ class QuickAccessSection extends StatelessWidget {
                 label: 'Customers',
                 color: Colors.indigo,
                 onTap: () {
-                _pushIfCompany(context, '/customers/${vm.companyId}');
+                _pushIfCompany(context, CfRoutes.customers(vm.companyId!));
                 },
               ),
               DashboardGridItem(
@@ -63,7 +64,7 @@ class QuickAccessSection extends StatelessWidget {
                 label: 'Vendors',
                 color: Colors.teal,
                 onTap: () {
-                _pushIfCompany(context, '/vendors/${vm.companyId}');
+                _pushIfCompany(context, CfRoutes.vendors(vm.companyId!));
                 },
               ),
               DashboardGridItem(
@@ -71,14 +72,14 @@ class QuickAccessSection extends StatelessWidget {
                 label: 'Items',
                 color: Colors.deepPurple,
                 onTap: () {
-                _pushIfCompany(context, '/items/${vm.companyId}');
+                _pushIfCompany(context, CfRoutes.items(vm.companyId!));
                 },
               ),
               DashboardGridItem(
                 icon: Icons.store_mall_directory_outlined,
                 label: 'Marketplace',
                 color: Colors.amber,
-                onTap: () => context.go('/marketplace'),
+                onTap: () => context.go(CfRoutes.marketplace),
               ),
             ],
           ),

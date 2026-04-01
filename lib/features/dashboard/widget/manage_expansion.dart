@@ -3,6 +3,7 @@
 import 'package:coreflow/core/storage/token_storage.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +16,7 @@ class DashboardMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentLocation = GoRouterState.of(context).matchedLocation;
-    final isSelected = currentLocation.startsWith('/dashboard');
+    final isSelected = CfRoutes.isSectionActive(currentLocation, 'dashboard');
 
     return _MenuTileContainer(
       isSelected: isSelected,
@@ -49,10 +50,10 @@ class DashboardMenuItem extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () {
-          vm.setSelectedMenu('/dashboard');
+          vm.setSelectedMenu('dashboard');
           Navigator.pop(context);
-          if (!currentLocation.startsWith('/dashboard')) {
-            context.go('/dashboard');
+          if (!isSelected && vm.companyId != null) {
+            context.go(CfRoutes.dashboard(vm.companyId!));
           }
         },
       ),
@@ -68,7 +69,7 @@ class SalesMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentLocation = GoRouterState.of(context).matchedLocation;
-    final isSelected = currentLocation.startsWith('/sales');
+    final isSelected = CfRoutes.isSectionActive(currentLocation, 'sales');
 
     return _MenuTileContainer(
       isSelected: isSelected,
@@ -102,10 +103,10 @@ class SalesMenuItem extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () {
-          vm.setSelectedMenu('/sales');
+          vm.setSelectedMenu('sales');
           Navigator.pop(context);
-          if (!currentLocation.startsWith('/sales')) {
-            context.go('/sales');
+          if (!isSelected && vm.companyId != null) {
+            context.go(CfRoutes.sales(vm.companyId!));
           }
         },
       ),
@@ -121,7 +122,7 @@ class PurchaseMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentLocation = GoRouterState.of(context).matchedLocation;
-    final isSelected = currentLocation.startsWith('/purchase');
+    final isSelected = CfRoutes.isSectionActive(currentLocation, 'purchase');
 
     return _MenuTileContainer(
       isSelected: isSelected,
@@ -155,10 +156,10 @@ class PurchaseMenuItem extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () {
-          vm.setSelectedMenu('/purchase');
+          vm.setSelectedMenu('purchase');
           Navigator.pop(context);
-          if (!currentLocation.startsWith('/purchase')) {
-            context.go('/purchase');
+          if (!isSelected && vm.companyId != null) {
+            context.go(CfRoutes.purchase(vm.companyId!));
           }
         },
       ),
@@ -174,7 +175,7 @@ class PaymentMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentLocation = GoRouterState.of(context).matchedLocation;
-    final isSelected = currentLocation.startsWith('/payment');
+    final isSelected = CfRoutes.isSectionActive(currentLocation, 'payment-made');
 
     return _MenuTileContainer(
       isSelected: isSelected,
@@ -208,10 +209,10 @@ class PaymentMenuItem extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () {
-          vm.setSelectedMenu('/payment');
+          vm.setSelectedMenu('payment-made');
           Navigator.pop(context);
-          if (!currentLocation.startsWith('/payment')) {
-            context.go('/payment');
+          if (!isSelected && vm.companyId != null) {
+            context.go(CfRoutes.paymentMade(vm.companyId!));
           }
         },
       ),
@@ -227,7 +228,7 @@ class PayReceivedMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentLocation = GoRouterState.of(context).matchedLocation;
-    final isSelected = currentLocation.startsWith('/pay-received');
+    final isSelected = CfRoutes.isSectionActive(currentLocation, 'payment-received');
 
     return _MenuTileContainer(
       isSelected: isSelected,
@@ -261,10 +262,10 @@ class PayReceivedMenuItem extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () {
-          vm.setSelectedMenu('/pay-received');
+          vm.setSelectedMenu('payment-received');
           Navigator.pop(context);
-          if (!currentLocation.startsWith('/pay-received')) {
-            context.go('/pay-received');
+          if (!isSelected && vm.companyId != null) {
+            context.go(CfRoutes.paymentReceived(vm.companyId!));
           }
         },
       ),
@@ -281,9 +282,9 @@ class ManageExpansion extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentLocation = GoRouterState.of(context).matchedLocation;
     final isManageRoute =
-        currentLocation.startsWith('/customers') ||
-        currentLocation.startsWith('/vendors') ||
-        currentLocation.startsWith('/items');
+        CfRoutes.isSectionActive(currentLocation, 'customers') ||
+        CfRoutes.isSectionActive(currentLocation, 'vendors') ||
+        CfRoutes.isSectionActive(currentLocation, 'items');
     final isExpanded = vm.isCustomersExpanded || isManageRoute;
 
     return _MenuTileContainer(
@@ -347,22 +348,22 @@ class ManageExpansion extends StatelessWidget {
               title: 'Customers',
               icon: Icons.people_alt_rounded,
               iconColor: Color(0xFF3B82F6), // Blue
-              menuKey: '/customers',
-              menuKeys: '/customersadd',
+              menuKey: 'customers',
+              menuKeys: 'customersadd',
             ),
             SubMenuItem(
               title: 'Vendors',
               icon: Icons.storefront_rounded,
               iconColor: Color(0xFFF59E0B), // Amber
-              menuKey: '/vendors',
-              menuKeys: '/vendoradd',
+              menuKey: 'vendors',
+              menuKeys: 'vendoradd',
             ),
             SubMenuItem(
               title: 'Items',
               icon: Icons.inventory_2_rounded,
               iconColor: Color(0xFF10B981), // Emerald
-              menuKey: '/items',
-              menuKeys: '/itemsadd',
+              menuKey: 'items',
+              menuKeys: 'itemsadd',
             ),
           ],
         ),
@@ -392,8 +393,7 @@ class SubMenuItem extends StatelessWidget {
     // ignore: unused_local_variable
     final vm = context.watch<DashboardViewModel>();
     final currentLocation = GoRouterState.of(context).matchedLocation;
-    final normalizedMenuKey = menuKey.replaceFirst('/', '');
-    final isSelected = currentLocation.startsWith('/$normalizedMenuKey');
+    final isSelected = CfRoutes.isSectionActive(currentLocation, menuKey);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
@@ -453,13 +453,20 @@ class SubMenuItem extends StatelessWidget {
 
   Future<void> _handleMainTap(BuildContext context) async {
     final vm = context.read<DashboardViewModel>();
-    var companyId = vm.companyId?.toString() ?? '';
-    if (companyId.isEmpty) {
+    var companyId = vm.companyId;
+    if (companyId == null) {
       final authData = await TokenStorage.getFullAuthData();
-      companyId = authData?['companyId']?.toString() ?? '';
+      final id = authData?['companyId'];
+      if (id is int) companyId = id;
     }
-    if (companyId.isEmpty) return;
-    final targetPath = '/${menuKey.replaceFirst('/', '')}/$companyId';
+    if (companyId == null) return;
+
+    final targetPath = switch (menuKey) {
+      'customers' => CfRoutes.customers(companyId),
+      'vendors' => CfRoutes.vendors(companyId),
+      'items' => CfRoutes.items(companyId),
+      _ => CfRoutes.customers(companyId),
+    };
     final currentLocation = GoRouterState.of(context).matchedLocation;
 
     vm.setSelectedMenu(menuKey);
@@ -473,12 +480,13 @@ class SubMenuItem extends StatelessWidget {
 
   Future<void> _handleAddTap(BuildContext context) async {
     final vm = context.read<DashboardViewModel>();
-    var companyId = vm.companyId?.toString() ?? '';
-    if (companyId.isEmpty) {
+    var companyId = vm.companyId;
+    if (companyId == null) {
       final authData = await TokenStorage.getFullAuthData();
-      companyId = authData?['companyId']?.toString() ?? '';
+      final id = authData?['companyId'];
+      if (id is int) companyId = id;
     }
-    if (companyId.isEmpty) return;
+    if (companyId == null) return;
     vm.setSelectedMenu(menuKeys);
 
     if (!context.mounted) return;
@@ -487,10 +495,10 @@ class SubMenuItem extends StatelessWidget {
     await Future.delayed(Duration(milliseconds: 80));
 
     final path = switch (menuKeys) {
-      '/vendoradd' => '/vendors/$companyId/add',
-      '/customersadd' => '/customers/$companyId/add',
-      '/itemsadd' => '/items/$companyId/add',
-      _ => '/${menuKeys.replaceFirst('/', '')}',
+      'vendoradd' => CfRoutes.vendorCreate(companyId),
+      'customersadd' => CfRoutes.customerCreate(companyId),
+      'itemsadd' => CfRoutes.itemCreate(companyId),
+      _ => CfRoutes.customers(companyId),
     };
 
     final currentLocation = GoRouterState.of(context).matchedLocation;
@@ -562,8 +570,9 @@ class _QuickAddTile extends StatelessWidget {
 
   Future<void> _handleAddTap(BuildContext context) async {
     final authData = await TokenStorage.getFullAuthData();
-    final companyId = authData?['companyId']?.toString() ?? '';
-    if (companyId.isEmpty) return;
+    final companyIdRaw = authData?['companyId'];
+    final companyId = companyIdRaw is int ? companyIdRaw : int.tryParse(companyIdRaw?.toString() ?? '');
+    if (companyId == null) return;
 
     final vm = context.read<DashboardViewModel>();
     vm.setSelectedMenu(menuKey);
@@ -571,7 +580,7 @@ class _QuickAddTile extends StatelessWidget {
     if (!context.mounted) return;
     Navigator.pop(context);
 
-    final path = route.replaceFirst('{companyId}', companyId);
+    final path = route.replaceFirst('{companyId}', companyId.toString());
     final currentLocation = GoRouterState.of(context).matchedLocation;
     if (currentLocation != path) {
       context.go(path);
@@ -587,7 +596,7 @@ class MarketplaceMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentLocation = GoRouterState.of(context).matchedLocation;
-    final isSelected = currentLocation.startsWith('/marketplace');
+    final isSelected = currentLocation.startsWith(CfRoutes.marketplace);
 
     return _MenuTileContainer(
       isSelected: isSelected,
@@ -620,10 +629,10 @@ class MarketplaceMenuItem extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () {
-          vm.setSelectedMenu('/marketplace');
+          vm.setSelectedMenu('marketplace');
           Navigator.pop(context);
-          if (!currentLocation.startsWith('/marketplace')) {
-            context.go('/marketplace');
+          if (!isSelected) {
+            context.go(CfRoutes.marketplace);
           }
         },
       ),
@@ -639,7 +648,7 @@ class ReportMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentLocation = GoRouterState.of(context).matchedLocation;
-    final isSelected = currentLocation.startsWith('/report');
+    final isSelected = CfRoutes.isSectionActive(currentLocation, 'report');
 
     return _MenuTileContainer(
       isSelected: isSelected,
@@ -672,10 +681,10 @@ class ReportMenuItem extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () {
-          vm.setSelectedMenu('/report');
+          vm.setSelectedMenu('report');
           Navigator.pop(context);
           if (vm.companyId != null) {
-            context.push('/report/${vm.companyId}');
+            context.push(CfRoutes.reportCustomers(vm.companyId!));
           }
         },
       ),
@@ -691,7 +700,7 @@ class SettingsMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentLocation = GoRouterState.of(context).matchedLocation;
-    final isSelected = currentLocation.startsWith('/settings');
+    final isSelected = CfRoutes.isUserSection(currentLocation, 'settings');
 
     return _MenuTileContainer(
       isSelected: isSelected,
@@ -723,11 +732,13 @@ class SettingsMenuItem extends StatelessWidget {
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        onTap: () {
-          vm.setSelectedMenu('/settings');
+        onTap: () async {
+          vm.setSelectedMenu('settings');
           Navigator.pop(context);
-          if (!currentLocation.startsWith('/settings')) {
-            context.go('/settings');
+          final authData = await TokenStorage.getFullAuthData();
+          final userId = int.tryParse(authData?['userId']?.toString() ?? '');
+          if (userId != null && context.mounted) {
+            context.go(CfRoutes.settings(userId));
           }
         },
       ),

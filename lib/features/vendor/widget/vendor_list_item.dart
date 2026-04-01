@@ -1,3 +1,4 @@
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -40,7 +41,7 @@ class VendorListItem extends StatelessWidget {
         splashColor: LoginColors.primaryLight.withValues(alpha:0.12),
         highlightColor: LoginColors.primaryLight.withValues(alpha:0.06),
         onTap: () async {
-          await context.push('/vendors/$companyId/${vendor.vendorId}');
+          await context.push(CfRoutes.vendorDetail(companyId, vendor.vendorId));
           if (context.mounted) {
             context.read<ActiveVendorViewModel>().refresh();
           }
@@ -54,7 +55,7 @@ class VendorListItem extends StatelessWidget {
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: vendor.vendorCompanyId != null
-                    ? () => context.push('/marketplace/${vendor.vendorCompanyId}')
+                    ? () => context.push(CfRoutes.marketplaceCompany(vendor.vendorCompanyId!))
                     : null,
                 child: Padding(
                   padding: const EdgeInsets.only(right: 0),

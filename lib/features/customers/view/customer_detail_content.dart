@@ -1,5 +1,6 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -105,7 +106,7 @@ class CustomerDetailContent extends StatelessWidget {
                   switch (value) {
                     case 'edit':
                       await context.push(
-                        '/customers/${vm.companyId}/${vm.customerId}/edit',
+                        CfRoutes.customerUpdate(vm.companyId, vm.customerId),
                       );
                       vm.loadCustomerDetail();
                       break;

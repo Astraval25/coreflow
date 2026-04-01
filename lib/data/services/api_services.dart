@@ -62,17 +62,17 @@ class ApiService {
     response = await request(initialTokens['token']);
 
     if (response.statusCode == 401 && !_isRefreshing) {
-      debugPrint('401 → Refresh token');
+      // debugPrint('401 → Refresh token');
 
       final newToken = await _performTokenRefresh();
 
       if (newToken != null && newToken.isNotEmpty) {
-        debugPrint('Retrying with new token');
+        // debugPrint('Retrying with new token');
         response = await request(newToken);
-        debugPrint('Retry: ${response.statusCode}');
+        // debugPrint('Retry: ${response.statusCode}');
         return response;
       } else {
-        debugPrint('Refresh failed - no new token');
+        // debugPrint('Refresh failed - no new token');
       }
     }
 
@@ -147,7 +147,7 @@ class ApiService {
   }
 
   Future<http.Response> delete(String url) async {
-    debugPrint('DELETE to: $url');
+    debugPrint ('DELETE to: $url');
     return _makeRequest((token) async {
       return http
           .delete(
@@ -168,9 +168,9 @@ class ApiService {
     File? file,
     String fileFieldName = 'file',
   }) async {
-    debugPrint('MULTIPART POST → $url');
-    debugPrint('FIELDS → $fields');
-    debugPrint('FILE → ${file?.path}');
+    // debugPrint('MULTIPART POST → $url');
+    // debugPrint('FIELDS → $fields');
+    // debugPrint('FILE → ${file?.path}');
 
     return _makeRequest((token) async {
       final uri = Uri.parse(url);
@@ -214,9 +214,9 @@ class ApiService {
     File? file,
     String fileFieldName = 'file',
   }) async {
-    debugPrint('MULTIPART PUT → $url');
-    debugPrint('FIELDS → $fields');
-    debugPrint('FILE → ${file?.path}');
+    // debugPrint('MULTIPART PUT → $url');
+    // debugPrint('FIELDS → $fields');
+    // debugPrint('FILE → ${file?.path}');
 
     return _makeRequest((token) async {
       final uri = Uri.parse(url);

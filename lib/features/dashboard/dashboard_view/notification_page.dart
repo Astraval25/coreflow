@@ -1,3 +1,4 @@
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -55,18 +56,19 @@ class _NotificationPageState extends State<NotificationPage> {
     final parts = actionUrl.split('/');
     // e.g. ["", "companies", "3", "purchase", "orders"]
     if (parts.length >= 4) {
-      final companyId = parts[2];
+      final companyId = int.tryParse(parts[2]);
+      if (companyId == null) return;
       final rest = parts.sublist(3).join('/');
       if (rest == 'purchase/orders') {
-        context.push('/purchase');
+        context.push(CfRoutes.purchase(companyId));
       } else if (rest == 'sales/orders') {
-        context.push('/sales');
+        context.push(CfRoutes.sales(companyId));
       } else if (rest.startsWith('customers')) {
-        context.push('/customers/$companyId');
+        context.push(CfRoutes.customers(companyId));
       } else if (rest.startsWith('vendors')) {
-        context.push('/vendors/$companyId');
+        context.push(CfRoutes.vendors(companyId));
       } else {
-        context.push('/dashboard');
+        context.push(CfRoutes.dashboard(companyId));
       }
     }
   }

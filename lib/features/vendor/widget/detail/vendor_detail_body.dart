@@ -5,6 +5,7 @@ import 'package:coreflow/features/vendor/view_model/vendor_detail_view_model.dar
 import 'package:coreflow/features/vendor/widget/detail/vendor_address_tile.dart';
 import 'package:coreflow/features/vendor/widget/detail/body/vendor_item_section.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_financial_strip.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_info_tile.dart';
@@ -120,7 +121,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             label: 'Create Purchase',
             color: LoginColors.primary,
             onTap: () => context.push(
-              '/purchase/${vm.companyId}/create',
+              CfRoutes.purchaseCreate(vm.companyId),
               extra: {
                 'preSelectedVendor': {
                   'vendorId': vendor.vendorId,
@@ -141,7 +142,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             label: 'Make Payment',
             color: LoginColors.success,
             onTap: () => context.push(
-              '/payment/${vm.companyId}/create',
+              CfRoutes.paymentMadeCreate(vm.companyId),
               extra: {
                 'preSelectedVendor': {
                   'vendorId': vendor.vendorId,

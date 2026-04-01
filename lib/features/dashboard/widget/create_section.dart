@@ -1,10 +1,11 @@
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/features/presentation/payment/receive_payment/view/create_receive_payment_page.dart';
-import 'package:coreflow/features/presentation/payment/send_payment/view/create_payment_sent_page.dart';
-import 'package:coreflow/features/presentation/purchase/view/create_purchase_order_page.dart';
-import 'package:coreflow/features/presentation/sales/view/create_sales_order_page.dart';
+import 'package:coreflow/features/payment/receive_payment/view/create_receive_payment_page.dart';
+import 'package:coreflow/features/payment/send_payment/view/create_payment_sent_page.dart';
+import 'package:coreflow/features/purchase/view/create_purchase_order_page.dart';
+import 'package:coreflow/features/sales/view/create_sales_order_page.dart';
 import 'dashboard_widgets.dart';
 import '../dashboard_view_model/dashboard_view_model.dart';
 
@@ -58,7 +59,7 @@ class CreateSection extends StatelessWidget {
                 label: 'Customer',
                 onTap: () {
                   if (vm.companyId != null) {
-                    context.push('/customers/${vm.companyId}/add');
+                    context.push(CfRoutes.customerCreate(vm.companyId!));
                   }
                 },
               ),
@@ -67,7 +68,7 @@ class CreateSection extends StatelessWidget {
                 label: 'Vendor',
                 onTap: () {
                   if (vm.companyId != null) {
-                    context.push('/vendors/${vm.companyId}/add');
+                    context.push(CfRoutes.vendorCreate(vm.companyId!));
                   }
                 },
               ),
@@ -76,7 +77,7 @@ class CreateSection extends StatelessWidget {
                 label: 'Item',
                 onTap: () {
                   if (vm.companyId != null) {
-                    context.push('/items/${vm.companyId}/add');
+                    context.push(CfRoutes.itemCreate(vm.companyId!));
                   }
                 },
               ),

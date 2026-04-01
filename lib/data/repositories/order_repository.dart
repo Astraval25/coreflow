@@ -49,9 +49,9 @@ class OrderRepository {
       final url = AppConfig.getSalesOrdersUrl(companyId);
       final response = await _apiService.get(Uri.parse(url));
 
-      debugPrint(
-        'GET /companies/$companyId/sales/orders status: ${response.statusCode}',
-      );
+      // debugPrint(
+      //   'GET /companies/$companyId/sales/orders status: ${response.statusCode}',
+      // );
 
       if (response.statusCode != 200 && response.statusCode != 202) {
         debugPrint('Get sales orders failed: ${response.statusCode}');
@@ -108,9 +108,9 @@ class OrderRepository {
       final url = AppConfig.getPurchaseOrdersUrl(companyId);
       final response = await _apiService.get(Uri.parse(url));
 
-      debugPrint(
-        'GET /companies/$companyId/purchase/orders status: ${response.statusCode}',
-      );
+      // debugPrint(
+      //   'GET /companies/$companyId/purchase/orders status: ${response.statusCode}',
+      // );
 
       if (response.statusCode != 200 && response.statusCode != 202) {
         debugPrint('Get purchase orders failed: ${response.statusCode}');
@@ -145,9 +145,9 @@ class OrderRepository {
       final uri = Uri.parse(AppConfig.getOrderDetailUrl(companyId, orderId));
       final response = await _apiService.get(uri);
 
-      debugPrint(
-        'GET /companies/$companyId/orders/$orderId status: ${response.statusCode}',
-      );
+      // debugPrint(
+      //   'GET /companies/$companyId/orders/$orderId status: ${response.statusCode}',
+      // );
 
       if (response.statusCode != 200 && response.statusCode != 202) {
         return null;

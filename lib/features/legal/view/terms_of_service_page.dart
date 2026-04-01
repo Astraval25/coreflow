@@ -1,4 +1,6 @@
+import 'package:coreflow/core/storage/token_storage.dart';
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -47,11 +49,13 @@ class TermsOfServicePage extends StatelessWidget {
     );
   }
 
-  void _handleBack(BuildContext context) {
+  void _handleBack(BuildContext context) async {
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/settings');
+      final authData = await TokenStorage.getFullAuthData();
+      final userId = int.tryParse(authData?['userId']?.toString() ?? '');
+      if (userId != null && context.mounted) context.go(CfRoutes.settings(userId));
     }
   }
 }
