@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/features/presentation/payment/proof/view_model/payment_proof_view_model.dart';
-import 'package:coreflow/features/presentation/payment/proof/widget/file_source_bottom_sheet.dart';
+import 'package:coreflow/features/payment/proof/view_model/payment_proof_view_model.dart';
+import 'package:coreflow/features/payment/proof/widget/file_source_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

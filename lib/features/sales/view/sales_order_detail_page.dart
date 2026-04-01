@@ -2,21 +2,24 @@ import 'package:coreflow/core/utils/order_share_helper.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/company_ref/order_ref.dart';
-import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
-import 'package:coreflow/domain/model/purchase/purchase_order_item.dart';
-import 'package:coreflow/domain/model/vendors/vendors.dart';
-import 'package:coreflow/features/presentation/payment/send_payment/view/create_payment_sent_page.dart';
-import 'package:coreflow/features/presentation/purchase/viewmodel/purchase_order_detail_view_model.dart';
-import 'package:coreflow/features/presentation/purchase/view/update_purchase_order_page.dart';
+import 'package:coreflow/domain/model/customer/customer.dart';
+import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
+    as sales_detail;
+import 'package:coreflow/domain/model/sales/sales_order_item.dart'
+    as sales_item;
+import 'package:coreflow/features/payment/receive_payment/view/create_receive_payment_page.dart';
+import 'package:coreflow/features/sales/viewmodel/sales_order_detail_view_model.dart';
+import 'package:coreflow/features/sales/view/update_sales_order_page.dart';
+import 'package:coreflow/features/items/view/item_detail_view.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class PurchaseOrderDetailPage extends StatelessWidget {
+class SalesOrderDetailPage extends StatelessWidget {
   final int companyId;
   final int orderId;
 
-  const PurchaseOrderDetailPage({
+  const SalesOrderDetailPage({
     super.key,
     required this.companyId,
     required this.orderId,
@@ -24,25 +27,25 @@ class PurchaseOrderDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<PurchaseOrderDetailViewModel>(
-      create: (_) => PurchaseOrderDetailViewModel(
+    return ChangeNotifierProvider<SalesOrderDetailViewModel>(
+      create: (_) => SalesOrderDetailViewModel(
         repository: AuthRepository(),
         companyId: companyId,
         orderId: orderId,
       ),
-      child: const _PurchaseOrderDetailView(),
+      child: const _SalesOrderDetailView(),
     );
   }
 }
 
-class _PurchaseOrderDetailView extends StatelessWidget {
-  const _PurchaseOrderDetailView();
+class _SalesOrderDetailView extends StatelessWidget {
+  const _SalesOrderDetailView();
 
   @override
   Widget build(BuildContext context) {
     LoginColors.setBrightness(Theme.of(context).brightness);
 
-    return Consumer<PurchaseOrderDetailViewModel>(
+    return Consumer<SalesOrderDetailViewModel>(
       builder: (context, vm, _) {
         return Scaffold(
           backgroundColor: LoginColors.background,
@@ -62,7 +65,7 @@ class _PurchaseOrderDetailView extends StatelessWidget {
                 ),
               ),
             ),
-            title: _OrderAppBarTitle(order: vm.orderDetail, orderRef: vm.orderRef),
+            title: _OrderAppBarTitle(order: vm.order, orderRef: vm.orderRef),
             leading: Padding(
               padding: const EdgeInsets.all(8),
               child: _RoundActionIcon(
@@ -91,7 +94,7 @@ class _PurchaseOrderDetailView extends StatelessWidget {
                     final updated = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => UpdatePurchaseOrderPage(
+                        builder: (_) => UpdateSalesOrderPage(
                           companyId: vm.companyId,
                           initialOrder: vm.orderDetail!,
                         ),
@@ -103,15 +106,21 @@ class _PurchaseOrderDetailView extends StatelessWidget {
               ),
             ],
           ),
-          body: RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
+          body: Stack(
+            children: [
+              RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
+              if (!vm.isLoading && !vm.hasError && !vm.isNoData && vm.order != null)
+                _BottomOptionsPanel(order: vm.order!, vm: vm),
+            ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildBody(PurchaseOrderDetailViewModel vm) {
+  Widget _buildBody(SalesOrderDetailViewModel vm) {
     if (vm.isLoading) {
-      return const _PurchaseOrderDetailLoadingSkeleton();
+      return const _SalesOrderDetailLoadingSkeleton();
     }
 
     if (vm.hasError) {
@@ -129,7 +138,7 @@ class _PurchaseOrderDetailView extends StatelessWidget {
       );
     }
 
-    if (vm.isNoData || vm.orderDetail == null) {
+    if (vm.isNoData || vm.order == null) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -138,26 +147,24 @@ class _PurchaseOrderDetailView extends StatelessWidget {
           _StateMessage(
             icon: Icons.receipt_long_outlined,
             title: 'No order detail found',
-            subtitle: 'This purchase order may not exist or is not accessible.',
+            subtitle: 'This order may not exist or is not accessible.',
           ),
         ],
       );
     }
 
-    final PurchaseOrderDetail order = vm.orderDetail!;
-    final items = order.orderItems;
+    final sales_detail.SalesOrderDetail order = vm.order!;
+    final items = vm.items;
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 20),
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 90),
       children: [
         _CustomerDetailsCard(order: order),
         const SizedBox(height: 10),
         _ItemDetailsCard(items: items, companyId: vm.companyId),
         const SizedBox(height: 10),
         _PaymentSummaryCard(order: order),
-        const SizedBox(height: 14),
-        _BottomActionsBar(order: order, vm: vm),
       ],
     );
   }
@@ -207,7 +214,7 @@ class _CardBlock extends StatelessWidget {
 }
 
 class _OrderAppBarTitle extends StatelessWidget {
-  final PurchaseOrderDetail? order;
+  final sales_detail.SalesOrderDetail? order;
   final OrderRef? orderRef;
 
   const _OrderAppBarTitle({required this.order, this.orderRef});
@@ -237,7 +244,7 @@ class _OrderAppBarTitle extends StatelessWidget {
           localNumber.isNotEmpty ? localNumber : 'Order Detail',
           style: TextStyle(
             color: DashboardColors.textWhite,
-            fontSize: 14,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -255,14 +262,14 @@ class _OrderAppBarTitle extends StatelessWidget {
 }
 
 class _CustomerDetailsCard extends StatelessWidget {
-  final PurchaseOrderDetail order;
+  final sales_detail.SalesOrderDetail order;
 
   const _CustomerDetailsCard({required this.order});
 
   @override
   Widget build(BuildContext context) {
-    final vendor = _displayVendor(order);
-    final sellerCompany = _displaySellerCompany(order);
+    final customer = _displayCustomer(order);
+    final customerCompany = _displayCustomerCompany(order);
 
     return Stack(
       clipBehavior: Clip.none,
@@ -272,7 +279,7 @@ class _CustomerDetailsCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Vendor Details',
+                'Customer Details',
                 style: TextStyle(
                   color: LoginColors.textPrimary,
                   fontSize: 15,
@@ -287,7 +294,7 @@ class _CustomerDetailsCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _MetaText(label: 'Vendor Name', value: vendor),
+                        _MetaText(label: 'Customer Name', value: customer),
                         const SizedBox(height: 8),
                         _MetaText(
                           label: 'Order Date',
@@ -299,8 +306,8 @@ class _CustomerDetailsCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _MetaText(
-                      label: 'Seller Company',
-                      value: sellerCompany,
+                      label: 'Company',
+                      value: customerCompany,
                       textAlignEnd: true,
                     ),
                   ),
@@ -404,7 +411,7 @@ class _MetaText extends StatelessWidget {
 
 class _CompanyRefCard extends StatefulWidget {
   final OrderRef? orderRef;
-  final PurchaseOrderDetailViewModel vm;
+  final SalesOrderDetailViewModel vm;
 
   const _CompanyRefCard({required this.orderRef, required this.vm});
 
@@ -422,6 +429,10 @@ class _CompanyRefCardState extends State<_CompanyRefCard> {
   @override
   void initState() {
     super.initState();
+    _initControllers();
+  }
+
+  void _initControllers() {
     _remarksCtrl = TextEditingController(text: widget.orderRef?.internalRemarks ?? '');
     _statusCtrl = TextEditingController(text: widget.orderRef?.internalStatus ?? '');
     _tagsCtrl = TextEditingController(text: widget.orderRef?.internalTags ?? '');
@@ -660,7 +671,7 @@ class _RefDisplayRow extends StatelessWidget {
 }
 
 class _ItemDetailsCard extends StatelessWidget {
-  final List<PurchaseOrderItem> items;
+  final List<sales_item.SalesOrderItem> items;
   final int companyId;
 
   const _ItemDetailsCard({required this.items, required this.companyId});
@@ -712,7 +723,7 @@ class _ItemDetailsCard extends StatelessWidget {
 }
 
 class _ItemDetailRow extends StatelessWidget {
-  final PurchaseOrderItem item;
+  final sales_item.SalesOrderItem item;
   final int index;
   final int companyId;
 
@@ -728,65 +739,77 @@ class _ItemDetailRow extends StatelessWidget {
         ? item.itemName
         : 'Item ${index + 1}';
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            itemName,
-            style: TextStyle(
-              color: LoginColors.textPrimary,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          if (item.itemDescription != null &&
-              item.itemDescription!.trim().isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 3),
-              child: Text(
-                item.itemDescription!,
-                style: TextStyle(
-                  color: LoginColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+    return InkWell(
+      onTap: item.itemId > 0
+          ? () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      ItemDetailView(companyId: companyId, itemId: item.itemId),
                 ),
+              );
+            }
+          : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              itemName,
+              style: TextStyle(
+                color: LoginColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _ItemValue(
-                  label: 'Qty',
-                  value: _trimNumber(item.quantity),
+            if (item.itemDescription != null &&
+                item.itemDescription!.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: Text(
+                  item.itemDescription!,
+                  style: TextStyle(
+                    color: LoginColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-              Expanded(
-                child: _ItemValue(
-                  label: 'Rate',
-                  value: _money(item.unitPrice),
-                  textAlignEnd: true,
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _ItemValue(
+                    label: 'Qty',
+                    value: _trimNumber(item.quantity),
+                  ),
                 ),
-              ),
-              Expanded(
-                child: _ItemValue(
-                  label: 'Amount',
-                  value: _money(item.itemTotal),
-                  textAlignEnd: true,
+                Expanded(
+                  child: _ItemValue(
+                    label: 'Rate',
+                    value: _money(item.unitPrice),
+                    textAlignEnd: true,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                Expanded(
+                  child: _ItemValue(
+                    label: 'Amount',
+                    value: _money(item.itemTotal),
+                    textAlignEnd: true,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _PaymentSummaryCard extends StatelessWidget {
-  final PurchaseOrderDetail order;
+  final sales_detail.SalesOrderDetail order;
 
   const _PaymentSummaryCard({required this.order});
 
@@ -948,28 +971,30 @@ TableRow _paymentRow(
   );
 }
 
-OrderShareData _purchaseOrderToShareData(PurchaseOrderDetail order) {
-  final vendor = order.vendorDisplayName.trim().isNotEmpty
-      ? order.vendorDisplayName
-      : order.vendorName.trim().isNotEmpty
-          ? order.vendorName
-          : 'Vendor';
+OrderShareData _salesOrderToShareData(sales_detail.SalesOrderDetail order) {
+  final customer = order.customerDisplayName.trim().isNotEmpty
+      ? order.customerDisplayName
+      : order.customerName.trim().isNotEmpty
+      ? order.customerName
+      : 'Customer';
 
   return OrderShareData(
     orderNumber: order.orderNumber,
     orderId: order.orderId,
     orderDate: order.orderDate,
-    partyName: vendor,
-    partyLabel: 'Vendor',
+    partyName: customer,
+    partyLabel: 'Customer',
     sellerCompanyName: order.sellerCompanyName,
     buyerCompanyName: order.buyerCompanyName,
     items: order.orderItems
-        .map((i) => OrderShareItemData(
-              itemName: i.itemName,
-              quantity: i.quantity,
-              unitPrice: i.unitPrice,
-              itemTotal: i.itemTotal,
-            ))
+        .map(
+          (i) => OrderShareItemData(
+            itemName: i.itemName,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            itemTotal: i.itemTotal,
+          ),
+        )
         .toList(),
     orderAmount: order.orderAmount,
     taxAmount: order.taxAmount,
@@ -981,108 +1006,84 @@ OrderShareData _purchaseOrderToShareData(PurchaseOrderDetail order) {
   );
 }
 
-class _BottomActionsBar extends StatefulWidget {
-  final PurchaseOrderDetail order;
-  final PurchaseOrderDetailViewModel vm;
+class _BottomOptionsPanel extends StatefulWidget {
+  final sales_detail.SalesOrderDetail order;
+  final SalesOrderDetailViewModel vm;
 
-  const _BottomActionsBar({required this.order, required this.vm});
+  const _BottomOptionsPanel({required this.order, required this.vm});
 
   @override
-  State<_BottomActionsBar> createState() => _BottomActionsBarState();
+  State<_BottomOptionsPanel> createState() => _BottomOptionsPanelState();
 }
 
-class _BottomActionsBarState extends State<_BottomActionsBar> {
-  bool _shareExpanded = false;
+class _BottomOptionsPanelState extends State<_BottomOptionsPanel> {
+  bool _expanded = false;
   bool _sharing = false;
 
-  OrderShareData get _data => _purchaseOrderToShareData(widget.order);
+  OrderShareData get _data => _salesOrderToShareData(widget.order);
 
-  Future<void> _shareText() async {
-    if (_sharing) return;
-    setState(() {
-      _sharing = true;
-      _shareExpanded = false;
-    });
-    await OrderShareHelper.shareText(_data);
-    if (mounted) setState(() => _sharing = false);
-  }
-
-  Future<void> _sharePdf() async {
-    if (_sharing) return;
-    setState(() {
-      _sharing = true;
-      _shareExpanded = false;
-    });
-    await OrderShareHelper.shareAsPdf(_data);
-    if (mounted) setState(() => _sharing = false);
-  }
-
-  String? get _statusLabel {
+  ({String label, IconData icon, String action, Color color})? get _statusInfo {
     switch (widget.order.orderStatus) {
       case 'ORDER':
-        return 'Mark as Viewed';
+        return (
+          label: 'Mark as Viewed',
+          icon: Icons.visibility_rounded,
+          action: 'viewed',
+          color: Colors.blue.shade600,
+        );
       case 'ORDER_VIEWED':
-        return 'Mark as Invoiced';
+        return (
+          label: 'Mark as Invoiced',
+          icon: Icons.receipt_long_outlined,
+          action: 'invoiced',
+          color: Colors.orange.shade700,
+        );
       case 'ORDER_INVOICED':
-        return 'Record Payment';
+        return (
+          label: 'Record Payment',
+          icon: Icons.payments_rounded,
+          action: 'record-payment',
+          color: LoginColors.primary,
+        );
+      default:
+        if (widget.order.orderStatus.isNotEmpty &&
+            !const ['ORDER_PAYED'].contains(widget.order.orderStatus)) {
+          return (
+            label: 'Set as Sales Order',
+            icon: Icons.assignment_turned_in_rounded,
+            action: 'sales-order',
+            color: Colors.indigo.shade600,
+          );
+        }
+        return null;
+    }
+  }
+
+  ({String label, IconData icon, String action, Color color})?
+  get _revertStatusInfo {
+    switch (widget.order.orderStatus) {
+      case 'ORDER_INVOICED':
+        return (
+          label: 'Revert to Ordered',
+          icon: Icons.undo_rounded,
+          action: 'viewed',
+          color: Colors.grey.shade600,
+        );
       default:
         return null;
     }
   }
 
-  IconData? get _statusIcon {
-    switch (widget.order.orderStatus) {
-      case 'ORDER':
-        return Icons.visibility_rounded;
-      case 'ORDER_VIEWED':
-        return Icons.receipt_long_outlined;
-      case 'ORDER_INVOICED':
-        return Icons.payments_rounded;
-      default:
-        return null;
-    }
-  }
-
-  String? get _statusAction {
-    switch (widget.order.orderStatus) {
-      case 'ORDER':
-        return 'viewed';
-      case 'ORDER_VIEWED':
-        return 'invoiced';
-      case 'ORDER_INVOICED':
-        return 'record-payment';
-      default:
-        return null;
-    }
-  }
-
-  Color get _statusColor {
-    switch (widget.order.orderStatus) {
-      case 'ORDER':
-        return Colors.blue.shade600;
-      case 'ORDER_VIEWED':
-        return Colors.orange.shade700;
-      case 'ORDER_INVOICED':
-        return LoginColors.primary;
-      default:
-        return LoginColors.primary;
-    }
-  }
-
-  bool get _canRevertStatus => widget.order.orderStatus == 'ORDER_INVOICED';
-
-  Future<void> _doStatusAction([String? overrideAction]) async {
-    final action = overrideAction ?? _statusAction;
-    if (action == null) return;
+  Future<void> _doStatusAction(String action) async {
     if (action == 'record-payment') {
-      await _navigateToSendPayment();
+      await _navigateToReceivePayment();
       return;
     }
     final success = await widget.vm.updateStatus(action);
     if (!success && mounted && widget.vm.statusError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: const Duration(seconds: 1),
           content: Text(widget.vm.statusError!),
           behavior: SnackBarBehavior.floating,
         ),
@@ -1090,26 +1091,26 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
     }
   }
 
-  Future<void> _navigateToSendPayment() async {
+  Future<void> _navigateToReceivePayment() async {
     final order = widget.order;
-    final displayName = order.vendorDisplayName.trim().isNotEmpty
-        ? order.vendorDisplayName
-        : order.vendorName.trim().isNotEmpty
-            ? order.vendorName
-            : 'Vendor';
-    final companyName = order.sellerCompanyName.trim().isNotEmpty
-        ? order.sellerCompanyName
-        : order.buyerCompanyName;
+    final displayName = order.customerDisplayName.trim().isNotEmpty
+        ? order.customerDisplayName
+        : order.customerName.trim().isNotEmpty
+            ? order.customerName
+            : 'Customer';
+    final companyName = order.buyerCompanyName.trim().isNotEmpty
+        ? order.buyerCompanyName
+        : order.sellerCompanyName;
     final companyId =
-        order.sellerCompanyId > 0 ? order.sellerCompanyId : null;
+        order.buyerCompanyId > 0 ? order.buyerCompanyId : null;
     final pending =
         order.pendingAmount < 0 ? 0.0 : order.pendingAmount;
 
-    final vendor = Vendor(
-      vendorId: order.vendorId,
+    final customer = Customer(
+      customerId: order.customerId,
       displayName: displayName,
-      vendorCompanyName: companyName,
-      vendorCompanyId: companyId,
+      customerCompanyName: companyName,
+      customerCompanyId: companyId,
       dueAmount: pending.toStringAsFixed(2),
       isActive: true,
     );
@@ -1117,9 +1118,9 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
     await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => CreatePaymentSentPage(
+        builder: (_) => CreateReceivePaymentPage(
           companyId: widget.vm.companyId,
-          initialVendor: vendor,
+          initialCustomer: customer,
           initialOrderId: order.orderId,
           initialAmount: pending > 0 ? pending : null,
         ),
@@ -1131,188 +1132,228 @@ class _BottomActionsBarState extends State<_BottomActionsBar> {
     }
   }
 
+  Future<void> _shareText() async {
+    if (_sharing) return;
+    setState(() {
+      _sharing = true;
+      _expanded = false;
+    });
+    await OrderShareHelper.shareText(_data);
+    if (mounted) setState(() => _sharing = false);
+  }
+
+  Future<void> _sharePdf() async {
+    if (_sharing) return;
+    setState(() {
+      _sharing = true;
+      _expanded = false;
+    });
+    await OrderShareHelper.shareAsPdf(_data);
+    if (mounted) setState(() => _sharing = false);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hasStatusAction = _statusLabel != null;
+    final info = _statusInfo;
+    final revertInfo = _revertStatusInfo;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Share options dropdown
-        AnimatedSize(
-          duration: Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          child: _shareExpanded
-              ? Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: LoginColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: LoginColors.borderLight),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _ActionTile(
-                        icon: Icons.text_fields_rounded,
-                        label: 'Share as Text',
-                        color: LoginColors.primary,
-                        onTap: _shareText,
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: GestureDetector(
+        onVerticalDragEnd: (details) {
+          if (details.primaryVelocity != null) {
+            if (details.primaryVelocity! < -200) {
+              setState(() => _expanded = true);
+            } else if (details.primaryVelocity! > 200) {
+              setState(() => _expanded = false);
+            }
+          }
+        },
+        child: Material(
+          color: LoginColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          elevation: 8,
+          shadowColor: Colors.black26,
+          child: AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              alignment: Alignment.bottomCenter,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ── Drag handle ──
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 10, bottom: 6),
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: LoginColors.textSecondary.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                      Divider(height: 1, color: LoginColors.borderLight),
+                    ),
+                  ),
+
+                  // ── Main action buttons row ──
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                    child: Row(
+                      children: [
+                        // Share button
+                        Expanded(
+                          child: SizedBox(
+                            height: 44,
+                            child: OutlinedButton.icon(
+                              onPressed: _sharing ? null : _sharePdf,
+                              icon: _sharing
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.share_rounded, size: 18),
+                              label: const Text(
+                                'Share',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: LoginColors.primary,
+                                side: BorderSide(
+                                  color: LoginColors.primary
+                                      .withValues(alpha: 0.4),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Status action button
+                        if (info != null) ...[
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: SizedBox(
+                              height: 44,
+                              child: FilledButton.icon(
+                                onPressed: widget.vm.isStatusUpdating
+                                    ? null
+                                    : () => _doStatusAction(info.action),
+                                icon: widget.vm.isStatusUpdating
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Icon(info.icon, size: 18),
+                                label: Text(
+                                  info.label,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: info.color,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+
+                        // More options toggle
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: OutlinedButton(
+                            onPressed: () =>
+                                setState(() => _expanded = !_expanded),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              foregroundColor: LoginColors.textPrimary,
+                              side: BorderSide(color: LoginColors.borderLight),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              backgroundColor: _expanded
+                                  ? LoginColors.primary.withValues(alpha: 0.08)
+                                  : null,
+                            ),
+                            child: Icon(
+                              _expanded
+                                  ? Icons.close_rounded
+                                  : Icons.more_horiz_rounded,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ── Expanded more options ──
+                  if (_expanded) ...[
+                    Divider(height: 1, color: LoginColors.borderLight),
+                    _ActionTile(
+                      icon: Icons.text_fields_rounded,
+                      label: 'Share as Text',
+                      color: LoginColors.primary,
+                      onTap: _shareText,
+                    ),
+                    Divider(
+                      height: 1,
+                      indent: 44,
+                      color: LoginColors.borderLight,
+                    ),
+                    _ActionTile(
+                      icon: Icons.picture_as_pdf_rounded,
+                      label: _data.isBillStatus
+                          ? 'Share Bill PDF'
+                          : 'Share Order PDF',
+                      color: LoginColors.primary,
+                      onTap: _sharePdf,
+                    ),
+                    if (revertInfo != null) ...[
+                      Divider(
+                        height: 1,
+                        indent: 44,
+                        color: LoginColors.borderLight,
+                      ),
                       _ActionTile(
-                        icon: Icons.picture_as_pdf_rounded,
-                        label: _data.isBillStatus
-                            ? 'Share Bill PDF'
-                            : 'Share Order PDF',
-                        color: LoginColors.primary,
-                        onTap: _sharePdf,
+                        icon: revertInfo.icon,
+                        label: revertInfo.label,
+                        color: revertInfo.color,
+                        onTap: widget.vm.isStatusUpdating
+                            ? () {}
+                            : () {
+                                setState(() => _expanded = false);
+                                _doStatusAction(revertInfo.action);
+                              },
                       ),
                     ],
-                  ),
-                )
-              : const SizedBox.shrink(),
-        ),
-
-        // Status error
-        if (widget.vm.statusError != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              widget.vm.statusError!,
-              style: TextStyle(
-                color: LoginColors.error,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+                  ],
+                ],
               ),
             ),
           ),
-
-        // Action buttons row
-        Row(
-          children: [
-            // Share button
-            Expanded(
-              child: SizedBox(
-                height: 44,
-                child: OutlinedButton.icon(
-                  onPressed: _sharing
-                      ? null
-                      : () => setState(
-                          () => _shareExpanded = !_shareExpanded),
-                  icon: _sharing
-                      ? SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: LoginColors.primary,
-                          ),
-                        )
-                      : Icon(
-                          _shareExpanded
-                              ? Icons.close_rounded
-                              : Icons.share_rounded,
-                          size: 18,
-                        ),
-                  label: Text(
-                    _shareExpanded ? 'Close' : 'Share',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: LoginColors.primary,
-                    side: BorderSide(
-                      color: LoginColors.primary.withValues(alpha: 0.4),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Status action button
-            if (hasStatusAction) ...[
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: SizedBox(
-                  height: 44,
-                  child: FilledButton.icon(
-                    onPressed:
-                        widget.vm.isStatusUpdating ? null : _doStatusAction,
-                    icon: widget.vm.isStatusUpdating
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Icon(_statusIcon, size: 18),
-                    label: Text(
-                      _statusLabel!,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _statusColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
         ),
-
-        // Revert status button
-        if (_canRevertStatus) ...[
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            height: 40,
-            child: OutlinedButton.icon(
-              onPressed: widget.vm.isStatusUpdating
-                  ? null
-                  : () => _doStatusAction('viewed'),
-              icon: widget.vm.isStatusUpdating
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Icon(Icons.undo_rounded, size: 16),
-              label: const Text(
-                'Revert to Viewed',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.grey.shade600,
-                side: BorderSide(
-                  color: Colors.grey.shade600.withValues(alpha: 0.4),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ],
     );
   }
 }
@@ -1356,8 +1397,8 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
-class _PurchaseOrderDetailLoadingSkeleton extends StatelessWidget {
-  const _PurchaseOrderDetailLoadingSkeleton();
+class _SalesOrderDetailLoadingSkeleton extends StatelessWidget {
+  const _SalesOrderDetailLoadingSkeleton();
 
   @override
   Widget build(BuildContext context) {
@@ -1430,29 +1471,25 @@ String _trimNumber(double value) {
   return value.toStringAsFixed(2);
 }
 
-String _displayVendor(PurchaseOrderDetail order) {
-  if (order.vendorDisplayName.trim().isNotEmpty) {
-    return order.vendorDisplayName;
+String _displayCustomer(sales_detail.SalesOrderDetail order) {
+  if (order.customerDisplayName.trim().isNotEmpty) {
+    return order.customerDisplayName;
   }
-  if (order.vendorName.trim().isNotEmpty) {
-    return order.vendorName;
+  if (order.customerName.trim().isNotEmpty) {
+    return order.customerName;
   }
-  if (order.sellerCompanyName.trim().isNotEmpty) {
-    return order.sellerCompanyName;
-  }
-  return 'Vendor';
+  return 'Customer';
 }
 
-String _displaySellerCompany(PurchaseOrderDetail order) {
-  if (order.sellerCompanyName.trim().isNotEmpty) {
-    return order.sellerCompanyName;
+String _displayCustomerCompany(sales_detail.SalesOrderDetail order) {
+  if (order.buyerCompanyName.trim().isNotEmpty) {
+    return order.buyerCompanyName;
   }
-  // if (order.buyerCompanyName.trim().isNotEmpty) {
-  //   return order.buyerCompanyName;
+  // if (order.sellerCompanyName.trim().isNotEmpty) {
+  //   return order.sellerCompanyName;
   // }
-  return ' ';
+  return '';
 }
-
 
 
 int _overdueDays(DateTime orderDate) {

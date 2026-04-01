@@ -9,17 +9,17 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/payment/payment_detail.dart';
-import 'package:coreflow/features/presentation/payment/receive_payment/viewmodel/receive_payment_detail_view_model.dart';
-import 'package:coreflow/features/presentation/payment/receive_payment/view/update_receive_payment_page.dart';
-import 'package:coreflow/features/presentation/sales/view/sales_order_detail_page.dart';
+import 'package:coreflow/features/payment/send_payment/viewmodel/send_payment_detail_view_model.dart';
+import 'package:coreflow/features/payment/send_payment/view/update_payment_sent_page.dart';
+import 'package:coreflow/features/purchase/view/purchase_order_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class PayReceivedDetailPage extends StatelessWidget {
+class SendPaymentDetailPage extends StatelessWidget {
   final int companyId;
   final int paymentId;
 
-  const PayReceivedDetailPage({
+  const SendPaymentDetailPage({
     super.key,
     required this.companyId,
     required this.paymentId,
@@ -27,25 +27,25 @@ class PayReceivedDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<ReceivePaymentDetailViewModel>(
-      create: (_) => ReceivePaymentDetailViewModel(
+    return ChangeNotifierProvider<SendPaymentDetailViewModel>(
+      create: (_) => SendPaymentDetailViewModel(
         repository: AuthRepository(),
         companyId: companyId,
         paymentId: paymentId,
       ),
-      child: const _PayReceivedDetailView(),
+      child: const _SendPaymentDetailView(),
     );
   }
 }
 
-class _PayReceivedDetailView extends StatelessWidget {
-  const _PayReceivedDetailView();
+class _SendPaymentDetailView extends StatelessWidget {
+  const _SendPaymentDetailView();
 
   @override
   Widget build(BuildContext context) {
     LoginColors.setBrightness(Theme.of(context).brightness);
 
-    return Consumer<ReceivePaymentDetailViewModel>(
+    return Consumer<SendPaymentDetailViewModel>(
       builder: (context, vm, _) {
         return Scaffold(
           backgroundColor: LoginColors.background,
@@ -107,7 +107,7 @@ class _PayReceivedDetailView extends StatelessWidget {
                     final updated = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => UpdateReceivePaymentPage(
+                        builder: (_) => UpdatePaymentSentPage(
                           companyId: vm.companyId,
                           initialPayment: vm.paymentDetail!,
                         ),
@@ -125,9 +125,9 @@ class _PayReceivedDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildBody(ReceivePaymentDetailViewModel vm) {
+  Widget _buildBody(SendPaymentDetailViewModel vm) {
     if (vm.isLoading) {
-      return const _PayReceivedDetailLoadingSkeleton();
+      return const _SendPaymentDetailLoadingSkeleton();
     }
 
     if (vm.hasError) {
@@ -177,12 +177,12 @@ class _PayReceivedDetailView extends StatelessWidget {
         ],
         const SizedBox(height: 10),
         _AmountCard(payment: payment),
-        const SizedBox(height: 10),
-        _ProofCard(vm: vm),
         if (payment.notes.trim().isNotEmpty) ...[
           const SizedBox(height: 10),
           _NotesCard(notes: payment.notes),
         ],
+        const SizedBox(height: 10),
+        _ProofCard(vm: vm),
         const SizedBox(height: 14),
         _BottomActionsBar(payment: payment, vm: vm),
       ],
@@ -278,7 +278,6 @@ class _PaymentAppBarTitle extends StatelessWidget {
 }
 
 
-
 class _MetaCard extends StatelessWidget {
   final PaymentDetail payment;
 
@@ -286,7 +285,7 @@ class _MetaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
+  
     return _CardBlock(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,7 +365,7 @@ class _MetaText extends StatelessWidget {
 
 class _PaymentRefCard extends StatefulWidget {
   final PaymentRef? paymentRef;
-  final ReceivePaymentDetailViewModel vm;
+  final SendPaymentDetailViewModel vm;
 
   const _PaymentRefCard({required this.paymentRef, required this.vm});
 
@@ -616,19 +615,19 @@ class _TransferCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final allocationOrders = payment.orderAllocations
-        .map((allocation) => _orderLabel(allocation))
-        .toList();
-    final orderIdsText = allocationOrders.isNotEmpty
-        ? allocationOrders.join(', ')
-        : payment.orderIds.isEmpty
-        ? ''
-        : payment.orderIds.map((id) => '#$id').join(', ');
+    // final allocationOrders = payment.orderAllocations
+    //     .map((allocation) => _orderLabel(allocation))
+    //     .toList();
+    // final orderIdsText = allocationOrders.isNotEmpty
+    //     ? allocationOrders.join(', ')
+    //     : payment.orderIds.isEmpty
+    //         ? ''
+    //         : payment.orderIds.map((id) => '#$id').join(', ');
     final mode = payment.modeOfPayment.trim();
-    final reference = payment.referenceNumber.trim();
+    // final reference = payment.referenceNumber.trim();
     final hasMode = mode.isNotEmpty;
-    final hasReference = reference.isNotEmpty;
-    final hasOrders = orderIdsText.isNotEmpty;
+    // final hasReference = reference.isNotEmpty;
+    // final hasOrders = orderIdsText.isNotEmpty;
 
     return _CardBlock(
       child: Column(
@@ -638,8 +637,8 @@ class _TransferCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _MetaText(
-                  label: 'Customer',
-                  value: _displayCustomer(payment),
+                  label: 'Vendor',
+                  value: _displayVendor(payment),
                 ),
               ),
               if (hasMode)
@@ -652,17 +651,6 @@ class _TransferCard extends StatelessWidget {
                 ),
             ],
           ),
-          if (hasReference || hasOrders) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                if (hasReference)
-                  Expanded(
-                    child: _MetaText(label: 'Reference', value: reference),
-                  ),
-              ],
-            ),
-          ],
         ],
       ),
     );
@@ -726,7 +714,7 @@ class _OrderAllocationRow extends StatelessWidget {
           ? () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => SalesOrderDetailPage(
+                  builder: (_) => PurchaseOrderDetailPage(
                     companyId: companyId,
                     orderId: allocation.orderId,
                   ),
@@ -795,16 +783,27 @@ class _AmountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final stateLabel = payment.isActive ? 'Active' : 'Inactive';
 
     return _CardBlock(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _HighlightAmount(
-              label: 'Amount',
-              value: _money(payment.amount),
-              color: LoginColors.success,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: _HighlightAmount(
+                  label: 'Amount',
+                  value: _money(payment.amount),
+                  color: Colors.redAccent,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _MetaText(label: 'State', value: stateLabel),
           ),
         ],
       ),
@@ -884,363 +883,8 @@ class _NotesCard extends StatelessWidget {
   }
 }
 
-class _BottomActionsBar extends StatefulWidget {
-  final PaymentDetail payment;
-  final ReceivePaymentDetailViewModel vm;
-
-  const _BottomActionsBar({required this.payment, required this.vm});
-
-  @override
-  State<_BottomActionsBar> createState() => _BottomActionsBarState();
-}
-
-class _BottomActionsBarState extends State<_BottomActionsBar> {
-  bool _shareExpanded = false;
-
-  List<({String label, IconData icon, String action, Color color})>
-      get _statusActions {
-    final status = widget.payment.paymentStatus;
-    final list =
-        <({String label, IconData icon, String action, Color color})>[];
-
-    if (status == 'PENDING') {
-      list.add((
-        label: 'Mark as Viewed',
-        icon: Icons.visibility_rounded,
-        action: 'viewed',
-        color: Colors.blue.shade600,
-      ));
-    }
-    if (status == 'VIEWED') {
-      list.add((
-        label: 'Partially Paid',
-        icon: Icons.payments_outlined,
-        action: 'partially-paid',
-        color: Colors.orange.shade700,
-      ));
-    }
-    if (status == 'PAID' || status == 'PARTIALLY_PAID') {
-      list.add((
-        label: 'Refund',
-        icon: Icons.undo_rounded,
-        action: 'refund',
-        color: Colors.purple.shade600,
-      ));
-    }
-    if (const ['PENDING', 'VIEWED', 'PARTIALLY_PAID'].contains(status)) {
-      list.add((
-        label: 'Mark Failed',
-        icon: Icons.cancel_outlined,
-        action: 'failed',
-        color: LoginColors.error,
-      ));
-    }
-    return list;
-  }
-
-  Future<void> _doStatusAction(String action) async {
-    final success = await widget.vm.updateStatus(action);
-    if (!success && mounted && widget.vm.statusError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          duration: Duration(seconds: 1),
-          content: Text(widget.vm.statusError!),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final actions = _statusActions;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Share options dropdown
-        AnimatedSize(
-          duration: Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          child: _shareExpanded
-              ? Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: LoginColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: LoginColors.borderLight),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _ActionTile(
-                        icon: Icons.text_fields_rounded,
-                        label: 'Share as Text',
-                        color: LoginColors.primary,
-                        onTap: () {
-                          setState(() => _shareExpanded = false);
-                          PaymentShareHelper.shareText(
-                            widget.payment,
-                            isSent: false,
-                          );
-                        },
-                      ),
-                      Divider(height: 1, color: LoginColors.borderLight),
-                      _ActionTile(
-                        icon: Icons.attachment_rounded,
-                        label: 'Share Proof with Text',
-                        color: widget.payment.paymentProofFile != null &&
-                                widget.payment.paymentProofFile!.isNotEmpty
-                            ? LoginColors.primary
-                            : LoginColors.textSecondary,
-                        onTap: () async {
-                          setState(() => _shareExpanded = false);
-                          final proofFile = widget.payment.paymentProofFile;
-                          if (proofFile == null || proofFile.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                duration: Duration(seconds: 1),
-                                content: Text('No proof attached to share'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                            return;
-                          }
-                          final bytes = await widget.vm.fetchProofBytes();
-                          if (bytes == null || bytes.isEmpty) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  duration: Duration(seconds: 1),
-                                  content: Text('Unable to load proof file'),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
-                            return;
-                          }
-                          PaymentShareHelper.shareProofWithText(
-                            widget.payment,
-                            bytes,
-                            isSent: false,
-                          );
-                        },
-                      ),
-                      Divider(height: 1, color: LoginColors.borderLight),
-                      _ActionTile(
-                        icon: Icons.picture_as_pdf_rounded,
-                        label: 'Share as PDF',
-                        color: LoginColors.primary,
-                        onTap: () {
-                          setState(() => _shareExpanded = false);
-                          PaymentShareHelper.shareAsPdf(
-                            widget.payment,
-                            isSent: false,
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                )
-              : const SizedBox.shrink(),
-        ),
-
-        // Status error
-        if (widget.vm.statusError != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              widget.vm.statusError!,
-              style: TextStyle(
-                color: LoginColors.error,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-
-        // Action buttons row
-        Row(
-          children: [
-            // Share button
-            SizedBox(
-              height: 44,
-              child: OutlinedButton.icon(
-                onPressed: () =>
-                    setState(() => _shareExpanded = !_shareExpanded),
-                icon: Icon(
-                  _shareExpanded ? Icons.close_rounded : Icons.share_rounded,
-                  size: 18,
-                ),
-                label: Text(
-                  _shareExpanded ? 'Close' : 'Share',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: LoginColors.primary,
-                  side: BorderSide(
-                    color: LoginColors.primary.withValues(alpha: 0.4),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-
-            // Status action buttons
-            for (final a in actions) ...[
-              const SizedBox(width: 8),
-              Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: FilledButton.icon(
-                    onPressed: widget.vm.isStatusUpdating
-                        ? null
-                        : () => _doStatusAction(a.action),
-                    icon: widget.vm.isStatusUpdating
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Icon(a.icon, size: 16),
-                    label: Text(
-                      a.label,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: a.color,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _ActionTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ActionTile({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: TextStyle(
-                color: LoginColors.textPrimary,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PayReceivedDetailLoadingSkeleton extends StatelessWidget {
-  const _PayReceivedDetailLoadingSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 20),
-      children: const [
-        Skeleton(height: 78, width: double.infinity, borderRadius: 12),
-        SizedBox(height: 10),
-        Skeleton(height: 72, width: double.infinity, borderRadius: 12),
-        SizedBox(height: 10),
-        Skeleton(height: 86, width: double.infinity, borderRadius: 12),
-        SizedBox(height: 10),
-        Skeleton(height: 72, width: double.infinity, borderRadius: 12),
-      ],
-    );
-  }
-}
-
-class _StateMessage extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _StateMessage({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, size: 40, color: LoginColors.textSecondary),
-        const SizedBox(height: 8),
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: LoginColors.textPrimary,
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: LoginColors.textSecondary,
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _ProofCard extends StatefulWidget {
-  final ReceivePaymentDetailViewModel vm;
+  final SendPaymentDetailViewModel vm;
   const _ProofCard({required this.vm});
 
   @override
@@ -1379,7 +1023,7 @@ class _ProofViewerPage extends StatelessWidget {
       await Share.shareXFiles([XFile(file.path)]);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar( 
           const SnackBar(
             duration: Duration(seconds: 1),
             content: Text('Unable to open PDF'),
@@ -1441,7 +1085,365 @@ class _ProofViewerPage extends StatelessWidget {
   }
 }
 
+class _BottomActionsBar extends StatefulWidget {
+  final PaymentDetail payment;
+  final SendPaymentDetailViewModel vm;
+
+  const _BottomActionsBar({required this.payment, required this.vm});
+
+  @override
+  State<_BottomActionsBar> createState() => _BottomActionsBarState();
+}
+
+class _BottomActionsBarState extends State<_BottomActionsBar> {
+  bool _shareExpanded = false;
+
+  List<({String label, IconData icon, String action, Color color})>
+      get _statusActions {
+    final status = widget.payment.paymentStatus;
+    final list =
+        <({String label, IconData icon, String action, Color color})>[];
+
+    if (status == 'PENDING') {
+      list.add((
+        label: 'Mark as Viewed',
+        icon: Icons.visibility_rounded,
+        action: 'viewed',
+        color: Colors.blue.shade600,
+      ));
+    }
+    if (status == 'VIEWED') {
+      list.add((
+        label: 'Partially Paid',
+        icon: Icons.payments_outlined,
+        action: 'partially-paid',
+        color: Colors.orange.shade700,
+      ));
+    }
+    if (status == 'PAID' || status == 'PARTIALLY_PAID') {
+      list.add((
+        label: 'Refund',
+        icon: Icons.undo_rounded,
+        action: 'refund',
+        color: Colors.purple.shade600,
+      ));
+    }
+    if (const ['PENDING', 'VIEWED', 'PARTIALLY_PAID'].contains(status)) {
+      list.add((
+        label: 'Mark Failed',
+        icon: Icons.cancel_outlined,
+        action: 'failed',
+        color: LoginColors.error,
+      ));
+    }
+    return list;
+  }
+
+  Future<void> _doStatusAction(String action) async {
+    final success = await widget.vm.updateStatus(action);
+    if (!success && mounted && widget.vm.statusError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(seconds: 1),
+          content: Text(widget.vm.statusError!),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = _statusActions;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Share options dropdown
+        AnimatedSize(
+          duration: Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          child: _shareExpanded
+              ? Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: LoginColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: LoginColors.borderLight),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _ActionTile(
+                        icon: Icons.text_fields_rounded,
+                        label: 'Share as Text',
+                        color: LoginColors.primary,
+                        onTap: () {
+                          setState(() => _shareExpanded = false);
+                          PaymentShareHelper.shareText(
+                            widget.payment,
+                            isSent: true,
+                          );
+                        },
+                      ),
+                      Divider(height: 1, color: LoginColors.borderLight),
+                      _ActionTile(
+                        icon: Icons.attachment_rounded,
+                        label: 'Share Proof with Text',
+                        color: widget.payment.paymentProofFile != null &&
+                                widget.payment.paymentProofFile!.isNotEmpty
+                            ? LoginColors.primary
+                            : LoginColors.textSecondary,
+                        onTap: () async {
+                          setState(() => _shareExpanded = false);
+                          final proofFile = widget.payment.paymentProofFile;
+                          if (proofFile == null || proofFile.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                duration: Duration(seconds: 1),
+                                content: Text('No proof attached to share'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                            return;
+                          }
+                          final bytes = await widget.vm.fetchProofBytes();
+                          if (bytes == null || bytes.isEmpty) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  duration: Duration(seconds: 1),
+                                  content: Text('Unable to load proof file'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                            return;
+                          }
+                          PaymentShareHelper.shareProofWithText(
+                            widget.payment,
+                            bytes,
+                            isSent: true,
+                          );
+                        },
+                      ),
+                      Divider(height: 1, color: LoginColors.borderLight),
+                      _ActionTile(
+                        icon: Icons.picture_as_pdf_rounded,
+                        label: 'Share as PDF',
+                        color: LoginColors.primary,
+                        onTap: () {
+                          setState(() => _shareExpanded = false);
+                          PaymentShareHelper.shareAsPdf(
+                            widget.payment,
+                            isSent: true,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+
+        // Status error
+        if (widget.vm.statusError != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              widget.vm.statusError!,
+              style: TextStyle(
+                color: LoginColors.error,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+
+        // Action buttons row
+        Row(
+          children: [
+            // Share button
+            SizedBox(
+              height: 44,
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    setState(() => _shareExpanded = !_shareExpanded),
+                icon: Icon(
+                        _shareExpanded
+                            ? Icons.close_rounded
+                            : Icons.share_rounded,
+                        size: 18,
+                      ),
+                label: Text(
+                  _shareExpanded ? 'Close' : 'Share',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: LoginColors.primary,
+                  side: BorderSide(
+                    color: LoginColors.primary.withValues(alpha: 0.4),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+
+            // Status action buttons
+            for (final a in actions) ...[
+              const SizedBox(width: 8),
+              Expanded(
+                child: SizedBox(
+                  height: 44,
+                  child: FilledButton.icon(
+                    onPressed: widget.vm.isStatusUpdating
+                        ? null
+                        : () => _doStatusAction(a.action),
+                    icon: widget.vm.isStatusUpdating
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Icon(a.icon, size: 16),
+                    label: Text(
+                      a.label,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: a.color,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ActionTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: LoginColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SendPaymentDetailLoadingSkeleton extends StatelessWidget {
+  const _SendPaymentDetailLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 20),
+      children: const [
+        Skeleton(height: 78, width: double.infinity, borderRadius: 12),
+        SizedBox(height: 10),
+        Skeleton(height: 72, width: double.infinity, borderRadius: 12),
+        SizedBox(height: 10),
+        Skeleton(height: 86, width: double.infinity, borderRadius: 12),
+        SizedBox(height: 10),
+        Skeleton(height: 72, width: double.infinity, borderRadius: 12),
+      ],
+    );
+  }
+}
+
+class _StateMessage extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _StateMessage({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon, size: 40, color: LoginColors.textSecondary),
+        const SizedBox(height: 8),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: LoginColors.textPrimary,
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: LoginColors.textSecondary,
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 String _money(double value) => 'INR ${value.toStringAsFixed(2)}';
+
 
 String _orderLabel(PaymentOrderAllocation allocation) {
   return allocation.orderNumber.trim().isNotEmpty
@@ -1449,14 +1451,14 @@ String _orderLabel(PaymentOrderAllocation allocation) {
       : '#${allocation.orderId}';
 }
 
-String _displayCustomer(PaymentDetail payment) {
-  if (payment.customerName.trim().isNotEmpty) {
-    return payment.customerName;
-  }
+String _displayVendor(PaymentDetail payment) {
   if (payment.vendorName.trim().isNotEmpty) {
     return payment.vendorName;
   }
-  return 'Customer';
+  if (payment.customerName.trim().isNotEmpty) {
+    return payment.customerName;
+  }
+  return 'Vendor';
 }
 
 String _formatDate(DateTime date) {

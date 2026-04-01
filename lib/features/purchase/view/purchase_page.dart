@@ -3,64 +3,63 @@ import 'package:coreflow/core/theme/theme_provider.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/domain/model/sales/sales_order.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
-import 'package:coreflow/features/presentation/sales/viewmodel/sales_order_view_model.dart';
-import 'package:coreflow/features/presentation/sales/view/create_sales_order_page.dart';
-import 'package:coreflow/features/presentation/sales/view/sales_order_detail_page.dart';
-import 'package:coreflow/features/presentation/sales/widgets/sales_empty_state.dart';
-import 'package:coreflow/features/presentation/sales/widgets/sales_loading_body.dart';
-import 'package:coreflow/features/presentation/sales/widgets/sales_order_card.dart';
-import 'package:coreflow/features/presentation/sales/widgets/sales_skeleton.dart';
+import 'package:coreflow/features/purchase/view/create_purchase_order_page.dart';
+import 'package:coreflow/features/purchase/view/purchase_order_detail_page.dart';
+import 'package:coreflow/features/purchase/viewmodel/purchase_order_view_model.dart';
+import 'package:coreflow/features/purchase/widgets/purchase_empty_state.dart';
+import 'package:coreflow/features/purchase/widgets/purchase_loading_body.dart';
+import 'package:coreflow/features/purchase/widgets/purchase_order_card.dart';
+import 'package:coreflow/features/purchase/widgets/purchase_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
-class SalesPage extends StatelessWidget {
-  const SalesPage({super.key});
+class PurchasePage extends StatelessWidget {
+  const PurchasePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     context.watch<ThemeProvider>();
     return Consumer<DashboardViewModel>(
-      builder: (context, dashboardVm, child) {
-        if (dashboardVm.isLoading) {
-          return const SalesSkeleton();
+      builder: (context, vm, child) {
+        if (vm.isLoading) {
+          return const PurchaseSkeleton();
         }
 
-        final companyId = dashboardVm.companyId;
+        final companyId = vm.companyId;
         if (companyId == null) {
-          return const SalesEmptyState(
-            title: 'Sales & Bills',
+          return const PurchaseEmptyState(
+            title: 'Purchase & Expenses',
             subtitle: 'Company not selected.',
           );
         }
 
-        return ChangeNotifierProvider<SalesOrderViewModel>(
-          create: (_) => SalesOrderViewModel(
+        return ChangeNotifierProvider<PurchaseOrderViewModel>(
+          create: (_) => PurchaseOrderViewModel(
             repository: AuthRepository(),
             companyId: companyId,
-          )..fetchSalesOrders(),
-          child: const _SalesOrdersContent(),
+          )..fetchPurchaseOrders(),
+          child: const _PurchaseOrdersContent(),
         );
       },
     );
   }
 }
 
-class _SalesOrdersContent extends StatefulWidget {
-  const _SalesOrdersContent();
+class _PurchaseOrdersContent extends StatefulWidget {
+  const _PurchaseOrdersContent();
 
   @override
-  State<_SalesOrdersContent> createState() => _SalesOrdersContentState();
+  State<_PurchaseOrdersContent> createState() => _PurchaseOrdersContentState();
 }
 
-class _SalesOrdersContentState extends State<_SalesOrdersContent> {
+class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _disabledSearchController =
       TextEditingController();
-  _SalesTopTab _selectedTopTab = _SalesTopTab.orders;
+  _PurchaseTopTab _selectedTopTab = _PurchaseTopTab.orders;
 
   @override
   void dispose() {
@@ -73,11 +72,8 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
     context.watch<ThemeProvider>();
     final dashboardVm = context.watch<DashboardViewModel>();
 
-    return Consumer<SalesOrderViewModel>(
+    return Consumer<PurchaseOrderViewModel>(
       builder: (context, vm, child) {
-        final filteredOrders = vm.filteredOrders;
-        final companyId = dashboardVm.companyId;
-
         return WillPopScope(
           onWillPop: _handleWillPop,
           child: Scaffold(
@@ -101,18 +97,16 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
               showSearchAction: false,
               tabs: const [
                 SearchableEntityTab(label: 'Orders'),
-                SearchableEntityTab(label: 'Invoices'),
+                SearchableEntityTab(label: 'Bills'),
                 SearchableEntityTab(label: 'Paid Orders'),
               ],
               selectedTabIndex: _selectedTopTab.index,
               onTabSelected: (index) {
-                setState(() => _selectedTopTab = _SalesTopTab.values[index]);
+                setState(() => _selectedTopTab = _PurchaseTopTab.values[index]);
               },
             ),
-            body: RefreshIndicator(
-              onRefresh: vm.refresh,
-              child: _buildBody(vm, filteredOrders, companyId),
-            ),
+            body:
+                RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
           ),
         );
       },
@@ -124,24 +118,20 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
     return false;
   }
 
-  Widget _buildBody(
-    SalesOrderViewModel vm,
-    List<SalesOrder> filteredOrders,
-    int? companyId,
-  ) {
-    final tabFilteredOrders = filteredOrders
+  Widget _buildBody(PurchaseOrderViewModel vm) {
+    final tabFilteredOrders = vm.orders
         .where((order) => _matchesSelectedTab(order.orderStatus))
         .toList();
 
     if (vm.isLoading) {
-      return const SalesLoadingBody();
+      return const PurchaseLoadingBody();
     }
 
     if (vm.errorMessage != null && vm.orders.isEmpty) {
       return _buildEmptyState(
-        title: 'Sales & Bills',
+        title: 'Purchase & Expenses',
         subtitle: vm.errorMessage!,
-        svgAsset: 'assets/svgs/empty_sales.svg',
+        svgAsset: 'assets/svgs/empty_purchase.svg',
         actionLabel: 'Retry',
         actionIcon: Icons.refresh_rounded,
         onAction: () => vm.refresh(),
@@ -150,14 +140,12 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
 
     if (tabFilteredOrders.isEmpty) {
       return _buildEmptyState(
-        title: 'Sales & Bills',
-        subtitle: 'No sales orders found.',
-        svgAsset: 'assets/svgs/empty_sales.svg',
-        actionLabel: 'New Sales',
+        title: 'Purchase & Expenses',
+        subtitle: 'No purchase orders found.',
+        svgAsset: 'assets/svgs/empty_purchase.svg',
+        actionLabel: 'New Purchase',
         actionIcon: Icons.add_rounded,
-        onAction: companyId == null
-            ? null
-            : () => _openCreateOrder(companyId),
+        onAction: () => _openCreateOrder(vm.companyId),
       );
     }
 
@@ -169,21 +157,21 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
         final order = tabFilteredOrders[index];
         return InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: () => _openOrderDetail(order, companyId),
-          child: AnimatedSalesOrderCard(order: order, index: index),
+          onTap: () => _openOrderDetail(vm.companyId, order.orderId),
+          child: PurchaseOrderCard(order: order),
         );
       },
     );
   }
 
-  Future<void> _openOrderDetail(SalesOrder order, int? companyId) async {
-    if (companyId == null) return;
+  Future<void> _openOrderDetail(int companyId, int orderId) async {
+    if (orderId <= 0) return;
 
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) =>
-            SalesOrderDetailPage(companyId: companyId, orderId: order.orderId),
+            PurchaseOrderDetailPage(companyId: companyId, orderId: orderId),
       ),
     );
   }
@@ -192,11 +180,11 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => CreateSalesOrderPage(companyId: companyId),
+        builder: (_) => CreatePurchaseOrderPage(companyId: companyId),
       ),
     );
     if (result == true && mounted) {
-      context.read<SalesOrderViewModel>().refresh();
+      context.read<PurchaseOrderViewModel>().refresh();
     }
   }
 
@@ -204,12 +192,12 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
     final normalizedStatus = orderStatus.trim().toUpperCase();
 
     switch (_selectedTopTab) {
-      case _SalesTopTab.orders:
+      case _PurchaseTopTab.orders:
         return normalizedStatus == 'ORDER' ||
             normalizedStatus == 'ORDER_VIEWED';
-      case _SalesTopTab.invoices:
+      case _PurchaseTopTab.bills:
         return normalizedStatus == 'ORDER_INVOICED';
-      case _SalesTopTab.paidOrders:
+      case _PurchaseTopTab.paidOrders:
         return normalizedStatus == 'ORDER_PAYED';
     }
   }
@@ -225,7 +213,7 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
       },
       icon: const Icon(Icons.add_rounded),
       label: const Text(
-        'New Sales',
+        'New Purchase',
         style: TextStyle(fontWeight: FontWeight.w700),
       ),
     );
@@ -311,4 +299,4 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
   }
 }
 
-enum _SalesTopTab { orders, invoices, paidOrders }
+enum _PurchaseTopTab { orders, bills, paidOrders }

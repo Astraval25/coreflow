@@ -1,52 +1,52 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
-import 'package:coreflow/core/widgets/customer_selector_page.dart';
 import 'package:coreflow/core/widgets/success_popup.dart';
+import 'package:coreflow/core/widgets/vendor_selector_page.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/domain/model/customer/customer.dart';
 import 'package:coreflow/domain/model/payment/payment_proof_result.dart';
+import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
-import 'package:coreflow/features/presentation/payment/proof/view/payment_proof_page.dart';
-import 'package:coreflow/features/presentation/payment/receive_payment/view/pay_received_detail_page.dart';
-import 'package:coreflow/features/presentation/payment/receive_payment/viewmodel/create_receive_payment_view_model.dart';
+import 'package:coreflow/features/payment/proof/view/payment_proof_page.dart';
+import 'package:coreflow/features/payment/send_payment/view/send_payment_detail_page.dart';
+import 'package:coreflow/features/payment/send_payment/viewmodel/create_payment_sent_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-class CreateReceivePaymentPage extends StatelessWidget {
+class CreatePaymentSentPage extends StatelessWidget {
   final int companyId;
   final PaymentProofResult? proofResult;
-  final Customer? initialCustomer;
+  final Vendor? initialVendor;
   final int? initialOrderId;
   final double? initialAmount;
-  final Map<String, dynamic>? preSelectedCustomer;
+  final Map<String, dynamic>? preSelectedVendor;
 
-  const CreateReceivePaymentPage({
+  const CreatePaymentSentPage({
     super.key,
     required this.companyId,
     this.proofResult,
-    this.initialCustomer,
+    this.initialVendor,
     this.initialOrderId,
     this.initialAmount,
-    this.preSelectedCustomer,
+    this.preSelectedVendor,
   });
 
   @override
   Widget build(BuildContext context) {
-    Customer? customer = initialCustomer;
-    if (customer == null && preSelectedCustomer != null) {
-      customer = Customer.fromJson(preSelectedCustomer!);
+    Vendor? vendor = initialVendor;
+    if (vendor == null && preSelectedVendor != null) {
+      vendor = Vendor.fromJson(preSelectedVendor!);
     }
     
     return ChangeNotifierProvider(
-      create: (_) => CreateReceivePaymentViewModel(
+      create: (_) => CreatePaymentSentViewModel(
         repository: AuthRepository(),
         companyId: companyId,
       ),
-      child: _CreateReceivePaymentView(
+      child: _CreatePaymentSentView(
         companyId: companyId,
         proofResult: proofResult,
-        initialCustomer: customer,
+        initialVendor: vendor,
         initialOrderId: initialOrderId,
         initialAmount: initialAmount,
       ),
@@ -54,27 +54,27 @@ class CreateReceivePaymentPage extends StatelessWidget {
   }
 }
 
-class _CreateReceivePaymentView extends StatefulWidget {
+class _CreatePaymentSentView extends StatefulWidget {
   final int companyId;
   final PaymentProofResult? proofResult;
-  final Customer? initialCustomer;
+  final Vendor? initialVendor;
   final int? initialOrderId;
   final double? initialAmount;
 
-  const _CreateReceivePaymentView({
+  const _CreatePaymentSentView({
     required this.companyId,
     this.proofResult,
-    this.initialCustomer,
+    this.initialVendor,
     this.initialOrderId,
     this.initialAmount,
   });
 
   @override
-  State<_CreateReceivePaymentView> createState() =>
-      _CreateReceivePaymentViewState();
+  State<_CreatePaymentSentView> createState() =>
+      _CreatePaymentSentViewState();
 }
 
-class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
+class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
 
@@ -82,6 +82,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
   final _referenceController = TextEditingController();
   final _remarksController = TextEditingController();
 
+  // Per-row allocation controllers (amount + remarks)
   final List<TextEditingController> _allocAmountControllers = [];
   final List<TextEditingController> _allocRemarksControllers = [];
 
@@ -99,7 +100,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final vm = context.read<CreateReceivePaymentViewModel>();
+      final vm = context.read<CreatePaymentSentViewModel>();
 
       if (widget.proofResult != null) {
         vm.setProofResult(widget.proofResult!);
@@ -114,9 +115,9 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
         }
       }
 
-      if (widget.initialCustomer != null) {
-        await vm.setCustomerWithOrder(
-          widget.initialCustomer!,
+      if (widget.initialVendor != null) {
+        await vm.setVendorWithOrder(
+          widget.initialVendor!,
           orderId: widget.initialOrderId,
           amount: widget.initialAmount,
         );
@@ -146,11 +147,15 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
     super.dispose();
   }
 
+  /// Ensures allocation controllers match the current order list.
+  /// Called from build() whenever the order count changes.
   void _syncAllocationControllers(List<OrderAllocationEntry> orders) {
+    // Dispose extras if list shrank
     while (_allocAmountControllers.length > orders.length) {
       _allocAmountControllers.removeLast().dispose();
       _allocRemarksControllers.removeLast().dispose();
     }
+    // Add controllers for new entries
     while (_allocAmountControllers.length < orders.length) {
       final idx = _allocAmountControllers.length;
       final entry = orders[idx];
@@ -169,10 +174,9 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
     }
   }
 
+  /// Syncs controller texts after auto-split without recreating controllers.
   void _syncAllocationAmountsFromVm(List<OrderAllocationEntry> orders) {
-    for (int i = 0;
-        i < orders.length && i < _allocAmountControllers.length;
-        i++) {
+    for (int i = 0; i < orders.length && i < _allocAmountControllers.length; i++) {
       final v = orders[i].amountApplied;
       final text = v > 0
           ? (v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2))
@@ -191,7 +195,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
       ),
     );
     if (result != null && mounted) {
-      final vm = context.read<CreateReceivePaymentViewModel>();
+      final vm = context.read<CreatePaymentSentViewModel>();
       vm.setProofResult(result);
       if (result.amount != null) {
         _amountController.text = result.amount! % 1 == 0
@@ -205,20 +209,20 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
     }
   }
 
-  Future<void> _selectCustomer() async {
-    final customer = await Navigator.push<Customer>(
+  Future<void> _selectVendor() async {
+    final vendor = await Navigator.push<Vendor>(
       context,
       MaterialPageRoute(
-        builder: (_) => CustomerSelectorPage(companyId: widget.companyId),
+        builder: (_) => VendorSelectorPage(companyId: widget.companyId),
       ),
     );
-    if (customer != null && mounted) {
-      context.read<CreateReceivePaymentViewModel>().setCustomer(customer);
+    if (vendor != null && mounted) {
+      context.read<CreatePaymentSentViewModel>().setVendor(vendor);
     }
   }
 
   Future<void> _selectDate() async {
-    final vm = context.read<CreateReceivePaymentViewModel>();
+    final vm = context.read<CreatePaymentSentViewModel>();
     final picked = await showDatePicker(
       context: context,
       initialDate: vm.paymentDate,
@@ -233,10 +237,10 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final vm = context.read<CreateReceivePaymentViewModel>();
+    final vm = context.read<CreatePaymentSentViewModel>();
 
-    if (vm.selectedCustomer == null) {
-      _showError('Please select a customer');
+    if (vm.selectedVendor == null) {
+      _showError('Please select a vendor');
       return;
     }
 
@@ -249,8 +253,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
     vm.setAmount(amount);
 
     if (vm.totalAllocated > amount) {
-      _showError(
-          'Total allocated (${vm.totalAllocated.toStringAsFixed(2)}) exceeds amount');
+      _showError('Total allocated (${vm.totalAllocated.toStringAsFixed(2)}) exceeds amount');
       return;
     }
 
@@ -263,14 +266,14 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
       final navigator = Navigator.of(context);
       await showSuccessPopup(
         context: context,
-        message: 'Payment Received Successfully',
+        message: 'Payment Sent Successfully',
       );
       if (!mounted) return;
       navigator.pop(true);
       if (vm.createdPaymentId != null) {
         navigator.push(
           MaterialPageRoute(
-            builder: (_) => PayReceivedDetailPage(
+            builder: (_) => SendPaymentDetailPage(
               companyId: widget.companyId,
               paymentId: vm.createdPaymentId!,
             ),
@@ -295,7 +298,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
   @override
   Widget build(BuildContext context) {
     final dashboardVm = context.watch<DashboardViewModel>();
-    final vm = context.watch<CreateReceivePaymentViewModel>();
+    final vm = context.watch<CreatePaymentSentViewModel>();
 
     return Scaffold(
       key: _scaffoldKey,
@@ -304,7 +307,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
       backgroundColor: LoginColors.background,
       appBar: AppBar(
         title: Text(
-          'Receive Payment',
+          'Send Payment',
           style: TextStyle(
             color: LoginColors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -333,7 +336,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
                     )
                   : const Icon(Icons.save, size: 18),
               label: Text(
-                vm.isLoading ? 'Saving' : 'Save',
+                vm.isLoading ? 'Sending' : 'Save',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -358,7 +361,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildCustomerSection(vm),
+                  _buildVendorSection(vm),
                   const SizedBox(height: 20),
                   _buildProofSection(vm),
                   const SizedBox(height: 20),
@@ -369,6 +372,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
                     return _buildOrderAllocationsSection(vm);
                   }),
                   const SizedBox(height: 28),
+                  // Submit Button
                   SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -384,11 +388,11 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(Icons.call_received_rounded, size: 20),
+                          : const Icon(Icons.send_rounded, size: 20),
                       label: Text(
                         vm.isLoading
-                            ? 'Saving Payment...'
-                            : 'Receive Payment',
+                            ? 'Sending Payment...'
+                            : 'Send Payment',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -452,7 +456,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
     );
   }
 
-  Widget _buildProofSection(CreateReceivePaymentViewModel vm) {
+  Widget _buildProofSection(CreatePaymentSentViewModel vm) {
     final hasProof = vm.fsId != null && vm.fsId!.isNotEmpty;
 
     return InkWell(
@@ -474,7 +478,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: LoginColors.success.withValues(alpha: 0.12),
+                        color: LoginColors.success.withValues(alpha:0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -525,7 +529,9 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () => vm.clearProof(),
+                      onPressed: () {
+                        vm.clearProof();
+                      },
                       style: TextButton.styleFrom(
                         foregroundColor: LoginColors.error,
                         padding: const EdgeInsets.symmetric(
@@ -592,11 +598,11 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
     );
   }
 
-  Widget _buildCustomerSection(CreateReceivePaymentViewModel vm) {
-    final customer = vm.selectedCustomer;
+  Widget _buildVendorSection(CreatePaymentSentViewModel vm) {
+    final vendor = vm.selectedVendor;
 
     return InkWell(
-      onTap: _selectCustomer,
+      onTap: _selectVendor,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         width: double.infinity,
@@ -613,13 +619,13 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
               child: Row(
                 children: [
                   Icon(
-                    Icons.person_rounded,
+                    Icons.store_rounded,
                     color: LoginColors.primary,
                     size: 18,
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'Customer',
+                    'Vendor',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -637,18 +643,16 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-              child: customer != null
+              child: vendor != null
                   ? Row(
                       children: [
                         CircleAvatar(
                           radius: 20,
                           backgroundColor:
-                              LoginColors.primary.withValues(
-                            alpha: 0.15,
-                          ),
+                              LoginColors.primary.withValues(alpha:0.15),
                           child: Text(
-                            customer.displayName.isNotEmpty
-                                ? customer.displayName[0].toUpperCase()
+                            vendor.displayName.isNotEmpty
+                                ? vendor.displayName[0].toUpperCase()
                                 : '?',
                             style: TextStyle(
                               color: LoginColors.primary,
@@ -663,16 +667,16 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                customer.displayName,
+                                vendor.displayName,
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                   color: LoginColors.textPrimary,
                                 ),
                               ),
-                              if (customer.customerCompanyName.isNotEmpty)
+                              if (vendor.vendorCompanyName.isNotEmpty)
                                 Text(
-                                  customer.customerCompanyName,
+                                  vendor.vendorCompanyName,
                                   style: TextStyle(
                                     fontSize: 12.5,
                                     color: LoginColors.textSecondary,
@@ -691,13 +695,13 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
                   : Row(
                       children: [
                         Icon(
-                          Icons.person_search_rounded,
+                          Icons.storefront_rounded,
                           color: LoginColors.textTertiary,
                           size: 20,
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          'Select a customer',
+                          'Select a vendor',
                           style: TextStyle(
                             fontSize: 14,
                             color: LoginColors.textTertiary,
@@ -718,7 +722,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
     );
   }
 
-  Widget _buildPaymentDetailsSection(CreateReceivePaymentViewModel vm) {
+  Widget _buildPaymentDetailsSection(CreatePaymentSentViewModel vm) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -755,6 +759,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
             child: Column(
               children: [
+                // Amount with auto-split button
                 TextFormField(
                   controller: _amountController,
                   keyboardType:
@@ -771,9 +776,12 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
                     if (n == null || n <= 0) return 'Must be > 0';
                     return null;
                   },
-                  decoration: _inputDecoration(
-                    label: 'Amount',
-                    icon: Icons.currency_rupee_rounded,
+                  decoration: InputDecoration(
+                    labelText: 'Amount',
+                    labelStyle: TextStyle(
+                        fontSize: 13, color: LoginColors.textSecondary),
+                    prefixIcon: Icon(Icons.currency_rupee_rounded,
+                        size: 18, color: LoginColors.textTertiary),
                     suffixIcon: Tooltip(
                       message: 'Auto-split to orders',
                       child: IconButton(
@@ -792,16 +800,60 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
                         },
                       ),
                     ),
+                    filled: true,
+                    fillColor: LoginColors.fieldFill,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          BorderSide(color: LoginColors.borderLight),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          BorderSide(color: LoginColors.borderLight),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                          color: LoginColors.primary, width: 1.2),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: LoginColors.error),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
+
+                // Payment Date
                 InkWell(
                   onTap: _selectDate,
                   borderRadius: BorderRadius.circular(10),
                   child: InputDecorator(
-                    decoration: _inputDecoration(
-                      label: 'Payment Date',
-                      icon: Icons.calendar_today_rounded,
+                    decoration: InputDecoration(
+                      labelText: 'Payment Date',
+                      labelStyle: TextStyle(
+                          fontSize: 13, color: LoginColors.textSecondary),
+                      prefixIcon: Icon(Icons.calendar_today_rounded,
+                          size: 18, color: LoginColors.textTertiary),
+                      filled: true,
+                      fillColor: LoginColors.fieldFill,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            BorderSide(color: LoginColors.borderLight),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            BorderSide(color: LoginColors.borderLight),
+                      ),
                     ),
                     child: Text(
                       DateFormat('dd MMM yyyy').format(vm.paymentDate),
@@ -813,6 +865,8 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
                   ),
                 ),
                 const SizedBox(height: 14),
+
+                // Mode of Payment
                 DropdownButtonFormField<String>(
                   value: vm.modeOfPayment,
                   onChanged: (v) {
@@ -830,46 +884,96 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
                             ),
                           ))
                       .toList(),
-                  decoration: _inputDecoration(
-                    label: 'Mode of Payment',
-                    icon: Icons.account_balance_rounded,
+                  decoration: InputDecoration(
+                    labelText: 'Mode of Payment',
+                    labelStyle: TextStyle(
+                        fontSize: 13, color: LoginColors.textSecondary),
+                    prefixIcon: Icon(Icons.account_balance_rounded,
+                        size: 18, color: LoginColors.textTertiary),
+                    filled: true,
+                    fillColor: LoginColors.fieldFill,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          BorderSide(color: LoginColors.borderLight),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          BorderSide(color: LoginColors.borderLight),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                          color: LoginColors.primary, width: 1.2),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
+
+                // Reference Number with auto-fill
                 TextFormField(
                   controller: _referenceController,
                   keyboardType: TextInputType.text,
                   style: TextStyle(
                       fontSize: 15, color: LoginColors.textPrimary),
-                  decoration: _inputDecoration(
-                    label: 'Reference Number (optional)',
-                    icon: Icons.tag_rounded,
-                    suffixIcon: vm.selectedCustomer != null
+                  decoration: InputDecoration(
+                    labelText: 'Reference Number (optional)',
+                    labelStyle: TextStyle(
+                        fontSize: 13, color: LoginColors.textSecondary),
+                    prefixIcon: Icon(Icons.tag_rounded,
+                        size: 18, color: LoginColors.textTertiary),
+                    suffixIcon: vm.selectedVendor != null
                         ? Tooltip(
-                            message: 'Auto-fill customer name',
+                            message: 'Auto-fill vendor name',
                             child: IconButton(
                               icon: Icon(Icons.person_pin_rounded,
                                   size: 20, color: LoginColors.primary),
                               onPressed: () {
                                 _referenceController.text =
-                                    'Received from ${vm.selectedCustomer!.displayName}';
+                                    'Transferred to ${vm.selectedVendor!.displayName}';
                               },
                             ),
                           )
                         : null,
+                    filled: true,
+                    fillColor: LoginColors.fieldFill,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          BorderSide(color: LoginColors.borderLight),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          BorderSide(color: LoginColors.borderLight),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                          color: LoginColors.primary, width: 1.2),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: LoginColors.error),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
-                TextFormField(
+
+                // Remarks
+                _buildTextField(
+                  label: 'Remarks (optional)',
                   controller: _remarksController,
-                  maxLines: 2,
+                  icon: Icons.notes_rounded,
                   keyboardType: TextInputType.text,
-                  style: TextStyle(
-                      fontSize: 15, color: LoginColors.textPrimary),
-                  decoration: _inputDecoration(
-                    label: 'Remarks (optional)',
-                    icon: Icons.notes_rounded,
-                  ),
+                  maxLines: 2,
                 ),
               ],
             ),
@@ -879,7 +983,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
     );
   }
 
-  Widget _buildOrderAllocationsSection(CreateReceivePaymentViewModel vm) {
+  Widget _buildOrderAllocationsSection(CreatePaymentSentViewModel vm) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -925,7 +1029,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
             ),
           ),
           Divider(color: LoginColors.borderLight, height: 16),
-          if (vm.selectedCustomer == null)
+          if (vm.selectedVendor == null)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
               child: Row(
@@ -934,7 +1038,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
                       size: 16, color: LoginColors.textTertiary),
                   const SizedBox(width: 8),
                   Text(
-                    'Select a customer to see unpaid orders',
+                    'Select a vendor to see unpaid orders',
                     style: TextStyle(
                       fontSize: 13,
                       color: LoginColors.textTertiary,
@@ -958,7 +1062,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
                         size: 36, color: LoginColors.textTertiary),
                     const SizedBox(height: 8),
                     Text(
-                      'No unpaid orders for this customer',
+                      'No unpaid orders for this vendor',
                       style: TextStyle(
                         color: LoginColors.textTertiary,
                         fontSize: 13,
@@ -969,6 +1073,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
               ),
             )
           else ...[
+            // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
               child: Row(
@@ -1011,6 +1116,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
               final alloc = entry.value;
               return _buildOrderAllocationRow(vm, alloc, index);
             }),
+            // Total allocated summary
             Divider(color: LoginColors.borderLight, height: 1),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
@@ -1045,7 +1151,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
   }
 
   Widget _buildOrderAllocationRow(
-    CreateReceivePaymentViewModel vm,
+    CreatePaymentSentViewModel vm,
     OrderAllocationEntry entry,
     int index,
   ) {
@@ -1054,7 +1160,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
     final remarksCtrl = _allocRemarksControllers[index];
     final hasAmount = entry.amountApplied > 0;
 
-    final rowDecoration = InputDecoration(
+    final inputDecoration = InputDecoration(
       hintStyle: TextStyle(fontSize: 12, color: LoginColors.textTertiary),
       filled: true,
       fillColor: LoginColors.fieldFill,
@@ -1082,6 +1188,7 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Order info + balance row
           Row(
             children: [
               Expanded(
@@ -1118,8 +1225,10 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
             ],
           ),
           const SizedBox(height: 8),
+          // Amount + Remarks fields side by side
           Row(
             children: [
+              // Amount field
               SizedBox(
                 width: 110,
                 height: 34,
@@ -1128,29 +1237,29 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                   textAlign: TextAlign.right,
-                  style:
-                      TextStyle(fontSize: 13, color: LoginColors.textPrimary),
+                  style: TextStyle(fontSize: 13, color: LoginColors.textPrimary),
                   onChanged: (v) {
                     final amount = double.tryParse(v.trim()) ?? 0;
                     vm.updateAllocationAmount(index, amount);
                   },
-                  decoration: rowDecoration.copyWith(hintText: '0.00'),
+                  decoration: inputDecoration.copyWith(hintText: '0.00'),
                 ),
               ),
               const SizedBox(width: 8),
+              // Remarks field
               Expanded(
                 child: SizedBox(
                   height: 34,
                   child: TextField(
                     controller: remarksCtrl,
-                    style: TextStyle(
-                        fontSize: 12, color: LoginColors.textPrimary),
+                    style:
+                        TextStyle(fontSize: 12, color: LoginColors.textPrimary),
                     onChanged: (v) {
                       vm.updateAllocationRemarks(
                           index, v.trim().isEmpty ? null : v.trim());
                     },
                     decoration:
-                        rowDecoration.copyWith(hintText: 'Remarks (optional)'),
+                        inputDecoration.copyWith(hintText: 'Remarks (optional)'),
                   ),
                 ),
               ),
@@ -1161,36 +1270,48 @@ class _CreateReceivePaymentViewState extends State<_CreateReceivePaymentView> {
     );
   }
 
-  InputDecoration _inputDecoration({
+  Widget _buildTextField({
     required String label,
+    required TextEditingController controller,
     required IconData icon,
-    Widget? suffixIcon,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    String? Function(String?)? validator,
   }) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: TextStyle(fontSize: 13, color: LoginColors.textSecondary),
-      prefixIcon: Icon(icon, size: 18, color: LoginColors.textTertiary),
-      suffixIcon: suffixIcon,
-      filled: true,
-      fillColor: LoginColors.fieldFill,
-      isDense: true,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: LoginColors.borderLight),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: LoginColors.borderLight),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: LoginColors.primary, width: 1.2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: LoginColors.error),
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      style: TextStyle(fontSize: 15, color: LoginColors.textPrimary),
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle:
+            TextStyle(fontSize: 13, color: LoginColors.textSecondary),
+        prefixIcon:
+            Icon(icon, size: 18, color: LoginColors.textTertiary),
+        filled: true,
+        fillColor: LoginColors.fieldFill,
+        isDense: true,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: LoginColors.borderLight),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: LoginColors.borderLight),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide:
+              BorderSide(color: LoginColors.primary, width: 1.2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: LoginColors.error),
+        ),
       ),
     );
   }
