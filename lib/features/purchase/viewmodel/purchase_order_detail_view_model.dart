@@ -30,6 +30,8 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
   bool _isCanceling = false;
   String? _cancelError;
   List<PaymentRef> _dependentPayments = const [];
+  List<PaymentRef> _orderPayments = const [];
+  bool _isOrderPaymentsLoading = false;
 
   PurchaseOrderDetailState get state => _state;
   PurchaseOrderDetail? get orderDetail => _orderDetail;
@@ -41,6 +43,8 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
   String? get cancelError => _cancelError;
   List<PaymentRef> get dependentPayments =>
       List.unmodifiable(_dependentPayments);
+  List<PaymentRef> get orderPayments => List.unmodifiable(_orderPayments);
+  bool get isOrderPaymentsLoading => _isOrderPaymentsLoading;
   bool get isRefUpdating => _isRefUpdating;
 
   bool get isLoading => _state == PurchaseOrderDetailState.loading;
@@ -66,6 +70,7 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
       _orderDetail = data;
       _updateState(PurchaseOrderDetailState.loaded);
       _loadOrderRef();
+      _loadOrderPayments();
 
       if (data.orderStatus == 'ORDER') {
         _autoMarkViewed();
@@ -100,6 +105,23 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
       _notifyListenersSafely();
     } catch (e) {
       debugPrint('loadOrderRef failed: $e');
+    }
+  }
+
+  Future<void> _loadOrderPayments() async {
+    _isOrderPaymentsLoading = true;
+    _notifyListenersSafely();
+    try {
+      _orderPayments = await _repository.getOrderPaymentDetails(
+        companyId,
+        orderId,
+      );
+    } catch (e) {
+      debugPrint('loadOrderPayments failed: $e');
+      _orderPayments = const [];
+    } finally {
+      _isOrderPaymentsLoading = false;
+      _notifyListenersSafely();
     }
   }
 

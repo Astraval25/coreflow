@@ -1,8 +1,10 @@
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/company_ref/order_ref.dart';
+import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_item.dart';
+import 'package:coreflow/features/payment/send_payment/view/send_payment_detail_page.dart';
 import 'package:coreflow/features/purchase/viewmodel/purchase_order_detail_view_model.dart';
 import 'package:coreflow/features/purchase/widgets/purchase_expand_more_option.dart';
 import 'package:coreflow/features/purchase/view/update_purchase_order_page.dart';
@@ -60,7 +62,10 @@ class _PurchaseOrderDetailView extends StatelessWidget {
                 ),
               ),
             ),
-            title: _OrderAppBarTitle(order: vm.orderDetail, orderRef: vm.orderRef),
+            title: _OrderAppBarTitle(
+              order: vm.orderDetail,
+              orderRef: vm.orderRef,
+            ),
             leading: Padding(
               padding: const EdgeInsets.all(8),
               child: _RoundActionIcon(
@@ -81,9 +86,10 @@ class _PurchaseOrderDetailView extends StatelessWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           duration: Duration(seconds: 2),
-                        content: Text('Fully paid orders cannot be edited'),
-                        behavior: SnackBarBehavior.floating,
-                      ));
+                          content: Text('Fully paid orders cannot be edited'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
                       return;
                     }
                     final updated = await Navigator.push<bool>(
@@ -104,7 +110,10 @@ class _PurchaseOrderDetailView extends StatelessWidget {
           body: Stack(
             children: [
               RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
-              if (!vm.isLoading && !vm.hasError && !vm.isNoData && vm.orderDetail != null)
+              if (!vm.isLoading &&
+                  !vm.hasError &&
+                  !vm.isNoData &&
+                  vm.orderDetail != null)
                 PurchaseBottomOptionsPanel(order: vm.orderDetail!, vm: vm),
             ],
           ),
@@ -160,6 +169,12 @@ class _PurchaseOrderDetailView extends StatelessWidget {
         _ItemDetailsCard(items: items, companyId: vm.companyId),
         const SizedBox(height: 10),
         _PaymentSummaryCard(order: order),
+        const SizedBox(height: 10),
+        _OrderPaymentLinksSection(
+          companyId: vm.companyId,
+          payments: vm.orderPayments,
+          isLoading: vm.isOrderPaymentsLoading,
+        ),
         const SizedBox(height: 100),
       ],
     );
@@ -425,10 +440,18 @@ class _CompanyRefCardState extends State<_CompanyRefCard> {
   @override
   void initState() {
     super.initState();
-    _remarksCtrl = TextEditingController(text: widget.orderRef?.internalRemarks ?? '');
-    _statusCtrl = TextEditingController(text: widget.orderRef?.internalStatus ?? '');
-    _tagsCtrl = TextEditingController(text: widget.orderRef?.internalTags ?? '');
-    _customRefCtrl = TextEditingController(text: widget.orderRef?.customReference ?? '');
+    _remarksCtrl = TextEditingController(
+      text: widget.orderRef?.internalRemarks ?? '',
+    );
+    _statusCtrl = TextEditingController(
+      text: widget.orderRef?.internalStatus ?? '',
+    );
+    _tagsCtrl = TextEditingController(
+      text: widget.orderRef?.internalTags ?? '',
+    );
+    _customRefCtrl = TextEditingController(
+      text: widget.orderRef?.customReference ?? '',
+    );
   }
 
   @override
@@ -505,7 +528,11 @@ class _CompanyRefCardState extends State<_CompanyRefCard> {
                   borderRadius: BorderRadius.circular(6),
                   child: Padding(
                     padding: const EdgeInsets.all(4),
-                    child: Icon(Icons.edit_rounded, size: 16, color: LoginColors.primary),
+                    child: Icon(
+                      Icons.edit_rounded,
+                      size: 16,
+                      color: LoginColors.primary,
+                    ),
                   ),
                 ),
             ],
@@ -514,7 +541,11 @@ class _CompanyRefCardState extends State<_CompanyRefCard> {
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.numbers_rounded, size: 12, color: LoginColors.textSecondary),
+                Icon(
+                  Icons.numbers_rounded,
+                  size: 12,
+                  color: LoginColors.textSecondary,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   localNumber,
@@ -533,9 +564,15 @@ class _CompanyRefCardState extends State<_CompanyRefCard> {
             const SizedBox(height: 8),
             _RefTextField(controller: _statusCtrl, label: 'Internal Status'),
             const SizedBox(height: 8),
-            _RefTextField(controller: _tagsCtrl, label: 'Tags (comma-separated)'),
+            _RefTextField(
+              controller: _tagsCtrl,
+              label: 'Tags (comma-separated)',
+            ),
             const SizedBox(height: 8),
-            _RefTextField(controller: _customRefCtrl, label: 'Custom Reference'),
+            _RefTextField(
+              controller: _customRefCtrl,
+              label: 'Custom Reference',
+            ),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -546,7 +583,8 @@ class _CompanyRefCardState extends State<_CompanyRefCard> {
                     _remarksCtrl.text = widget.orderRef?.internalRemarks ?? '';
                     _statusCtrl.text = widget.orderRef?.internalStatus ?? '';
                     _tagsCtrl.text = widget.orderRef?.internalTags ?? '';
-                    _customRefCtrl.text = widget.orderRef?.customReference ?? '';
+                    _customRefCtrl.text =
+                        widget.orderRef?.customReference ?? '';
                   },
                   child: const Text('Cancel', style: TextStyle(fontSize: 12)),
                 ),
@@ -555,31 +593,48 @@ class _CompanyRefCardState extends State<_CompanyRefCard> {
                   onPressed: widget.vm.isRefUpdating ? null : _save,
                   style: FilledButton.styleFrom(
                     backgroundColor: LoginColors.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   child: widget.vm.isRefUpdating
                       ? const SizedBox(
-                          width: 14, height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
-                      : const Text('Save', style: TextStyle(fontSize: 12, color: Colors.white)),
+                      : const Text(
+                          'Save',
+                          style: TextStyle(fontSize: 12, color: Colors.white),
+                        ),
                 ),
               ],
             ),
           ] else ...[
             if (_hasRefData(ref)) ...[
               const SizedBox(height: 8),
-              if (ref!.internalRemarks != null && ref.internalRemarks!.isNotEmpty)
+              if (ref!.internalRemarks != null &&
+                  ref.internalRemarks!.isNotEmpty)
                 _RefDisplayRow(label: 'Remarks', value: ref.internalRemarks!),
               if (ref.internalStatus != null && ref.internalStatus!.isNotEmpty)
                 _RefDisplayRow(label: 'Status', value: ref.internalStatus!),
               if (ref.internalTags != null && ref.internalTags!.isNotEmpty)
                 _RefDisplayRow(label: 'Tags', value: ref.internalTags!),
-              if (ref.customReference != null && ref.customReference!.isNotEmpty)
-                _RefDisplayRow(label: 'Custom Ref', value: ref.customReference!),
+              if (ref.customReference != null &&
+                  ref.customReference!.isNotEmpty)
+                _RefDisplayRow(
+                  label: 'Custom Ref',
+                  value: ref.customReference!,
+                ),
             ],
           ],
         ],
@@ -974,6 +1029,211 @@ class _PurchaseOrderDetailLoadingSkeleton extends StatelessWidget {
   }
 }
 
+class _OrderPaymentLinksSection extends StatefulWidget {
+  final int companyId;
+  final List<PaymentRef> payments;
+  final bool isLoading;
+
+  const _OrderPaymentLinksSection({
+    required this.companyId,
+    required this.payments,
+    required this.isLoading,
+  });
+
+  @override
+  State<_OrderPaymentLinksSection> createState() =>
+      _OrderPaymentLinksSectionState();
+}
+
+class _OrderPaymentLinksSectionState extends State<_OrderPaymentLinksSection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CardBlock(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.account_balance_wallet_rounded,
+                    size: 16,
+                    color: LoginColors.textPrimary,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Payments Made',
+                      style: TextStyle(
+                        color: LoginColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${widget.payments.length}',
+                    style: TextStyle(
+                      color: LoginColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    _expanded
+                        ? Icons.expand_less_rounded
+                        : Icons.expand_more_rounded,
+                    color: LoginColors.textSecondary,
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_expanded) ...[
+            const SizedBox(height: 8),
+            if (widget.isLoading)
+              Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: LoginColors.primary,
+                  ),
+                ),
+              )
+            else if (widget.payments.isEmpty)
+              Text(
+                'No payments linked to this order.',
+                style: TextStyle(
+                  color: LoginColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              )
+            else
+              for (int i = 0; i < widget.payments.length; i++) ...[
+                _PaymentLinkRow(
+                  payment: widget.payments[i],
+                  onTap: () {
+                    final paymentId = widget.payments[i].paymentId;
+                    if (paymentId == null || paymentId <= 0) return;
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => SendPaymentDetailPage(
+                          companyId: widget.companyId,
+                          paymentId: paymentId,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                if (i != widget.payments.length - 1)
+                  Divider(height: 12, color: LoginColors.borderLight),
+              ],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentLinkRow extends StatelessWidget {
+  final PaymentRef payment;
+  final VoidCallback onTap;
+
+  const _PaymentLinkRow({required this.payment, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final linkLabel = payment.localPaymentNumber.isNotEmpty
+        ? payment.localPaymentNumber
+        : 'Payment #${payment.paymentId ?? '-'}';
+    final dateText = _formatPaymentDate(payment.paymentDate);
+    final amountText = payment.amount != null
+        ? 'INR ${payment.amount!.toStringAsFixed(2)}'
+        : '';
+    final meta = [dateText, amountText].where((e) => e.isNotEmpty).join(' | ');
+    final canOpen = (payment.paymentId ?? 0) > 0;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(Icons.link_rounded, size: 14, color: LoginColors.primary),
+          const SizedBox(width: 6),
+          InkWell(
+            onTap: canOpen ? onTap : null,
+            borderRadius: BorderRadius.circular(6),
+            child: Text(
+              linkLabel,
+              style: TextStyle(
+                color: canOpen
+                    ? LoginColors.primary
+                    : LoginColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                decoration: canOpen
+                    ? TextDecoration.underline
+                    : TextDecoration.none,
+                decorationColor: LoginColors.primary,
+              ),
+            ),
+          ),
+          if (meta.isNotEmpty) ...[
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                meta,
+                style: TextStyle(
+                  color: LoginColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ] else
+            const Spacer(),
+          if (canOpen)
+            Icon(
+              Icons.open_in_new_rounded,
+              size: 14,
+              color: LoginColors.textSecondary,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+String _formatPaymentDate(DateTime? date) {
+  if (date == null) return '';
+  const months = <String>[
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  final month = months[(date.month - 1).clamp(0, 11)];
+  return '$month ${date.day}, ${date.year}';
+}
+
 class _StateMessage extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -1047,8 +1307,6 @@ String _displaySellerCompany(PurchaseOrderDetail order) {
   // }
   return ' ';
 }
-
-
 
 int _overdueDays(DateTime orderDate) {
   final now = DateTime.now();

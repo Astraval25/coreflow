@@ -169,17 +169,16 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
     }
 
     if (responseCode == 444 || dependentPayments.isNotEmpty) {
-      TopCenterMessagePopup.show(
+      TopMessagePopup.show(
         context: context,
         title: 'Order Cannot Be Canceled',
         message: message,
         links: dependentPayments
             .where((p) => (p.paymentId ?? 0) > 0)
             .map(
-              (p) => TopCenterMessagePopupLink(
-                label: p.localPaymentNumber.isNotEmpty
-                    ? p.localPaymentNumber
-                    : 'Payment #${p.paymentId}',
+              (p) => TopMessageLink(
+                label: _paymentLinkLabel(p),
+                meta: _paymentLinkMeta(p),
                 onTap: () {
                   final paymentId = p.paymentId;
                   if (paymentId == null || paymentId <= 0) return;
@@ -206,6 +205,39 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  String _paymentLinkLabel(PaymentRef p) {
+    return p.localPaymentNumber.isNotEmpty
+        ? p.localPaymentNumber
+        : 'Payment #${p.paymentId}';
+  }
+
+  String _paymentLinkMeta(PaymentRef p) {
+    final dateText = p.paymentDate != null ? _formatDate(p.paymentDate!) : '';
+    final amountText = p.amount != null
+        ? 'INR ${p.amount!.toStringAsFixed(2)}'
+        : '';
+    return [dateText, amountText].where((e) => e.isNotEmpty).join(' | ');
+  }
+
+  String _formatDate(DateTime date) {
+    const months = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final month = months[(date.month - 1).clamp(0, 11)];
+    return '$month ${date.day}, ${date.year}';
   }
 
   Future<void> _doStatusAction(String action) async {

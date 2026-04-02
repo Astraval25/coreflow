@@ -104,6 +104,34 @@ class OrderRepository {
     }
   }
 
+  Future<List<PaymentRef>> getOrderPaymentDetails(
+    int companyId,
+    int orderId,
+  ) async {
+    try {
+      final uri = Uri.parse(
+        AppConfig.getOrderPaymentDetailsUrl(companyId, orderId),
+      );
+      final response = await _apiService.get(uri);
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        return [];
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] != true) return [];
+      final responseData = data['responseData'];
+      if (responseData is! List) return [];
+
+      return responseData
+          .whereType<Map>()
+          .map((e) => PaymentRef.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } catch (e) {
+      debugPrint('Get order payment details error: $e');
+      return [];
+    }
+  }
+
   Future<List<PurchaseOrder>> getPurchaseOrders(int companyId) async {
     try {
       final url = AppConfig.getPurchaseOrdersUrl(companyId);
