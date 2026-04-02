@@ -35,24 +35,20 @@ class CustomerDetailContent extends StatelessWidget {
             ),
           ),
         ),
-        leading: Builder(
-          builder: (scaffoldContext) {
-            return IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.menu_rounded,
-                  color: Colors.white,
-                  size: 19,
-                ),
-              ),
-              onPressed: () => Scaffold.of(scaffoldContext).openDrawer(),
-            );
-          },
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white,
+              size: 19,
+            ),
+          ),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Consumer<CustomerDetailViewModel>(
           builder: (context, vm, child) {
