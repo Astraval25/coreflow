@@ -33,7 +33,7 @@ import 'package:coreflow/features/payment/send_payment/view/create_payment_sent_
 import 'package:coreflow/features/payment/receive_payment/view/pay_received_page.dart';
 import 'package:coreflow/features/payment/receive_payment/view/create_receive_payment_page.dart';
 import 'package:coreflow/features/report/view/report_list_page.dart';
-import 'package:coreflow/features/splash/view/splash_page.dart';
+import 'package:coreflow/core/utils/splash/view/splash_page.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:go_router/go_router.dart';
 

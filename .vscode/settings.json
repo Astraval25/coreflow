@@ -1,3 +1,17 @@
 {
-  "java.configuration.updateBuildConfiguration": "interactive"
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "files.exclude": {
+    "**/.dart_tool": true,
+    "**/.pub-cache": true,
+    "**/-p": true,
+    "**/.idea": true,
+    "**/*.log": true,
+    "**/pubspec.lock": true,
+    "**/.metadata": true,
+    "**/.flutter-plugins-dependencies": true,
+    "**/analysis_options.yaml": true,
+    
+    "**/android": true,
+    "**/ios": true,
+  }
 }
