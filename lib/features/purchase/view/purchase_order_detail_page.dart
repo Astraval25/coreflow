@@ -1,4 +1,5 @@
 import 'package:coreflow/core/widgets/skeleton.dart';
+import 'package:coreflow/core/utils/common_formatters.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/company_ref/order_ref.dart';
 import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
@@ -244,9 +245,9 @@ class _OrderAppBarTitle extends StatelessWidget {
     }
 
     final localNumber = orderRef?.localOrderNumber ?? '';
-    final overdueDays = _overdueDays(order!.orderDate);
-    final overdueText = overdueDays > 0
-        ? 'Overdue by $overdueDays day${overdueDays == 1 ? '' : 's'}'
+    final overdueDaysCount = overdueDays(order!.orderDate);
+    final overdueText = overdueDaysCount > 0
+        ? 'Overdue by $overdueDaysCount day${overdueDaysCount == 1 ? '' : 's'}'
         : 'Overdue by 0 days';
 
     return Column(
@@ -309,7 +310,7 @@ class _CustomerDetailsCard extends StatelessWidget {
                         const SizedBox(height: 8),
                         _MetaText(
                           label: 'Order Date',
-                          value: _formatDate(order.orderDate),
+                          value: formatDate(order.orderDate),
                         ),
                       ],
                     ),
@@ -824,14 +825,14 @@ class _ItemDetailRow extends StatelessWidget {
               Expanded(
                 child: _ItemValue(
                   label: 'Rate',
-                  value: _money(item.unitPrice),
+                  value: formatMoney(item.unitPrice),
                   textAlignEnd: true,
                 ),
               ),
               Expanded(
                 child: _ItemValue(
                   label: 'Amount',
-                  value: _money(item.itemTotal),
+                  value: formatMoney(item.itemTotal),
                   textAlignEnd: true,
                 ),
               ),
@@ -874,18 +875,22 @@ class _PaymentSummaryCard extends StatelessWidget {
               1: IntrinsicColumnWidth(),
             },
             children: [
-              _paymentRow(context, 'Sub Total', _money(order.orderAmount)),
-              _paymentRow(context, 'Tax Amount', _money(order.taxAmount)),
-              _paymentRow(context, 'Discount', _money(order.discountAmount)),
+              _paymentRow(context, 'Sub Total', formatMoney(order.orderAmount)),
+              _paymentRow(context, 'Tax Amount', formatMoney(order.taxAmount)),
+              _paymentRow(
+                context,
+                'Discount',
+                formatMoney(order.discountAmount),
+              ),
               _paymentRow(
                 context,
                 'Delivery Charge',
-                _money(order.deliveryCharge),
+                formatMoney(order.deliveryCharge),
               ),
               _paymentRow(
                 context,
                 'Total',
-                _money(order.totalAmount),
+                formatMoney(order.totalAmount),
                 isEmphasized: true,
                 valueColor: LoginColors.textPrimary,
                 valueSize: 14,
@@ -903,14 +908,14 @@ class _PaymentSummaryCard extends StatelessWidget {
               _paymentRow(
                 context,
                 'Amount Paid',
-                _money(order.paidAmount),
+                formatMoney(order.paidAmount),
                 valueColor: LoginColors.success,
                 valueSize: 14,
               ),
               _paymentRow(
                 context,
                 'Balance',
-                _money(pending),
+                formatMoney(pending),
                 isEmphasized: true,
                 valueColor: LoginColors.error,
                 valueSize: 14,
@@ -1157,7 +1162,7 @@ class _PaymentLinkRow extends StatelessWidget {
     final linkLabel = payment.localPaymentNumber.isNotEmpty
         ? payment.localPaymentNumber
         : 'Payment #${payment.paymentId ?? '-'}';
-    final dateText = _formatPaymentDate(payment.paymentDate);
+    final dateText = formatPaymentDate(payment.paymentDate);
     final amountText = payment.amount != null
         ? 'INR ${payment.amount!.toStringAsFixed(2)}'
         : '';
@@ -1214,26 +1219,6 @@ class _PaymentLinkRow extends StatelessWidget {
   }
 }
 
-String _formatPaymentDate(DateTime? date) {
-  if (date == null) return '';
-  const months = <String>[
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  final month = months[(date.month - 1).clamp(0, 11)];
-  return '$month ${date.day}, ${date.year}';
-}
-
 class _StateMessage extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -1275,8 +1260,6 @@ class _StateMessage extends StatelessWidget {
   }
 }
 
-String _money(double value) => ' ${value.toStringAsFixed(2)}';
-
 String _trimNumber(double value) {
   final rounded = value.roundToDouble();
   if ((value - rounded).abs() < 0.000001) {
@@ -1306,29 +1289,4 @@ String _displaySellerCompany(PurchaseOrderDetail order) {
   //   return order.buyerCompanyName;
   // }
   return ' ';
-}
-
-int _overdueDays(DateTime orderDate) {
-  final now = DateTime.now();
-  final diff = now.difference(orderDate).inDays;
-  return diff < 0 ? 0 : diff;
-}
-
-String _formatDate(DateTime date) {
-  const months = <String>[
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  final month = months[(date.month - 1).clamp(0, 12)];
-  return '$month ${date.day}, ${date.year}';
 }

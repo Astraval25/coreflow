@@ -1,4 +1,5 @@
 import 'package:coreflow/core/utils/order_share_helper.dart';
+import 'package:coreflow/core/utils/common_formatters.dart';
 import 'package:coreflow/core/widgets/top_message_popup.dart';
 import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/customer/customer.dart';
@@ -214,30 +215,11 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
   }
 
   String _paymentLinkMeta(PaymentRef p) {
-    final dateText = p.paymentDate != null ? _formatDate(p.paymentDate!) : '';
+    final dateText = p.paymentDate != null ? formatDate(p.paymentDate!) : '';
     final amountText = p.amount != null
         ? 'INR ${p.amount!.toStringAsFixed(2)}'
         : '';
     return [dateText, amountText].where((e) => e.isNotEmpty).join(' | ');
-  }
-
-  String _formatDate(DateTime date) {
-    const months = <String>[
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    final month = months[(date.month - 1).clamp(0, 11)];
-    return '$month ${date.day}, ${date.year}';
   }
 
   Future<void> _doStatusAction(String action) async {
