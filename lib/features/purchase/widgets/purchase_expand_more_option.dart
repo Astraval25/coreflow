@@ -137,7 +137,7 @@ class _PurchaseBottomOptionsPanelState extends State<PurchaseBottomOptionsPanel>
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: const Duration(seconds: 1),
+          duration: const Duration(seconds: 2),
           content: Text(message),
           behavior: SnackBarBehavior.floating,
         ),
@@ -178,7 +178,7 @@ class _PurchaseBottomOptionsPanelState extends State<PurchaseBottomOptionsPanel>
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: const Duration(seconds: 1),
+        duration: const Duration(seconds: 2),
         content: Text(message),
         behavior: SnackBarBehavior.floating,
       ),
@@ -194,7 +194,7 @@ class _PurchaseBottomOptionsPanelState extends State<PurchaseBottomOptionsPanel>
     if (!success && mounted && widget.vm.statusError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: const Duration(seconds: 1),
+          duration: const Duration(seconds: 2),
           content: Text(widget.vm.statusError!),
           behavior: SnackBarBehavior.floating,
         ),
@@ -477,7 +477,7 @@ class _PurchaseBottomOptionsPanelState extends State<PurchaseBottomOptionsPanel>
                       ),
                       _ActionTile(
                         icon: Icons.undo_rounded,
-                        label: 'Revert to Viewed',
+                        label: 'Mark as Order',
                         color: Colors.grey.shade600,
                         onTap: widget.vm.isStatusUpdating
                             ? () {}

@@ -83,7 +83,7 @@ class _SalesOrderDetailView extends StatelessWidget {
                     if (vm.orderDetail!.isPaid) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          duration: Duration(seconds: 1),
+                          duration: Duration(seconds: 2),
                         content: Text('Fully paid orders cannot be edited'),
                         behavior: SnackBarBehavior.floating,
                       ));
@@ -475,7 +475,7 @@ class _CompanyRefCardState extends State<_CompanyRefCard> {
       if (!success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            duration: Duration(seconds: 1),
+            duration: Duration(seconds: 2),
             content: Text('Failed to update reference'),
             behavior: SnackBarBehavior.floating,
           ),

@@ -373,7 +373,7 @@ class _CustomerEditScreenState extends State<CustomerEditScreen> {
     if (success && mounted && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: Text('Edit updated successfully'),
         ),
       );

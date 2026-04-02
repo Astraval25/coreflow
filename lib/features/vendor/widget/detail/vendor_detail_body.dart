@@ -235,7 +235,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             if (context.mounted && response != null && !response.responseStatus) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  duration: Duration(seconds: 1),
+                  duration: Duration(seconds: 2),
                   content: Text(response.responseMessage),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -247,7 +247,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             if (context.mounted && response == null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  duration: Duration(seconds: 1),
+                  duration: Duration(seconds: 2),
                   content: Text('No existing invitation code found'),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -259,7 +259,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  duration: Duration(seconds: 1),
+                  duration: Duration(seconds: 2),
                   content: Text(
                     response?.responseStatus == true
                         ? 'Company linked successfully'

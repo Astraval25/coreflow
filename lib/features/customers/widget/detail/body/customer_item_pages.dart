@@ -344,7 +344,7 @@ class _CreateCustomerItemPageState extends State<CreateCustomerItemPage> {
     if (price == null || price <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: Text('Enter a valid sales price'),
         ),
       );
@@ -367,7 +367,7 @@ class _CreateCustomerItemPageState extends State<CreateCustomerItemPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: Duration(seconds: 1),
+        duration: Duration(seconds: 2),
         content: Text(
           widget.viewModel.errorMessage ?? 'Failed to create customer item',
         ),
@@ -566,7 +566,7 @@ class _UpdateCustomerItemPageState extends State<UpdateCustomerItemPage> {
     if (price == null || price <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: Text('Enter a valid sales price'),
         ),
       );
@@ -589,7 +589,7 @@ class _UpdateCustomerItemPageState extends State<UpdateCustomerItemPage> {
 
     ScaffoldMessenger.of(context).showSnackBar( 
       SnackBar(
-        duration: Duration(seconds: 1),
+        duration: Duration(seconds: 2),
         content: Text(
           widget.viewModel.errorMessage ?? 'Failed to update customer item',
         ),

@@ -377,7 +377,7 @@ class VendorItemSection extends StatelessWidget {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        duration: Duration(seconds: 1),
+        duration: Duration(seconds: 2),
         content: Text('Vendor item created successfully'),
       ),
     );

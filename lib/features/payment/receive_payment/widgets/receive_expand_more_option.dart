@@ -86,7 +86,7 @@ class _ReceivePaymentBottomPanelState extends State<ReceivePaymentBottomPanel>
     if (!success && mounted && widget.vm.statusError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: const Duration(seconds: 1),
+          duration: const Duration(seconds: 2),
           content: Text(widget.vm.statusError!),
           behavior: SnackBarBehavior.floating,
         ),
@@ -289,7 +289,7 @@ class _ReceivePaymentBottomPanelState extends State<ReceivePaymentBottomPanel>
                         if (proofFile == null || proofFile.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              duration: Duration(seconds: 1),
+                              duration: Duration(seconds: 2),
                               content: Text('No proof attached to share'),
                               behavior: SnackBarBehavior.floating,
                             ),
@@ -301,7 +301,7 @@ class _ReceivePaymentBottomPanelState extends State<ReceivePaymentBottomPanel>
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                duration: Duration(seconds: 1),
+                                duration: Duration(seconds: 2),
                                 content: Text('Unable to load proof file'),
                                 behavior: SnackBarBehavior.floating,
                               ),

@@ -97,7 +97,7 @@ class _SendPaymentDetailView extends StatelessWidget {
                     if (hoursDiff >= 24) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          duration: Duration(seconds: 1),
+                          duration: Duration(seconds: 2),
                         content: Text(
                             'Payments can only be edited within 24 hours of creation'),
                         behavior: SnackBarBehavior.floating,
@@ -426,7 +426,7 @@ class _PaymentRefCardState extends State<_PaymentRefCard> {
       if (!success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            duration: Duration(seconds: 1),
+            duration: Duration(seconds: 2),
             content: Text('Failed to update reference'),
             behavior: SnackBarBehavior.floating,
           ),
@@ -1030,7 +1030,7 @@ class _ProofViewerPage extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar( 
           const SnackBar(
-            duration: Duration(seconds: 1),
+            duration: Duration(seconds: 2),
             content: Text('Unable to open PDF'),
             behavior: SnackBarBehavior.floating,
           ),

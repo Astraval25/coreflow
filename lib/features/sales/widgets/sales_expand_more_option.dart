@@ -160,7 +160,7 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: const Duration(seconds: 1),
+          duration: const Duration(seconds: 2),
           content: Text(message),
           behavior: SnackBarBehavior.floating,
         ),
@@ -201,7 +201,7 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: const Duration(seconds: 1),
+        duration: const Duration(seconds: 2),
         content: Text(message),
         behavior: SnackBarBehavior.floating,
       ),
@@ -217,7 +217,7 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
     if (!success && mounted && widget.vm.statusError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: const Duration(seconds: 1),
+          duration: const Duration(seconds: 2),
           content: Text(widget.vm.statusError!),
           behavior: SnackBarBehavior.floating,
         ),

@@ -107,7 +107,7 @@ class QuickAccessSection extends StatelessWidget {
   void _showSelectCompany(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: Duration(seconds: 1),
+        duration: Duration(seconds: 2),
         content: const Text('Please select a company first.'),
         behavior: SnackBarBehavior.floating,
         backgroundColor: LoginColors.primary,

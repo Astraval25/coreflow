@@ -130,7 +130,7 @@ class _ReportDetailView extends StatelessWidget {
     if (vm.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
         content: Text(vm.error!),
         backgroundColor: LoginColors.error,
         behavior: SnackBarBehavior.floating,

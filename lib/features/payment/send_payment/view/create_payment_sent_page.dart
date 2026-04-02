@@ -286,7 +286,7 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: Duration(seconds: 1),
+        duration: Duration(seconds: 2),
         content: Text(message),
         backgroundColor: LoginColors.error,
         behavior: SnackBarBehavior.floating,

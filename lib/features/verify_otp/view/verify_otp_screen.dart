@@ -34,7 +34,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     _resendTimer = 30;
     _timer?.cancel();
 
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(Duration(seconds: 2), (timer) {
       if (_resendTimer > 0) {
         setState(() => _resendTimer--);
       } else {
