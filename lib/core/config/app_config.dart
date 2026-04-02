@@ -286,9 +286,14 @@ class AppConfig {
   static String getOrderStatusUrl(int companyId, int orderId, String action) =>
       '$baseUrl/api/companies/$companyId/orders/$orderId/$action';
 
+  static String getCancelOrderUrl(int companyId, int orderId) =>
+      '$baseUrl/api/companies/$companyId/orders/$orderId/cancel-order';
+
   static String getPaymentStatusUrl(
-          int companyId, int paymentId, String action) =>
-      '$baseUrl/api/companies/$companyId/payments/$paymentId/$action';
+    int companyId,
+    int paymentId,
+    String action,
+  ) => '$baseUrl/api/companies/$companyId/payments/$paymentId/$action';
 
   static String getCustomerInvitationUrl(int companyId, int customerId) =>
       '$baseUrl${customerInvitationEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';

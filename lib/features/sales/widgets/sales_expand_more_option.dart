@@ -1,8 +1,11 @@
 import 'package:coreflow/core/utils/order_share_helper.dart';
+import 'package:coreflow/core/widgets/top_message_popup.dart';
+import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/customer/customer.dart';
 import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
     as sales_detail;
 import 'package:coreflow/features/payment/receive_payment/view/create_receive_payment_page.dart';
+import 'package:coreflow/features/payment/receive_payment/view/pay_received_detail_page.dart';
 import 'package:coreflow/features/sales/viewmodel/sales_order_detail_view_model.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';
@@ -11,8 +14,8 @@ OrderShareData _salesOrderToShareData(sales_detail.SalesOrderDetail order) {
   final customer = order.customerDisplayName.trim().isNotEmpty
       ? order.customerDisplayName
       : order.customerName.trim().isNotEmpty
-          ? order.customerName
-          : 'Customer';
+      ? order.customerName
+      : 'Customer';
 
   return OrderShareData(
     orderNumber: order.orderNumber,
@@ -119,7 +122,7 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
   }
 
   ({String label, IconData icon, String action, Color color})?
-      get _revertStatusInfo {
+  get _revertStatusInfo {
     switch (widget.order.orderStatus) {
       case 'ORDER_INVOICED':
         return (
@@ -131,6 +134,78 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
       default:
         return null;
     }
+  }
+
+  bool get _canCancelOrder {
+    final status = widget.order.orderStatus.toUpperCase();
+    if (!widget.order.isActive) return false;
+    if (status.contains('CANCEL')) return false;
+    return true;
+  }
+
+  Future<void> _cancelOrder() async {
+    if (widget.vm.isCanceling) return;
+
+    _animCtrl.reverse();
+    final result = await widget.vm.cancelOrder();
+    if (!mounted) return;
+
+    final success = result['success'] == true;
+    final message = result['message']?.toString() ?? 'Failed to cancel order';
+    final dependentPayments =
+        (result['dependentPayments'] as List<PaymentRef>?) ??
+        const <PaymentRef>[];
+    final responseCode = result['responseCode'];
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 1),
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (responseCode == 444 || dependentPayments.isNotEmpty) {
+      TopCenterMessagePopup.show(
+        context: context,
+        title: 'Order Cannot Be Canceled',
+        message: message,
+        links: dependentPayments
+            .where((p) => (p.paymentId ?? 0) > 0)
+            .map(
+              (p) => TopCenterMessagePopupLink(
+                label: p.localPaymentNumber.isNotEmpty
+                    ? p.localPaymentNumber
+                    : 'Payment #${p.paymentId}',
+                onTap: () {
+                  final paymentId = p.paymentId;
+                  if (paymentId == null || paymentId <= 0) return;
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => PayReceivedDetailPage(
+                        companyId: widget.vm.companyId,
+                        paymentId: paymentId,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            )
+            .toList(),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 1),
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _doStatusAction(String action) async {
@@ -155,13 +230,12 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
     final displayName = order.customerDisplayName.trim().isNotEmpty
         ? order.customerDisplayName
         : order.customerName.trim().isNotEmpty
-            ? order.customerName
-            : 'Customer';
+        ? order.customerName
+        : 'Customer';
     final companyName = order.buyerCompanyName.trim().isNotEmpty
         ? order.buyerCompanyName
         : order.sellerCompanyName;
-    final companyId =
-        order.buyerCompanyId > 0 ? order.buyerCompanyId : null;
+    final companyId = order.buyerCompanyId > 0 ? order.buyerCompanyId : null;
     final pending = order.pendingAmount < 0 ? 0.0 : order.pendingAmount;
 
     final customer = Customer(
@@ -218,8 +292,7 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
 
   void _measureExpandedHeight() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final box =
-          _expandedKey.currentContext?.findRenderObject() as RenderBox?;
+      final box = _expandedKey.currentContext?.findRenderObject() as RenderBox?;
       if (box != null) _expandedHeight = box.size.height;
     });
   }
@@ -257,8 +330,7 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
         onVerticalDragEnd: _onDragEnd,
         child: Material(
           color: LoginColors.surface,
-          borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(16)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
           elevation: 8,
           shadowColor: Colors.black26,
           child: Column(
@@ -271,8 +343,7 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color:
-                        LoginColors.textSecondary.withValues(alpha: 0.3),
+                    color: LoginColors.textSecondary.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -308,8 +379,7 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
                           style: OutlinedButton.styleFrom(
                             foregroundColor: LoginColors.primary,
                             side: BorderSide(
-                              color: LoginColors.primary
-                                  .withValues(alpha: 0.4),
+                              color: LoginColors.primary.withValues(alpha: 0.4),
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -371,14 +441,12 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
                           style: OutlinedButton.styleFrom(
                             padding: EdgeInsets.zero,
                             foregroundColor: LoginColors.textPrimary,
-                            side: BorderSide(
-                                color: LoginColors.borderLight),
+                            side: BorderSide(color: LoginColors.borderLight),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             backgroundColor: _animCtrl.value > 0.5
-                                ? LoginColors.primary
-                                    .withValues(alpha: 0.08)
+                                ? LoginColors.primary.withValues(alpha: 0.08)
                                 : null,
                           ),
                           child: Icon(
@@ -441,6 +509,21 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
                                 _animCtrl.reverse();
                                 _doStatusAction(revertInfo.action);
                               },
+                      ),
+                    ],
+                    if (_canCancelOrder) ...[
+                      Divider(
+                        height: 1,
+                        indent: 44,
+                        color: LoginColors.borderLight,
+                      ),
+                      _ActionTile(
+                        icon: Icons.cancel_schedule_send_rounded,
+                        label: widget.vm.isCanceling
+                            ? 'Canceling Order...'
+                            : 'Cancel Order',
+                        color: LoginColors.error,
+                        onTap: _cancelOrder,
                       ),
                     ],
                   ],

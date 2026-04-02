@@ -1,7 +1,10 @@
 import 'package:coreflow/core/utils/order_share_helper.dart';
+import 'package:coreflow/core/widgets/top_message_popup.dart';
+import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
 import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:coreflow/features/payment/send_payment/view/create_payment_sent_page.dart';
+import 'package:coreflow/features/payment/send_payment/view/send_payment_detail_page.dart';
 import 'package:coreflow/features/purchase/viewmodel/purchase_order_detail_view_model.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';
@@ -10,8 +13,8 @@ OrderShareData _purchaseOrderToShareData(PurchaseOrderDetail order) {
   final vendor = order.vendorDisplayName.trim().isNotEmpty
       ? order.vendorDisplayName
       : order.vendorName.trim().isNotEmpty
-          ? order.vendorName
-          : 'Vendor';
+      ? order.vendorName
+      : 'Vendor';
 
   return OrderShareData(
     orderNumber: order.orderNumber,
@@ -22,12 +25,14 @@ OrderShareData _purchaseOrderToShareData(PurchaseOrderDetail order) {
     sellerCompanyName: order.sellerCompanyName,
     buyerCompanyName: order.buyerCompanyName,
     items: order.orderItems
-        .map((i) => OrderShareItemData(
-              itemName: i.itemName,
-              quantity: i.quantity,
-              unitPrice: i.unitPrice,
-              itemTotal: i.itemTotal,
-            ))
+        .map(
+          (i) => OrderShareItemData(
+            itemName: i.itemName,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            itemTotal: i.itemTotal,
+          ),
+        )
         .toList(),
     orderAmount: order.orderAmount,
     taxAmount: order.taxAmount,
@@ -54,8 +59,7 @@ class PurchaseBottomOptionsPanel extends StatefulWidget {
       _PurchaseBottomOptionsPanelState();
 }
 
-class _PurchaseBottomOptionsPanelState
-    extends State<PurchaseBottomOptionsPanel>
+class _PurchaseBottomOptionsPanelState extends State<PurchaseBottomOptionsPanel>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animCtrl;
   bool _sharing = false;
@@ -109,6 +113,78 @@ class _PurchaseBottomOptionsPanelState
 
   bool get _canRevertStatus => widget.order.orderStatus == 'ORDER_INVOICED';
 
+  bool get _canCancelOrder {
+    final status = widget.order.orderStatus.toUpperCase();
+    if (!widget.order.isActive) return false;
+    if (status.contains('CANCEL')) return false;
+    return true;
+  }
+
+  Future<void> _cancelOrder() async {
+    if (widget.vm.isCanceling) return;
+
+    _animCtrl.reverse();
+    final result = await widget.vm.cancelOrder();
+    if (!mounted) return;
+
+    final success = result['success'] == true;
+    final message = result['message']?.toString() ?? 'Failed to cancel order';
+    final dependentPayments =
+        (result['dependentPayments'] as List<PaymentRef>?) ??
+        const <PaymentRef>[];
+    final responseCode = result['responseCode'];
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 1),
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (responseCode == 444 || dependentPayments.isNotEmpty) {
+      TopCenterMessagePopup.show(
+        context: context,
+        title: 'Order Cannot Be Canceled',
+        message: message,
+        links: dependentPayments
+            .where((p) => (p.paymentId ?? 0) > 0)
+            .map(
+              (p) => TopCenterMessagePopupLink(
+                label: p.localPaymentNumber.isNotEmpty
+                    ? p.localPaymentNumber
+                    : 'Payment #${p.paymentId}',
+                onTap: () {
+                  final paymentId = p.paymentId;
+                  if (paymentId == null || paymentId <= 0) return;
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SendPaymentDetailPage(
+                        companyId: widget.vm.companyId,
+                        paymentId: paymentId,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            )
+            .toList(),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 1),
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Future<void> _doStatusAction(String action) async {
     if (action == 'record-payment') {
       await _navigateToSendPayment();
@@ -131,13 +207,12 @@ class _PurchaseBottomOptionsPanelState
     final displayName = order.vendorDisplayName.trim().isNotEmpty
         ? order.vendorDisplayName
         : order.vendorName.trim().isNotEmpty
-            ? order.vendorName
-            : 'Vendor';
+        ? order.vendorName
+        : 'Vendor';
     final companyName = order.sellerCompanyName.trim().isNotEmpty
         ? order.sellerCompanyName
         : order.buyerCompanyName;
-    final companyId =
-        order.sellerCompanyId > 0 ? order.sellerCompanyId : null;
+    final companyId = order.sellerCompanyId > 0 ? order.sellerCompanyId : null;
     final pending = order.pendingAmount < 0 ? 0.0 : order.pendingAmount;
 
     final vendor = Vendor(
@@ -194,8 +269,7 @@ class _PurchaseBottomOptionsPanelState
 
   void _measureExpandedHeight() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final box =
-          _expandedKey.currentContext?.findRenderObject() as RenderBox?;
+      final box = _expandedKey.currentContext?.findRenderObject() as RenderBox?;
       if (box != null) _expandedHeight = box.size.height;
     });
   }
@@ -232,8 +306,7 @@ class _PurchaseBottomOptionsPanelState
         onVerticalDragEnd: _onDragEnd,
         child: Material(
           color: LoginColors.surface,
-          borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(16)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
           elevation: 8,
           shadowColor: Colors.black26,
           child: Column(
@@ -246,8 +319,7 @@ class _PurchaseBottomOptionsPanelState
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color:
-                        LoginColors.textSecondary.withValues(alpha: 0.3),
+                    color: LoginColors.textSecondary.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -283,8 +355,7 @@ class _PurchaseBottomOptionsPanelState
                           style: OutlinedButton.styleFrom(
                             foregroundColor: LoginColors.primary,
                             side: BorderSide(
-                              color: LoginColors.primary
-                                  .withValues(alpha: 0.4),
+                              color: LoginColors.primary.withValues(alpha: 0.4),
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -346,14 +417,12 @@ class _PurchaseBottomOptionsPanelState
                           style: OutlinedButton.styleFrom(
                             padding: EdgeInsets.zero,
                             foregroundColor: LoginColors.textPrimary,
-                            side: BorderSide(
-                                color: LoginColors.borderLight),
+                            side: BorderSide(color: LoginColors.borderLight),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             backgroundColor: _animCtrl.value > 0.5
-                                ? LoginColors.primary
-                                    .withValues(alpha: 0.08)
+                                ? LoginColors.primary.withValues(alpha: 0.08)
                                 : null,
                           ),
                           child: Icon(
@@ -416,6 +485,21 @@ class _PurchaseBottomOptionsPanelState
                                 _animCtrl.reverse();
                                 _doStatusAction('viewed');
                               },
+                      ),
+                    ],
+                    if (_canCancelOrder) ...[
+                      Divider(
+                        height: 1,
+                        indent: 44,
+                        color: LoginColors.borderLight,
+                      ),
+                      _ActionTile(
+                        icon: Icons.cancel_schedule_send_rounded,
+                        label: widget.vm.isCanceling
+                            ? 'Canceling Order...'
+                            : 'Cancel Order',
+                        color: LoginColors.error,
+                        onTap: _cancelOrder,
                       ),
                     ],
                   ],

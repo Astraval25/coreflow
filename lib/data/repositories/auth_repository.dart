@@ -388,6 +388,7 @@ class AuthRepository {
   Future<Map<String, dynamic>> updatePurchaseOrder(int companyId, int orderId, Map<String, dynamic> body) => _orderRepo.updatePurchaseOrder(companyId, orderId, body);
   Future<Map<String, dynamic>> updateSalesOrder(int companyId, int orderId, Map<String, dynamic> body) => _orderRepo.updateSalesOrder(companyId, orderId, body);
   Future<Map<String, dynamic>> updateOrderStatus(int companyId, int orderId, String action) => _orderRepo.updateOrderStatus(companyId, orderId, action);
+  Future<Map<String, dynamic>> cancelOrder(int companyId, int orderId) => _orderRepo.cancelOrder(companyId, orderId);
 
   // ─── Payment (delegates to PaymentRepository) ───
 
