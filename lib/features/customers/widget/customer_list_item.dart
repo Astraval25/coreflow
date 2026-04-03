@@ -4,15 +4,20 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/customers/view_model/customers_view_model.dart';
+import 'package:coreflow/domain/model/customer/customer.dart';
 
 class CustomerListItem extends StatelessWidget {
-  final dynamic customer;
+  final Customer customer;
   final int companyId;
+  final bool isPinned;
+  final VoidCallback onTogglePin;
 
   const CustomerListItem({
     super.key,
     required this.customer,
     required this.companyId,
+    required this.isPinned,
+    required this.onTogglePin,
   });
 
   @override
@@ -131,12 +136,59 @@ class CustomerListItem extends StatelessWidget {
               ),
               if (customer.dueAmount.isNotEmpty) ...[
                 const SizedBox(width: 10),
-                Text(
-                  customer.dueAmount,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: _getDueAmountColor(customer.dueAmount),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(999),
+                        onTap: onTogglePin,
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Icon(
+                            isPinned
+                                ? Icons.push_pin_rounded
+                                : Icons.push_pin_outlined,
+                            size: 19,
+                            color: isPinned
+                                ? LoginColors.primary
+                                : LoginColors.textTertiary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      customer.dueAmount,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _getDueAmountColor(customer.dueAmount),
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                const SizedBox(width: 10),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(999),
+                    onTap: onTogglePin,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        isPinned
+                            ? Icons.push_pin_rounded
+                            : Icons.push_pin_outlined,
+                        size: 19,
+                        color: isPinned
+                            ? LoginColors.primary
+                            : LoginColors.textTertiary,
+                      ),
+                    ),
                   ),
                 ),
               ],

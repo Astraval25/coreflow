@@ -207,6 +207,10 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
       child: CustomersList(
         customers: filteredCustomers,
         companyId: widget.companyId,
+        pinnedCustomerIds: viewModel.pinnedCustomerIds,
+        onTogglePin: (customerId) {
+          viewModel.togglePinCustomer(customerId);
+        },
       ),
     );
   }

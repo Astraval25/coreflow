@@ -102,31 +102,31 @@ class _QuickAccessSectionState extends State<QuickAccessSection> {
         color: Colors.amber,
         onTap: () => context.go(CfRoutes.marketplace),
       ),
-      DashboardGridItem(
-        icon: Icons.receipt_long_outlined,
-        label: 'Sales',
-        color: Colors.blue,
-        onTap: () => _pushIfCompany(context, (id) => CfRoutes.sales(id)),
-      ),
-      DashboardGridItem(
-        icon: Icons.shopping_cart_outlined,
-        label: 'Purchase',
-        color: Colors.orange,
-        onTap: () => _pushIfCompany(context, (id) => CfRoutes.purchase(id)),
-      ),
-      DashboardGridItem(
-        icon: Icons.payments_outlined,
-        label: 'Payment',
-        color: Colors.green,
-        onTap: () => _pushIfCompany(context, (id) => CfRoutes.paymentMade(id)),
-      ),
-      DashboardGridItem(
-        icon: Icons.account_balance_wallet_outlined,
-        label: 'Received',
-        color: Colors.purple,
-        onTap: () =>
-            _pushIfCompany(context, (id) => CfRoutes.paymentReceived(id)),
-      ),
+      // DashboardGridItem(
+      //   icon: Icons.receipt_long_outlined,
+      //   label: 'Sales',
+      //   color: Colors.blue,
+      //   onTap: () => _pushIfCompany(context, (id) => CfRoutes.sales(id)),
+      // ),
+      // DashboardGridItem(
+      //   icon: Icons.shopping_cart_outlined,
+      //   label: 'Purchase',
+      //   color: Colors.orange,
+      //   onTap: () => _pushIfCompany(context, (id) => CfRoutes.purchase(id)),
+      // ),
+      // DashboardGridItem(
+      //   icon: Icons.payments_outlined,
+      //   label: 'Payment',
+      //   color: Colors.green,
+      //   onTap: () => _pushIfCompany(context, (id) => CfRoutes.paymentMade(id)),
+      // ),
+      // DashboardGridItem(
+      //   icon: Icons.account_balance_wallet_outlined,
+      //   label: 'Received',
+      //   color: Colors.purple,
+      //   onTap: () =>
+      //       _pushIfCompany(context, (id) => CfRoutes.paymentReceived(id)),
+      // ),
     ];
   }
 
