@@ -4,6 +4,7 @@ import 'package:coreflow/features/vendor/widget/detail/vendor_detail_body.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_error_state.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_header.dart';
 import 'package:coreflow/features/vendor/widget/detail/body/vendor_expand_more_option.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:go_router/go_router.dart';
@@ -93,8 +94,8 @@ class VendorDetailContent extends StatelessWidget {
                 onSelected: (value) async {
                   switch (value) {
                     case 'edit':
-                      context.pushReplacement(
-                        '/vendors/${vm.companyId}/${vm.vendorId}/edit',
+                      await context.push(
+                        CfRoutes.vendorUpdate(vm.companyId, vm.vendorId),
                       );
                       vm.loadVendorDetail();
                       break;

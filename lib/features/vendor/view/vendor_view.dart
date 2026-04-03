@@ -8,6 +8,7 @@ import 'package:coreflow/features/vendor/widget/empty_vendor_view.dart';
 import 'package:coreflow/features/vendor/widget/error_view.dart';
 import 'package:coreflow/features/vendor/widget/loading_view.dart';
 import 'package:coreflow/features/vendor/widget/vendor_list.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -133,7 +134,7 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
               ),
               onPressed: () async {
                 final result = await context.push<bool>(
-                  '/vendors/${widget.companyId}/add',
+                  CfRoutes.vendorCreate(widget.companyId),
                 );
                 if (result == true && context.mounted) {
                   context.read<ActiveVendorViewModel>().refresh();
