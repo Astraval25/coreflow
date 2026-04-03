@@ -228,7 +228,14 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
       key: ValueKey(
         'vendor-list-${viewModel.showActiveOnly}-$searchQuery-${filteredVendor.length}',
       ),
-      child: VendorsList(vendors: filteredVendor, companyId: widget.companyId),
+      child: VendorsList(
+        vendors: filteredVendor,
+        companyId: widget.companyId,
+        pinnedVendorIds: viewModel.pinnedVendorIds,
+        onTogglePin: (vendorId) {
+          viewModel.togglePinVendor(vendorId);
+        },
+      ),
     );
   }
 
