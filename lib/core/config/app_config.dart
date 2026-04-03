@@ -71,6 +71,8 @@ class AppConfig {
       '/api/companies/{companyId}/customers/{customerId}/items/sellable';
   static const String customerOrdersPaymentsEndpoint =
       '/api/companies/{companyId}/customers/{customerId}/orders-payments';
+  static const String vendorOrdersPaymentsEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/orders-payments';
   static const String vendorPurchasableItemsEndpoint =
       '/api/companies/{companyId}/vendors/{vendorId}/items/purchasable';
   static const String fileEndpoint = '/api/file';
@@ -235,6 +237,9 @@ class AppConfig {
 
   static String getVendorPurchasableItemsUrl(int companyId, int vendorId) =>
       '$baseUrl${vendorPurchasableItemsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+
+  static String getVendorOrdersPaymentsUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorOrdersPaymentsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
 
   static String getFileUrl(String fsId) => '$baseUrl$fileEndpoint?fsId=$fsId';
   static String getItemActivateUrl(int companyId, int itemId) =>

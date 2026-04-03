@@ -51,6 +51,7 @@ import 'package:coreflow/domain/model/sales/sales_order.dart';
 import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
     as sales_detail;
 import 'package:coreflow/domain/model/vendors/create_vendors_request.dart';
+import 'package:coreflow/domain/model/vendors/vendor_orders_payments.dart';
 import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
 import 'package:coreflow/domain/model/vendors/vendors_edit_request.dart';
@@ -371,6 +372,7 @@ class AuthRepository {
   Future<ItemStatusResponse?> activateVendorMappedItem(int companyId, int vendorId, int itemId) => _vendorRepo.activateVendorMappedItem(companyId, vendorId, itemId);
   Future<ItemStatusResponse?> deactivateVendorMappedItem(int companyId, int vendorId, int itemId) => _vendorRepo.deactivateVendorMappedItem(companyId, vendorId, itemId);
   Future<List<SellableItem>> getVendorPurchasableItems(int companyId, int vendorId) => _vendorRepo.getVendorPurchasableItems(companyId, vendorId);
+  Future<VendorOrdersPaymentsData?> getVendorOrdersPayments(int companyId, int vendorId) => _vendorRepo.getVendorOrdersPayments(companyId, vendorId);
 
   // ─── Item (delegates to ItemRepository) ───
 

@@ -4,11 +4,11 @@ import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
 import 'package:coreflow/features/vendor/view_model/vendor_detail_view_model.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_address_tile.dart';
 import 'package:coreflow/features/vendor/widget/detail/body/vendor_item_section.dart';
+import 'package:coreflow/features/vendor/widget/detail/body/vendor_orders_payments_section.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_financial_strip.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:coreflow/features/vendor/widget/detail/vendor_info_tile.dart';
 import 'package:provider/provider.dart';
 
 class VendorDetailBody extends StatefulWidget {
@@ -51,7 +51,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildTabText('Basic Info', 0),
+                  _buildTabText('Transaction', 0),
                   _buildTabText('Items', 1),
                   _buildTabText('Address', 2),
                 ],
@@ -282,7 +282,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
   Widget _buildSelectedSection(VendorsDetailData vendor) {
     switch (_selectedIndex) {
       case 0:
-        return _BasicInfoSection(vendor: vendor);
+        return const VendorOrdersPaymentsSection();
       case 1:
         return const VendorItemSection();
       case 2:
@@ -324,55 +324,6 @@ class _SectionHeader extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _BasicInfoSection extends StatelessWidget {
-  final VendorsDetailData vendor;
-
-  const _BasicInfoSection({required this.vendor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SectionHeader(title: 'Basic Information'),
-        Divider(height: 1, thickness: 1, color: LoginColors.border),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Column(
-            children: [
-              VendorInfoTile(
-                icon: Icons.email_outlined,
-                label: 'Email',
-                value: vendor.email,
-              ),
-              VendorInfoTile(
-                icon: Icons.phone_outlined,
-                label: 'Phone',
-                value: vendor.phone,
-              ),
-              VendorInfoTile(
-                icon: Icons.badge_outlined,
-                label: 'PAN',
-                value: vendor.pan,
-              ),
-              VendorInfoTile(
-                icon: Icons.receipt_long_outlined,
-                label: 'GST',
-                value: vendor.gst,
-              ),
-              VendorInfoTile(
-                icon: Icons.language_rounded,
-                label: 'Language',
-                value: vendor.lang,
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

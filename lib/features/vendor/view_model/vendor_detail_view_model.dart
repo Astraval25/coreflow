@@ -1,5 +1,6 @@
 import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
 import 'package:coreflow/domain/model/customer/customer_mapped_item.dart';
+import 'package:coreflow/domain/model/vendors/vendor_orders_payments.dart';
 import 'package:coreflow/domain/model/invitation/invitation_response.dart';
 import 'package:coreflow/domain/model/items/item.dart';
 import 'package:coreflow/domain/model/items/item_status_response.dart';
@@ -19,6 +20,8 @@ class VendorDetailViewModel extends ChangeNotifier {
   bool _isMappedItemsLoading = false;
   bool _isMappedItemStatusUpdating = false;
   int? _statusUpdatingItemId;
+  List<VendorOrderPaymentEntry> _ordersPayments = [];
+  bool _isOrdersPaymentsLoading = false;
 
   final int _companyId;
   final int _vendorId;
@@ -37,6 +40,9 @@ class VendorDetailViewModel extends ChangeNotifier {
   bool get isMappedItemsLoading => _isMappedItemsLoading;
   bool get isMappedItemStatusUpdating => _isMappedItemStatusUpdating;
   int? get statusUpdatingItemId => _statusUpdatingItemId;
+  List<VendorOrderPaymentEntry> get ordersPayments =>
+      List.unmodifiable(_ordersPayments);
+  bool get isOrdersPaymentsLoading => _isOrdersPaymentsLoading;
 
   bool get isLoading => _state == VendorViewState.loading;
   bool get hasData => _state == VendorViewState.loaded;
@@ -60,7 +66,8 @@ class VendorDetailViewModel extends ChangeNotifier {
       if (vendorData != null) {
         _vendor = vendorData;
         _updateState(VendorViewState.loaded);
-        await loadMappedItems();
+        loadMappedItems();
+        loadOrdersPayments();
       } else {
         _updateState(VendorViewState.noData, error: 'No Vendor data found');
       }
@@ -249,6 +256,33 @@ class VendorDetailViewModel extends ChangeNotifier {
     } finally {
       _isMappedItemStatusUpdating = false;
       _statusUpdatingItemId = null;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadOrdersPayments() async {
+    _isOrdersPaymentsLoading = true;
+    notifyListeners();
+
+    try {
+      final data = await _authRepository.getVendorOrdersPayments(
+        _companyId,
+        _vendorId,
+      );
+      if (data != null) {
+        final entries = <VendorOrderPaymentEntry>[
+          ...data.orders.map((o) => VendorOrderPaymentEntry.fromOrder(o)),
+          ...data.payments.map((p) => VendorOrderPaymentEntry.fromPayment(p)),
+        ]..sort();
+        _ordersPayments = entries;
+      } else {
+        _ordersPayments = [];
+      }
+    } catch (e) {
+      debugPrint('Failed to load vendor orders-payments: $e');
+      _ordersPayments = [];
+    } finally {
+      _isOrdersPaymentsLoading = false;
       notifyListeners();
     }
   }
