@@ -17,7 +17,7 @@ class QuickAccessSection extends StatefulWidget {
 
 class _QuickAccessSectionState extends State<QuickAccessSection> {
   static const int _firstRowCount = 4;
-  bool _expanded = false;
+  bool _expanded = true;
 
   @override
   Widget build(BuildContext context) {
