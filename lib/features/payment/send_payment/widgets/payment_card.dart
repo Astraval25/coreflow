@@ -56,10 +56,8 @@ class PaymentCard extends StatelessWidget {
                       _PaymentInfoPill(
                         icon: Icons.person_outline_rounded,
                         value: payment.vendorName,
-                      ),
-                      _PaymentInfoPill(
-                        icon: Icons.payments_rounded,
-                        value: payment.modeOfPayment,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
                       ),
                       if (payment.referenceNumber?.isNotEmpty == true)
                         _PaymentInfoPill(
@@ -84,10 +82,8 @@ class PaymentCard extends StatelessWidget {
                             _PaymentInfoPill(
                               icon: Icons.person_outline_rounded,
                               value: payment.vendorName,
-                            ),
-                            _PaymentInfoPill(
-                              icon: Icons.payments_rounded,
-                              value: payment.modeOfPayment,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
                             ),
                             if (payment.referenceNumber?.isNotEmpty == true)
                               _PaymentInfoPill(
@@ -104,12 +100,12 @@ class PaymentCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                const Divider(thickness: 1.0, color: Colors.grey, height: 15.0),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 _PaymentMetricTile(
                   label: 'Amount',
                   value: _money(payment.amount),
                   valueColor: LoginColors.textPrimary,
+                  modeOfPayment: payment.modeOfPayment,
                 ),
               ],
             ),
@@ -157,8 +153,15 @@ class _PaymentStatusBadge extends StatelessWidget {
 class _PaymentInfoPill extends StatelessWidget {
   final IconData icon;
   final String value;
+  final double fontSize;
+  final FontWeight fontWeight;
 
-  const _PaymentInfoPill({required this.icon, required this.value});
+  const _PaymentInfoPill({
+    required this.icon,
+    required this.value,
+    this.fontSize = 12,
+    this.fontWeight = FontWeight.w600,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -171,8 +174,8 @@ class _PaymentInfoPill extends StatelessWidget {
           value,
           style: TextStyle(
             color: LoginColors.textSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+            fontSize: fontSize,
+            fontWeight: fontWeight,
           ),
         ),
       ],
@@ -184,11 +187,13 @@ class _PaymentMetricTile extends StatelessWidget {
   final String label;
   final String value;
   final Color valueColor;
+  final String modeOfPayment;
 
   const _PaymentMetricTile({
     required this.label,
     required this.value,
     required this.valueColor,
+    required this.modeOfPayment,
   });
 
   @override
@@ -205,15 +210,46 @@ class _PaymentMetricTile extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor,
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                color: valueColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            _ModeOfPaymentChip(modeOfPayment: modeOfPayment),
+          ],
         ),
       ],
+    );
+  }
+}
+
+class _ModeOfPaymentChip extends StatelessWidget {
+  final String modeOfPayment;
+
+  const _ModeOfPaymentChip({required this.modeOfPayment});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: LoginColors.primary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        modeOfPayment,
+        style: TextStyle(
+          color: LoginColors.primary,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }

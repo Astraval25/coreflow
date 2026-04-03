@@ -4,7 +4,7 @@ import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class VendorHeader extends StatelessWidget {
+class VendorHeader extends StatefulWidget {
   final VendorsDetailData vendor;
   final VoidCallback onToggleStatus;
   static const double _horizontalPadding = 20;
@@ -16,12 +16,28 @@ class VendorHeader extends StatelessWidget {
   });
 
   @override
+  State<VendorHeader> createState() => _VendorHeaderState();
+}
+
+class _VendorHeaderState extends State<VendorHeader> {
+  bool _expanded = false;
+
+  String _value(String? input) {
+    final value = input?.trim() ?? '';
+    return value.isEmpty ? '-' : value;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // final isActive = vendor.isActive;
-    // final statusColor = isActive ? LoginColors.success : LoginColors.error;
+    final vendor = widget.vendor;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(_horizontalPadding, 16, _horizontalPadding, 10),
+      padding: const EdgeInsets.fromLTRB(
+        VendorHeader._horizontalPadding,
+        16,
+        VendorHeader._horizontalPadding,
+        10,
+      ),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -52,15 +68,32 @@ class VendorHeader extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    vendor.displayName,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: LoginColors.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          vendor.displayName,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: LoginColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => setState(() => _expanded = !_expanded),
+                        icon: Icon(
+                          _expanded
+                              ? Icons.expand_less_rounded
+                              : Icons.expand_more_rounded,
+                          color: LoginColors.textSecondary,
+                        ),
+                        splashRadius: 20,
+                        tooltip: _expanded ? 'Collapse' : 'Expand',
+                      ),
+                    ],
                   ),
                   if (vendor.vendorCompany != null) ...[
                     const SizedBox(height: 4),
@@ -81,7 +114,7 @@ class VendorHeader extends StatelessWidget {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              vendor.vendorCompany!.companyName ?? '—',
+                              vendor.vendorCompany!.companyName ?? '-',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -100,11 +133,64 @@ class VendorHeader extends StatelessWidget {
                       ),
                     ),
                   ],
+                  if (_expanded) ...[
+                    const SizedBox(height: 8),
+                    _BasicInfoRow(label: 'Email', value: _value(vendor.email)),
+                    _BasicInfoRow(label: 'Phone', value: _value(vendor.phone)),
+                    _BasicInfoRow(label: 'PAN', value: _value(vendor.pan)),
+                    _BasicInfoRow(label: 'GST', value: _value(vendor.gst)),
+                    _BasicInfoRow(
+                      label: 'Language',
+                      value: _value(vendor.lang),
+                    ),
+                  ],
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _BasicInfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _BasicInfoRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 70,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                fontSize: 11.5,
+                color: LoginColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 12,
+                color: LoginColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }

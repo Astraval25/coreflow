@@ -6,9 +6,7 @@ import 'package:coreflow/features/vendor/widget/detail/vendor_address_tile.dart'
 import 'package:coreflow/features/vendor/widget/detail/body/vendor_item_section.dart';
 import 'package:coreflow/features/vendor/widget/detail/body/vendor_orders_payments_section.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_financial_strip.dart';
-import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class VendorDetailBody extends StatefulWidget {
@@ -35,7 +33,6 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         VendorFinancialStrip(vendor: vendor),
-        _buildQuickActions(context),
         _buildLinkCompanyStrip(context, vm, vendor, isLinked),
         const SizedBox(height: 10),
         Padding(
@@ -60,7 +57,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(_horizontal, 14, _horizontal, 32),
+          padding: const EdgeInsets.fromLTRB(_horizontal, 14, _horizontal, 120),
           child: Container(
             decoration: BoxDecoration(
               color: LoginColors.surface,
@@ -102,102 +99,6 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActions(BuildContext context) {
-    final vm = context.read<VendorDetailViewModel>();
-    final vendor = widget.vendor;
-    
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(_horizontal, 6, _horizontal, 0),
-      child: Row(
-        children: [
-          _buildActionButton(
-            context,
-            icon: Icons.shopping_cart_rounded,
-            label: 'Create Purchase',
-            color: LoginColors.primary,
-            onTap: () => context.push(
-              CfRoutes.purchaseCreate(vm.companyId),
-              extra: {
-                'preSelectedVendor': {
-                  'vendorId': vendor.vendorId,
-                  'displayName': vendor.vendorName,
-                  'vendorCompanyName': vendor.vendorCompany?.companyName ?? '',
-                  'vendorCompanyId': vendor.vendorCompany?.companyId,
-                  'email': vendor.email,
-                  'isActive': vendor.isActive,
-                  'dueAmount': '',
-                }
-              },
-            ),
-          ),
-          const SizedBox(width: 10),
-          _buildActionButton(
-            context,
-            icon: Icons.payment_rounded,
-            label: 'Make Payment',
-            color: LoginColors.success,
-            onTap: () => context.push(
-              CfRoutes.paymentMadeCreate(vm.companyId),
-              extra: {
-                'preSelectedVendor': {
-                  'vendorId': vendor.vendorId,
-                  'displayName': vendor.vendorName,
-                  'vendorCompanyName': vendor.vendorCompany?.companyName ?? '',
-                  'vendorCompanyId': vendor.vendorCompany?.companyId,
-                  'email': vendor.email,
-                  'isActive': vendor.isActive,
-                  'dueAmount': '',
-                }
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: color.withValues(alpha: 0.2)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 18, color: color),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

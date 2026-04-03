@@ -3,6 +3,7 @@ import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_detail_body.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_error_state.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_header.dart';
+import 'package:coreflow/features/vendor/widget/detail/body/vendor_expand_more_option.dart';
 import 'package:flutter/material.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:go_router/go_router.dart';
@@ -165,32 +166,47 @@ class VendorDetailContent extends StatelessWidget {
 
       body: Consumer<VendorDetailViewModel>(
         builder: (context, vm, child) {
-          return RefreshIndicator(
-            onRefresh: () async => vm.loadVendorDetail(),
-            backgroundColor: LoginColors.surface,
-            color: LoginColors.primary,
-            child: NotificationListener<ScrollNotification>(
-              onNotification: (notification) {
-                if (notification.metrics.maxScrollExtent <= 0) return false;
-                final triggerOffset = notification.metrics.maxScrollExtent * 0.85;
-                if (notification.metrics.pixels >= triggerOffset) {
-                  vm.loadMoreOrdersPaymentsIfNeeded();
-                }
-                return false;
-              },
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight:
-                        MediaQuery.of(context).size.height -
-                        AppBar().preferredSize.height -
-                        MediaQuery.of(context).padding.top,
+          return Stack(
+            children: [
+              RefreshIndicator(
+                onRefresh: () async => vm.loadVendorDetail(),
+                backgroundColor: LoginColors.surface,
+                color: LoginColors.primary,
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    if (notification.metrics.maxScrollExtent <= 0) return false;
+                    final triggerOffset =
+                        notification.metrics.maxScrollExtent * 0.85;
+                    if (notification.metrics.pixels >= triggerOffset) {
+                      vm.loadMoreOrdersPaymentsIfNeeded();
+                    }
+                    return false;
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight:
+                            MediaQuery.of(context).size.height -
+                            AppBar().preferredSize.height -
+                            MediaQuery.of(context).padding.top,
+                      ),
+                      child: _buildBody(context, vm),
+                    ),
                   ),
-                  child: _buildBody(context, vm),
                 ),
               ),
-            ),
+              if (!vm.isLoading &&
+                  !vm.isError &&
+                  !vm.isNoData &&
+                  vm.vendor != null)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: VendorBottomOptionsPanel(vm: vm, vendor: vm.vendor!),
+                ),
+            ],
           );
         },
       ),

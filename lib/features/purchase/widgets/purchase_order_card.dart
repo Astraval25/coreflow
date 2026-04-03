@@ -63,6 +63,8 @@ class PurchaseOrderCard extends StatelessWidget {
                       _PurchaseInfoPill(
                         icon: Icons.person_outline_rounded,
                         value: order.customerName,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
                       ),
                       _PurchaseInfoPill(
                         icon: Icons.business_rounded,
@@ -86,6 +88,8 @@ class PurchaseOrderCard extends StatelessWidget {
                             _PurchaseInfoPill(
                               icon: Icons.person_outline_rounded,
                               value: order.customerName,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
                             ),
                             _PurchaseInfoPill(
                               icon: Icons.business_rounded,
@@ -101,8 +105,7 @@ class PurchaseOrderCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                const Divider(thickness: 1.0, color: Colors.grey, height: 15.0),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
@@ -184,8 +187,15 @@ class _PurchaseStatusBadge extends StatelessWidget {
 class _PurchaseInfoPill extends StatelessWidget {
   final IconData icon;
   final String value;
+  final double fontSize;
+  final FontWeight fontWeight;
 
-  const _PurchaseInfoPill({required this.icon, required this.value});
+  const _PurchaseInfoPill({
+    required this.icon,
+    required this.value,
+    this.fontSize = 12,
+    this.fontWeight = FontWeight.w600,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -198,8 +208,8 @@ class _PurchaseInfoPill extends StatelessWidget {
           value,
           style: TextStyle(
             color: LoginColors.textSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+            fontSize: fontSize,
+            fontWeight: fontWeight,
           ),
         ),
       ],
