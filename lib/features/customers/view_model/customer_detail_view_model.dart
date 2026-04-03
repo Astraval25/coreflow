@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/customer/customer_mapped_item.dart';
+import 'package:coreflow/domain/model/customer/customer_orders_payments.dart';
 import 'package:coreflow/domain/model/invitation/invitation_response.dart';
 import 'package:coreflow/domain/model/items/item.dart';
 import 'package:coreflow/domain/model/items/item_status_response.dart';
@@ -20,6 +20,8 @@ class CustomerDetailViewModel extends ChangeNotifier {
   bool _isMappedItemsLoading = false;
   bool _isMappedItemStatusUpdating = false;
   int? _statusUpdatingItemId;
+  List<OrderPaymentEntry> _ordersPayments = [];
+  bool _isOrdersPaymentsLoading = false;
 
   final int _companyId;
   final int _customerId;
@@ -37,6 +39,24 @@ class CustomerDetailViewModel extends ChangeNotifier {
   bool get isMappedItemsLoading => _isMappedItemsLoading;
   bool get isMappedItemStatusUpdating => _isMappedItemStatusUpdating;
   int? get statusUpdatingItemId => _statusUpdatingItemId;
+  List<OrderPaymentEntry> get ordersPayments => List.unmodifiable(_ordersPayments);
+  bool get isOrdersPaymentsLoading => _isOrdersPaymentsLoading;
+  List<CustomerOrder> get ordersOnly => _ordersPayments
+      .where((e) => e.isOrder && e.order != null)
+      .map((e) => e.order!)
+      .toList(growable: false);
+  List<CustomerPayment> get paymentsOnly => _ordersPayments
+      .where((e) => !e.isOrder && e.payment != null)
+      .map((e) => e.payment!)
+      .toList(growable: false);
+  double get totalOrderAmount =>
+      ordersOnly.fold(0.0, (sum, order) => sum + order.totalAmount);
+  double get totalPaidOnOrders =>
+      ordersOnly.fold(0.0, (sum, order) => sum + order.paidAmount);
+  double get totalDueAmount =>
+      ordersOnly.fold(0.0, (sum, order) => sum + order.dueAmount);
+  double get totalPaymentAmount =>
+      paymentsOnly.fold(0.0, (sum, payment) => sum + payment.amount);
 
   bool get isLoading => _state == CustomerViewState.loading;
   bool get hasData => _state == CustomerViewState.loaded;
@@ -60,7 +80,8 @@ class CustomerDetailViewModel extends ChangeNotifier {
       if (customerData != null) {
         _customer = customerData;
         _updateState(CustomerViewState.loaded);
-        await loadMappedItems();
+        loadMappedItems();
+        loadOrdersPayments();
       } else {
         _updateState(CustomerViewState.noData, error: 'No customer data found');
       }
@@ -256,6 +277,38 @@ class CustomerDetailViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // ─── Transaction ───
+
+  Future<void> loadOrdersPayments() async {
+    _isOrdersPaymentsLoading = true;
+    notifyListeners();
+
+    try {
+      final data = await _authRepository.getCustomerOrdersPayments(
+        _companyId,
+        _customerId,
+      );
+
+      if (data != null) {
+        final entries = <OrderPaymentEntry>[
+          ...data.orders.map((o) => OrderPaymentEntry.fromOrder(o)),
+          ...data.payments.map((p) => OrderPaymentEntry.fromPayment(p)),
+        ]..sort();
+        _ordersPayments = entries;
+      } else {
+        _ordersPayments = [];
+      }
+    } catch (e) {
+      debugPrint('Failed to load orders-payments: $e');
+      _ordersPayments = [];
+    } finally {
+      _isOrdersPaymentsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> refreshOrdersPayments() => loadOrdersPayments();
 
   // ─── Invitation ───
 

@@ -23,6 +23,7 @@ import 'package:coreflow/domain/model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
 import 'package:coreflow/domain/model/customer/customer_edit_response.dart';
 import 'package:coreflow/domain/model/customer/customer_mapped_item.dart';
+import 'package:coreflow/domain/model/customer/customer_orders_payments.dart';
 import 'package:coreflow/domain/model/customer/customer_status_response.dart';
 import 'package:coreflow/domain/model/items/create_item_request.dart';
 import 'package:coreflow/domain/model/items/sellable_item.dart';
@@ -351,6 +352,10 @@ class AuthRepository {
   Future<ItemStatusResponse?> activateCustomerMappedItem(int companyId, int customerId, int itemId) => _customerRepo.activateCustomerMappedItem(companyId, customerId, itemId);
   Future<ItemStatusResponse?> deactivateCustomerMappedItem(int companyId, int customerId, int itemId) => _customerRepo.deactivateCustomerMappedItem(companyId, customerId, itemId);
   Future<List<SellableItem>> getCustomerSellableItems(int companyId, int customerId) => _customerRepo.getCustomerSellableItems(companyId, customerId);
+  Future<CustomerOrdersPaymentsData?> getCustomerOrdersPayments(
+    int companyId,
+    int customerId,
+  ) => _customerRepo.getCustomerOrdersPayments(companyId, customerId);
 
   // ─── Vendor (delegates to VendorRepository) ───
 

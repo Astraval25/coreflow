@@ -69,6 +69,8 @@ class AppConfig {
       '/api/companies/{companyId}/customers/{customerId}/items/{itemId}/deactivate';
   static const String customerSellableItemsEndpoint =
       '/api/companies/{companyId}/customers/{customerId}/items/sellable';
+  static const String customerOrdersPaymentsEndpoint =
+      '/api/companies/{companyId}/customers/{customerId}/orders-payments';
   static const String vendorPurchasableItemsEndpoint =
       '/api/companies/{companyId}/vendors/{vendorId}/items/purchasable';
   static const String fileEndpoint = '/api/file';
@@ -221,6 +223,15 @@ class AppConfig {
 
   static String getCustomerSellableItemsUrl(int companyId, int customerId) =>
       '$baseUrl${customerSellableItemsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+
+  static String getCustomerOrdersPaymentsUrl(int companyId, int customerId) =>
+      '$baseUrl${customerOrdersPaymentsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+
+  // Alias kept for clearer call sites.
+  static String getCustomerOrdersAndPaymentsUrl(
+    int companyId,
+    int customerId,
+  ) => getCustomerOrdersPaymentsUrl(companyId, customerId);
 
   static String getVendorPurchasableItemsUrl(int companyId, int vendorId) =>
       '$baseUrl${vendorPurchasableItemsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';

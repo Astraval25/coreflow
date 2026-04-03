@@ -1,10 +1,10 @@
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/domain/model/customer/customer_detail.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:coreflow/domain/model/customer/customer_detail.dart';
 
-class CustomerHeader extends StatelessWidget {
+class CustomerHeader extends StatefulWidget {
   final CustomerDetailData customer;
   final VoidCallback onToggleStatus;
   static const double _horizontalPadding = 20;
@@ -16,15 +16,26 @@ class CustomerHeader extends StatelessWidget {
   });
 
   @override
+  State<CustomerHeader> createState() => _CustomerHeaderState();
+}
+
+class _CustomerHeaderState extends State<CustomerHeader> {
+  bool _expanded = false;
+
+  String _value(String? input) {
+    final v = input?.trim() ?? '';
+    return v.isEmpty ? '-' : v;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // final isActive = customer.isActive;
-    // final statusColor = isActive ? LoginColors.success : LoginColors.error;
+    final customer = widget.customer;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        _horizontalPadding,
+        CustomerHeader._horizontalPadding,
         16,
-        _horizontalPadding,
+        CustomerHeader._horizontalPadding,
         10,
       ),
       child: Container(
@@ -42,10 +53,11 @@ class CustomerHeader extends StatelessWidget {
           ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CircleAvatar(
               radius: 30,
-              backgroundColor: LoginColors.primary.withValues(alpha:0.14),
+              backgroundColor: LoginColors.primary.withValues(alpha: 0.14),
               child: Icon(
                 Icons.person_rounded,
                 size: 32,
@@ -57,18 +69,36 @@ class CustomerHeader extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    customer.displayName,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: LoginColors.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          customer.displayName,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: LoginColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () =>
+                            setState(() => _expanded = !_expanded),
+                        icon: Icon(
+                          _expanded
+                              ? Icons.expand_less_rounded
+                              : Icons.expand_more_rounded,
+                          color: LoginColors.textSecondary,
+                        ),
+                        splashRadius: 20,
+                        tooltip: _expanded ? 'Collapse' : 'Expand',
+                      ),
+                    ],
                   ),
                   if (customer.customerCompany != null) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     GestureDetector(
                       onTap: () {
                         final companyId = customer.customerCompany!.companyId;
@@ -80,15 +110,15 @@ class CustomerHeader extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.link_rounded,
-                            size: 14,
+                            size: 13,
                             color: LoginColors.success,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              customer.customerCompany!.companyName ?? '—',
+                              customer.customerCompany!.companyName ?? '-',
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 12.5,
                                 fontWeight: FontWeight.w600,
                                 color: LoginColors.success,
                               ),
@@ -98,18 +128,68 @@ class CustomerHeader extends StatelessWidget {
                           ),
                           Icon(
                             Icons.arrow_forward_ios_rounded,
-                            size: 12,
+                            size: 11,
                             color: LoginColors.success.withValues(alpha: 0.6),
                           ),
                         ],
                       ),
                     ),
                   ],
+                  if (_expanded) ...[
+                    const SizedBox(height: 8),
+                    _BasicInfoRow(label: 'Email', value: _value(customer.email)),
+                    _BasicInfoRow(label: 'Phone', value: _value(customer.phone)),
+                    _BasicInfoRow(label: 'PAN', value: _value(customer.pan)),
+                    _BasicInfoRow(label: 'GST', value: _value(customer.gst)),
+                    _BasicInfoRow(label: 'Language', value: _value(customer.lang)),
+                  ],
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _BasicInfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _BasicInfoRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 70,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                fontSize: 11.5,
+                color: LoginColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 12,
+                color: LoginColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }

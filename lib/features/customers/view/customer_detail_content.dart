@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_header.dart';
+import 'package:coreflow/features/customers/widget/detail/body/customer_expand_more_option.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_detail_body.dart';
 import 'package:coreflow/features/customers/widget/detail/customer_error_state.dart';
@@ -173,22 +174,39 @@ class CustomerDetailContent extends StatelessWidget {
       drawer: AppDrawer(vm: dashboardVM),
       body: Consumer<CustomerDetailViewModel>(
         builder: (context, vm, child) {
-          return RefreshIndicator(
-            onRefresh: () async => vm.loadCustomerDetail(),
-            backgroundColor: LoginColors.surface,
-            color: LoginColors.primary,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight:
-                      MediaQuery.of(context).size.height -
-                      AppBar().preferredSize.height -
-                      MediaQuery.of(context).padding.top,
+          return Stack(
+            children: [
+              RefreshIndicator(
+                onRefresh: () async => vm.loadCustomerDetail(),
+                backgroundColor: LoginColors.surface,
+                color: LoginColors.primary,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight:
+                          MediaQuery.of(context).size.height -
+                          AppBar().preferredSize.height -
+                          MediaQuery.of(context).padding.top,
+                    ),
+                    child: _buildBody(context, vm),
+                  ),
                 ),
-                child: _buildBody(context, vm),
               ),
-            ),
+              if (!vm.isLoading &&
+                  !vm.isError &&
+                  !vm.isNoData &&
+                  vm.customer != null)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: CustomerBottomOptionsPanel(
+                    vm: vm,
+                    customer: vm.customer!,
+                  ),
+                ),
+            ],
           );
         },
         child: LayoutBuilder(
