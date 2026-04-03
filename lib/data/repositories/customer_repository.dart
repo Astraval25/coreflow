@@ -318,11 +318,14 @@ class CustomerRepository {
   Future<CustomerOrdersPaymentsData?> getCustomerOrdersPayments(
     int companyId,
     int customerId,
+    {int page = 0, int size = 10}
   ) async {
     try {
-      final url = AppConfig.getCustomerOrdersAndPaymentsUrl(
+      final url = AppConfig.getCustomerOrdersPaymentsUrl(
         companyId,
         customerId,
+        page: page,
+        size: size,
       );
       final response = await _apiService.get(Uri.parse(url));
 

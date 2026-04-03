@@ -26,6 +26,8 @@ class CustomerOrdersPaymentsSection extends StatelessWidget {
       );
     }
 
+    final totalCount = vm.ordersPayments.length + (vm.isOrdersPaymentsLoadingMore ? 1 : 0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -65,9 +67,20 @@ class CustomerOrdersPaymentsSection extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-            itemCount: vm.ordersPayments.length,
+            itemCount: totalCount,
             separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
+              if (index >= vm.ordersPayments.length) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: LoginColors.primary,
+                      strokeWidth: 2.2,
+                    ),
+                  ),
+                );
+              }
               return _buildEntryCard(
                 context,
                 vm.ordersPayments[index],

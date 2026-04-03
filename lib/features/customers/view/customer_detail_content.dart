@@ -180,16 +180,27 @@ class CustomerDetailContent extends StatelessWidget {
                 onRefresh: () async => vm.loadCustomerDetail(),
                 backgroundColor: LoginColors.surface,
                 color: LoginColors.primary,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight:
-                          MediaQuery.of(context).size.height -
-                          AppBar().preferredSize.height -
-                          MediaQuery.of(context).padding.top,
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    if (notification.metrics.maxScrollExtent <= 0) return false;
+                    final triggerOffset =
+                        notification.metrics.maxScrollExtent * 0.85;
+                    if (notification.metrics.pixels >= triggerOffset) {
+                      vm.loadMoreOrdersPaymentsIfNeeded();
+                    }
+                    return false;
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight:
+                            MediaQuery.of(context).size.height -
+                            AppBar().preferredSize.height -
+                            MediaQuery.of(context).padding.top,
+                      ),
+                      child: _buildBody(context, vm),
                     ),
-                    child: _buildBody(context, vm),
                   ),
                 ),
               ),

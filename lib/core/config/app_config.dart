@@ -226,8 +226,22 @@ class AppConfig {
   static String getCustomerSellableItemsUrl(int companyId, int customerId) =>
       '$baseUrl${customerSellableItemsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
 
-  static String getCustomerOrdersPaymentsUrl(int companyId, int customerId) =>
-      '$baseUrl${customerOrdersPaymentsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+  static String getCustomerOrdersPaymentsUrl(
+    int companyId,
+    int customerId, {
+    int? page,
+    int? size,
+  }) {
+    final base =
+        '$baseUrl${customerOrdersPaymentsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+    if (page == null && size == null) return base;
+
+    final params = <String>[
+      if (page != null) 'page=$page',
+      if (size != null) 'size=$size',
+    ];
+    return '$base?${params.join('&')}';
+  }
 
   // Alias kept for clearer call sites.
   static String getCustomerOrdersAndPaymentsUrl(
@@ -238,8 +252,22 @@ class AppConfig {
   static String getVendorPurchasableItemsUrl(int companyId, int vendorId) =>
       '$baseUrl${vendorPurchasableItemsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
 
-  static String getVendorOrdersPaymentsUrl(int companyId, int vendorId) =>
-      '$baseUrl${vendorOrdersPaymentsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+  static String getVendorOrdersPaymentsUrl(
+    int companyId,
+    int vendorId, {
+    int? page,
+    int? size,
+  }) {
+    final base =
+        '$baseUrl${vendorOrdersPaymentsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+    if (page == null && size == null) return base;
+
+    final params = <String>[
+      if (page != null) 'page=$page',
+      if (size != null) 'size=$size',
+    ];
+    return '$base?${params.join('&')}';
+  }
 
   static String getFileUrl(String fsId) => '$baseUrl$fileEndpoint?fsId=$fsId';
   static String getItemActivateUrl(int companyId, int itemId) =>

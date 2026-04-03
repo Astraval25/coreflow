@@ -22,6 +22,10 @@ class CustomerDetailViewModel extends ChangeNotifier {
   int? _statusUpdatingItemId;
   List<OrderPaymentEntry> _ordersPayments = [];
   bool _isOrdersPaymentsLoading = false;
+  bool _isOrdersPaymentsLoadingMore = false;
+  bool _hasMoreOrdersPayments = true;
+  int _nextOrdersPaymentsPage = 0;
+  static const int _ordersPaymentsPageSize = 10;
 
   final int _companyId;
   final int _customerId;
@@ -41,6 +45,8 @@ class CustomerDetailViewModel extends ChangeNotifier {
   int? get statusUpdatingItemId => _statusUpdatingItemId;
   List<OrderPaymentEntry> get ordersPayments => List.unmodifiable(_ordersPayments);
   bool get isOrdersPaymentsLoading => _isOrdersPaymentsLoading;
+  bool get isOrdersPaymentsLoadingMore => _isOrdersPaymentsLoadingMore;
+  bool get hasMoreOrdersPayments => _hasMoreOrdersPayments;
   List<CustomerOrder> get ordersOnly => _ordersPayments
       .where((e) => e.isOrder && e.order != null)
       .map((e) => e.order!)
@@ -81,7 +87,7 @@ class CustomerDetailViewModel extends ChangeNotifier {
         _customer = customerData;
         _updateState(CustomerViewState.loaded);
         loadMappedItems();
-        loadOrdersPayments();
+        loadOrdersPayments(reset: true);
       } else {
         _updateState(CustomerViewState.noData, error: 'No customer data found');
       }
@@ -280,35 +286,93 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
   // ─── Transaction ───
 
-  Future<void> loadOrdersPayments() async {
-    _isOrdersPaymentsLoading = true;
+  Future<void> loadOrdersPayments({bool reset = false}) async {
+    if (_isOrdersPaymentsLoading || _isOrdersPaymentsLoadingMore) return;
+
+    if (reset) {
+      _nextOrdersPaymentsPage = 0;
+      _hasMoreOrdersPayments = true;
+      _ordersPayments = [];
+    } else if (!_hasMoreOrdersPayments) {
+      return;
+    }
+
+    final page = _nextOrdersPaymentsPage;
+
+    if (page == 0) {
+      _isOrdersPaymentsLoading = true;
+    } else {
+      _isOrdersPaymentsLoadingMore = true;
+    }
     notifyListeners();
 
     try {
       final data = await _authRepository.getCustomerOrdersPayments(
         _companyId,
         _customerId,
+        page: page,
+        size: _ordersPaymentsPageSize,
       );
 
+      final entries = <OrderPaymentEntry>[];
       if (data != null) {
-        final entries = <OrderPaymentEntry>[
+        entries.addAll([
           ...data.orders.map((o) => OrderPaymentEntry.fromOrder(o)),
           ...data.payments.map((p) => OrderPaymentEntry.fromPayment(p)),
-        ]..sort();
+        ]);
+      }
+      entries.sort();
+
+      if (page == 0) {
         _ordersPayments = entries;
       } else {
-        _ordersPayments = [];
+        final existing = _ordersPayments.map(_entryKey).toSet();
+        final fresh = entries
+            .where((entry) => !existing.contains(_entryKey(entry)))
+            .toList();
+        _ordersPayments = [..._ordersPayments, ...fresh];
+        if (fresh.isEmpty) {
+          _hasMoreOrdersPayments = false;
+          return;
+        }
+      }
+
+      _hasMoreOrdersPayments = entries.length >= _ordersPaymentsPageSize;
+      if (_hasMoreOrdersPayments) {
+        _nextOrdersPaymentsPage = page + 1;
       }
     } catch (e) {
       debugPrint('Failed to load orders-payments: $e');
-      _ordersPayments = [];
+      if (page == 0) {
+        _ordersPayments = [];
+      }
     } finally {
       _isOrdersPaymentsLoading = false;
+      _isOrdersPaymentsLoadingMore = false;
       notifyListeners();
     }
   }
 
-  Future<void> refreshOrdersPayments() => loadOrdersPayments();
+  Future<void> refreshOrdersPayments() => loadOrdersPayments(reset: true);
+
+  Future<void> loadMoreOrdersPaymentsIfNeeded() async {
+    if (_isOrdersPaymentsLoading ||
+        _isOrdersPaymentsLoadingMore ||
+        !_hasMoreOrdersPayments) {
+      return;
+    }
+    await loadOrdersPayments();
+  }
+
+  String _entryKey(OrderPaymentEntry entry) {
+    if (entry.isOrder && entry.order != null) {
+      return 'o_${entry.order!.orderId}';
+    }
+    if (entry.payment != null) {
+      return 'p_${entry.payment!.paymentId}';
+    }
+    return 'x_${entry.date.millisecondsSinceEpoch}';
+  }
 
   // ─── Invitation ───
 

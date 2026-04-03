@@ -356,7 +356,13 @@ class AuthRepository {
   Future<CustomerOrdersPaymentsData?> getCustomerOrdersPayments(
     int companyId,
     int customerId,
-  ) => _customerRepo.getCustomerOrdersPayments(companyId, customerId);
+    {int page = 0, int size = 10}
+  ) => _customerRepo.getCustomerOrdersPayments(
+    companyId,
+    customerId,
+    page: page,
+    size: size,
+  );
 
   // ─── Vendor (delegates to VendorRepository) ───
 
@@ -372,7 +378,16 @@ class AuthRepository {
   Future<ItemStatusResponse?> activateVendorMappedItem(int companyId, int vendorId, int itemId) => _vendorRepo.activateVendorMappedItem(companyId, vendorId, itemId);
   Future<ItemStatusResponse?> deactivateVendorMappedItem(int companyId, int vendorId, int itemId) => _vendorRepo.deactivateVendorMappedItem(companyId, vendorId, itemId);
   Future<List<SellableItem>> getVendorPurchasableItems(int companyId, int vendorId) => _vendorRepo.getVendorPurchasableItems(companyId, vendorId);
-  Future<VendorOrdersPaymentsData?> getVendorOrdersPayments(int companyId, int vendorId) => _vendorRepo.getVendorOrdersPayments(companyId, vendorId);
+  Future<VendorOrdersPaymentsData?> getVendorOrdersPayments(
+    int companyId,
+    int vendorId,
+    {int page = 0, int size = 10}
+  ) => _vendorRepo.getVendorOrdersPayments(
+    companyId,
+    vendorId,
+    page: page,
+    size: size,
+  );
 
   // ─── Item (delegates to ItemRepository) ───
 

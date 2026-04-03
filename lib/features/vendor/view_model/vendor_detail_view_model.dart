@@ -22,6 +22,10 @@ class VendorDetailViewModel extends ChangeNotifier {
   int? _statusUpdatingItemId;
   List<VendorOrderPaymentEntry> _ordersPayments = [];
   bool _isOrdersPaymentsLoading = false;
+  bool _isOrdersPaymentsLoadingMore = false;
+  bool _hasMoreOrdersPayments = true;
+  int _nextOrdersPaymentsPage = 0;
+  static const int _ordersPaymentsPageSize = 10;
 
   final int _companyId;
   final int _vendorId;
@@ -43,6 +47,8 @@ class VendorDetailViewModel extends ChangeNotifier {
   List<VendorOrderPaymentEntry> get ordersPayments =>
       List.unmodifiable(_ordersPayments);
   bool get isOrdersPaymentsLoading => _isOrdersPaymentsLoading;
+  bool get isOrdersPaymentsLoadingMore => _isOrdersPaymentsLoadingMore;
+  bool get hasMoreOrdersPayments => _hasMoreOrdersPayments;
 
   bool get isLoading => _state == VendorViewState.loading;
   bool get hasData => _state == VendorViewState.loaded;
@@ -67,7 +73,7 @@ class VendorDetailViewModel extends ChangeNotifier {
         _vendor = vendorData;
         _updateState(VendorViewState.loaded);
         loadMappedItems();
-        loadOrdersPayments();
+        loadOrdersPayments(reset: true);
       } else {
         _updateState(VendorViewState.noData, error: 'No Vendor data found');
       }
@@ -260,31 +266,89 @@ class VendorDetailViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> loadOrdersPayments() async {
-    _isOrdersPaymentsLoading = true;
+  Future<void> loadOrdersPayments({bool reset = false}) async {
+    if (_isOrdersPaymentsLoading || _isOrdersPaymentsLoadingMore) return;
+
+    if (reset) {
+      _nextOrdersPaymentsPage = 0;
+      _hasMoreOrdersPayments = true;
+      _ordersPayments = [];
+    } else if (!_hasMoreOrdersPayments) {
+      return;
+    }
+
+    final page = _nextOrdersPaymentsPage;
+
+    if (page == 0) {
+      _isOrdersPaymentsLoading = true;
+    } else {
+      _isOrdersPaymentsLoadingMore = true;
+    }
     notifyListeners();
 
     try {
       final data = await _authRepository.getVendorOrdersPayments(
         _companyId,
         _vendorId,
+        page: page,
+        size: _ordersPaymentsPageSize,
       );
+      final entries = <VendorOrderPaymentEntry>[];
       if (data != null) {
-        final entries = <VendorOrderPaymentEntry>[
+        entries.addAll([
           ...data.orders.map((o) => VendorOrderPaymentEntry.fromOrder(o)),
           ...data.payments.map((p) => VendorOrderPaymentEntry.fromPayment(p)),
-        ]..sort();
+        ]);
+      }
+      entries.sort();
+
+      if (page == 0) {
         _ordersPayments = entries;
       } else {
-        _ordersPayments = [];
+        final existing = _ordersPayments.map(_entryKey).toSet();
+        final fresh = entries
+            .where((entry) => !existing.contains(_entryKey(entry)))
+            .toList();
+        _ordersPayments = [..._ordersPayments, ...fresh];
+        if (fresh.isEmpty) {
+          _hasMoreOrdersPayments = false;
+          return;
+        }
+      }
+
+      _hasMoreOrdersPayments = entries.length >= _ordersPaymentsPageSize;
+      if (_hasMoreOrdersPayments) {
+        _nextOrdersPaymentsPage = page + 1;
       }
     } catch (e) {
       debugPrint('Failed to load vendor orders-payments: $e');
-      _ordersPayments = [];
+      if (page == 0) {
+        _ordersPayments = [];
+      }
     } finally {
       _isOrdersPaymentsLoading = false;
+      _isOrdersPaymentsLoadingMore = false;
       notifyListeners();
     }
+  }
+
+  Future<void> loadMoreOrdersPaymentsIfNeeded() async {
+    if (_isOrdersPaymentsLoading ||
+        _isOrdersPaymentsLoadingMore ||
+        !_hasMoreOrdersPayments) {
+      return;
+    }
+    await loadOrdersPayments();
+  }
+
+  String _entryKey(VendorOrderPaymentEntry entry) {
+    if (entry.isOrder && entry.order != null) {
+      return 'o_${entry.order!.orderId}';
+    }
+    if (entry.payment != null) {
+      return 'p_${entry.payment!.paymentId}';
+    }
+    return 'x_${entry.date.millisecondsSinceEpoch}';
   }
 
   // ─── Invitation ───

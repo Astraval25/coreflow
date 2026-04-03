@@ -337,9 +337,15 @@ class VendorRepository {
   Future<VendorOrdersPaymentsData?> getVendorOrdersPayments(
     int companyId,
     int vendorId,
+    {int page = 0, int size = 10}
   ) async {
     try {
-      final url = AppConfig.getVendorOrdersPaymentsUrl(companyId, vendorId);
+      final url = AppConfig.getVendorOrdersPaymentsUrl(
+        companyId,
+        vendorId,
+        page: page,
+        size: size,
+      );
       final response = await _apiService.get(Uri.parse(url));
 
       if (response.statusCode != 200 && response.statusCode != 202) {
