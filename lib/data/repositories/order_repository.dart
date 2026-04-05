@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:coreflow/data/services/api_services.dart';
+import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/purchase/create_purchase_order_request.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
@@ -100,6 +101,34 @@ class OrderRepository {
     } catch (e) {
       debugPrint('Get order detail error: $e');
       return null;
+    }
+  }
+
+  Future<List<PaymentRef>> getOrderPaymentDetails(
+    int companyId,
+    int orderId,
+  ) async {
+    try {
+      final uri = Uri.parse(
+        AppConfig.getOrderPaymentDetailsUrl(companyId, orderId),
+      );
+      final response = await _apiService.get(uri);
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        return [];
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['responseStatus'] != true) return [];
+      final responseData = data['responseData'];
+      if (responseData is! List) return [];
+
+      return responseData
+          .whereType<Map>()
+          .map((e) => PaymentRef.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } catch (e) {
+      debugPrint('Get order payment details error: $e');
+      return [];
     }
   }
 
@@ -262,7 +291,9 @@ class OrderRepository {
     try {
       final url = AppConfig.getOrderStatusUrl(companyId, orderId, action);
       final response = await _apiService.put(url, {});
-      debugPrint('Order status [$action][${response.statusCode}]: ${response.body}');
+      debugPrint(
+        'Order status [$action][${response.statusCode}]: ${response.body}',
+      );
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       if (data['responseStatus'] == true) {
         return {
@@ -278,5 +309,54 @@ class OrderRepository {
       debugPrint('Update order status error: $e');
       return {'success': false, 'message': 'Error: $e'};
     }
+  }
+
+  Future<Map<String, dynamic>> cancelOrder(int companyId, int orderId) async {
+    try {
+      final url = AppConfig.getCancelOrderUrl(companyId, orderId);
+      final response = await _apiService.put(url, {});
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final responseCode = _asInt(data['responseCode']);
+      final message =
+          data['responseMessage']?.toString() ?? 'Failed to cancel order';
+      final dependentPayments = _parseDependentPayments(data['responseData']);
+
+      if (data['responseStatus'] == true) {
+        return {
+          'success': true,
+          'message': message,
+          'responseCode': responseCode,
+          'dependentPayments': <PaymentRef>[],
+        };
+      }
+
+      return {
+        'success': false,
+        'message': message,
+        'responseCode': responseCode,
+        'dependentPayments': dependentPayments,
+      };
+    } catch (e) {
+      debugPrint('Cancel order error: $e');
+      return {
+        'success': false,
+        'message': 'Error: $e',
+        'responseCode': 0,
+        'dependentPayments': <PaymentRef>[],
+      };
+    }
+  }
+
+  List<PaymentRef> _parseDependentPayments(dynamic raw) {
+    if (raw is! List) return <PaymentRef>[];
+    return raw
+        .whereType<Map>()
+        .map((e) => PaymentRef.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+  int _asInt(dynamic value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 }

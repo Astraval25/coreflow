@@ -360,7 +360,7 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            duration: Duration(seconds: 1),
+            duration: Duration(seconds: 2),
             content: Text('Customer created successfully'),
           ),
         );
@@ -393,7 +393,7 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
           
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              duration: Duration(seconds: 1),
+              duration: Duration(seconds: 2),
               content: Text('Customer and items created successfully'),
             ),
           );
@@ -406,7 +406,7 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            duration: Duration(seconds: 1),
+            duration: Duration(seconds: 2),
             content: Text(viewModel.error ?? 'Failed to create customer'),
           ),
         );

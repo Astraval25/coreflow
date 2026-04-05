@@ -1,5 +1,6 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/company_ref/order_ref.dart';
+import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
     as sales_detail;
 import 'package:coreflow/domain/model/sales/sales_order_item.dart'
@@ -29,10 +30,21 @@ class SalesOrderDetailViewModel extends ChangeNotifier {
   bool _isStatusUpdating = false;
   String? _statusError;
   bool _isRefUpdating = false;
+  bool _isCanceling = false;
+  String? _cancelError;
+  List<PaymentRef> _dependentPayments = const [];
+  List<PaymentRef> _orderPayments = const [];
+  bool _isOrderPaymentsLoading = false;
 
   SalesOrderDetailState get state => _state;
   bool get isStatusUpdating => _isStatusUpdating;
   String? get statusError => _statusError;
+  bool get isCanceling => _isCanceling;
+  String? get cancelError => _cancelError;
+  List<PaymentRef> get dependentPayments =>
+      List.unmodifiable(_dependentPayments);
+  List<PaymentRef> get orderPayments => List.unmodifiable(_orderPayments);
+  bool get isOrderPaymentsLoading => _isOrderPaymentsLoading;
   sales_detail.SalesOrderDetail? get orderDetail => _orderDetail;
   OrderRef? get orderRef => _orderRef;
   bool get isRefUpdating => _isRefUpdating;
@@ -76,6 +88,7 @@ class SalesOrderDetailViewModel extends ChangeNotifier {
       _orderDetail = data;
       _updateState(SalesOrderDetailState.loaded);
       _loadOrderRef();
+      _loadOrderPayments();
     } catch (e, stack) {
       debugPrint('loadOrderDetail failed: $e\n$stack');
       _updateState(
@@ -94,11 +107,32 @@ class SalesOrderDetailViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _loadOrderPayments() async {
+    _isOrderPaymentsLoading = true;
+    _notifyListenersSafely();
+    try {
+      _orderPayments = await _repository.getOrderPaymentDetails(
+        companyId,
+        orderId,
+      );
+    } catch (e) {
+      debugPrint('loadOrderPayments failed: $e');
+      _orderPayments = const [];
+    } finally {
+      _isOrderPaymentsLoading = false;
+      _notifyListenersSafely();
+    }
+  }
+
   Future<bool> updateOrderRef(Map<String, dynamic> body) async {
     _isRefUpdating = true;
     _notifyListenersSafely();
     try {
-      final success = await _repository.updateOrderRef(companyId, orderId, body);
+      final success = await _repository.updateOrderRef(
+        companyId,
+        orderId,
+        body,
+      );
       if (success) {
         await _loadOrderRef();
       }
@@ -121,8 +155,11 @@ class SalesOrderDetailViewModel extends ChangeNotifier {
     _statusError = null;
     _notifyListenersSafely();
     try {
-      final result =
-          await _repository.updateOrderStatus(companyId, orderId, action);
+      final result = await _repository.updateOrderStatus(
+        companyId,
+        orderId,
+        action,
+      );
       if (result['success'] == true) {
         await loadOrderDetail();
         return true;
@@ -134,6 +171,46 @@ class SalesOrderDetailViewModel extends ChangeNotifier {
       return false;
     } finally {
       _isStatusUpdating = false;
+      _notifyListenersSafely();
+    }
+  }
+
+  Future<Map<String, dynamic>> cancelOrder() async {
+    _isCanceling = true;
+    _cancelError = null;
+    _dependentPayments = const [];
+    _notifyListenersSafely();
+    try {
+      final result = await _repository.cancelOrder(companyId, orderId);
+      if (result['success'] == true) {
+        await loadOrderDetail();
+        return {
+          'success': true,
+          'message': result['message'] ?? 'Order canceled successfully',
+          'dependentPayments': <PaymentRef>[],
+        };
+      }
+
+      final payments = result['dependentPayments'];
+      _dependentPayments = payments is List<PaymentRef>
+          ? payments
+          : const <PaymentRef>[];
+      _cancelError = result['message']?.toString() ?? 'Failed to cancel order';
+      return {
+        'success': false,
+        'message': _cancelError,
+        'responseCode': result['responseCode'],
+        'dependentPayments': _dependentPayments,
+      };
+    } catch (e) {
+      _cancelError = 'Error: $e';
+      return {
+        'success': false,
+        'message': _cancelError,
+        'dependentPayments': <PaymentRef>[],
+      };
+    } finally {
+      _isCanceling = false;
       _notifyListenersSafely();
     }
   }

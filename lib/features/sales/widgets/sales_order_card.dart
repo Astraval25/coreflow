@@ -90,6 +90,8 @@ class SalesOrderCard extends StatelessWidget {
                       _SalesInfoPill(
                         icon: Icons.person_outline_rounded,
                         value: order.vendorName,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
                       ),
                     ],
                   ),
@@ -113,6 +115,8 @@ class SalesOrderCard extends StatelessWidget {
                             _SalesInfoPill(
                               icon: Icons.person_outline_rounded,
                               value: order.vendorName,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
                             ),
                           ],
                         ),
@@ -124,8 +128,7 @@ class SalesOrderCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                const Divider(thickness: 1.0, color: Colors.grey, height: 15.0),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
@@ -213,8 +216,15 @@ class _SalesStatusBadge extends StatelessWidget {
 class _SalesInfoPill extends StatelessWidget {
   final IconData icon;
   final String value;
+  final double fontSize;
+  final FontWeight fontWeight;
 
-  const _SalesInfoPill({required this.icon, required this.value});
+  const _SalesInfoPill({
+    required this.icon,
+    required this.value,
+    this.fontSize = 12,
+    this.fontWeight = FontWeight.w600,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -227,8 +237,8 @@ class _SalesInfoPill extends StatelessWidget {
           value,
           style: TextStyle(
             color: LoginColors.textSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+            fontSize: fontSize,
+            fontWeight: fontWeight,
           ),
         ),
       ],

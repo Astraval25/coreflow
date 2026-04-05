@@ -111,7 +111,7 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
     if (vm.selectedCustomer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: const Text('Please select a customer first'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -128,7 +128,7 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
     if (items.isEmpty && !vm.isLoadingItems) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: const Text('No sellable items available for this customer'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -222,7 +222,7 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
     if (vm.selectedCustomer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: const Text('Please select a customer'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -237,7 +237,7 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
     if (vm.orderItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: const Text('Please add at least one item'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -258,7 +258,7 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
     if (vm.isSuccess && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: const Row(
             children: [
               Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
@@ -1252,7 +1252,7 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
     if (!widget.hostContext.mounted) return;
     ScaffoldMessenger.of(widget.hostContext).showSnackBar(
       const SnackBar(
-        duration: Duration(seconds: 1),
+        duration: Duration(seconds: 2),
         content: Text('Customer item created successfully'),
       ),
     );

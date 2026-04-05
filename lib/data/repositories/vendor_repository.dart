@@ -8,6 +8,7 @@ import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
 import 'package:coreflow/domain/model/vendors/vendors_edit_request.dart';
 import 'package:coreflow/domain/model/vendors/vendors_edit_response.dart';
+import 'package:coreflow/domain/model/vendors/vendor_orders_payments.dart';
 import 'package:coreflow/domain/model/vendors/vendors_status_response.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_config.dart';
@@ -330,6 +331,42 @@ class VendorRepository {
     } catch (e, stack) {
       debugPrint('Get vendor purchasable items error: $e\n$stack');
       return [];
+    }
+  }
+
+  Future<VendorOrdersPaymentsData?> getVendorOrdersPayments(
+    int companyId,
+    int vendorId,
+    {int page = 0, int size = 10}
+  ) async {
+    try {
+      final url = AppConfig.getVendorOrdersPaymentsUrl(
+        companyId,
+        vendorId,
+        page: page,
+        size: size,
+      );
+      final response = await _apiService.get(Uri.parse(url));
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        debugPrint('Get vendor orders-payments failed: ${response.statusCode}');
+        return null;
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final parsed = VendorOrdersPaymentsResponse.fromJson(data);
+      if (!parsed.responseStatus) {
+        debugPrint(
+          'Get vendor orders-payments responseStatus false: ${parsed.responseMessage}',
+        );
+        return null;
+      }
+
+      return parsed.responseData ??
+          VendorOrdersPaymentsData(orders: const [], payments: const []);
+    } catch (e) {
+      debugPrint('Get vendor orders-payments error: $e');
+      return null;
     }
   }
 }

@@ -332,7 +332,7 @@ class _CompanyCard extends StatelessWidget {
               if (context.mounted && !success) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    duration: Duration(seconds: 1),
+                    duration: Duration(seconds: 2),
                     content: Text(vm.errorMessage ?? 'Operation failed'),
                     backgroundColor: LoginColors.error,
                   ),

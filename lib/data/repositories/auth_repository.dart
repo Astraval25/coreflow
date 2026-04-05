@@ -23,6 +23,7 @@ import 'package:coreflow/domain/model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
 import 'package:coreflow/domain/model/customer/customer_edit_response.dart';
 import 'package:coreflow/domain/model/customer/customer_mapped_item.dart';
+import 'package:coreflow/domain/model/customer/customer_orders_payments.dart';
 import 'package:coreflow/domain/model/customer/customer_status_response.dart';
 import 'package:coreflow/domain/model/items/create_item_request.dart';
 import 'package:coreflow/domain/model/items/sellable_item.dart';
@@ -50,6 +51,7 @@ import 'package:coreflow/domain/model/sales/sales_order.dart';
 import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
     as sales_detail;
 import 'package:coreflow/domain/model/vendors/create_vendors_request.dart';
+import 'package:coreflow/domain/model/vendors/vendor_orders_payments.dart';
 import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
 import 'package:coreflow/domain/model/vendors/vendors_edit_request.dart';
@@ -351,6 +353,16 @@ class AuthRepository {
   Future<ItemStatusResponse?> activateCustomerMappedItem(int companyId, int customerId, int itemId) => _customerRepo.activateCustomerMappedItem(companyId, customerId, itemId);
   Future<ItemStatusResponse?> deactivateCustomerMappedItem(int companyId, int customerId, int itemId) => _customerRepo.deactivateCustomerMappedItem(companyId, customerId, itemId);
   Future<List<SellableItem>> getCustomerSellableItems(int companyId, int customerId) => _customerRepo.getCustomerSellableItems(companyId, customerId);
+  Future<CustomerOrdersPaymentsData?> getCustomerOrdersPayments(
+    int companyId,
+    int customerId,
+    {int page = 0, int size = 10}
+  ) => _customerRepo.getCustomerOrdersPayments(
+    companyId,
+    customerId,
+    page: page,
+    size: size,
+  );
 
   // ─── Vendor (delegates to VendorRepository) ───
 
@@ -366,6 +378,16 @@ class AuthRepository {
   Future<ItemStatusResponse?> activateVendorMappedItem(int companyId, int vendorId, int itemId) => _vendorRepo.activateVendorMappedItem(companyId, vendorId, itemId);
   Future<ItemStatusResponse?> deactivateVendorMappedItem(int companyId, int vendorId, int itemId) => _vendorRepo.deactivateVendorMappedItem(companyId, vendorId, itemId);
   Future<List<SellableItem>> getVendorPurchasableItems(int companyId, int vendorId) => _vendorRepo.getVendorPurchasableItems(companyId, vendorId);
+  Future<VendorOrdersPaymentsData?> getVendorOrdersPayments(
+    int companyId,
+    int vendorId,
+    {int page = 0, int size = 10}
+  ) => _vendorRepo.getVendorOrdersPayments(
+    companyId,
+    vendorId,
+    page: page,
+    size: size,
+  );
 
   // ─── Item (delegates to ItemRepository) ───
 
@@ -388,6 +410,8 @@ class AuthRepository {
   Future<Map<String, dynamic>> updatePurchaseOrder(int companyId, int orderId, Map<String, dynamic> body) => _orderRepo.updatePurchaseOrder(companyId, orderId, body);
   Future<Map<String, dynamic>> updateSalesOrder(int companyId, int orderId, Map<String, dynamic> body) => _orderRepo.updateSalesOrder(companyId, orderId, body);
   Future<Map<String, dynamic>> updateOrderStatus(int companyId, int orderId, String action) => _orderRepo.updateOrderStatus(companyId, orderId, action);
+  Future<Map<String, dynamic>> cancelOrder(int companyId, int orderId) => _orderRepo.cancelOrder(companyId, orderId);
+  Future<List<PaymentRef>> getOrderPaymentDetails(int companyId, int orderId) => _orderRepo.getOrderPaymentDetails(companyId, orderId);
 
   // ─── Payment (delegates to PaymentRepository) ───
 

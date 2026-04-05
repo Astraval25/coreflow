@@ -119,7 +119,7 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
     if (vm.selectedVendor == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: const Text('Please select a vendor first'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -135,7 +135,7 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
     if (items.isEmpty && !vm.isLoadingItems) {
       ScaffoldMessenger.of(context).showSnackBar( 
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content:
               const Text('No purchasable items available for this vendor'),
           backgroundColor: LoginColors.error,
@@ -240,7 +240,7 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
     if (vm.selectedVendor == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: const Text('Please select a vendor'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -254,7 +254,7 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
     if (vm.orderItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: const Text('Please add at least one item'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -1328,7 +1328,7 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
     if (!widget.hostContext.mounted) return;
     ScaffoldMessenger.of(widget.hostContext).showSnackBar(
       const SnackBar(
-        duration: Duration(seconds: 1),
+        duration: Duration(seconds: 2),
         content: Text('Vendor item created successfully'),
       ),
     );

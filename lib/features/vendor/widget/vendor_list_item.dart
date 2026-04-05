@@ -4,15 +4,20 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/vendor/view_model/vendor_view_model.dart';
+import 'package:coreflow/domain/model/vendors/vendors.dart';
 
 class VendorListItem extends StatelessWidget {
-  final dynamic vendor;
+  final Vendor vendor;
   final int companyId;
+  final bool isPinned;
+  final VoidCallback onTogglePin;
 
   const VendorListItem({
     super.key,
     required this.vendor,
     required this.companyId,
+    required this.isPinned,
+    required this.onTogglePin,
   });
 
   @override
@@ -128,12 +133,59 @@ class VendorListItem extends StatelessWidget {
               ),
               if (vendor.dueAmount.isNotEmpty) ...[
                 const SizedBox(width: 10),
-                Text(
-                  vendor.dueAmount,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: _getDueAmountColor(vendor.dueAmount),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(999),
+                        onTap: onTogglePin,
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Icon(
+                            isPinned
+                                ? Icons.push_pin_rounded
+                                : Icons.push_pin_outlined,
+                            size: 19,
+                            color: isPinned
+                                ? LoginColors.primary
+                                : LoginColors.textTertiary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      vendor.dueAmount,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _getDueAmountColor(vendor.dueAmount),
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                const SizedBox(width: 10),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(999),
+                    onTap: onTogglePin,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        isPinned
+                            ? Icons.push_pin_rounded
+                            : Icons.push_pin_outlined,
+                        size: 19,
+                        color: isPinned
+                            ? LoginColors.primary
+                            : LoginColors.textTertiary,
+                      ),
+                    ),
                   ),
                 ),
               ],

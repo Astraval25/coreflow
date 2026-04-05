@@ -359,7 +359,7 @@ class CustomerItemSection extends StatelessWidget {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        duration: Duration(seconds: 1),
+        duration: Duration(seconds: 2),
         content: Text('Customer item created successfully'),
       ),
     );

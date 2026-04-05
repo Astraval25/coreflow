@@ -134,7 +134,7 @@ class _DashboardViewState extends State<_DashboardView>
                             _contentHorizontalPadding,
                             0,
                             _contentHorizontalPadding,
-                            100,
+                            50,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -143,9 +143,7 @@ class _DashboardViewState extends State<_DashboardView>
                                 vm: vm,
                                 // onPlay: () => _openHowItWorksVideo(context),
                               ),
-                              const SizedBox(height: 20),
                               QuickAccessSection(vm: vm),
-                              const SizedBox(height: 4),
                               DashboardAnalyticsSection(
                                 kpi: vm.kpi,
                                 cashFlow: vm.cashFlow,

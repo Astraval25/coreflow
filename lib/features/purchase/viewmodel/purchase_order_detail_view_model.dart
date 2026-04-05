@@ -1,5 +1,6 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/company_ref/order_ref.dart';
+import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
 import 'package:flutter/foundation.dart';
 
@@ -26,6 +27,11 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
   bool _isStatusUpdating = false;
   String? _statusError;
   bool _isRefUpdating = false;
+  bool _isCanceling = false;
+  String? _cancelError;
+  List<PaymentRef> _dependentPayments = const [];
+  List<PaymentRef> _orderPayments = const [];
+  bool _isOrderPaymentsLoading = false;
 
   PurchaseOrderDetailState get state => _state;
   PurchaseOrderDetail? get orderDetail => _orderDetail;
@@ -33,6 +39,12 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isStatusUpdating => _isStatusUpdating;
   String? get statusError => _statusError;
+  bool get isCanceling => _isCanceling;
+  String? get cancelError => _cancelError;
+  List<PaymentRef> get dependentPayments =>
+      List.unmodifiable(_dependentPayments);
+  List<PaymentRef> get orderPayments => List.unmodifiable(_orderPayments);
+  bool get isOrderPaymentsLoading => _isOrderPaymentsLoading;
   bool get isRefUpdating => _isRefUpdating;
 
   bool get isLoading => _state == PurchaseOrderDetailState.loading;
@@ -58,6 +70,7 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
       _orderDetail = data;
       _updateState(PurchaseOrderDetailState.loaded);
       _loadOrderRef();
+      _loadOrderPayments();
 
       if (data.orderStatus == 'ORDER') {
         _autoMarkViewed();
@@ -73,8 +86,11 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
 
   Future<void> _autoMarkViewed() async {
     try {
-      final result =
-          await _repository.updateOrderStatus(companyId, orderId, 'viewed');
+      final result = await _repository.updateOrderStatus(
+        companyId,
+        orderId,
+        'viewed',
+      );
       if (result['success'] == true) {
         await loadOrderDetail();
       }
@@ -92,11 +108,32 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _loadOrderPayments() async {
+    _isOrderPaymentsLoading = true;
+    _notifyListenersSafely();
+    try {
+      _orderPayments = await _repository.getOrderPaymentDetails(
+        companyId,
+        orderId,
+      );
+    } catch (e) {
+      debugPrint('loadOrderPayments failed: $e');
+      _orderPayments = const [];
+    } finally {
+      _isOrderPaymentsLoading = false;
+      _notifyListenersSafely();
+    }
+  }
+
   Future<bool> updateOrderRef(Map<String, dynamic> body) async {
     _isRefUpdating = true;
     _notifyListenersSafely();
     try {
-      final success = await _repository.updateOrderRef(companyId, orderId, body);
+      final success = await _repository.updateOrderRef(
+        companyId,
+        orderId,
+        body,
+      );
       if (success) {
         await _loadOrderRef();
       }
@@ -119,8 +156,11 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
     _statusError = null;
     _notifyListenersSafely();
     try {
-      final result =
-          await _repository.updateOrderStatus(companyId, orderId, action);
+      final result = await _repository.updateOrderStatus(
+        companyId,
+        orderId,
+        action,
+      );
       if (result['success'] == true) {
         await loadOrderDetail();
         return true;
@@ -132,6 +172,46 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
       return false;
     } finally {
       _isStatusUpdating = false;
+      _notifyListenersSafely();
+    }
+  }
+
+  Future<Map<String, dynamic>> cancelOrder() async {
+    _isCanceling = true;
+    _cancelError = null;
+    _dependentPayments = const [];
+    _notifyListenersSafely();
+    try {
+      final result = await _repository.cancelOrder(companyId, orderId);
+      if (result['success'] == true) {
+        await loadOrderDetail();
+        return {
+          'success': true,
+          'message': result['message'] ?? 'Order canceled successfully',
+          'dependentPayments': <PaymentRef>[],
+        };
+      }
+
+      final payments = result['dependentPayments'];
+      _dependentPayments = payments is List<PaymentRef>
+          ? payments
+          : const <PaymentRef>[];
+      _cancelError = result['message']?.toString() ?? 'Failed to cancel order';
+      return {
+        'success': false,
+        'message': _cancelError,
+        'responseCode': result['responseCode'],
+        'dependentPayments': _dependentPayments,
+      };
+    } catch (e) {
+      _cancelError = 'Error: $e';
+      return {
+        'success': false,
+        'message': _cancelError,
+        'dependentPayments': <PaymentRef>[],
+      };
+    } finally {
+      _isCanceling = false;
       _notifyListenersSafely();
     }
   }

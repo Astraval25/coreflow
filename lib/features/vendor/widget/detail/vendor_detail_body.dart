@@ -4,11 +4,9 @@ import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
 import 'package:coreflow/features/vendor/view_model/vendor_detail_view_model.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_address_tile.dart';
 import 'package:coreflow/features/vendor/widget/detail/body/vendor_item_section.dart';
+import 'package:coreflow/features/vendor/widget/detail/body/vendor_orders_payments_section.dart';
 import 'package:coreflow/features/vendor/widget/detail/vendor_financial_strip.dart';
-import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:coreflow/features/vendor/widget/detail/vendor_info_tile.dart';
 import 'package:provider/provider.dart';
 
 class VendorDetailBody extends StatefulWidget {
@@ -35,7 +33,6 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         VendorFinancialStrip(vendor: vendor),
-        _buildQuickActions(context),
         _buildLinkCompanyStrip(context, vm, vendor, isLinked),
         const SizedBox(height: 10),
         Padding(
@@ -51,7 +48,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildTabText('Basic Info', 0),
+                  _buildTabText('Transaction', 0),
                   _buildTabText('Items', 1),
                   _buildTabText('Address', 2),
                 ],
@@ -60,7 +57,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(_horizontal, 14, _horizontal, 32),
+          padding: const EdgeInsets.fromLTRB(_horizontal, 14, _horizontal, 120),
           child: Container(
             decoration: BoxDecoration(
               color: LoginColors.surface,
@@ -107,102 +104,6 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context) {
-    final vm = context.read<VendorDetailViewModel>();
-    final vendor = widget.vendor;
-    
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(_horizontal, 6, _horizontal, 0),
-      child: Row(
-        children: [
-          _buildActionButton(
-            context,
-            icon: Icons.shopping_cart_rounded,
-            label: 'Create Purchase',
-            color: LoginColors.primary,
-            onTap: () => context.push(
-              CfRoutes.purchaseCreate(vm.companyId),
-              extra: {
-                'preSelectedVendor': {
-                  'vendorId': vendor.vendorId,
-                  'displayName': vendor.vendorName,
-                  'vendorCompanyName': vendor.vendorCompany?.companyName ?? '',
-                  'vendorCompanyId': vendor.vendorCompany?.companyId,
-                  'email': vendor.email,
-                  'isActive': vendor.isActive,
-                  'dueAmount': '',
-                }
-              },
-            ),
-          ),
-          const SizedBox(width: 10),
-          _buildActionButton(
-            context,
-            icon: Icons.payment_rounded,
-            label: 'Make Payment',
-            color: LoginColors.success,
-            onTap: () => context.push(
-              CfRoutes.paymentMadeCreate(vm.companyId),
-              extra: {
-                'preSelectedVendor': {
-                  'vendorId': vendor.vendorId,
-                  'displayName': vendor.vendorName,
-                  'vendorCompanyName': vendor.vendorCompany?.companyName ?? '',
-                  'vendorCompanyId': vendor.vendorCompany?.companyId,
-                  'email': vendor.email,
-                  'isActive': vendor.isActive,
-                  'dueAmount': '',
-                }
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: color.withValues(alpha: 0.2)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 18, color: color),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildLinkCompanyStrip(
     BuildContext context,
     VendorDetailViewModel vm,
@@ -235,7 +136,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             if (context.mounted && response != null && !response.responseStatus) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  duration: Duration(seconds: 1),
+                  duration: Duration(seconds: 2),
                   content: Text(response.responseMessage),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -247,7 +148,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             if (context.mounted && response == null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  duration: Duration(seconds: 1),
+                  duration: Duration(seconds: 2),
                   content: Text('No existing invitation code found'),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -259,7 +160,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  duration: Duration(seconds: 1),
+                  duration: Duration(seconds: 2),
                   content: Text(
                     response?.responseStatus == true
                         ? 'Company linked successfully'
@@ -282,7 +183,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
   Widget _buildSelectedSection(VendorsDetailData vendor) {
     switch (_selectedIndex) {
       case 0:
-        return _BasicInfoSection(vendor: vendor);
+        return const VendorOrdersPaymentsSection();
       case 1:
         return const VendorItemSection();
       case 2:
@@ -324,55 +225,6 @@ class _SectionHeader extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _BasicInfoSection extends StatelessWidget {
-  final VendorsDetailData vendor;
-
-  const _BasicInfoSection({required this.vendor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SectionHeader(title: 'Basic Information'),
-        Divider(height: 1, thickness: 1, color: LoginColors.border),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Column(
-            children: [
-              VendorInfoTile(
-                icon: Icons.email_outlined,
-                label: 'Email',
-                value: vendor.email,
-              ),
-              VendorInfoTile(
-                icon: Icons.phone_outlined,
-                label: 'Phone',
-                value: vendor.phone,
-              ),
-              VendorInfoTile(
-                icon: Icons.badge_outlined,
-                label: 'PAN',
-                value: vendor.pan,
-              ),
-              VendorInfoTile(
-                icon: Icons.receipt_long_outlined,
-                label: 'GST',
-                value: vendor.gst,
-              ),
-              VendorInfoTile(
-                icon: Icons.language_rounded,
-                label: 'Language',
-                value: vendor.lang,
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

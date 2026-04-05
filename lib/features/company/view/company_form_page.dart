@@ -252,7 +252,7 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: Text(
             isEditing ? 'Company updated successfully' : 'Company created successfully',
           ),
@@ -263,7 +263,7 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: Text(vm.errorMessage ?? 'Operation failed'),
           backgroundColor: LoginColors.error,
         ),

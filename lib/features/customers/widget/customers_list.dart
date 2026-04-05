@@ -1,14 +1,19 @@
 import 'package:coreflow/features/customers/widget/customer_list_item.dart';
+import 'package:coreflow/domain/model/customer/customer.dart';
 import 'package:flutter/material.dart';
 
 class CustomersList extends StatelessWidget {
-  final List<dynamic> customers;
+  final List<Customer> customers;
   final int companyId;
+  final Set<int> pinnedCustomerIds;
+  final ValueChanged<int> onTogglePin;
 
   const CustomersList({
     super.key,
     required this.customers,
     required this.companyId,
+    required this.pinnedCustomerIds,
+    required this.onTogglePin,
   });
 
   @override
@@ -24,7 +29,12 @@ class CustomersList extends StatelessWidget {
         return _AnimatedCustomerEntry(
           key: ValueKey('customer-entry-${customer.customerId}-$index'),
           index: index,
-          child: CustomerListItem(customer: customer, companyId: companyId),
+          child: CustomerListItem(
+            customer: customer,
+            companyId: companyId,
+            isPinned: pinnedCustomerIds.contains(customer.customerId),
+            onTogglePin: () => onTogglePin(customer.customerId),
+          ),
         );
       },
     );

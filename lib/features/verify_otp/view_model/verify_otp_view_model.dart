@@ -129,7 +129,7 @@ class VerifyOtpViewModel extends ChangeNotifier {
     _canResend = false;
     _timer?.cancel();
 
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(Duration(seconds: 2), (timer) {
       if (_resendTimer > 0) {
         _resendTimer--;
         notifyListeners();

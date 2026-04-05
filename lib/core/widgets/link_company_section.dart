@@ -515,7 +515,7 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
                         if (code.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              duration: Duration(seconds: 1),
+                              duration: Duration(seconds: 2),
                               content: Text('Please enter a code'),
                               behavior: SnackBarBehavior.floating,
                             ),
@@ -589,7 +589,7 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
     Clipboard.setData(ClipboardData(text: code));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: Duration(seconds: 1),
+        duration: Duration(seconds: 2),
         content: const Text('Code copied to clipboard'),
         backgroundColor: LoginColors.primary,
         behavior: SnackBarBehavior.floating,

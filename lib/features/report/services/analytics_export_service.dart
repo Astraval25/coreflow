@@ -84,7 +84,7 @@ class AnalyticsExportService {
           context,
         ).showSnackBar(
           SnackBar(
-            duration: Duration(seconds: 1),
+            duration: Duration(seconds: 2),
             content: Text('PDF export failed: $e'),
           ),
         );
@@ -125,7 +125,7 @@ class AnalyticsExportService {
           context,
         ).showSnackBar(
           SnackBar(
-            duration: Duration(seconds: 1),
+            duration: Duration(seconds: 2),
             content: Text('CSV export failed: $e'),
           ),
         );

@@ -64,7 +64,7 @@ class ResendOtpViewModel extends ChangeNotifier {
         _successMessage = response.responseMessage ?? 'OTP resent successfully';
         notifyListeners();
 
-        await Future.delayed(Duration(seconds: 1));
+        await Future.delayed(Duration(seconds: 2));
         if (context.mounted) {
           final email = Uri.encodeComponent(emailController.text.trim());
           context.go('${CfRoutes.verifyBase}?email=$email');

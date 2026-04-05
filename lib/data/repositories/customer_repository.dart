@@ -8,6 +8,7 @@ import 'package:coreflow/domain/model/customer/customer_edit_response.dart';
 import 'package:coreflow/domain/model/customer/customer_mapped_item.dart';
 import 'package:coreflow/domain/model/customer/customer_status_response.dart';
 import 'package:coreflow/domain/model/items/item_status_response.dart';
+import 'package:coreflow/domain/model/customer/customer_orders_payments.dart';
 import 'package:coreflow/domain/model/items/sellable_item.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_config.dart';
@@ -310,6 +311,42 @@ class CustomerRepository {
       return ItemStatusResponse.fromJson(data);
     } catch (e) {
       debugPrint('Deactivate customer item error: $e');
+      return null;
+    }
+  }
+
+  Future<CustomerOrdersPaymentsData?> getCustomerOrdersPayments(
+    int companyId,
+    int customerId,
+    {int page = 0, int size = 10}
+  ) async {
+    try {
+      final url = AppConfig.getCustomerOrdersPaymentsUrl(
+        companyId,
+        customerId,
+        page: page,
+        size: size,
+      );
+      final response = await _apiService.get(Uri.parse(url));
+
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        debugPrint('Get customer orders-payments failed: ${response.statusCode}');
+        return null;
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final parsed = CustomerOrdersPaymentsResponse.fromJson(data);
+      if (!parsed.responseStatus) {
+        debugPrint(
+          'Get customer orders-payments responseStatus false: ${parsed.responseMessage}',
+        );
+        return null;
+      }
+
+      return parsed.responseData ??
+          CustomerOrdersPaymentsData(orders: const [], payments: const []);
+    } catch (e) {
+      debugPrint('Get customer orders-payments error: $e');
       return null;
     }
   }

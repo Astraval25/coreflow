@@ -1,94 +1,150 @@
-import 'package:coreflow/routing/cf_routes.dart';
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/payment/receive_payment/view/create_receive_payment_page.dart';
 import 'package:coreflow/features/payment/send_payment/view/create_payment_sent_page.dart';
 import 'package:coreflow/features/purchase/view/create_purchase_order_page.dart';
 import 'package:coreflow/features/sales/view/create_sales_order_page.dart';
-import 'dashboard_widgets.dart';
+import 'package:coreflow/routing/cf_routes.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
 import '../dashboard_view_model/dashboard_view_model.dart';
+import 'dashboard_widgets.dart';
 
-class CreateSection extends StatelessWidget {
+class CreateSection extends StatefulWidget {
   final DashboardViewModel vm;
-  // final VoidCallback onPlay;
 
-  const CreateSection({super.key, required this.vm}); //, required this.onPlay});
+  const CreateSection({super.key, required this.vm});
+
+  @override
+  State<CreateSection> createState() => _CreateSectionState();
+}
+
+class _CreateSectionState extends State<CreateSection> {
+  static const int _firstRowCount = 4;
+  bool _expanded = true;
 
   @override
   Widget build(BuildContext context) {
+    final items = _items(context);
+    final firstRow = items.take(_firstRowCount).toList();
+    final rest = items.skip(_firstRowCount).toList();
+
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 11),
-
-          DashboardSectionHeader(title: 'Create', onTap: () {}), //, onPlay: onPlay),
-          const SizedBox(height: 10),
-
-          GridView.count(
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 4,
-            childAspectRatio: 0.85,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            children: [
-              DashboardGridItem(
-                icon: Icons.receipt_long_outlined,
-                label: 'Sales Order',
-                onTap: () => _openSalesOrder(context),
-              ),
-              DashboardGridItem(
-                icon: Icons.shopping_cart_outlined,
-                label: 'Purchase',
-                onTap: () => _openPurchaseOrder(context),
-              ),
-              DashboardGridItem(
-                icon: Icons.payments_outlined,
-                label: 'Payment',
-                onTap: () => _openSendPayment(context),
-              ),
-              DashboardGridItem(
-                icon: Icons.account_balance_wallet_outlined,
-                label: 'Received',
-                onTap: () => _openReceivePayment(context),
-              ),
-              DashboardGridItem(
-                icon: Icons.person_add_outlined,
-                label: 'Customer',
-                onTap: () {
-                  if (vm.companyId != null) {
-                    context.push(CfRoutes.customerCreate(vm.companyId!));
-                  }
-                },
-              ),
-              DashboardGridItem(
-                icon: Icons.storefront_outlined,
-                label: 'Vendor',
-                onTap: () {
-                  if (vm.companyId != null) {
-                    context.push(CfRoutes.vendorCreate(vm.companyId!));
-                  }
-                },
-              ),
-              DashboardGridItem(
-                icon: Icons.inventory_2_outlined,
-                label: 'Item',
-                onTap: () {
-                  if (vm.companyId != null) {
-                    context.push(CfRoutes.itemCreate(vm.companyId!));
-                  }
-                },
-              ),
-            ],
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 11),
+        DashboardSectionHeader(
+          title: 'Create',
+          onTap: () {},
+          trailing: rest.isNotEmpty
+              ? TextButton.icon(
+                  onPressed: () => setState(() => _expanded = !_expanded),
+                  icon: Icon(
+                    _expanded
+                        ? Icons.expand_less_rounded
+                        : Icons.expand_more_rounded,
+                    size: 18,
+                  ),
+                  label: Text(_expanded ? 'Show less' : 'Show more'),
+                )
+              : null,
+        ),
+        const SizedBox(height: 5),
+        _buildGrid(firstRow),
+        if (rest.isNotEmpty) ...[
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: _buildGrid(rest),
+            ),
+            crossFadeState: _expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
+            sizeCurve: Curves.easeInOut,
           ),
         ],
+      ],
     );
   }
 
+  Widget _buildGrid(List<DashboardGridItem> children) {
+    return GridView.count(
+      shrinkWrap: true,
+      padding: EdgeInsets.zero,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 4,
+      childAspectRatio: 0.85,
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      children: children,
+    );
+  }
+
+  List<DashboardGridItem> _items(BuildContext context) {
+    return [
+      DashboardGridItem(
+        icon: Icons.receipt_long_outlined,
+        label: 'Sales Order',
+        onTap: () => _openSalesOrder(context),
+      ),
+      DashboardGridItem(
+        icon: Icons.shopping_cart_outlined,
+        label: 'Purchase',
+        onTap: () => _openPurchaseOrder(context),
+      ),
+      DashboardGridItem(
+        icon: Icons.payments_outlined,
+        label: 'Payment',
+        onTap: () => _openSendPayment(context),
+      ),
+      DashboardGridItem(
+        icon: Icons.account_balance_wallet_outlined,
+        label: 'Received',
+        onTap: () => _openReceivePayment(context),
+      ),
+      DashboardGridItem(
+        icon: Icons.person_add_outlined,
+        label: 'Customer',
+        onTap: () {
+          final companyId = widget.vm.companyId;
+          if (companyId == null) {
+            _showSelectCompany(context);
+            return;
+          }
+          context.push(CfRoutes.customerCreate(companyId));
+        },
+      ),
+      DashboardGridItem(
+        icon: Icons.storefront_outlined,
+        label: 'Vendor',
+        onTap: () {
+          final companyId = widget.vm.companyId;
+          if (companyId == null) {
+            _showSelectCompany(context);
+            return;
+          }
+          context.push(CfRoutes.vendorCreate(companyId));
+        },
+      ),
+      DashboardGridItem(
+        icon: Icons.inventory_2_outlined,
+        label: 'Item',
+        onTap: () {
+          final companyId = widget.vm.companyId;
+          if (companyId == null) {
+            _showSelectCompany(context);
+            return;
+          }
+          context.push(CfRoutes.itemCreate(companyId));
+        },
+      ),
+    ];
+  }
+
   void _openSalesOrder(BuildContext context) {
-    final companyId = vm.companyId;
+    final companyId = widget.vm.companyId;
     if (companyId == null) {
       _showSelectCompany(context);
       return;
@@ -102,7 +158,7 @@ class CreateSection extends StatelessWidget {
   }
 
   void _openPurchaseOrder(BuildContext context) {
-    final companyId = vm.companyId;
+    final companyId = widget.vm.companyId;
     if (companyId == null) {
       _showSelectCompany(context);
       return;
@@ -116,7 +172,7 @@ class CreateSection extends StatelessWidget {
   }
 
   void _openSendPayment(BuildContext context) {
-    final companyId = vm.companyId;
+    final companyId = widget.vm.companyId;
     if (companyId == null) {
       _showSelectCompany(context);
       return;
@@ -130,7 +186,7 @@ class CreateSection extends StatelessWidget {
   }
 
   void _openReceivePayment(BuildContext context) {
-    final companyId = vm.companyId;
+    final companyId = widget.vm.companyId;
     if (companyId == null) {
       _showSelectCompany(context);
       return;
@@ -146,7 +202,7 @@ class CreateSection extends StatelessWidget {
   void _showSelectCompany(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: Duration(seconds: 1),
+        duration: const Duration(seconds: 2),
         content: const Text('Please select a company first.'),
         behavior: SnackBarBehavior.floating,
         backgroundColor: LoginColors.primary,

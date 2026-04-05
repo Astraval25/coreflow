@@ -1,3 +1,4 @@
+import 'package:coreflow/core/storage/vendor_pin_storage.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +16,7 @@ class ActiveVendorViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   bool _showActiveOnly = true;
-
+  Set<int> _pinnedVendorIds = <int>{};
 
 
   bool get isLoading => _isLoading;
@@ -24,9 +25,9 @@ class ActiveVendorViewModel extends ChangeNotifier {
 
   bool get showActiveOnly => _showActiveOnly;
 
-  List<Vendor> get vendor => _showActiveOnly
-      ? List.unmodifiable(_activeVendor)
-      : List.unmodifiable(_inactiveVendor);
+  List<Vendor> get vendor => _sortVendorsByPinned(
+    _showActiveOnly ? _activeVendor : _inactiveVendor,
+  );
 
   bool get hasData => _activeVendor.isNotEmpty || _inactiveVendor.isNotEmpty;
 
@@ -35,6 +36,9 @@ class ActiveVendorViewModel extends ChangeNotifier {
 
   List<Vendor> get activeVendor => List.unmodifiable(_activeVendor);
   List<Vendor> get inactiveVendor => List.unmodifiable(_inactiveVendor);
+  Set<int> get pinnedVendorIds => Set.unmodifiable(_pinnedVendorIds);
+
+  bool isVendorPinned(int vendorId) => _pinnedVendorIds.contains(vendorId);
 
 
   Future<void> loadVendor(int companyId) async {
@@ -43,6 +47,7 @@ class ActiveVendorViewModel extends ChangeNotifier {
     _clearError();
 
     try {
+      _pinnedVendorIds = await VendorPinStorage.loadPinnedVendorIds(companyId);
       final allVendor = await _authRepository.getActiveVendors(companyId);
 
       _activeVendor
@@ -52,6 +57,13 @@ class ActiveVendorViewModel extends ChangeNotifier {
       _inactiveVendor
         ..clear()
         ..addAll(allVendor.where((v) => !v.isActive));
+
+      final validIds = allVendor.map((v) => v.vendorId).toSet();
+      final stalePins = _pinnedVendorIds.difference(validIds);
+      if (stalePins.isNotEmpty) {
+        _pinnedVendorIds.removeAll(stalePins);
+        await VendorPinStorage.savePinnedVendorIds(_companyId, _pinnedVendorIds);
+      }
     } catch (e) {
       _setError('Failed to load Vendor');
     } finally {
@@ -98,6 +110,29 @@ class ActiveVendorViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> togglePinVendor(int vendorId) async {
+    if (_companyId == 0) return;
+
+    if (_pinnedVendorIds.contains(vendorId)) {
+      _pinnedVendorIds.remove(vendorId);
+    } else {
+      _pinnedVendorIds.add(vendorId);
+    }
+
+    await VendorPinStorage.savePinnedVendorIds(_companyId, _pinnedVendorIds);
+    notifyListeners();
+  }
+
+  List<Vendor> _sortVendorsByPinned(List<Vendor> source) {
+    final sorted = List<Vendor>.from(source);
+    sorted.sort((a, b) {
+      final aPinned = _pinnedVendorIds.contains(a.vendorId);
+      final bPinned = _pinnedVendorIds.contains(b.vendorId);
+      if (aPinned != bPinned) return aPinned ? -1 : 1;
+      return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
+    });
+    return sorted;
+  }
 
 
   void _setLoading(bool value) {

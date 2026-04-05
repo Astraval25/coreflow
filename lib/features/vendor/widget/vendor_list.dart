@@ -1,14 +1,19 @@
 import 'package:coreflow/features/vendor/widget/vendor_list_item.dart';
+import 'package:coreflow/domain/model/vendors/vendors.dart';
 import 'package:flutter/material.dart';
 
 class VendorsList extends StatelessWidget {
-  final List<dynamic> vendors;
+  final List<Vendor> vendors;
   final int companyId;
+  final Set<int> pinnedVendorIds;
+  final ValueChanged<int> onTogglePin;
 
   const VendorsList({
     super.key,
     required this.vendors,
     required this.companyId,
+    required this.pinnedVendorIds,
+    required this.onTogglePin,
   });
 
   @override
@@ -24,7 +29,12 @@ class VendorsList extends StatelessWidget {
         return _AnimatedVendorEntry(
           key: ValueKey('vendor-entry-${vendor.vendorId}-$index'),
           index: index,
-          child: VendorListItem(vendor: vendor, companyId: companyId),
+          child: VendorListItem(
+            vendor: vendor,
+            companyId: companyId,
+            isPinned: pinnedVendorIds.contains(vendor.vendorId),
+            onTogglePin: () => onTogglePin(vendor.vendorId),
+          ),
         );
       },
     );

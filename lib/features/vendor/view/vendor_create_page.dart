@@ -383,7 +383,7 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            duration: Duration(seconds: 1),
+            duration: Duration(seconds: 2),
             content: Text('Vendor created successfully'),
           ),
         );
@@ -416,7 +416,7 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
           
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              duration: Duration(seconds: 1),
+              duration: Duration(seconds: 2),
               content: Text('Vendor and items created successfully'),
             ),
           );
@@ -429,7 +429,7 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            duration: Duration(seconds: 1),
+            duration: Duration(seconds: 2),
             content: Text(viewModel.error ?? 'Failed to create vendor'),
           ),
         );

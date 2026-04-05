@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:coreflow/core/utils/payment_share_helper.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
@@ -10,6 +9,7 @@ import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/payment/payment_detail.dart';
 import 'package:coreflow/features/payment/send_payment/viewmodel/send_payment_detail_view_model.dart';
+import 'package:coreflow/features/payment/send_payment/widgets/send_expand_more_option.dart';
 import 'package:coreflow/features/payment/send_payment/view/update_payment_sent_page.dart';
 import 'package:coreflow/features/purchase/view/purchase_order_detail_page.dart';
 import 'package:flutter/material.dart';
@@ -97,7 +97,7 @@ class _SendPaymentDetailView extends StatelessWidget {
                     if (hoursDiff >= 24) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          duration: Duration(seconds: 1),
+                          duration: Duration(seconds: 2),
                         content: Text(
                             'Payments can only be edited within 24 hours of creation'),
                         behavior: SnackBarBehavior.floating,
@@ -119,7 +119,13 @@ class _SendPaymentDetailView extends StatelessWidget {
               ),
             ],
           ),
-          body: RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
+          body: Stack(
+            children: [
+              RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
+              if (!vm.isLoading && !vm.hasError && !vm.isNoData && vm.paymentDetail != null)
+                SendPaymentBottomPanel(payment: vm.paymentDetail!, vm: vm),
+            ],
+          ),
         );
       },
     );
@@ -183,8 +189,7 @@ class _SendPaymentDetailView extends StatelessWidget {
         ],
         const SizedBox(height: 10),
         _ProofCard(vm: vm),
-        const SizedBox(height: 14),
-        _BottomActionsBar(payment: payment, vm: vm),
+        const SizedBox(height: 100),
       ],
     );
   }
@@ -421,7 +426,7 @@ class _PaymentRefCardState extends State<_PaymentRefCard> {
       if (!success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            duration: Duration(seconds: 1),
+            duration: Duration(seconds: 2),
             content: Text('Failed to update reference'),
             behavior: SnackBarBehavior.floating,
           ),
@@ -1025,7 +1030,7 @@ class _ProofViewerPage extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar( 
           const SnackBar(
-            duration: Duration(seconds: 1),
+            duration: Duration(seconds: 2),
             content: Text('Unable to open PDF'),
             behavior: SnackBarBehavior.floating,
           ),
@@ -1079,301 +1084,6 @@ class _ProofViewerPage extends StatelessWidget {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BottomActionsBar extends StatefulWidget {
-  final PaymentDetail payment;
-  final SendPaymentDetailViewModel vm;
-
-  const _BottomActionsBar({required this.payment, required this.vm});
-
-  @override
-  State<_BottomActionsBar> createState() => _BottomActionsBarState();
-}
-
-class _BottomActionsBarState extends State<_BottomActionsBar> {
-  bool _shareExpanded = false;
-
-  List<({String label, IconData icon, String action, Color color})>
-      get _statusActions {
-    final status = widget.payment.paymentStatus;
-    final list =
-        <({String label, IconData icon, String action, Color color})>[];
-
-    if (status == 'PENDING') {
-      list.add((
-        label: 'Mark as Viewed',
-        icon: Icons.visibility_rounded,
-        action: 'viewed',
-        color: Colors.blue.shade600,
-      ));
-    }
-    if (status == 'VIEWED') {
-      list.add((
-        label: 'Partially Paid',
-        icon: Icons.payments_outlined,
-        action: 'partially-paid',
-        color: Colors.orange.shade700,
-      ));
-    }
-    if (status == 'PAID' || status == 'PARTIALLY_PAID') {
-      list.add((
-        label: 'Refund',
-        icon: Icons.undo_rounded,
-        action: 'refund',
-        color: Colors.purple.shade600,
-      ));
-    }
-    if (const ['PENDING', 'VIEWED', 'PARTIALLY_PAID'].contains(status)) {
-      list.add((
-        label: 'Mark Failed',
-        icon: Icons.cancel_outlined,
-        action: 'failed',
-        color: LoginColors.error,
-      ));
-    }
-    return list;
-  }
-
-  Future<void> _doStatusAction(String action) async {
-    final success = await widget.vm.updateStatus(action);
-    if (!success && mounted && widget.vm.statusError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          duration: Duration(seconds: 1),
-          content: Text(widget.vm.statusError!),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final actions = _statusActions;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Share options dropdown
-        AnimatedSize(
-          duration: Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          child: _shareExpanded
-              ? Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: LoginColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: LoginColors.borderLight),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _ActionTile(
-                        icon: Icons.text_fields_rounded,
-                        label: 'Share as Text',
-                        color: LoginColors.primary,
-                        onTap: () {
-                          setState(() => _shareExpanded = false);
-                          PaymentShareHelper.shareText(
-                            widget.payment,
-                            isSent: true,
-                          );
-                        },
-                      ),
-                      Divider(height: 1, color: LoginColors.borderLight),
-                      _ActionTile(
-                        icon: Icons.attachment_rounded,
-                        label: 'Share Proof with Text',
-                        color: widget.payment.paymentProofFile != null &&
-                                widget.payment.paymentProofFile!.isNotEmpty
-                            ? LoginColors.primary
-                            : LoginColors.textSecondary,
-                        onTap: () async {
-                          setState(() => _shareExpanded = false);
-                          final proofFile = widget.payment.paymentProofFile;
-                          if (proofFile == null || proofFile.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                duration: Duration(seconds: 1),
-                                content: Text('No proof attached to share'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                            return;
-                          }
-                          final bytes = await widget.vm.fetchProofBytes();
-                          if (bytes == null || bytes.isEmpty) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  duration: Duration(seconds: 1),
-                                  content: Text('Unable to load proof file'),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
-                            return;
-                          }
-                          PaymentShareHelper.shareProofWithText(
-                            widget.payment,
-                            bytes,
-                            isSent: true,
-                          );
-                        },
-                      ),
-                      Divider(height: 1, color: LoginColors.borderLight),
-                      _ActionTile(
-                        icon: Icons.picture_as_pdf_rounded,
-                        label: 'Share as PDF',
-                        color: LoginColors.primary,
-                        onTap: () {
-                          setState(() => _shareExpanded = false);
-                          PaymentShareHelper.shareAsPdf(
-                            widget.payment,
-                            isSent: true,
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                )
-              : const SizedBox.shrink(),
-        ),
-
-        // Status error
-        if (widget.vm.statusError != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              widget.vm.statusError!,
-              style: TextStyle(
-                color: LoginColors.error,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-
-        // Action buttons row
-        Row(
-          children: [
-            // Share button
-            SizedBox(
-              height: 44,
-              child: OutlinedButton.icon(
-                onPressed: () =>
-                    setState(() => _shareExpanded = !_shareExpanded),
-                icon: Icon(
-                        _shareExpanded
-                            ? Icons.close_rounded
-                            : Icons.share_rounded,
-                        size: 18,
-                      ),
-                label: Text(
-                  _shareExpanded ? 'Close' : 'Share',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: LoginColors.primary,
-                  side: BorderSide(
-                    color: LoginColors.primary.withValues(alpha: 0.4),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-
-            // Status action buttons
-            for (final a in actions) ...[
-              const SizedBox(width: 8),
-              Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: FilledButton.icon(
-                    onPressed: widget.vm.isStatusUpdating
-                        ? null
-                        : () => _doStatusAction(a.action),
-                    icon: widget.vm.isStatusUpdating
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Icon(a.icon, size: 16),
-                    label: Text(
-                      a.label,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: a.color,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _ActionTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ActionTile({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: TextStyle(
-                color: LoginColors.textPrimary,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
         ),
       ),
     );

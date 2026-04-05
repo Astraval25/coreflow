@@ -3,6 +3,7 @@ import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/features/customers/view_model/customers_view_model.dart';
 import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -134,7 +135,7 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
               ),
               onPressed: () async {
                 final result = await context.push<bool>(
-                  '/customers/${widget.companyId}/add',
+                  CfRoutes.customerCreate(widget.companyId),
                 );
                 if (result == true && context.mounted) {
                   context.read<ActiveCustomersViewModel>().refresh();
@@ -207,6 +208,10 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
       child: CustomersList(
         customers: filteredCustomers,
         companyId: widget.companyId,
+        pinnedCustomerIds: viewModel.pinnedCustomerIds,
+        onTogglePin: (customerId) {
+          viewModel.togglePinCustomer(customerId);
+        },
       ),
     );
   }

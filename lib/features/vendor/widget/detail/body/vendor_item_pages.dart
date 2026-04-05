@@ -373,7 +373,7 @@ class _CreateVendorItemPageState extends State<CreateVendorItemPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: Duration(seconds: 1),
+        duration: Duration(seconds: 2),
         content: Text(
           widget.viewModel.errorMessage ?? 'Failed to create vendor item',
         ),
@@ -589,7 +589,7 @@ class _UpdateVendorItemPageState extends State<UpdateVendorItemPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: Duration(seconds: 1),
+        duration: Duration(seconds: 2),
         content: Text(
           widget.viewModel.errorMessage ?? 'Failed to update vendor item',
         ),

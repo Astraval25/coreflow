@@ -69,6 +69,10 @@ class AppConfig {
       '/api/companies/{companyId}/customers/{customerId}/items/{itemId}/deactivate';
   static const String customerSellableItemsEndpoint =
       '/api/companies/{companyId}/customers/{customerId}/items/sellable';
+  static const String customerOrdersPaymentsEndpoint =
+      '/api/companies/{companyId}/customers/{customerId}/orders-payments';
+  static const String vendorOrdersPaymentsEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/orders-payments';
   static const String vendorPurchasableItemsEndpoint =
       '/api/companies/{companyId}/vendors/{vendorId}/items/purchasable';
   static const String fileEndpoint = '/api/file';
@@ -222,8 +226,48 @@ class AppConfig {
   static String getCustomerSellableItemsUrl(int companyId, int customerId) =>
       '$baseUrl${customerSellableItemsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
 
+  static String getCustomerOrdersPaymentsUrl(
+    int companyId,
+    int customerId, {
+    int? page,
+    int? size,
+  }) {
+    final base =
+        '$baseUrl${customerOrdersPaymentsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+    if (page == null && size == null) return base;
+
+    final params = <String>[
+      if (page != null) 'page=$page',
+      if (size != null) 'size=$size',
+    ];
+    return '$base?${params.join('&')}';
+  }
+
+  // Alias kept for clearer call sites.
+  static String getCustomerOrdersAndPaymentsUrl(
+    int companyId,
+    int customerId,
+  ) => getCustomerOrdersPaymentsUrl(companyId, customerId);
+
   static String getVendorPurchasableItemsUrl(int companyId, int vendorId) =>
       '$baseUrl${vendorPurchasableItemsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+
+  static String getVendorOrdersPaymentsUrl(
+    int companyId,
+    int vendorId, {
+    int? page,
+    int? size,
+  }) {
+    final base =
+        '$baseUrl${vendorOrdersPaymentsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+    if (page == null && size == null) return base;
+
+    final params = <String>[
+      if (page != null) 'page=$page',
+      if (size != null) 'size=$size',
+    ];
+    return '$base?${params.join('&')}';
+  }
 
   static String getFileUrl(String fsId) => '$baseUrl$fileEndpoint?fsId=$fsId';
   static String getItemActivateUrl(int companyId, int itemId) =>
@@ -251,6 +295,8 @@ class AppConfig {
       getPaymentDetailUrl(companyId, paymentId);
   static String getOrderDetailUrl(int companyId, int orderId) =>
       '$baseUrl${orderDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{orderId}', orderId.toString())}';
+  static String getOrderPaymentDetailsUrl(int companyId, int orderId) =>
+      '$baseUrl/api/companies/$companyId/orders/$orderId/payment-details';
 
   static String getCreatePaymentSentUrl(int companyId) =>
       '$baseUrl${createPaymentSentEndpoint.replaceAll('{companyId}', companyId.toString())}';
@@ -286,9 +332,14 @@ class AppConfig {
   static String getOrderStatusUrl(int companyId, int orderId, String action) =>
       '$baseUrl/api/companies/$companyId/orders/$orderId/$action';
 
+  static String getCancelOrderUrl(int companyId, int orderId) =>
+      '$baseUrl/api/companies/$companyId/orders/$orderId/cancel-order';
+
   static String getPaymentStatusUrl(
-          int companyId, int paymentId, String action) =>
-      '$baseUrl/api/companies/$companyId/payments/$paymentId/$action';
+    int companyId,
+    int paymentId,
+    String action,
+  ) => '$baseUrl/api/companies/$companyId/payments/$paymentId/$action';
 
   static String getCustomerInvitationUrl(int companyId, int customerId) =>
       '$baseUrl${customerInvitationEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';

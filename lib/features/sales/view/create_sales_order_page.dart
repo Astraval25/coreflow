@@ -117,7 +117,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     if (vm.selectedCustomer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: const Text('Please select a customer first'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -133,7 +133,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     if (items.isEmpty && !vm.isLoadingItems) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: const Text('No sellable items available for this customer'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -226,7 +226,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     if (vm.selectedCustomer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: const Text('Please select a customer'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -240,7 +240,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     if (vm.orderItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 1),
+          duration: Duration(seconds: 2),
           content: const Text('Please add at least one item'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
@@ -1245,7 +1245,7 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
     if (!widget.hostContext.mounted) return;
     ScaffoldMessenger.of(widget.hostContext).showSnackBar( 
       const SnackBar(
-        duration: Duration(seconds: 1),
+        duration: Duration(seconds: 2),
         content: Text('Customer item created successfully'),
       ),
     );
