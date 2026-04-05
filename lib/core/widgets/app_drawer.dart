@@ -1,8 +1,8 @@
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
-import 'package:coreflow/features/dashboard/widget/company_header.dart';
-import 'package:coreflow/features/dashboard/widget/manage_expansion.dart';
-import 'package:coreflow/features/dashboard/widget/profile_row.dart';
+import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/features/main_feature/dashboard/widget/company_header.dart';
+import 'package:coreflow/features/main_feature/dashboard/widget/manage_expansion.dart';
+import 'package:coreflow/features/main_feature/dashboard/widget/profile_row.dart';
 import 'package:flutter/material.dart';
 
 class AppDrawer extends StatelessWidget {

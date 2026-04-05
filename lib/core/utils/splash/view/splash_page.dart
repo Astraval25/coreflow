@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/features/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
