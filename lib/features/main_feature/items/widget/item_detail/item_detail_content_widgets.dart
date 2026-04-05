@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/domain/model/items/detail_item.dart';
+import 'package:coreflow/domain/model/main_model/items/detail_item.dart';
 import 'package:coreflow/features/main_feature/items/widget/item_section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';

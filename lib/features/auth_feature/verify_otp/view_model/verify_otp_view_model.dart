@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:coreflow/domain/model/resend_otp/resend_otp_request.dart';
-import 'package:coreflow/domain/model/verify_otp/verify_otp_request.dart';
+import 'package:coreflow/domain/model/auth_model/resend_otp/resend_otp_request.dart';
+import 'package:coreflow/domain/model/auth_model/verify_otp/verify_otp_request.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';

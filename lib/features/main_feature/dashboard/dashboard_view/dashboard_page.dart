@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/core/theme/theme_provider.dart';
-import 'package:coreflow/domain/model/advertisement/advertisement.dart';
+import 'package:coreflow/domain/model/main_model/advertisement/advertisement.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 

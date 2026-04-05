@@ -1,6 +1,6 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/link_company_section.dart';
-import 'package:coreflow/domain/model/customer/customer_detail.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
 import 'package:coreflow/features/main_feature/customers/view_model/customer_detail_view_model.dart';
 import 'package:coreflow/features/main_feature/customers/widget/detail/body/customer_detail_sections.dart';
 import 'package:coreflow/features/main_feature/customers/widget/detail/body/customer_item_section.dart';

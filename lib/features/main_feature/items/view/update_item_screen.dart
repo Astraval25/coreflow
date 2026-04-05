@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/domain/model/items/item.dart';
-import 'package:coreflow/domain/model/items/update_item_request.dart';
+import 'package:coreflow/domain/model/main_model/items/item.dart';
+import 'package:coreflow/domain/model/main_model/items/update_item_request.dart';
 import 'package:coreflow/features/main_feature/items/view_model/item_update_view_model.dart';
 import 'package:coreflow/features/main_feature/items/widget/item_image_uploader.dart';
 import 'package:coreflow/features/main_feature/items/widget/item_section_card.dart';

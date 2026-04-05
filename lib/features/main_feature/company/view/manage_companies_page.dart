@@ -1,7 +1,7 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/main_feature/company/view_model/company_view_model.dart';
 import 'package:coreflow/features/main_feature/company/view/company_form_page.dart';
-import 'package:coreflow/domain/model/company/company.dart';
+import 'package:coreflow/domain/model/main_model/company/company.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

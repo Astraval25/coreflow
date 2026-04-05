@@ -1,6 +1,6 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/domain/model/payment/payment_detail.dart';
-import 'package:coreflow/domain/model/payment/payment_sent_summary.dart';
+import 'package:coreflow/domain/model/main_model/payment/payment_detail.dart';
+import 'package:coreflow/domain/model/main_model/payment/payment_sent_summary.dart';
 import 'package:flutter/material.dart';
 
 class SendPaymentViewModel extends ChangeNotifier {

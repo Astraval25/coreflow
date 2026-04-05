@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:coreflow/data/services/api_services.dart';
-import 'package:coreflow/domain/model/items/update_item_request.dart';
+import 'package:coreflow/domain/model/main_model/items/update_item_request.dart';
 import 'package:coreflow/core/config/app_config.dart';
 
 class UpdateItemViewModel extends ChangeNotifier {

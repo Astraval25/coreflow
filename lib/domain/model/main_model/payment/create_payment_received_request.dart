@@ -1,4 +1,4 @@
-import 'package:coreflow/domain/model/payment/create_payment_sent_request.dart';
+import 'package:coreflow/domain/model/main_model/payment/create_payment_sent_request.dart';
 
 class CreatePaymentReceivedRequest {
   final int customerId;

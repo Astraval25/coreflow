@@ -1,5 +1,5 @@
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors_detail.dart';
 import 'package:flutter/material.dart';
 
 class VendorAddressTile extends StatelessWidget {

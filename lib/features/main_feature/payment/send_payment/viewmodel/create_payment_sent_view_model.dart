@@ -1,8 +1,8 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/domain/model/payment/create_payment_sent_request.dart';
-import 'package:coreflow/domain/model/payment/payment_proof_result.dart';
-import 'package:coreflow/domain/model/payment/unpaid_order.dart';
-import 'package:coreflow/domain/model/vendors/vendors.dart';
+import 'package:coreflow/domain/model/main_model/payment/create_payment_sent_request.dart';
+import 'package:coreflow/domain/model/main_model/payment/payment_proof_result.dart';
+import 'package:coreflow/domain/model/main_model/payment/unpaid_order.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors.dart';
 import 'package:flutter/material.dart';
 
 class OrderAllocationEntry {

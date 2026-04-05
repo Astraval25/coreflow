@@ -1,7 +1,7 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/domain/model/items/sellable_item.dart';
-import 'package:coreflow/domain/model/purchase/create_purchase_order_request.dart';
-import 'package:coreflow/domain/model/vendors/vendors.dart';
+import 'package:coreflow/domain/model/main_model/items/sellable_item.dart';
+import 'package:coreflow/domain/model/main_model/purchase/create_purchase_order_request.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors.dart';
 import 'package:flutter/material.dart';
 
 class PurchaseOrderItemEntry {

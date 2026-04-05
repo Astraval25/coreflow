@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:coreflow/core/share_intent/share_intent_service.dart';
-import 'package:coreflow/domain/model/payment/payment_proof_result.dart';
+import 'package:coreflow/domain/model/main_model/payment/payment_proof_result.dart';
 import 'package:coreflow/features/main_feature/payment/proof/view/payment_proof_page.dart';
 import 'package:coreflow/features/main_feature/payment/receive_payment/view/create_receive_payment_page.dart';
 import 'package:coreflow/features/main_feature/payment/send_payment/view/create_payment_sent_page.dart';

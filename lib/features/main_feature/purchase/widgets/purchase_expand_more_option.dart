@@ -1,9 +1,9 @@
 import 'package:coreflow/core/utils/order_share_helper.dart';
 import 'package:coreflow/core/utils/common_formatters.dart';
 import 'package:coreflow/core/widgets/top_message_popup.dart';
-import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
-import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
-import 'package:coreflow/domain/model/vendors/vendors.dart';
+import 'package:coreflow/domain/model/main_model/company_ref/payment_ref.dart';
+import 'package:coreflow/domain/model/main_model/purchase/purchase_order_detail.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors.dart';
 import 'package:coreflow/features/main_feature/payment/send_payment/view/create_payment_sent_page.dart';
 import 'package:coreflow/features/main_feature/payment/send_payment/view/send_payment_detail_page.dart';
 import 'package:coreflow/features/main_feature/purchase/viewmodel/purchase_order_detail_view_model.dart';

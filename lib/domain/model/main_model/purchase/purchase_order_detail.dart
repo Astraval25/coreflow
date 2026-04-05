@@ -1,4 +1,4 @@
-import 'package:coreflow/domain/model/purchase/purchase_order_item.dart';
+import 'package:coreflow/domain/model/main_model/purchase/purchase_order_item.dart';
 
 class PurchaseOrderDetail {
   final int orderId;

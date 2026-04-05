@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/domain/model/items/item.dart';
+import 'package:coreflow/domain/model/main_model/items/item.dart';
 import 'package:coreflow/features/main_feature/items/view/item_detail_view.dart';
 import 'package:coreflow/features/main_feature/items/view_model/items_view_model.dart';
 

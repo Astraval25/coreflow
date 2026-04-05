@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/data/services/api_services.dart';
-import 'package:coreflow/domain/model/items/detail_item.dart';
+import 'package:coreflow/domain/model/main_model/items/detail_item.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/main_feature/items/view/update_item_screen.dart';
 import 'package:coreflow/features/main_feature/items/view_model/item_detail_view_model.dart';

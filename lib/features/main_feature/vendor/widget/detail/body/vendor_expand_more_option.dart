@@ -1,5 +1,5 @@
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors_detail.dart';
 import 'package:coreflow/features/main_feature/vendor/view_model/vendor_detail_view_model.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';

@@ -1,6 +1,6 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/domain/model/customer/customer.dart';
-import 'package:coreflow/domain/model/payment/payment_detail.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer.dart';
+import 'package:coreflow/domain/model/main_model/payment/payment_detail.dart';
 import 'package:flutter/material.dart';
 
 class UpdateReceivePaymentAllocationEntry {

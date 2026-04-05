@@ -11,8 +11,8 @@ import 'package:provider/provider.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/features/main_feature/customers/view_model/customer_edit_view_model.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
-import 'package:coreflow/domain/model/customer/customer_detail.dart';
-import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_edit_request.dart';
 import 'package:go_router/go_router.dart';
 
 class CustomerEditPage extends StatelessWidget {

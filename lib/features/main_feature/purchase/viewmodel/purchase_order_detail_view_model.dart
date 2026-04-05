@@ -1,7 +1,7 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/domain/model/company_ref/order_ref.dart';
-import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
-import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
+import 'package:coreflow/domain/model/main_model/company_ref/order_ref.dart';
+import 'package:coreflow/domain/model/main_model/company_ref/payment_ref.dart';
+import 'package:coreflow/domain/model/main_model/purchase/purchase_order_detail.dart';
 import 'package:flutter/foundation.dart';
 
 enum PurchaseOrderDetailState { initial, loading, loaded, noData, error }

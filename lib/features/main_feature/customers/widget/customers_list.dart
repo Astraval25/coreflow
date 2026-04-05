@@ -1,5 +1,5 @@
 import 'package:coreflow/features/main_feature/customers/widget/customer_list_item.dart';
-import 'package:coreflow/domain/model/customer/customer.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer.dart';
 import 'package:flutter/material.dart';
 
 class CustomersList extends StatelessWidget {

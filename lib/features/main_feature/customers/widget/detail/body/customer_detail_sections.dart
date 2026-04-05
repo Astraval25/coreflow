@@ -1,5 +1,5 @@
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/domain/model/customer/customer_detail.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
 import 'package:coreflow/features/main_feature/customers/widget/detail/customer_address_tile.dart';
 import 'package:coreflow/features/main_feature/customers/widget/detail/customer_info_tile.dart';
 import 'package:flutter/material.dart';

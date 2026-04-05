@@ -1,6 +1,6 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/utils/common_formatters.dart';
-import 'package:coreflow/domain/model/customer/customer_orders_payments.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_orders_payments.dart';
 import 'package:coreflow/features/main_feature/customers/view_model/customer_detail_view_model.dart';
 import 'package:coreflow/features/main_feature/payment/receive_payment/view/pay_received_detail_page.dart';
 import 'package:coreflow/features/main_feature/sales/view/sales_order_detail_page.dart';

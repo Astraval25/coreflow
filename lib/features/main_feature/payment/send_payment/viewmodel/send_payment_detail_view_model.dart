@@ -1,6 +1,6 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
-import 'package:coreflow/domain/model/payment/payment_detail.dart';
+import 'package:coreflow/domain/model/main_model/company_ref/payment_ref.dart';
+import 'package:coreflow/domain/model/main_model/payment/payment_detail.dart';
 import 'package:flutter/foundation.dart';
 
 enum SendPaymentDetailState { initial, loading, loaded, noData, error }

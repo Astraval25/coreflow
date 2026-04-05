@@ -1,4 +1,4 @@
-import 'package:coreflow/domain/model/register/register_request.dart';
+import 'package:coreflow/domain/model/auth_model/register/register_request.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import '../../../../data/repositories/auth_repository.dart';

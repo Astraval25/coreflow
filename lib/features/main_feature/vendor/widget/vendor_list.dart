@@ -1,5 +1,5 @@
 import 'package:coreflow/features/main_feature/vendor/widget/vendor_list_item.dart';
-import 'package:coreflow/domain/model/vendors/vendors.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors.dart';
 import 'package:flutter/material.dart';
 
 class VendorsList extends StatelessWidget {

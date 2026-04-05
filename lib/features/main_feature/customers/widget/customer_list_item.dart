@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/main_feature/customers/view_model/customers_view_model.dart';
-import 'package:coreflow/domain/model/customer/customer.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer.dart';
 
 class CustomerListItem extends StatelessWidget {
   final Customer customer;

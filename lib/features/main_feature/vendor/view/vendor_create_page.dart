@@ -1,7 +1,7 @@
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
-import 'package:coreflow/domain/model/vendors/create_vendors_request.dart';
-import 'package:coreflow/domain/model/items/item.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_edit_request.dart';
+import 'package:coreflow/domain/model/main_model/vendors/create_vendors_request.dart';
+import 'package:coreflow/domain/model/main_model/items/item.dart';
 import 'package:coreflow/core/widgets/item_selector_page.dart';
 import 'package:coreflow/core/widgets/process_loading_screen.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';

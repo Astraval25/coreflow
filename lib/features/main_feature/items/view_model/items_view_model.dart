@@ -1,6 +1,6 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:flutter/material.dart';
-import 'package:coreflow/domain/model/items/item.dart';
+import 'package:coreflow/domain/model/main_model/items/item.dart';
 
 class ItemsViewModel extends ChangeNotifier {
   final AuthRepository _repository;

@@ -1,4 +1,4 @@
-import 'package:coreflow/domain/model/sales/sales_order_detail.dart';
+import 'package:coreflow/domain/model/main_model/sales/sales_order_detail.dart';
 
 class SalesOrderDetailResponse {
   final bool responseStatus;

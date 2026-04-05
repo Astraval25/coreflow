@@ -1,4 +1,4 @@
-import 'package:coreflow/domain/model/sales/sales_order_item.dart';
+import 'package:coreflow/domain/model/main_model/sales/sales_order_item.dart';
 
 class SalesOrderDetail {
   final int orderId;

@@ -1,9 +1,9 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/domain/model/company_ref/order_ref.dart';
-import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
-import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
+import 'package:coreflow/domain/model/main_model/company_ref/order_ref.dart';
+import 'package:coreflow/domain/model/main_model/company_ref/payment_ref.dart';
+import 'package:coreflow/domain/model/main_model/sales/sales_order_detail.dart'
     as sales_detail;
-import 'package:coreflow/domain/model/sales/sales_order_item.dart'
+import 'package:coreflow/domain/model/main_model/sales/sales_order_item.dart'
     as sales_item;
 import 'package:flutter/foundation.dart';
 

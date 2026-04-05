@@ -1,6 +1,6 @@
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
-import 'package:coreflow/domain/model/vendors/vendors_edit_request.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors_detail.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors_edit_request.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/features/main_feature/vendor/view_model/vendor_edit_view_model.dart';
 import 'package:coreflow/features/main_feature/vendor/widget/edit_create/billing_address_card.dart';
@@ -13,7 +13,7 @@ import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
-import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_edit_request.dart';
 import 'package:go_router/go_router.dart';
 
 class VendorEditPage extends StatelessWidget {

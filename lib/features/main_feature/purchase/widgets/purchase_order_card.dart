@@ -1,5 +1,5 @@
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/domain/model/purchase/purchase_order.dart';
+import 'package:coreflow/domain/model/main_model/purchase/purchase_order.dart';
 import 'package:flutter/material.dart';
 
 class PurchaseOrderCard extends StatelessWidget {

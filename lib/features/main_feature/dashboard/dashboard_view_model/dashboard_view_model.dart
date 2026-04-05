@@ -6,11 +6,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../data/services/api_services.dart';
-import '../../../../domain/model/advertisement/advertisement.dart';
-import '../../../../domain/model/analytics/cash_flow.dart';
-import '../../../../domain/model/analytics/dashboard_kpi.dart';
-import '../../../../domain/model/analytics/revenue_expense.dart';
-import '../../../../domain/model/company/company.dart';
+import '../../../../domain/model/main_model/advertisement/advertisement.dart';
+import '../../../../domain/model/main_model/analytics/cash_flow.dart';
+import '../../../../domain/model/main_model/analytics/dashboard_kpi.dart';
+import '../../../../domain/model/main_model/analytics/revenue_expense.dart';
+import '../../../../domain/model/main_model/company/company.dart';
 import '../../../../data/repositories/auth_repository.dart';
 
 class DashboardViewModel extends ChangeNotifier {

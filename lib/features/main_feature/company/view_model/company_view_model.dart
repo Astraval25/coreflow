@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../data/repositories/company_repository.dart';
-import '../../../../domain/model/company/company.dart';
+import '../../../../domain/model/main_model/company/company.dart';
 
 class CompanyViewModel extends ChangeNotifier {
   final CompanyRepository _companyRepo = CompanyRepository();

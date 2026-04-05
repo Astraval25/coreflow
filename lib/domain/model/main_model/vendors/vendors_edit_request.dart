@@ -1,5 +1,5 @@
 
-import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_edit_request.dart';
 
 class VendorsEditRequest {
   final String vendorName;

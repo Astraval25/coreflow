@@ -1,5 +1,5 @@
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/domain/model/payment/payment_sent_summary.dart';
+import 'package:coreflow/domain/model/main_model/payment/payment_sent_summary.dart';
 import 'package:flutter/material.dart';
 
 class PaymentCard extends StatelessWidget {

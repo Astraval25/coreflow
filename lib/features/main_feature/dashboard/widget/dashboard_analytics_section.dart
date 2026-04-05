@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/domain/model/analytics/cash_flow.dart';
-import 'package:coreflow/domain/model/analytics/dashboard_kpi.dart';
-import 'package:coreflow/domain/model/analytics/revenue_expense.dart';
+import 'package:coreflow/domain/model/main_model/analytics/cash_flow.dart';
+import 'package:coreflow/domain/model/main_model/analytics/dashboard_kpi.dart';
+import 'package:coreflow/domain/model/main_model/analytics/revenue_expense.dart';
 import 'package:coreflow/features/main_feature/report/view/report_detail_page.dart';
 import 'package:coreflow/features/main_feature/report/analytics_view_model/analytics_view_model.dart';
 

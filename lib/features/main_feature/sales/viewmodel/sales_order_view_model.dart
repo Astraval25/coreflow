@@ -1,5 +1,5 @@
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/domain/model/sales/sales_order.dart';
+import 'package:coreflow/domain/model/main_model/sales/sales_order.dart';
 import 'package:flutter/material.dart';
 
 class SalesOrderViewModel extends ChangeNotifier {

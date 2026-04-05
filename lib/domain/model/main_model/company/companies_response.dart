@@ -1,4 +1,4 @@
-import 'package:coreflow/domain/model/company/company.dart';
+import 'package:coreflow/domain/model/main_model/company/company.dart';
 
 class CompaniesResponse {
   final bool responseStatus;

@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'package:coreflow/data/services/api_services.dart';
-import 'package:coreflow/domain/model/customer/create_customer_request.dart';
-import 'package:coreflow/domain/model/customer/customer.dart';
-import 'package:coreflow/domain/model/customer/customer_detail.dart';
-import 'package:coreflow/domain/model/customer/customer_edit_request.dart';
-import 'package:coreflow/domain/model/customer/customer_edit_response.dart';
-import 'package:coreflow/domain/model/customer/customer_mapped_item.dart';
-import 'package:coreflow/domain/model/customer/customer_status_response.dart';
-import 'package:coreflow/domain/model/items/item_status_response.dart';
-import 'package:coreflow/domain/model/customer/customer_orders_payments.dart';
-import 'package:coreflow/domain/model/items/sellable_item.dart';
+import 'package:coreflow/domain/model/main_model/customer/create_customer_request.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_edit_request.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_edit_response.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_mapped_item.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_status_response.dart';
+import 'package:coreflow/domain/model/main_model/items/item_status_response.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_orders_payments.dart';
+import 'package:coreflow/domain/model/main_model/items/sellable_item.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_config.dart';
 

@@ -1,4 +1,4 @@
-import 'package:coreflow/domain/model/vendors/vendors.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors.dart';
 
 class ActiveVendorsResponse {
   final bool responseStatus;

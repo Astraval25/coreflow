@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:coreflow/data/services/api_services.dart';
-import 'package:coreflow/domain/model/company/companies_response.dart';
-import 'package:coreflow/domain/model/company/company.dart';
-import 'package:coreflow/domain/model/company/marketplace_company.dart';
+import 'package:coreflow/domain/model/main_model/company/companies_response.dart';
+import 'package:coreflow/domain/model/main_model/company/company.dart';
+import 'package:coreflow/domain/model/main_model/company/marketplace_company.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_config.dart';
 

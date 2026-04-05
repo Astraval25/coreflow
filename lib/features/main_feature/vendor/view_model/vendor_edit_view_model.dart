@@ -1,7 +1,7 @@
-import 'package:coreflow/domain/model/vendors/create_vendors_request.dart';
-import 'package:coreflow/domain/model/vendors/vendors_detail.dart';
-import 'package:coreflow/domain/model/vendors/vendors_edit_request.dart';
-import 'package:coreflow/domain/model/vendors/vendors_edit_response.dart';
+import 'package:coreflow/domain/model/main_model/vendors/create_vendors_request.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors_detail.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors_edit_request.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors_edit_response.dart';
 import 'package:flutter/foundation.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
 

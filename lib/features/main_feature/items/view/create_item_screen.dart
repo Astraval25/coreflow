@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/services/api_services.dart';
-import 'package:coreflow/domain/model/items/create_item_request.dart';
+import 'package:coreflow/domain/model/main_model/items/create_item_request.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/features/main_feature/items/view_model/item_create_view_model.dart';

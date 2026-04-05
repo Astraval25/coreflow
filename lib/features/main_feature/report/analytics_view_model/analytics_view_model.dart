@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../../data/repositories/auth_repository.dart';
-import '../../../../domain/model/analytics/cash_flow.dart';
-import '../../../../domain/model/analytics/dashboard_kpi.dart';
-import '../../../../domain/model/analytics/item_analytics.dart';
-import '../../../../domain/model/analytics/item_frequency.dart';
-import '../../../../domain/model/analytics/monthly_trend.dart';
-import '../../../../domain/model/analytics/order_frequency.dart';
-import '../../../../domain/model/analytics/party_analytics.dart';
-import '../../../../domain/model/analytics/payment_mode.dart';
-import '../../../../domain/model/analytics/revenue_expense.dart';
-import '../../../../domain/model/analytics/running_amount.dart';
-import '../../../../domain/model/analytics/sales_summary.dart';
+import '../../../../domain/model/main_model/analytics/cash_flow.dart';
+import '../../../../domain/model/main_model/analytics/dashboard_kpi.dart';
+import '../../../../domain/model/main_model/analytics/item_analytics.dart';
+import '../../../../domain/model/main_model/analytics/item_frequency.dart';
+import '../../../../domain/model/main_model/analytics/monthly_trend.dart';
+import '../../../../domain/model/main_model/analytics/order_frequency.dart';
+import '../../../../domain/model/main_model/analytics/party_analytics.dart';
+import '../../../../domain/model/main_model/analytics/payment_mode.dart';
+import '../../../../domain/model/main_model/analytics/revenue_expense.dart';
+import '../../../../domain/model/main_model/analytics/running_amount.dart';
+import '../../../../domain/model/main_model/analytics/sales_summary.dart';
 
 enum ReportType {
   // Dashboard / Financial

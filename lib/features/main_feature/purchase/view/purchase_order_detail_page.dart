@@ -1,10 +1,10 @@
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/core/utils/common_formatters.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/domain/model/company_ref/order_ref.dart';
-import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
-import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
-import 'package:coreflow/domain/model/purchase/purchase_order_item.dart';
+import 'package:coreflow/domain/model/main_model/company_ref/order_ref.dart';
+import 'package:coreflow/domain/model/main_model/company_ref/payment_ref.dart';
+import 'package:coreflow/domain/model/main_model/purchase/purchase_order_detail.dart';
+import 'package:coreflow/domain/model/main_model/purchase/purchase_order_item.dart';
 import 'package:coreflow/features/main_feature/payment/send_payment/view/send_payment_detail_page.dart';
 import 'package:coreflow/features/main_feature/purchase/viewmodel/purchase_order_detail_view_model.dart';
 import 'package:coreflow/features/main_feature/purchase/widgets/purchase_expand_more_option.dart';

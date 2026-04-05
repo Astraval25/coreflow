@@ -1,4 +1,4 @@
-import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
+import 'package:coreflow/domain/model/main_model/purchase/purchase_order_detail.dart';
 
 class PurchaseOrderDetailResponse {
   final bool responseStatus;

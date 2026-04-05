@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:coreflow/data/services/api_services.dart';
-import 'package:coreflow/domain/model/invitation/invitation_response.dart';
+import 'package:coreflow/domain/model/main_model/invitation/invitation_response.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_config.dart';
 

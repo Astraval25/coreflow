@@ -1,5 +1,5 @@
 import 'package:coreflow/core/utils/payment_share_helper.dart';
-import 'package:coreflow/domain/model/payment/payment_detail.dart';
+import 'package:coreflow/domain/model/main_model/payment/payment_detail.dart';
 import 'package:coreflow/features/main_feature/payment/receive_payment/viewmodel/receive_payment_detail_view_model.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:flutter/material.dart';

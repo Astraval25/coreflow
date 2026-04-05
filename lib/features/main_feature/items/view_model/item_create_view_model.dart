@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:coreflow/data/services/api_services.dart';
-import 'package:coreflow/domain/model/items/create_item_request.dart';
+import 'package:coreflow/domain/model/main_model/items/create_item_request.dart';
 
 class CreateItemViewModel extends ChangeNotifier {
   final ApiService _apiService;

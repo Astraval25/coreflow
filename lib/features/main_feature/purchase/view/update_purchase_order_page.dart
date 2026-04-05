@@ -1,9 +1,9 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/vendor_selector_page.dart';
 import 'package:coreflow/data/repositories/auth_repository.dart';
-import 'package:coreflow/domain/model/items/sellable_item.dart';
-import 'package:coreflow/domain/model/purchase/purchase_order_detail.dart';
-import 'package:coreflow/domain/model/vendors/vendors.dart';
+import 'package:coreflow/domain/model/main_model/items/sellable_item.dart';
+import 'package:coreflow/domain/model/main_model/purchase/purchase_order_detail.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors.dart';
 import 'package:coreflow/features/main_feature/vendor/view_model/vendor_detail_view_model.dart';
 import 'package:coreflow/features/main_feature/vendor/widget/detail/body/vendor_item_pages.dart';
 import 'package:coreflow/features/main_feature/items/widget/item_section_card.dart';

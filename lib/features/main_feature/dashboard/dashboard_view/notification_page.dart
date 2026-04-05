@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/notification_view_model.dart';
-import 'package:coreflow/domain/model/notification/app_notification.dart';
+import 'package:coreflow/domain/model/main_model/notification/app_notification.dart';
 
 class NotificationPage extends StatefulWidget {
   final int companyId;

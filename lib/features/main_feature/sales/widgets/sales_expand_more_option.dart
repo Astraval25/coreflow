@@ -1,9 +1,9 @@
 import 'package:coreflow/core/utils/order_share_helper.dart';
 import 'package:coreflow/core/utils/common_formatters.dart';
 import 'package:coreflow/core/widgets/top_message_popup.dart';
-import 'package:coreflow/domain/model/company_ref/payment_ref.dart';
-import 'package:coreflow/domain/model/customer/customer.dart';
-import 'package:coreflow/domain/model/sales/sales_order_detail.dart'
+import 'package:coreflow/domain/model/main_model/company_ref/payment_ref.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer.dart';
+import 'package:coreflow/domain/model/main_model/sales/sales_order_detail.dart'
     as sales_detail;
 import 'package:coreflow/features/main_feature/payment/receive_payment/view/create_receive_payment_page.dart';
 import 'package:coreflow/features/main_feature/payment/receive_payment/view/pay_received_detail_page.dart';
