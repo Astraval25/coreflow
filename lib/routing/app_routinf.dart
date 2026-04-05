@@ -34,6 +34,10 @@ import 'package:coreflow/features/main_feature/payment/receive_payment/view/pay_
 import 'package:coreflow/features/main_feature/payment/receive_payment/view/create_receive_payment_page.dart';
 import 'package:coreflow/features/main_feature/report/view/report_list_page.dart';
 import 'package:coreflow/core/utils/splash/view/splash_page.dart';
+import 'package:coreflow/features/employee_feature/employees/view/employees_page.dart';
+import 'package:coreflow/features/employee_feature/employees/view/employee_detail_page.dart';
+import 'package:coreflow/features/employee_feature/employees/view/employee_create_page.dart';
+import 'package:coreflow/features/employee_feature/employees/view/employee_edit_page.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:go_router/go_router.dart';
 
@@ -163,6 +167,40 @@ final GoRouter router = GoRouter(
                 final companyId = int.parse(state.pathParameters['companyId']!);
                 final vendorId = int.parse(state.pathParameters['vendorId']!);
                 return VendorEditPage(companyId: companyId, vendorId: vendorId);
+              },
+            ),
+          ],
+        ),
+
+        // ── Employees ────────────────────────────────────────────────────
+        GoRoute(
+          path: '/cf/company/:companyId/employees',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            return EmployeesPage(companyId: companyId);
+          },
+          routes: [
+            GoRoute(
+              path: 'create',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                return EmployeeCreatePage(companyId: companyId);
+              },
+            ),
+            GoRoute(
+              path: ':employeeId/detail',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                final employeeId = int.parse(state.pathParameters['employeeId']!);
+                return EmployeeDetailPage(companyId: companyId, employeeId: employeeId);
+              },
+            ),
+            GoRoute(
+              path: ':employeeId/update',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                final employeeId = int.parse(state.pathParameters['employeeId']!);
+                return EmployeeEditPage(companyId: companyId, employeeId: employeeId);
               },
             ),
           ],

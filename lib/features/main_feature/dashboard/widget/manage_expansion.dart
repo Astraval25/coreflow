@@ -284,6 +284,7 @@ class ManageExpansion extends StatelessWidget {
     final isManageRoute =
         CfRoutes.isSectionActive(currentLocation, 'customers') ||
         CfRoutes.isSectionActive(currentLocation, 'vendors') ||
+        CfRoutes.isSectionActive(currentLocation, 'employees') ||
         CfRoutes.isSectionActive(currentLocation, 'items');
     final isExpanded = vm.isCustomersExpanded || isManageRoute;
 
@@ -357,6 +358,13 @@ class ManageExpansion extends StatelessWidget {
               iconColor: Color(0xFFF59E0B), // Amber
               menuKey: 'vendors',
               menuKeys: 'vendoradd',
+            ),
+            SubMenuItem(
+              title: 'Employees',
+              icon: Icons.badge_rounded,
+              iconColor: Color(0xFF8B5CF6), // Violet
+              menuKey: 'employees',
+              menuKeys: 'employeesadd',
             ),
             SubMenuItem(
               title: 'Items',
@@ -464,6 +472,7 @@ class SubMenuItem extends StatelessWidget {
     final targetPath = switch (menuKey) {
       'customers' => CfRoutes.customers(companyId),
       'vendors' => CfRoutes.vendors(companyId),
+      'employees' => CfRoutes.employees(companyId),
       'items' => CfRoutes.items(companyId),
       _ => CfRoutes.customers(companyId),
     };
@@ -497,6 +506,7 @@ class SubMenuItem extends StatelessWidget {
     final path = switch (menuKeys) {
       'vendoradd' => CfRoutes.vendorCreate(companyId),
       'customersadd' => CfRoutes.customerCreate(companyId),
+      'employeesadd' => CfRoutes.employeeCreate(companyId),
       'itemsadd' => CfRoutes.itemCreate(companyId),
       _ => CfRoutes.customers(companyId),
     };

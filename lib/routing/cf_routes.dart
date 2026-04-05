@@ -106,6 +106,16 @@ class CfRoutes {
   static String paymentMadeUpdate(int companyId, int id) =>
       '/cf/company/$companyId/payment-made/$id/update';
 
+  // ── Employees ─────────────────────────────────────────────────────
+  static String employees(int companyId) =>
+      '/cf/company/$companyId/employees';
+  static String employeeCreate(int companyId) =>
+      '/cf/company/$companyId/employees/create';
+  static String employeeDetail(int companyId, int employeeId) =>
+      '/cf/company/$companyId/employees/$employeeId/detail';
+  static String employeeUpdate(int companyId, int employeeId) =>
+      '/cf/company/$companyId/employees/$employeeId/update';
+
   // ── Report ────────────────────────────────────────────────────────────
   static String reportCustomers(int companyId) =>
       '/cf/company/$companyId/report/customers';

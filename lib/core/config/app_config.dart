@@ -466,6 +466,33 @@ class AppConfig {
   static String getMonthlyTrendUrl(int c, String s, String e) =>
       '$baseUrl/api/companies/$c/analytics/dashboard/monthly-trend?startDate=$s&endDate=$e';
 
+  // ─── Employee Module (modemp) ───
+  static const String employeesEndpoint =
+      '/api/companies/{companyId}/modemp/employees';
+  static const String employeeDetailEndpoint =
+      '/api/companies/{companyId}/modemp/employees/{employeeId}';
+  static const String employeeDeactivateEndpoint =
+      '/api/companies/{companyId}/modemp/employees/{employeeId}/deactivate';
+
+  static String getEmployeesUrl(int companyId, {bool? activeOnly}) {
+    final base =
+        '$baseUrl${employeesEndpoint.replaceAll('{companyId}', companyId.toString())}';
+    if (activeOnly == null) return base;
+    return '$base?activeOnly=$activeOnly';
+  }
+
+  static String getEmployeeDetailUrl(int companyId, int employeeId) =>
+      '$baseUrl${employeeDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+
+  static String getCreateEmployeeUrl(int companyId) =>
+      '$baseUrl${employeesEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getUpdateEmployeeUrl(int companyId, int employeeId) =>
+      '$baseUrl${employeeDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+
+  static String getDeactivateEmployeeUrl(int companyId, int employeeId) =>
+      '$baseUrl${employeeDeactivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+
   // ─── Company Config ───
   static String getCompanyConfigUrl(int companyId) =>
       '$baseUrl/api/companies/$companyId/config';
