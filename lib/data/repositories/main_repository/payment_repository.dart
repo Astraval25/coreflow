@@ -11,7 +11,7 @@ import 'package:coreflow/domain/model/main_model/payment/payment_received_summar
 import 'package:coreflow/domain/model/main_model/payment/payment_sent_summary.dart';
 import 'package:coreflow/domain/model/main_model/payment/unpaid_order.dart';
 import 'package:flutter/material.dart';
-import '../../core/config/app_config.dart';
+import '../../../core/config/app_config.dart';
 
 class PaymentRepository {
   final ApiService _apiService = ApiService();

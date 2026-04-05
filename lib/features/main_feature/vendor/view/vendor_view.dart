@@ -12,7 +12,7 @@ import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:coreflow/core/widgets/status_toggle_tabs.dart';
 
 class ActiveVendorView extends StatefulWidget {

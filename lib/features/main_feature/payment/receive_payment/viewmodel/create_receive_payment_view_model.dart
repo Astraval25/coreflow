@@ -1,4 +1,4 @@
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer.dart';
 import 'package:coreflow/domain/model/main_model/payment/create_payment_received_request.dart';
 import 'package:coreflow/domain/model/main_model/payment/create_payment_sent_request.dart';

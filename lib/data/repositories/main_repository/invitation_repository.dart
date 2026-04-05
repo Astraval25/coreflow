@@ -101,8 +101,7 @@ class InvitationRepository {
       final url = AppConfig.getAcceptInvitationUrl(companyId, invitationCode);
       final body = <String, dynamic>{};
       if (selectedVendorId != null) body['selectedVendorId'] = selectedVendorId;
-      if (selectedCustomerId != null)
-        body['selectedCustomerId'] = selectedCustomerId;
+      if (selectedCustomerId != null) body['selectedCustomerId'] = selectedCustomerId;
 
       final response = await _apiService.post(url, body);
 

@@ -3,7 +3,7 @@ import 'package:coreflow/domain/model/main_model/vendors/vendors_detail.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors_edit_request.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors_edit_response.dart';
 import 'package:flutter/foundation.dart';
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 
 class VendorEditViewModel extends ChangeNotifier {
   final AuthRepository _authRepository;

@@ -1,4 +1,4 @@
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:coreflow/domain/model/main_model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/main_model/payment/payment_detail.dart';
 import 'package:flutter/foundation.dart';

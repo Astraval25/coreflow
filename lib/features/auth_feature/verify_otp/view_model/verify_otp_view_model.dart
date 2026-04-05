@@ -4,7 +4,7 @@ import 'package:coreflow/domain/model/auth_model/verify_otp/verify_otp_request.d
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../data/repositories/auth_repository.dart';
+import '../../../../data/repositories/auth_repository/auth_repository.dart';
 
 class VerifyOtpViewModel extends ChangeNotifier {
   final AuthRepository _authRepository = AuthRepository();

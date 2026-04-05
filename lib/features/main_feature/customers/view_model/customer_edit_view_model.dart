@@ -1,6 +1,6 @@
 import 'package:coreflow/domain/model/main_model/customer/create_customer_request.dart';
 import 'package:flutter/foundation.dart';
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_edit_request.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_edit_response.dart';

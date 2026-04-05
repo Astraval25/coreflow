@@ -4,7 +4,7 @@ import 'package:coreflow/domain/model/main_model/vendors/vendor_orders_payments.
 import 'package:coreflow/domain/model/main_model/invitation/invitation_response.dart';
 import 'package:coreflow/domain/model/main_model/items/item.dart';
 import 'package:coreflow/domain/model/main_model/items/item_status_response.dart';
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

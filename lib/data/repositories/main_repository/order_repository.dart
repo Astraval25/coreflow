@@ -12,7 +12,7 @@ import 'package:coreflow/domain/model/main_model/sales/sales_order_detail.dart'
 import 'package:coreflow/domain/model/main_model/sales/sales_order_detail_response.dart'
     as sales_detail;
 import 'package:flutter/material.dart';
-import '../../core/config/app_config.dart';
+import '../../../core/config/app_config.dart';
 
 class OrderRepository {
   final ApiService _apiService = ApiService();

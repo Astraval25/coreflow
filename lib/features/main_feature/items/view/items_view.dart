@@ -1,4 +1,4 @@
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/main_feature/items/view_model/items_view_model.dart';
 import 'package:coreflow/features/main_feature/items/widget/items_view_body.dart';

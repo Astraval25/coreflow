@@ -1,6 +1,6 @@
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/core/utils/common_formatters.dart';
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:coreflow/domain/model/main_model/company_ref/order_ref.dart';
 import 'package:coreflow/domain/model/main_model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/main_model/purchase/purchase_order_detail.dart';

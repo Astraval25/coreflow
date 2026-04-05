@@ -14,7 +14,7 @@ import 'package:coreflow/features/main_feature/vendor/widget/edit_create/vendor_
 import 'package:coreflow/features/main_feature/items/widget/item_section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:go_router/go_router.dart';
 

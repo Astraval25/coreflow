@@ -1,4 +1,4 @@
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_mapped_item.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_orders_payments.dart';

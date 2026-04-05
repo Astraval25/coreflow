@@ -4,7 +4,7 @@ import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../../../data/repositories/auth_repository.dart';
+import '../../../../data/repositories/auth_repository/auth_repository.dart';
 
 class LoginViewModel extends ChangeNotifier {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();

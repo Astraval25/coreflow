@@ -1,4 +1,4 @@
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer.dart';
 import 'package:coreflow/domain/model/main_model/items/sellable_item.dart';
 import 'package:coreflow/domain/model/main_model/sales/create_sales_order_request.dart';

@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:coreflow/domain/model/main_model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/main_model/payment/payment_detail.dart';
 import 'package:coreflow/features/main_feature/payment/receive_payment/viewmodel/receive_payment_detail_view_model.dart';

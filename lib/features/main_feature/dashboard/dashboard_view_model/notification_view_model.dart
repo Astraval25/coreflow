@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:coreflow/domain/model/main_model/notification/app_notification.dart';
 
 class NotificationViewModel extends ChangeNotifier {

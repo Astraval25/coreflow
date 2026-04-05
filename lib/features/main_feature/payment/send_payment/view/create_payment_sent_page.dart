@@ -2,7 +2,7 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/success_popup.dart';
 import 'package:coreflow/core/widgets/vendor_selector_page.dart';
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:coreflow/domain/model/main_model/payment/payment_proof_result.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';

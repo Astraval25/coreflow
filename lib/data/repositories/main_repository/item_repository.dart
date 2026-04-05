@@ -8,7 +8,7 @@ import 'package:coreflow/domain/model/main_model/items/item_status_response.dart
 import 'package:coreflow/domain/model/main_model/items/update_item_request.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../../core/config/app_config.dart';
+import '../../../core/config/app_config.dart';
 
 class ItemRepository {
   final ApiService _apiService = ApiService();

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../data/repositories/company_repository.dart';
+import '../../../../data/repositories/main_repository/company_repository.dart';
 import '../../../../domain/model/main_model/company/company.dart';
 
 class CompanyViewModel extends ChangeNotifier {

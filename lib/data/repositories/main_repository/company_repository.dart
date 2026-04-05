@@ -4,7 +4,7 @@ import 'package:coreflow/domain/model/main_model/company/companies_response.dart
 import 'package:coreflow/domain/model/main_model/company/company.dart';
 import 'package:coreflow/domain/model/main_model/company/marketplace_company.dart';
 import 'package:flutter/material.dart';
-import '../../core/config/app_config.dart';
+import '../../../core/config/app_config.dart';
 
 class CompanyRepository {
   final ApiService _apiService = ApiService();

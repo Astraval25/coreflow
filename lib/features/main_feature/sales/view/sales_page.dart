@@ -2,7 +2,7 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/theme/theme_provider.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:coreflow/domain/model/main_model/sales/sales_order.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/main_feature/sales/viewmodel/sales_order_view_model.dart';

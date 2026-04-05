@@ -11,7 +11,7 @@ import 'package:coreflow/domain/model/main_model/vendors/vendors_edit_response.d
 import 'package:coreflow/domain/model/main_model/vendors/vendor_orders_payments.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors_status_response.dart';
 import 'package:flutter/material.dart';
-import '../../core/config/app_config.dart';
+import '../../../core/config/app_config.dart';
 
 class VendorRepository {
   final ApiService _apiService = ApiService();

@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/main_model/items/detail_item.dart';
 import 'package:flutter/foundation.dart';

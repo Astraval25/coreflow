@@ -11,7 +11,7 @@ import '../../../../domain/model/main_model/analytics/cash_flow.dart';
 import '../../../../domain/model/main_model/analytics/dashboard_kpi.dart';
 import '../../../../domain/model/main_model/analytics/revenue_expense.dart';
 import '../../../../domain/model/main_model/company/company.dart';
-import '../../../../data/repositories/auth_repository.dart';
+import '../../../../data/repositories/auth_repository/auth_repository.dart';
 
 class DashboardViewModel extends ChangeNotifier {
   final AuthRepository _authRepository = AuthRepository();

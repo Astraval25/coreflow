@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../../core/config/app_config.dart';
-import '../../domain/model/main_model/config/company_config.dart';
-import '../services/api_services.dart';
+import '../../../core/config/app_config.dart';
+import '../../../domain/model/main_model/config/company_config.dart';
+import '../../services/api_services.dart';
 
 class ConfigRepository {
   final ApiService _apiService = ApiService();

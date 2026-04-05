@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../data/repositories/auth_repository.dart';
+import '../../../../data/repositories/auth_repository/auth_repository.dart';
 import '../../../../domain/model/main_model/analytics/cash_flow.dart';
 import '../../../../domain/model/main_model/analytics/dashboard_kpi.dart';
 import '../../../../domain/model/main_model/analytics/item_analytics.dart';

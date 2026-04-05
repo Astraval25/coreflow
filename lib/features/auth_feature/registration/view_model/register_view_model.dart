@@ -1,7 +1,7 @@
 import 'package:coreflow/domain/model/auth_model/register/register_request.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
-import '../../../../data/repositories/auth_repository.dart';
+import '../../../../data/repositories/auth_repository/auth_repository.dart';
 import 'package:go_router/go_router.dart';
 
 class RegisterViewModel extends ChangeNotifier {

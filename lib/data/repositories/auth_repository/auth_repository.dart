@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:coreflow/data/repositories/company_ref_repository.dart';
-import 'package:coreflow/data/repositories/company_repository.dart';
-import 'package:coreflow/data/repositories/config_repository.dart';
-import 'package:coreflow/data/repositories/customer_repository.dart';
-import 'package:coreflow/data/repositories/invitation_repository.dart';
-import 'package:coreflow/data/repositories/item_repository.dart';
-import 'package:coreflow/data/repositories/order_repository.dart';
-import 'package:coreflow/data/repositories/payment_repository.dart';
-import 'package:coreflow/data/repositories/vendor_repository.dart';
+import 'package:coreflow/data/repositories/main_repository/company_ref_repository.dart';
+import 'package:coreflow/data/repositories/main_repository/company_repository.dart';
+import 'package:coreflow/data/repositories/main_repository/config_repository.dart';
+import 'package:coreflow/data/repositories/main_repository/customer_repository.dart';
+import 'package:coreflow/data/repositories/main_repository/invitation_repository.dart';
+import 'package:coreflow/data/repositories/main_repository/item_repository.dart';
+import 'package:coreflow/data/repositories/main_repository/order_repository.dart';
+import 'package:coreflow/data/repositories/main_repository/payment_repository.dart';
+import 'package:coreflow/data/repositories/main_repository/vendor_repository.dart';
 import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/main_model/company/company.dart';
 import 'package:coreflow/domain/model/main_model/company/marketplace_company.dart';
@@ -75,8 +75,8 @@ import 'package:coreflow/domain/model/auth_model/verify_otp/verify_otp_response.
 import 'package:coreflow/domain/repositories/login_response.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../../core/config/app_config.dart';
-import '../../core/storage/token_storage.dart';
+import '../../../core/config/app_config.dart';
+import '../../../core/storage/token_storage.dart';
 
 /// Facade that keeps backward compatibility with all existing consumers.
 ///

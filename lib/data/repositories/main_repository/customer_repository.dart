@@ -11,7 +11,7 @@ import 'package:coreflow/domain/model/main_model/items/item_status_response.dart
 import 'package:coreflow/domain/model/main_model/customer/customer_orders_payments.dart';
 import 'package:coreflow/domain/model/main_model/items/sellable_item.dart';
 import 'package:flutter/material.dart';
-import '../../core/config/app_config.dart';
+import '../../../core/config/app_config.dart';
 
 class CustomerRepository {
   final ApiService _apiService = ApiService();
