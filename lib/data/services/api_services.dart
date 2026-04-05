@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:coreflow/core/config/app_config.dart';
-import 'package:coreflow/data/repositories/auth_repository.dart';
+import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';

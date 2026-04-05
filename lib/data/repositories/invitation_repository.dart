@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:coreflow/data/services/api_services.dart';
-import 'package:coreflow/domain/model/invitation/invitation_response.dart';
+import 'package:coreflow/domain/model/main_model/invitation/invitation_response.dart';
 import 'package:flutter/material.dart';
-import '../../core/config/app_config.dart';
+import '../../../core/config/app_config.dart';
 
 class InvitationRepository {
   final ApiService _apiService = ApiService();
@@ -101,7 +101,8 @@ class InvitationRepository {
       final url = AppConfig.getAcceptInvitationUrl(companyId, invitationCode);
       final body = <String, dynamic>{};
       if (selectedVendorId != null) body['selectedVendorId'] = selectedVendorId;
-      if (selectedCustomerId != null) body['selectedCustomerId'] = selectedCustomerId;
+      if (selectedCustomerId != null)
+        body['selectedCustomerId'] = selectedCustomerId;
 
       final response = await _apiService.post(url, body);
 

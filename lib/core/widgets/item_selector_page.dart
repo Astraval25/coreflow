@@ -1,6 +1,6 @@
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/data/repositories/item_repository.dart';
-import 'package:coreflow/domain/model/items/item.dart';
+import 'package:coreflow/data/repositories/main_repository/item_repository.dart';
+import 'package:coreflow/domain/model/main_model/items/item.dart';
 import 'package:flutter/material.dart';
 
 class ItemSelectorPage extends StatefulWidget {
