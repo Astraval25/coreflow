@@ -96,3 +96,106 @@ features/<feature>/
 | `/sales`, `/purchase` | Sales/Purchase order list pages |
 | `/payment`, `/pay-received` | Payment sent/received pages |
 | `/profile` | ProfilePage |
+
+## Employee Module (modemp) — Upcoming Implementation
+
+API documentation: `docs/employee/api.md`
+
+### Overview
+
+The employee module (`modemp`) adds workforce management to CoreFlow — employees, salary configs, work definitions, work logs, leave logs, salary calculation, and an employee self-service portal.
+
+### API base prefix
+
+- **Admin APIs**: `/api/companies/{companyId}/modemp/...`
+- **Employee self-service APIs**: `/api/emp/...` (scoped by JWT, no companyId/employeeId in URL)
+- **Employee auth**: `POST /api/auth/employee/company/{companyId}` (public, returns `role: "EMP"` JWT)
+
+### Enum values
+
+| Enum | Values |
+|------|--------|
+| SalaryType | `MONTHLY`, `WORK_BASED` |
+| WorkUnit | `KG`, `PC`, `BOX`, `LITER`, `METER`, `GRAM`, `HOUR` |
+| WorkLogStatus | `PENDING`, `APPROVED`, `REJECTED` |
+| LeaveType | `FULL_DAY`, `HALF_DAY` |
+| LeaveCategory | `CASUAL`, `SICK`, `UNPAID`, `LOP` |
+| LeaveStatus | `PENDING`, `APPROVED`, `REJECTED` |
+| SalaryPeriodStatus | `DRAFT`, `APPROVED`, `PAID` |
+| SalaryLineType | `FIXED`, `WORK_EARNING`, `DEDUCTION`, `BONUS` |
+
+### Planned file structure
+
+```
+lib/
+  core/config/app_config.dart          # Add modemp endpoint constants + URL builders
+  core/storage/token_storage.dart      # Add employee auth data (employeeId, role=EMP)
+  data/repositories/employee_repository/
+    employee_repository.dart           # All modemp API calls (mirrors AuthRepository pattern)
+  domain/model/employee_model/
+    employee.dart                      # Employee, EmployeeDetail, SalaryConfigHistory
+    work_definition.dart               # WorkDefinition, RateHistory
+    work_log.dart                      # WorkLog
+    leave_log.dart                     # LeaveLog
+    salary.dart                        # SalaryPeriod, SalaryPeriodDetail, SalaryLine, SalaryReport
+    portal_user.dart                   # PortalUser
+    employee_login.dart                # EmployeeLoginRequest/Response
+  features/employee_feature/
+    employees/                         # CRUD + list employees (admin)
+      view/
+      view_model/
+      widget/
+    work_definitions/                  # CRUD + list work definitions (admin)
+      view/
+      view_model/
+      widget/
+    work_logs/                         # Create/list/review work logs (admin + employee)
+      view/
+      view_model/
+      widget/
+    leave_logs/                        # Create/list/review leave logs (admin + employee)
+      view/
+      view_model/
+      widget/
+    salary/                            # Calculate/approve/pay salary, reports (admin)
+      view/
+      view_model/
+      widget/
+    portal/                            # Employee self-service (my profile, my salary, my logs)
+      view/
+      view_model/
+      widget/
+  routing/app_routinf.dart             # Add employee module routes
+```
+
+### Planned routes
+
+```
+cf/company/:companyId/employees                          # Employee list
+cf/company/:companyId/employees/create                   # Create employee
+cf/company/:companyId/employees/:employeeId/detail       # Employee detail
+cf/company/:companyId/employees/:employeeId/update       # Update employee
+cf/company/:companyId/work-definitions                   # Work definitions list
+cf/company/:companyId/work-definitions/create            # Create work definition
+cf/company/:companyId/work-definitions/:workDefId/detail # Work definition detail
+cf/company/:companyId/work-logs                          # Work logs (admin)
+cf/company/:companyId/leave-logs                         # Leave logs (admin)
+cf/company/:companyId/salary                             # Salary periods list
+cf/company/:companyId/salary/:salaryPeriodId/detail      # Salary period detail
+cf/emp/login                                             # Employee login
+cf/emp/dashboard                                         # Employee self-service home
+cf/emp/work-logs                                         # My work logs
+cf/emp/leave-logs                                        # My leave logs
+cf/emp/salary                                            # My salary periods
+cf/emp/salary/:salaryPeriodId/detail                     # My salary detail
+cf/emp/profile                                           # My profile
+```
+
+### Key implementation notes
+
+- **Separate repository**: Use `EmployeeRepository` (already has empty directory at `data/repositories/employee_repository/`) — do NOT add to `AuthRepository`.
+- **Employee auth is separate**: Employee login returns a different JWT with `role: "EMP"`. Token refresh uses `/api/auth/employee/refresh-token`. Store employee auth data alongside (or separate from) admin auth in `TokenStorage`.
+- **Locked-date validation**: Work log and leave log creation is blocked when salary is already calculated for that date (HTTP 406). Show the error message to the user.
+- **Salary calculation overlap**: Date ranges must not overlap existing salary periods. DRAFT periods with same dates get replaced on recalculate.
+- **PDF salary slip**: APIs #34 and #40 return binary PDF — use `ApiService` to download and display/share via `pdf` / `share_plus`.
+- **Self-service APIs** (`/api/emp/*`) auto-scope to the logged-in employee via JWT — no need to pass companyId or employeeId.
