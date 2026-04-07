@@ -473,6 +473,68 @@ class AppConfig {
       '/api/companies/{companyId}/modemp/employees/{employeeId}';
   static const String employeeDeactivateEndpoint =
       '/api/companies/{companyId}/modemp/employees/{employeeId}/deactivate';
+  static const String employeeSalaryConfigEndpoint =
+      '/api/companies/{companyId}/modemp/employees/{employeeId}/salary-config';
+  static const String employeeSalaryConfigHistoryEndpoint =
+      '/api/companies/{companyId}/modemp/employees/{employeeId}/salary-config/history';
+  static const String employeePortalUserEndpoint =
+      '/api/companies/{companyId}/modemp/employees/{employeeId}/portal-user';
+  static const String employeePortalUserResetPasswordEndpoint =
+      '/api/companies/{companyId}/modemp/employees/{employeeId}/portal-user/reset-password';
+  static const String workDefinitionsEndpoint =
+      '/api/companies/{companyId}/modemp/work-definitions';
+  static const String workDefinitionDetailEndpoint =
+      '/api/companies/{companyId}/modemp/work-definitions/{workDefId}';
+  static const String workDefinitionDeactivateEndpoint =
+      '/api/companies/{companyId}/modemp/work-definitions/{workDefId}/deactivate';
+  static const String workDefinitionRateHistoryEndpoint =
+      '/api/companies/{companyId}/modemp/work-definitions/{workDefId}/rate-history';
+  static const String workLogsEndpoint =
+      '/api/companies/{companyId}/modemp/work-logs';
+  static const String workLogsByEmployeeEndpoint =
+      '/api/companies/{companyId}/modemp/work-logs/employee/{employeeId}';
+  static const String pendingWorkLogsEndpoint =
+      '/api/companies/{companyId}/modemp/work-logs/pending';
+  static const String reviewWorkLogEndpoint =
+      '/api/companies/{companyId}/modemp/work-logs/{logId}/review';
+  static const String leaveLogsEndpoint =
+      '/api/companies/{companyId}/modemp/leave-logs';
+  static const String leaveLogsByEmployeeEndpoint =
+      '/api/companies/{companyId}/modemp/leave-logs/employee/{employeeId}';
+  static const String pendingLeaveLogsEndpoint =
+      '/api/companies/{companyId}/modemp/leave-logs/pending';
+  static const String reviewLeaveLogEndpoint =
+      '/api/companies/{companyId}/modemp/leave-logs/{leaveId}/review';
+  static const String salaryCalculateEndpoint =
+      '/api/companies/{companyId}/modemp/salary/calculate';
+  static const String salaryPeriodsEndpoint =
+      '/api/companies/{companyId}/modemp/salary/periods';
+  static const String salaryPeriodDetailEndpoint =
+      '/api/companies/{companyId}/modemp/salary/periods/{salaryPeriodId}';
+  static const String salaryApproveEndpoint =
+      '/api/companies/{companyId}/modemp/salary/periods/{salaryPeriodId}/approve';
+  static const String salaryMarkPaidEndpoint =
+      '/api/companies/{companyId}/modemp/salary/periods/{salaryPeriodId}/mark-paid';
+  static const String salaryReportEndpoint =
+      '/api/companies/{companyId}/modemp/salary/report';
+  static const String salarySlipEndpoint =
+      '/api/companies/{companyId}/modemp/salary/periods/{salaryPeriodId}/slip';
+  static const String employeeLoginEndpoint = '/api/auth/employee/login';
+  static const String employeeRefreshTokenEndpoint =
+      '/api/auth/employee/refresh-token';
+  static const String employeeMeEndpoint = '/api/emp/me';
+  static const String employeeMySalaryPeriodsEndpoint =
+      '/api/emp/salary/periods';
+  static const String employeeMySalaryReportEndpoint =
+      '/api/emp/salary/report';
+  static const String employeeMySalaryDetailEndpoint =
+      '/api/emp/salary/periods/{salaryPeriodId}';
+  static const String employeeMySalarySlipEndpoint =
+      '/api/emp/salary/periods/{salaryPeriodId}/slip';
+  static const String employeeMyWorkLogsEndpoint = '/api/emp/work-logs';
+  static const String employeeMyLeaveLogsEndpoint = '/api/emp/leave-logs';
+  static const String employeeWorkDefinitionsEndpoint =
+      '/api/emp/work-definitions';
 
   static String getEmployeesUrl(int companyId, {bool? activeOnly}) {
     final base =
@@ -492,6 +554,185 @@ class AppConfig {
 
   static String getDeactivateEmployeeUrl(int companyId, int employeeId) =>
       '$baseUrl${employeeDeactivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+
+  static String getEmployeeSalaryConfigUrl(int companyId, int employeeId) =>
+      '$baseUrl${employeeSalaryConfigEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+
+  static String getEmployeeSalaryConfigHistoryUrl(
+    int companyId,
+    int employeeId,
+  ) =>
+      '$baseUrl${employeeSalaryConfigHistoryEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+
+  static String getEmployeePortalUserUrl(int companyId, int employeeId) =>
+      '$baseUrl${employeePortalUserEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+
+  static String getEmployeePortalUserResetPasswordUrl(
+    int companyId,
+    int employeeId,
+  ) =>
+      '$baseUrl${employeePortalUserResetPasswordEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+
+  static String getWorkDefinitionsUrl(int companyId, {bool? activeOnly}) {
+    final base =
+        '$baseUrl${workDefinitionsEndpoint.replaceAll('{companyId}', companyId.toString())}';
+    if (activeOnly == null) return base;
+    return '$base?activeOnly=$activeOnly';
+  }
+
+  static String getWorkDefinitionDetailUrl(int companyId, int workDefId) =>
+      '$baseUrl${workDefinitionDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{workDefId}', workDefId.toString())}';
+
+  static String getDeactivateWorkDefinitionUrl(int companyId, int workDefId) =>
+      '$baseUrl${workDefinitionDeactivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{workDefId}', workDefId.toString())}';
+
+  static String getWorkDefinitionRateHistoryUrl(int companyId, int workDefId) =>
+      '$baseUrl${workDefinitionRateHistoryEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{workDefId}', workDefId.toString())}';
+
+  static String getWorkLogsUrl(int companyId, {String? from, String? to}) {
+    final base =
+        '$baseUrl${workLogsEndpoint.replaceAll('{companyId}', companyId.toString())}';
+    final params = <String>[
+      if (from != null && from.isNotEmpty) 'from=$from',
+      if (to != null && to.isNotEmpty) 'to=$to',
+    ];
+    if (params.isEmpty) return base;
+    return '$base?${params.join('&')}';
+  }
+
+  static String getWorkLogsByEmployeeUrl(
+    int companyId,
+    int employeeId, {
+    String? from,
+    String? to,
+  }) {
+    final base =
+        '$baseUrl${workLogsByEmployeeEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+    final params = <String>[
+      if (from != null && from.isNotEmpty) 'from=$from',
+      if (to != null && to.isNotEmpty) 'to=$to',
+    ];
+    if (params.isEmpty) return base;
+    return '$base?${params.join('&')}';
+  }
+
+  static String getPendingWorkLogsUrl(int companyId) =>
+      '$baseUrl${pendingWorkLogsEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getReviewWorkLogUrl(int companyId, int logId) =>
+      '$baseUrl${reviewWorkLogEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{logId}', logId.toString())}';
+
+  static String getLeaveLogsUrl(int companyId, {String? from, String? to}) {
+    final base =
+        '$baseUrl${leaveLogsEndpoint.replaceAll('{companyId}', companyId.toString())}';
+    final params = <String>[
+      if (from != null && from.isNotEmpty) 'from=$from',
+      if (to != null && to.isNotEmpty) 'to=$to',
+    ];
+    if (params.isEmpty) return base;
+    return '$base?${params.join('&')}';
+  }
+
+  static String getLeaveLogsByEmployeeUrl(
+    int companyId,
+    int employeeId, {
+    String? from,
+    String? to,
+  }) {
+    final base =
+        '$baseUrl${leaveLogsByEmployeeEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+    final params = <String>[
+      if (from != null && from.isNotEmpty) 'from=$from',
+      if (to != null && to.isNotEmpty) 'to=$to',
+    ];
+    if (params.isEmpty) return base;
+    return '$base?${params.join('&')}';
+  }
+
+  static String getPendingLeaveLogsUrl(int companyId) =>
+      '$baseUrl${pendingLeaveLogsEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getReviewLeaveLogUrl(int companyId, int leaveId) =>
+      '$baseUrl${reviewLeaveLogEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{leaveId}', leaveId.toString())}';
+
+  static String getSalaryCalculateUrl(int companyId) =>
+      '$baseUrl${salaryCalculateEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getSalaryPeriodsUrl(int companyId, {String? period}) {
+    final base =
+        '$baseUrl${salaryPeriodsEndpoint.replaceAll('{companyId}', companyId.toString())}';
+    if (period == null || period.isEmpty) return base;
+    return '$base?period=$period';
+  }
+
+  static String getSalaryPeriodDetailUrl(int companyId, int salaryPeriodId) =>
+      '$baseUrl${salaryPeriodDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{salaryPeriodId}', salaryPeriodId.toString())}';
+
+  static String getApproveSalaryPeriodUrl(int companyId, int salaryPeriodId) =>
+      '$baseUrl${salaryApproveEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{salaryPeriodId}', salaryPeriodId.toString())}';
+
+  static String getMarkSalaryPaidUrl(int companyId, int salaryPeriodId) =>
+      '$baseUrl${salaryMarkPaidEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{salaryPeriodId}', salaryPeriodId.toString())}';
+
+  static String getSalaryReportUrl(
+    int companyId, {
+    required String from,
+    required String to,
+  }) =>
+      '$baseUrl${salaryReportEndpoint.replaceAll('{companyId}', companyId.toString())}?from=$from&to=$to';
+
+  static String getSalarySlipUrl(int companyId, int salaryPeriodId) =>
+      '$baseUrl${salarySlipEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{salaryPeriodId}', salaryPeriodId.toString())}';
+
+  static String get employeeLoginUrl => '$baseUrl$employeeLoginEndpoint';
+
+  static String get employeeRefreshTokenUrl =>
+      '$baseUrl$employeeRefreshTokenEndpoint';
+
+  static String get employeeMeUrl => '$baseUrl$employeeMeEndpoint';
+
+  static String getEmployeeMySalaryPeriodsUrl({String? period}) {
+    final base = '$baseUrl$employeeMySalaryPeriodsEndpoint';
+    if (period == null || period.isEmpty) return base;
+    return '$base?period=$period';
+  }
+
+  static String getEmployeeMySalaryReportUrl({
+    required String from,
+    required String to,
+  }) => '$baseUrl$employeeMySalaryReportEndpoint?from=$from&to=$to';
+
+  static String getEmployeeMySalaryDetailUrl(int salaryPeriodId) =>
+      '$baseUrl${employeeMySalaryDetailEndpoint.replaceAll('{salaryPeriodId}', salaryPeriodId.toString())}';
+
+  static String getEmployeeMySalarySlipUrl(int salaryPeriodId) =>
+      '$baseUrl${employeeMySalarySlipEndpoint.replaceAll('{salaryPeriodId}', salaryPeriodId.toString())}';
+
+  static String getEmployeeMyWorkLogsUrl({String? from, String? to}) {
+    final base = '$baseUrl$employeeMyWorkLogsEndpoint';
+    final params = <String>[
+      if (from != null && from.isNotEmpty) 'from=$from',
+      if (to != null && to.isNotEmpty) 'to=$to',
+    ];
+    if (params.isEmpty) return base;
+    return '$base?${params.join('&')}';
+  }
+
+  static String getEmployeeMyLeaveLogsUrl({String? from, String? to}) {
+    final base = '$baseUrl$employeeMyLeaveLogsEndpoint';
+    final params = <String>[
+      if (from != null && from.isNotEmpty) 'from=$from',
+      if (to != null && to.isNotEmpty) 'to=$to',
+    ];
+    if (params.isEmpty) return base;
+    return '$base?${params.join('&')}';
+  }
+
+  static String getEmployeeWorkDefinitionsUrl({bool? activeOnly}) {
+    final base = '$baseUrl$employeeWorkDefinitionsEndpoint';
+    if (activeOnly == null) return base;
+    return '$base?activeOnly=$activeOnly';
+  }
 
   // ─── Company Config ───
   static String getCompanyConfigUrl(int companyId) =>

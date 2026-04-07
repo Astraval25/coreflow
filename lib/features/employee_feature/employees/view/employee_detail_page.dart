@@ -76,7 +76,7 @@ class _EmployeeDetailScreen extends StatelessWidget {
                     final ok = await vm.deactivateEmployee();
                     if (!context.mounted) return;
                     final text = ok
-                        ? 'Employee deactivated successfully'
+                        ? (vm.message ?? 'Employee deactivated successfully')
                         : (vm.errorMessage ?? 'Failed to deactivate employee');
                     ScaffoldMessenger.of(
                       context,

@@ -128,7 +128,13 @@ class _EmployeeEditScreenState extends State<_EmployeeEditScreen> {
     if (!mounted) return;
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Employee updated successfully')),
+        SnackBar(
+          content: Text(
+            vm.message ??
+                vm.editResponse?.responseMessage ??
+                'Employee updated successfully',
+          ),
+        ),
       );
       context.pop(true);
     }

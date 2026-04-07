@@ -3,6 +3,7 @@ import 'package:coreflow/domain/model/employee_model/create_employee_request.dar
 import 'package:coreflow/domain/model/employee_model/employee_detail.dart';
 import 'package:coreflow/domain/model/employee_model/employee_edit_request.dart';
 import 'package:coreflow/domain/model/employee_model/employee_edit_response.dart';
+import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
 import 'package:flutter/foundation.dart';
 
 class EmployeeEditViewModel extends ChangeNotifier {
@@ -13,6 +14,7 @@ class EmployeeEditViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool _isSaving = false;
   String? _error;
+  String? _message;
 
   EmployeeEditViewModel(this._employeeRepository);
 
@@ -21,10 +23,12 @@ class EmployeeEditViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
   String? get error => _error;
+  String? get message => _message;
 
   Future<void> loadEmployeeDetails(int companyId, int employeeId) async {
     _isLoading = true;
     _error = null;
+    _message = null;
     notifyListeners();
 
     try {
@@ -49,6 +53,7 @@ class EmployeeEditViewModel extends ChangeNotifier {
   ) async {
     _isSaving = true;
     _error = null;
+    _message = null;
     _editResponse = null;
     notifyListeners();
 
@@ -59,6 +64,7 @@ class EmployeeEditViewModel extends ChangeNotifier {
       );
       _editResponse = response;
       if (response != null && response.responseStatus) {
+        _message = response.responseMessage ?? 'Employee created successfully';
         return true;
       }
       _error = response?.responseMessage ?? 'Failed to create employee';
@@ -79,6 +85,7 @@ class EmployeeEditViewModel extends ChangeNotifier {
   ) async {
     _isSaving = true;
     _error = null;
+    _message = null;
     notifyListeners();
 
     try {
@@ -89,6 +96,7 @@ class EmployeeEditViewModel extends ChangeNotifier {
       );
       _editResponse = response;
       if (response != null && response.responseStatus) {
+        _message = response.responseMessage ?? 'Employee updated successfully';
         return true;
       }
       _error = response?.responseMessage ?? 'Failed to update employee';
@@ -102,8 +110,42 @@ class EmployeeEditViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> createPortalUser(
+    int companyId,
+    int employeeId,
+    CreatePortalUserRequest request,
+  ) async {
+    try {
+      _isSaving = true;
+      _error = null;
+      _message = null;
+      notifyListeners();
+
+      final response = await _employeeRepository.createPortalUser(
+        companyId,
+        employeeId,
+        request,
+      );
+      _editResponse = response;
+      if (response != null && response.responseStatus) {
+        _message =
+            response.responseMessage ?? 'Portal access created successfully';
+        return true;
+      }
+      _error = response?.responseMessage ?? 'Failed to create portal user';
+      return false;
+    } catch (e) {
+      _error = 'Error creating portal user';
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
   void clearError() {
     _error = null;
+    _message = null;
     notifyListeners();
   }
 }

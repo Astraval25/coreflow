@@ -5,6 +5,7 @@ import 'package:coreflow/data/repositories/main_repository/company_ref_repositor
 import 'package:coreflow/data/repositories/main_repository/company_repository.dart';
 import 'package:coreflow/data/repositories/main_repository/config_repository.dart';
 import 'package:coreflow/data/repositories/main_repository/customer_repository.dart';
+import 'package:coreflow/data/repositories/employee_repository/employee_repository.dart';
 import 'package:coreflow/data/repositories/main_repository/invitation_repository.dart';
 import 'package:coreflow/data/repositories/main_repository/item_repository.dart';
 import 'package:coreflow/data/repositories/main_repository/order_repository.dart';
@@ -72,7 +73,10 @@ import 'package:coreflow/domain/model/main_model/vendors/vendors_edit_response.d
 import 'package:coreflow/domain/model/main_model/vendors/vendors_status_response.dart';
 import 'package:coreflow/domain/model/auth_model/verify_otp/verify_otp_request.dart';
 import 'package:coreflow/domain/model/auth_model/verify_otp/verify_otp_response.dart';
+import 'package:coreflow/domain/model/employee_model/employee_auth_models.dart';
+import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
 import 'package:coreflow/domain/repositories/login_response.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../core/config/app_config.dart';
@@ -101,6 +105,7 @@ class AuthRepository {
   final OrderRepository _orderRepo = OrderRepository();
   final PaymentRepository _paymentRepo = PaymentRepository();
   final InvitationRepository _invitationRepo = InvitationRepository();
+  final EmployeeRepository _employeeRepo = EmployeeRepository();
 
   // ─── Auth ───
 
@@ -154,6 +159,41 @@ class AuthRepository {
       );
     } catch (e) {
       debugPrint(' saveAuthData error: $e');
+    }
+  }
+
+  Future<void> saveEmployeeAuthData(
+    EmployeeAuthData? data,
+    String username,
+  ) async {
+    if (data == null || username.trim().isEmpty) {
+      debugPrint('saveEmployeeAuthData: null data or empty username');
+      return;
+    }
+
+    try {
+      await TokenStorage.saveFullAuthData(
+        userId: data.employeeId.toString(),
+        companyId: data.companyId,
+        companyName: data.companyName,
+        token: data.token,
+        refreshToken: data.refreshToken,
+        roleCode: 'EMP',
+        landingUrl: CfRoutes.employeePortalHome,
+        email: username.trim(),
+        userName: data.employeeName,
+        employeeId: data.employeeId,
+        employeeCode: data.employeeCode,
+        designation: data.designation,
+        authType: 'employee',
+      );
+
+      final verifyData = await TokenStorage.getFullAuthData();
+      debugPrint(
+        ' Employee auth saved. Token exists: ${verifyData?['token']?.isNotEmpty == true}',
+      );
+    } catch (e) {
+      debugPrint(' saveEmployeeAuthData error: $e');
     }
   }
 
@@ -237,7 +277,13 @@ class AuthRepository {
         return false;
       }
 
+      final isEmployeeAuth =
+          authData['roleCode']?.toString().toUpperCase() == 'EMP' ||
+          authData['authType']?.toString().toLowerCase() == 'employee';
       final refreshToken = authData['refreshToken']!.trim();
+      final refreshUrl = isEmployeeAuth
+          ? AppConfig.employeeRefreshTokenUrl
+          : AppConfig.refreshTokenUrl;
       List<Map<String, dynamic>> bodies = [
         {'refreshToken': refreshToken},
         {'refresh_token': refreshToken},
@@ -248,7 +294,7 @@ class AuthRepository {
         try {
           final response = await http
               .post(
-                Uri.parse(AppConfig.refreshTokenUrl),
+                Uri.parse(refreshUrl),
                 headers: {'Content-Type': 'application/json'},
                 body: jsonEncode(bodies[i]),
               )
@@ -283,14 +329,32 @@ class AuthRepository {
             );
 
             if (newToken?.isNotEmpty == true) {
+              final authCompanyIds = authData['companyIds'];
               final saveSuccess = await TokenStorage.saveFullAuthData(
-                userId: (responseData['userId'] ?? authData['userId'])
-                    .toString(),
-                companyId: responseData['companyId'] ?? authData['companyId'],
+                userId:
+                    (responseData['userId'] ??
+                            responseData['employeeId'] ??
+                            authData['userId'])
+                        .toString(),
+                employeeId: employeeParseInt(
+                  responseData['employeeId'] ?? authData['employeeId'],
+                ),
+                employeeCode:
+                    responseData['employeeCode']?.toString() ??
+                    authData['employeeCode']?.toString(),
+                designation:
+                    responseData['designation']?.toString() ??
+                    authData['designation']?.toString(),
+                authType: isEmployeeAuth
+                    ? 'employee'
+                    : authData['authType']?.toString(),
+                companyId: employeeParseInt(
+                  responseData['companyId'] ?? authData['companyId'],
+                ),
                 companyIds: responseData['companyIds'] != null
                     ? List<int>.from(responseData['companyIds'])
-                    : authData['companyIds'] != null
-                    ? List<int>.from(jsonDecode(authData['companyIds']))
+                    : authCompanyIds != null
+                    ? List<int>.from(jsonDecode(authCompanyIds.toString()))
                     : null,
                 companyName:
                     responseData['companyName']?.toString() ??
@@ -299,13 +363,23 @@ class AuthRepository {
                 refreshToken: newRefreshToken ?? refreshToken,
                 roleCode:
                     responseData['roleCode']?.toString() ??
-                    authData['roleCode']?.toString(),
+                    authData['roleCode']?.toString() ??
+                    (isEmployeeAuth ? 'EMP' : null),
                 landingUrl:
                     responseData['landingUrl']?.toString() ??
-                    authData['landingUrl'] ??
-                    '/dashboard',
-                email: authData['email']?.toString() ?? '',
-                userName: authData['userName']?.toString() ?? '',
+                    authData['landingUrl']?.toString() ??
+                    (isEmployeeAuth
+                        ? CfRoutes.employeePortalHome
+                        : '/dashboard'),
+                email:
+                    authData['email']?.toString() ??
+                    responseData['username']?.toString() ??
+                    '',
+                userName:
+                    responseData['userName']?.toString() ??
+                    responseData['employeeName']?.toString() ??
+                    authData['userName']?.toString() ??
+                    '',
               );
 
               debugPrint(' Save result: $saveSuccess');
@@ -330,34 +404,102 @@ class AuthRepository {
     }
   }
 
+  Future<EmployeeAuthResponse?> employeeLogin(EmployeeLoginRequest request) =>
+      _employeeRepo.employeeLogin(request);
+
+  Future<EmployeeAuthResponse?> employeeRefresh(String refreshToken) =>
+      _employeeRepo.employeeRefreshToken(refreshToken);
+
   // ─── Company (delegates to CompanyRepository) ───
 
   Future<List<Company>> getMyCompanies() => _companyRepo.getMyCompanies();
-  Future<Company?> createCompany(Map<String, dynamic> data) => _companyRepo.createCompany(data);
-  Future<Company?> updateCompany(int companyId, Map<String, dynamic> data) => _companyRepo.updateCompany(companyId, data);
-  Future<bool> activateCompany(int companyId) => _companyRepo.activateCompany(companyId);
-  Future<bool> deactivateCompany(int companyId) => _companyRepo.deactivateCompany(companyId);
-  Future<List<MarketplaceCompany>> getAllCompanies() => _companyRepo.getAllCompanies();
+  Future<Company?> createCompany(Map<String, dynamic> data) =>
+      _companyRepo.createCompany(data);
+  Future<Company?> updateCompany(int companyId, Map<String, dynamic> data) =>
+      _companyRepo.updateCompany(companyId, data);
+  Future<bool> activateCompany(int companyId) =>
+      _companyRepo.activateCompany(companyId);
+  Future<bool> deactivateCompany(int companyId) =>
+      _companyRepo.deactivateCompany(companyId);
+  Future<List<MarketplaceCompany>> getAllCompanies() =>
+      _companyRepo.getAllCompanies();
 
   // ─── Customer (delegates to CustomerRepository) ───
 
-  Future<List<Customer>> getCustomers(int companyId) => _customerRepo.getCustomers(companyId);
-  Future<CustomerDetailData?> getCustomerDetail(int companyId, int customerId) => _customerRepo.getCustomerDetail(companyId, customerId);
-  Future<CustomerEditResponse?> updateCustomer(int companyId, int customerId, CustomerEditRequest request) => _customerRepo.updateCustomer(companyId, customerId, request);
-  Future<CustomerEditResponse?> createCustomer(int companyId, CreateCustomerRequest request) => _customerRepo.createCustomer(companyId, request);
-  Future<CustomerStatusResponse?> activateCustomer(int companyId, int customerId) => _customerRepo.activateCustomer(companyId, customerId);
-  Future<CustomerStatusResponse?> deactivateCustomer(int companyId, int customerId) => _customerRepo.deactivateCustomer(companyId, customerId);
-  Future<List<CustomerMappedItem>> getCustomerMappedItems(int companyId, int customerId) => _customerRepo.getCustomerMappedItems(companyId, customerId);
-  Future<ItemStatusResponse?> createCustomerItem({required int companyId, required int customerId, required int itemId, required double salesPrice, String? salesDescription}) => _customerRepo.createCustomerItem(companyId: companyId, customerId: customerId, itemId: itemId, salesPrice: salesPrice, salesDescription: salesDescription);
-  Future<ItemStatusResponse?> updateCustomerItem({required int companyId, required int customerId, required int itemId, required double salesPrice, String? salesDescription}) => _customerRepo.updateCustomerItem(companyId: companyId, customerId: customerId, itemId: itemId, salesPrice: salesPrice, salesDescription: salesDescription);
-  Future<ItemStatusResponse?> activateCustomerMappedItem(int companyId, int customerId, int itemId) => _customerRepo.activateCustomerMappedItem(companyId, customerId, itemId);
-  Future<ItemStatusResponse?> deactivateCustomerMappedItem(int companyId, int customerId, int itemId) => _customerRepo.deactivateCustomerMappedItem(companyId, customerId, itemId);
-  Future<List<SellableItem>> getCustomerSellableItems(int companyId, int customerId) => _customerRepo.getCustomerSellableItems(companyId, customerId);
-  Future<CustomerOrdersPaymentsData?> getCustomerOrdersPayments(
+  Future<List<Customer>> getCustomers(int companyId) =>
+      _customerRepo.getCustomers(companyId);
+  Future<CustomerDetailData?> getCustomerDetail(
     int companyId,
     int customerId,
-    {int page = 0, int size = 10}
-  ) => _customerRepo.getCustomerOrdersPayments(
+  ) => _customerRepo.getCustomerDetail(companyId, customerId);
+  Future<CustomerEditResponse?> updateCustomer(
+    int companyId,
+    int customerId,
+    CustomerEditRequest request,
+  ) => _customerRepo.updateCustomer(companyId, customerId, request);
+  Future<CustomerEditResponse?> createCustomer(
+    int companyId,
+    CreateCustomerRequest request,
+  ) => _customerRepo.createCustomer(companyId, request);
+  Future<CustomerStatusResponse?> activateCustomer(
+    int companyId,
+    int customerId,
+  ) => _customerRepo.activateCustomer(companyId, customerId);
+  Future<CustomerStatusResponse?> deactivateCustomer(
+    int companyId,
+    int customerId,
+  ) => _customerRepo.deactivateCustomer(companyId, customerId);
+  Future<List<CustomerMappedItem>> getCustomerMappedItems(
+    int companyId,
+    int customerId,
+  ) => _customerRepo.getCustomerMappedItems(companyId, customerId);
+  Future<ItemStatusResponse?> createCustomerItem({
+    required int companyId,
+    required int customerId,
+    required int itemId,
+    required double salesPrice,
+    String? salesDescription,
+  }) => _customerRepo.createCustomerItem(
+    companyId: companyId,
+    customerId: customerId,
+    itemId: itemId,
+    salesPrice: salesPrice,
+    salesDescription: salesDescription,
+  );
+  Future<ItemStatusResponse?> updateCustomerItem({
+    required int companyId,
+    required int customerId,
+    required int itemId,
+    required double salesPrice,
+    String? salesDescription,
+  }) => _customerRepo.updateCustomerItem(
+    companyId: companyId,
+    customerId: customerId,
+    itemId: itemId,
+    salesPrice: salesPrice,
+    salesDescription: salesDescription,
+  );
+  Future<ItemStatusResponse?> activateCustomerMappedItem(
+    int companyId,
+    int customerId,
+    int itemId,
+  ) => _customerRepo.activateCustomerMappedItem(companyId, customerId, itemId);
+  Future<ItemStatusResponse?> deactivateCustomerMappedItem(
+    int companyId,
+    int customerId,
+    int itemId,
+  ) =>
+      _customerRepo.deactivateCustomerMappedItem(companyId, customerId, itemId);
+  Future<List<SellableItem>> getCustomerSellableItems(
+    int companyId,
+    int customerId,
+  ) => _customerRepo.getCustomerSellableItems(companyId, customerId);
+  Future<CustomerOrdersPaymentsData?> getCustomerOrdersPayments(
+    int companyId,
+    int customerId, {
+    int page = 0,
+    int size = 10,
+  }) => _customerRepo.getCustomerOrdersPayments(
     companyId,
     customerId,
     page: page,
@@ -366,23 +508,75 @@ class AuthRepository {
 
   // ─── Vendor (delegates to VendorRepository) ───
 
-  Future<List<Vendor>> getActiveVendors(int companyId) => _vendorRepo.getActiveVendors(companyId);
-  Future<VendorsDetailData?> getVendorDetail(int companyId, int vendorId) => _vendorRepo.getVendorDetail(companyId, vendorId);
-  Future<VendorsEditResponse?> updateVendor(int companyId, int vendorId, VendorsEditRequest request) => _vendorRepo.updateVendor(companyId, vendorId, request);
-  Future<VendorsEditResponse?> createVendor(int companyId, CreateVendorsRequest request) => _vendorRepo.createVendor(companyId, request);
-  Future<VendorsStatusResponse?> activateVendor(int companyId, int vendorId) => _vendorRepo.activateVendor(companyId, vendorId);
-  Future<VendorsStatusResponse?> deactivateVendor(int companyId, int vendorId) => _vendorRepo.deactivateVendor(companyId, vendorId);
-  Future<List<CustomerMappedItem>> getVendorMappedItems(int companyId, int vendorId) => _vendorRepo.getVendorMappedItems(companyId, vendorId);
-  Future<ItemStatusResponse?> createVendorItem({required int companyId, required int vendorId, required int itemId, required double purchasePrice, String? purchaseDescription}) => _vendorRepo.createVendorItem(companyId: companyId, vendorId: vendorId, itemId: itemId, purchasePrice: purchasePrice, purchaseDescription: purchaseDescription);
-  Future<ItemStatusResponse?> updateVendorItem({required int companyId, required int vendorId, required int itemId, required double purchasePrice, String? purchaseDescription}) => _vendorRepo.updateVendorItem(companyId: companyId, vendorId: vendorId, itemId: itemId, purchasePrice: purchasePrice, purchaseDescription: purchaseDescription);
-  Future<ItemStatusResponse?> activateVendorMappedItem(int companyId, int vendorId, int itemId) => _vendorRepo.activateVendorMappedItem(companyId, vendorId, itemId);
-  Future<ItemStatusResponse?> deactivateVendorMappedItem(int companyId, int vendorId, int itemId) => _vendorRepo.deactivateVendorMappedItem(companyId, vendorId, itemId);
-  Future<List<SellableItem>> getVendorPurchasableItems(int companyId, int vendorId) => _vendorRepo.getVendorPurchasableItems(companyId, vendorId);
-  Future<VendorOrdersPaymentsData?> getVendorOrdersPayments(
+  Future<List<Vendor>> getActiveVendors(int companyId) =>
+      _vendorRepo.getActiveVendors(companyId);
+  Future<VendorsDetailData?> getVendorDetail(int companyId, int vendorId) =>
+      _vendorRepo.getVendorDetail(companyId, vendorId);
+  Future<VendorsEditResponse?> updateVendor(
     int companyId,
     int vendorId,
-    {int page = 0, int size = 10}
-  ) => _vendorRepo.getVendorOrdersPayments(
+    VendorsEditRequest request,
+  ) => _vendorRepo.updateVendor(companyId, vendorId, request);
+  Future<VendorsEditResponse?> createVendor(
+    int companyId,
+    CreateVendorsRequest request,
+  ) => _vendorRepo.createVendor(companyId, request);
+  Future<VendorsStatusResponse?> activateVendor(int companyId, int vendorId) =>
+      _vendorRepo.activateVendor(companyId, vendorId);
+  Future<VendorsStatusResponse?> deactivateVendor(
+    int companyId,
+    int vendorId,
+  ) => _vendorRepo.deactivateVendor(companyId, vendorId);
+  Future<List<CustomerMappedItem>> getVendorMappedItems(
+    int companyId,
+    int vendorId,
+  ) => _vendorRepo.getVendorMappedItems(companyId, vendorId);
+  Future<ItemStatusResponse?> createVendorItem({
+    required int companyId,
+    required int vendorId,
+    required int itemId,
+    required double purchasePrice,
+    String? purchaseDescription,
+  }) => _vendorRepo.createVendorItem(
+    companyId: companyId,
+    vendorId: vendorId,
+    itemId: itemId,
+    purchasePrice: purchasePrice,
+    purchaseDescription: purchaseDescription,
+  );
+  Future<ItemStatusResponse?> updateVendorItem({
+    required int companyId,
+    required int vendorId,
+    required int itemId,
+    required double purchasePrice,
+    String? purchaseDescription,
+  }) => _vendorRepo.updateVendorItem(
+    companyId: companyId,
+    vendorId: vendorId,
+    itemId: itemId,
+    purchasePrice: purchasePrice,
+    purchaseDescription: purchaseDescription,
+  );
+  Future<ItemStatusResponse?> activateVendorMappedItem(
+    int companyId,
+    int vendorId,
+    int itemId,
+  ) => _vendorRepo.activateVendorMappedItem(companyId, vendorId, itemId);
+  Future<ItemStatusResponse?> deactivateVendorMappedItem(
+    int companyId,
+    int vendorId,
+    int itemId,
+  ) => _vendorRepo.deactivateVendorMappedItem(companyId, vendorId, itemId);
+  Future<List<SellableItem>> getVendorPurchasableItems(
+    int companyId,
+    int vendorId,
+  ) => _vendorRepo.getVendorPurchasableItems(companyId, vendorId);
+  Future<VendorOrdersPaymentsData?> getVendorOrdersPayments(
+    int companyId,
+    int vendorId, {
+    int page = 0,
+    int size = 10,
+  }) => _vendorRepo.getVendorOrdersPayments(
     companyId,
     vendorId,
     page: page,
@@ -392,79 +586,204 @@ class AuthRepository {
   // ─── Item (delegates to ItemRepository) ───
 
   Future<List<Item>> getItems(int companyId) => _itemRepo.getItems(companyId);
-  Future<ItemResponse> fetchItemDetail(int companyId, int itemId) => _itemRepo.fetchItemDetail(companyId, itemId);
+  Future<ItemResponse> fetchItemDetail(int companyId, int itemId) =>
+      _itemRepo.fetchItemDetail(companyId, itemId);
   String getFileUrl(String fsId) => _itemRepo.getFileUrl(fsId);
-  Future<http.Response> createItem({required int companyId, required CreateItemRequest request, required String token, File? imageFile}) => _itemRepo.createItem(companyId: companyId, request: request, token: token, imageFile: imageFile);
-  Future<http.Response> updateItem({required int companyId, required int itemId, required UpdateItemRequest request, required String token, File? imageFile}) => _itemRepo.updateItem(companyId: companyId, itemId: itemId, request: request, token: token, imageFile: imageFile);
-  Future<ItemStatusResponse?> activateItem(int companyId, int itemId) => _itemRepo.activateItem(companyId, itemId);
-  Future<ItemStatusResponse?> deactivateItem(int companyId, int itemId) => _itemRepo.deactivateItem(companyId, itemId);
+  Future<http.Response> createItem({
+    required int companyId,
+    required CreateItemRequest request,
+    required String token,
+    File? imageFile,
+  }) => _itemRepo.createItem(
+    companyId: companyId,
+    request: request,
+    token: token,
+    imageFile: imageFile,
+  );
+  Future<http.Response> updateItem({
+    required int companyId,
+    required int itemId,
+    required UpdateItemRequest request,
+    required String token,
+    File? imageFile,
+  }) => _itemRepo.updateItem(
+    companyId: companyId,
+    itemId: itemId,
+    request: request,
+    token: token,
+    imageFile: imageFile,
+  );
+  Future<ItemStatusResponse?> activateItem(int companyId, int itemId) =>
+      _itemRepo.activateItem(companyId, itemId);
+  Future<ItemStatusResponse?> deactivateItem(int companyId, int itemId) =>
+      _itemRepo.deactivateItem(companyId, itemId);
 
   // ─── Order (delegates to OrderRepository) ───
 
-  Future<Map<String, dynamic>> createSalesOrder(int companyId, CreateSalesOrderRequest request) => _orderRepo.createSalesOrder(companyId, request);
-  Future<List<SalesOrder>> getSalesOrders(int companyId) => _orderRepo.getSalesOrders(companyId);
-  Future<sales_detail.SalesOrderDetail?> getSalesOrderDetail(int companyId, int orderId) => _orderRepo.getSalesOrderDetail(companyId, orderId);
-  Future<List<PurchaseOrder>> getPurchaseOrders(int companyId) => _orderRepo.getPurchaseOrders(companyId);
-  Future<PurchaseOrderDetail?> getPurchaseOrderDetail(int companyId, int orderId) => _orderRepo.getPurchaseOrderDetail(companyId, orderId);
-  Future<Map<String, dynamic>> createPurchaseOrder(int companyId, CreatePurchaseOrderRequest request) => _orderRepo.createPurchaseOrder(companyId, request);
-  Future<Map<String, dynamic>> updatePurchaseOrder(int companyId, int orderId, Map<String, dynamic> body) => _orderRepo.updatePurchaseOrder(companyId, orderId, body);
-  Future<Map<String, dynamic>> updateSalesOrder(int companyId, int orderId, Map<String, dynamic> body) => _orderRepo.updateSalesOrder(companyId, orderId, body);
-  Future<Map<String, dynamic>> updateOrderStatus(int companyId, int orderId, String action) => _orderRepo.updateOrderStatus(companyId, orderId, action);
-  Future<Map<String, dynamic>> cancelOrder(int companyId, int orderId) => _orderRepo.cancelOrder(companyId, orderId);
-  Future<List<PaymentRef>> getOrderPaymentDetails(int companyId, int orderId) => _orderRepo.getOrderPaymentDetails(companyId, orderId);
+  Future<Map<String, dynamic>> createSalesOrder(
+    int companyId,
+    CreateSalesOrderRequest request,
+  ) => _orderRepo.createSalesOrder(companyId, request);
+  Future<List<SalesOrder>> getSalesOrders(int companyId) =>
+      _orderRepo.getSalesOrders(companyId);
+  Future<sales_detail.SalesOrderDetail?> getSalesOrderDetail(
+    int companyId,
+    int orderId,
+  ) => _orderRepo.getSalesOrderDetail(companyId, orderId);
+  Future<List<PurchaseOrder>> getPurchaseOrders(int companyId) =>
+      _orderRepo.getPurchaseOrders(companyId);
+  Future<PurchaseOrderDetail?> getPurchaseOrderDetail(
+    int companyId,
+    int orderId,
+  ) => _orderRepo.getPurchaseOrderDetail(companyId, orderId);
+  Future<Map<String, dynamic>> createPurchaseOrder(
+    int companyId,
+    CreatePurchaseOrderRequest request,
+  ) => _orderRepo.createPurchaseOrder(companyId, request);
+  Future<Map<String, dynamic>> updatePurchaseOrder(
+    int companyId,
+    int orderId,
+    Map<String, dynamic> body,
+  ) => _orderRepo.updatePurchaseOrder(companyId, orderId, body);
+  Future<Map<String, dynamic>> updateSalesOrder(
+    int companyId,
+    int orderId,
+    Map<String, dynamic> body,
+  ) => _orderRepo.updateSalesOrder(companyId, orderId, body);
+  Future<Map<String, dynamic>> updateOrderStatus(
+    int companyId,
+    int orderId,
+    String action,
+  ) => _orderRepo.updateOrderStatus(companyId, orderId, action);
+  Future<Map<String, dynamic>> cancelOrder(int companyId, int orderId) =>
+      _orderRepo.cancelOrder(companyId, orderId);
+  Future<List<PaymentRef>> getOrderPaymentDetails(int companyId, int orderId) =>
+      _orderRepo.getOrderPaymentDetails(companyId, orderId);
 
   // ─── Payment (delegates to PaymentRepository) ───
 
-  Future<PaymentDetail?> getPaymentDetail(int companyId, int paymentId) => _paymentRepo.getPaymentDetail(companyId, paymentId);
-  Future<PaymentDetail?> getSendPaymentDetail(int companyId, int paymentId) => _paymentRepo.getSendPaymentDetail(companyId, paymentId);
-  Future<PaymentDetail?> getReceivePaymentDetail(int companyId, int paymentId) => _paymentRepo.getReceivePaymentDetail(companyId, paymentId);
-  Future<List<PaymentSentSummary>> getPaymentsSentSummary(int companyId) => _paymentRepo.getPaymentsSentSummary(companyId);
-  Future<List<PaymentReceivedSummary>> getPaymentsReceivedSummary(int companyId) => _paymentRepo.getPaymentsReceivedSummary(companyId);
-  Future<List<UnpaidOrder>> getVendorUnpaidOrders(int companyId, int vendorId) => _paymentRepo.getVendorUnpaidOrders(companyId, vendorId);
-  Future<Map<String, dynamic>> createPaymentSent(int companyId, CreatePaymentSentRequest request) => _paymentRepo.createPaymentSent(companyId, request);
-  Future<Uint8List?> fetchPaymentProofBytes(int companyId, String fsId) => _paymentRepo.fetchPaymentProofBytes(companyId, fsId);
-  Future<PaymentProofData?> uploadPaymentProof(int companyId, File file) => _paymentRepo.uploadPaymentProof(companyId, file);
-  Future<List<UnpaidOrder>> getCustomerUnpaidOrders(int companyId, int customerId) => _paymentRepo.getCustomerUnpaidOrders(companyId, customerId);
-  Future<Map<String, dynamic>> createPaymentReceived(int companyId, CreatePaymentReceivedRequest request) => _paymentRepo.createPaymentReceived(companyId, request);
-  Future<Map<String, dynamic>> updatePaymentSent(int companyId, int paymentId, Map<String, dynamic> body) => _paymentRepo.updatePaymentSent(companyId, paymentId, body);
-  Future<Map<String, dynamic>> updatePaymentReceived(int companyId, int paymentId, Map<String, dynamic> body) => _paymentRepo.updatePaymentReceived(companyId, paymentId, body);
-  Future<Map<String, dynamic>> updatePaymentStatus(int companyId, int paymentId, String action) => _paymentRepo.updatePaymentStatus(companyId, paymentId, action);
+  Future<PaymentDetail?> getPaymentDetail(int companyId, int paymentId) =>
+      _paymentRepo.getPaymentDetail(companyId, paymentId);
+  Future<PaymentDetail?> getSendPaymentDetail(int companyId, int paymentId) =>
+      _paymentRepo.getSendPaymentDetail(companyId, paymentId);
+  Future<PaymentDetail?> getReceivePaymentDetail(
+    int companyId,
+    int paymentId,
+  ) => _paymentRepo.getReceivePaymentDetail(companyId, paymentId);
+  Future<List<PaymentSentSummary>> getPaymentsSentSummary(int companyId) =>
+      _paymentRepo.getPaymentsSentSummary(companyId);
+  Future<List<PaymentReceivedSummary>> getPaymentsReceivedSummary(
+    int companyId,
+  ) => _paymentRepo.getPaymentsReceivedSummary(companyId);
+  Future<List<UnpaidOrder>> getVendorUnpaidOrders(
+    int companyId,
+    int vendorId,
+  ) => _paymentRepo.getVendorUnpaidOrders(companyId, vendorId);
+  Future<Map<String, dynamic>> createPaymentSent(
+    int companyId,
+    CreatePaymentSentRequest request,
+  ) => _paymentRepo.createPaymentSent(companyId, request);
+  Future<Uint8List?> fetchPaymentProofBytes(int companyId, String fsId) =>
+      _paymentRepo.fetchPaymentProofBytes(companyId, fsId);
+  Future<PaymentProofData?> uploadPaymentProof(int companyId, File file) =>
+      _paymentRepo.uploadPaymentProof(companyId, file);
+  Future<List<UnpaidOrder>> getCustomerUnpaidOrders(
+    int companyId,
+    int customerId,
+  ) => _paymentRepo.getCustomerUnpaidOrders(companyId, customerId);
+  Future<Map<String, dynamic>> createPaymentReceived(
+    int companyId,
+    CreatePaymentReceivedRequest request,
+  ) => _paymentRepo.createPaymentReceived(companyId, request);
+  Future<Map<String, dynamic>> updatePaymentSent(
+    int companyId,
+    int paymentId,
+    Map<String, dynamic> body,
+  ) => _paymentRepo.updatePaymentSent(companyId, paymentId, body);
+  Future<Map<String, dynamic>> updatePaymentReceived(
+    int companyId,
+    int paymentId,
+    Map<String, dynamic> body,
+  ) => _paymentRepo.updatePaymentReceived(companyId, paymentId, body);
+  Future<Map<String, dynamic>> updatePaymentStatus(
+    int companyId,
+    int paymentId,
+    String action,
+  ) => _paymentRepo.updatePaymentStatus(companyId, paymentId, action);
 
   // ─── Invitation (delegates to InvitationRepository) ───
 
-  Future<InvitationResponse?> sendCustomerInvitation(int companyId, int customerId) => _invitationRepo.sendCustomerInvitation(companyId, customerId);
-  Future<InvitationResponse?> getCustomerInvitationCode(int companyId, int customerId) => _invitationRepo.getCustomerInvitationCode(companyId, customerId);
-  Future<InvitationResponse?> sendVendorInvitation(int companyId, int vendorId) => _invitationRepo.sendVendorInvitation(companyId, vendorId);
-  Future<InvitationResponse?> getVendorInvitationCode(int companyId, int vendorId) => _invitationRepo.getVendorInvitationCode(companyId, vendorId);
-  Future<AcceptInvitationResponse?> acceptInvitation({required int companyId, required String invitationCode, int? selectedVendorId, int? selectedCustomerId}) => _invitationRepo.acceptInvitation(companyId: companyId, invitationCode: invitationCode, selectedVendorId: selectedVendorId, selectedCustomerId: selectedCustomerId);
+  Future<InvitationResponse?> sendCustomerInvitation(
+    int companyId,
+    int customerId,
+  ) => _invitationRepo.sendCustomerInvitation(companyId, customerId);
+  Future<InvitationResponse?> getCustomerInvitationCode(
+    int companyId,
+    int customerId,
+  ) => _invitationRepo.getCustomerInvitationCode(companyId, customerId);
+  Future<InvitationResponse?> sendVendorInvitation(
+    int companyId,
+    int vendorId,
+  ) => _invitationRepo.sendVendorInvitation(companyId, vendorId);
+  Future<InvitationResponse?> getVendorInvitationCode(
+    int companyId,
+    int vendorId,
+  ) => _invitationRepo.getVendorInvitationCode(companyId, vendorId);
+  Future<AcceptInvitationResponse?> acceptInvitation({
+    required int companyId,
+    required String invitationCode,
+    int? selectedVendorId,
+    int? selectedCustomerId,
+  }) => _invitationRepo.acceptInvitation(
+    companyId: companyId,
+    invitationCode: invitationCode,
+    selectedVendorId: selectedVendorId,
+    selectedCustomerId: selectedCustomerId,
+  );
 
   // ─── Company Ref (delegates to CompanyRefRepository) ───
 
-  Future<OrderRef?> getOrderRef(int companyId, int orderId) => _companyRefRepo.getOrderRef(companyId, orderId);
-  Future<bool> updateOrderRef(int companyId, int orderId, Map<String, dynamic> body) => _companyRefRepo.updateOrderRef(companyId, orderId, body);
-  Future<PaymentRef?> getPaymentRef(int companyId, int paymentId) => _companyRefRepo.getPaymentRef(companyId, paymentId);
-  Future<bool> updatePaymentRef(int companyId, int paymentId, Map<String, dynamic> body) => _companyRefRepo.updatePaymentRef(companyId, paymentId, body);
+  Future<OrderRef?> getOrderRef(int companyId, int orderId) =>
+      _companyRefRepo.getOrderRef(companyId, orderId);
+  Future<bool> updateOrderRef(
+    int companyId,
+    int orderId,
+    Map<String, dynamic> body,
+  ) => _companyRefRepo.updateOrderRef(companyId, orderId, body);
+  Future<PaymentRef?> getPaymentRef(int companyId, int paymentId) =>
+      _companyRefRepo.getPaymentRef(companyId, paymentId);
+  Future<bool> updatePaymentRef(
+    int companyId,
+    int paymentId,
+    Map<String, dynamic> body,
+  ) => _companyRefRepo.updatePaymentRef(companyId, paymentId, body);
 
   // ─── Config (delegates to ConfigRepository) ───
 
-  Future<CompanyConfig?> getCompanyConfig(int companyId) => _configRepo.getCompanyConfig(companyId);
-  Future<bool> setConfigOverride(int companyId, String configKey, String configValue) => _configRepo.setConfigOverride(companyId, configKey, configValue);
-  Future<bool> resetConfigToDefault(int companyId, String configKey) => _configRepo.resetConfigToDefault(companyId, configKey);
+  Future<CompanyConfig?> getCompanyConfig(int companyId) =>
+      _configRepo.getCompanyConfig(companyId);
+  Future<bool> setConfigOverride(
+    int companyId,
+    String configKey,
+    String configValue,
+  ) => _configRepo.setConfigOverride(companyId, configKey, configValue);
+  Future<bool> resetConfigToDefault(int companyId, String configKey) =>
+      _configRepo.resetConfigToDefault(companyId, configKey);
 
   // ─── Notification APIs ───
 
-  Future<({List<AppNotification> notifications, bool hasNext})> getNotifications(
-    int companyId, {
-    int page = 0,
-  }) async {
+  Future<({List<AppNotification> notifications, bool hasNext})>
+  getNotifications(int companyId, {int page = 0}) async {
     try {
       final url = AppConfig.getNotificationsUrl(companyId, page: page);
       final response = await _apiService.get(Uri.parse(url));
 
-      if (response.statusCode != 200) return (notifications: <AppNotification>[], hasNext: false);
+      if (response.statusCode != 200)
+        return (notifications: <AppNotification>[], hasNext: false);
 
       final data = jsonDecode(response.body);
-      if (data['responseStatus'] != true) return (notifications: <AppNotification>[], hasNext: false);
+      if (data['responseStatus'] != true)
+        return (notifications: <AppNotification>[], hasNext: false);
 
       final responseData = data['responseData'] as Map<String, dynamic>;
       final list = (responseData['notifications'] as List<dynamic>?) ?? [];
@@ -472,7 +791,9 @@ class AuthRepository {
 
       return (
         notifications: list
-            .map((json) => AppNotification.fromJson(json as Map<String, dynamic>))
+            .map(
+              (json) => AppNotification.fromJson(json as Map<String, dynamic>),
+            )
             .toList(),
         hasNext: hasNext,
       );
@@ -601,8 +922,7 @@ class AuthRepository {
     String endDate,
   ) async {
     try {
-      final url =
-          AppConfig.getRevenueExpenseUrl(companyId, startDate, endDate);
+      final url = AppConfig.getRevenueExpenseUrl(companyId, startDate, endDate);
       final response = await _apiService.get(Uri.parse(url));
       if (response.statusCode != 200) return [];
       final data = jsonDecode(response.body);
@@ -619,211 +939,432 @@ class AuthRepository {
 
   Future<SalesSummary?> getSalesSummary(int c, String s, String e) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getSalesSummaryUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getSalesSummaryUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return null;
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return null;
       return SalesSummary.fromJson(d['responseData'] as Map<String, dynamic>);
-    } catch (err) { debugPrint('getSalesSummary: $err'); return null; }
+    } catch (err) {
+      debugPrint('getSalesSummary: $err');
+      return null;
+    }
   }
 
   Future<PurchaseSummary?> getPurchaseSummary(int c, String s, String e) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getPurchaseSummaryUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getPurchaseSummaryUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return null;
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return null;
-      return PurchaseSummary.fromJson(d['responseData'] as Map<String, dynamic>);
-    } catch (err) { debugPrint('getPurchaseSummary: $err'); return null; }
+      return PurchaseSummary.fromJson(
+        d['responseData'] as Map<String, dynamic>,
+      );
+    } catch (err) {
+      debugPrint('getPurchaseSummary: $err');
+      return null;
+    }
   }
 
-  Future<List<OrderFrequencyEntry>> getSalesOrderFrequency(int c, String s, String e) async {
+  Future<List<OrderFrequencyEntry>> getSalesOrderFrequency(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getSalesOrderFrequencyUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getSalesOrderFrequencyUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => OrderFrequencyEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getSalesOrderFrequency: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => OrderFrequencyEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getSalesOrderFrequency: $err');
+      return [];
+    }
   }
 
-  Future<List<OrderFrequencyEntry>> getPurchaseOrderFrequency(int c, String s, String e) async {
+  Future<List<OrderFrequencyEntry>> getPurchaseOrderFrequency(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getPurchaseOrderFrequencyUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getPurchaseOrderFrequencyUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => OrderFrequencyEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getPurchaseOrderFrequency: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => OrderFrequencyEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getPurchaseOrderFrequency: $err');
+      return [];
+    }
   }
 
-  Future<List<PaymentFrequencyEntry>> getSalesPaymentFrequency(int c, String s, String e) async {
+  Future<List<PaymentFrequencyEntry>> getSalesPaymentFrequency(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getSalesPaymentFrequencyUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getSalesPaymentFrequencyUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => PaymentFrequencyEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getSalesPaymentFrequency: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => PaymentFrequencyEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getSalesPaymentFrequency: $err');
+      return [];
+    }
   }
 
-  Future<List<PaymentFrequencyEntry>> getPurchasePaymentFrequency(int c, String s, String e) async {
+  Future<List<PaymentFrequencyEntry>> getPurchasePaymentFrequency(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getPurchasePaymentFrequencyUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getPurchasePaymentFrequencyUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => PaymentFrequencyEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getPurchasePaymentFrequency: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => PaymentFrequencyEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getPurchasePaymentFrequency: $err');
+      return [];
+    }
   }
 
-  Future<List<ItemFrequencyEntry>> getSalesItemFrequency(int c, String s, String e) async {
+  Future<List<ItemFrequencyEntry>> getSalesItemFrequency(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getSalesItemFrequencyUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getSalesItemFrequencyUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => ItemFrequencyEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getSalesItemFrequency: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => ItemFrequencyEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getSalesItemFrequency: $err');
+      return [];
+    }
   }
 
-  Future<List<ItemFrequencyEntry>> getPurchaseItemFrequency(int c, String s, String e) async {
+  Future<List<ItemFrequencyEntry>> getPurchaseItemFrequency(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getPurchaseItemFrequencyUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getPurchaseItemFrequencyUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => ItemFrequencyEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getPurchaseItemFrequency: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => ItemFrequencyEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getPurchaseItemFrequency: $err');
+      return [];
+    }
   }
 
-  Future<List<RunningAmountEntry>> getSalesRunningOrderAmount(int c, String s, String e) async {
+  Future<List<RunningAmountEntry>> getSalesRunningOrderAmount(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getSalesRunningOrderAmountUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getSalesRunningOrderAmountUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => RunningAmountEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getSalesRunningOrderAmount: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => RunningAmountEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getSalesRunningOrderAmount: $err');
+      return [];
+    }
   }
 
-  Future<List<RunningAmountEntry>> getPurchaseRunningOrderAmount(int c, String s, String e) async {
+  Future<List<RunningAmountEntry>> getPurchaseRunningOrderAmount(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getPurchaseRunningOrderAmountUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getPurchaseRunningOrderAmountUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => RunningAmountEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getPurchaseRunningOrderAmount: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => RunningAmountEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getPurchaseRunningOrderAmount: $err');
+      return [];
+    }
   }
 
-  Future<List<RunningAmountEntry>> getSalesRunningPaymentAmount(int c, String s, String e) async {
+  Future<List<RunningAmountEntry>> getSalesRunningPaymentAmount(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getSalesRunningPaymentAmountUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getSalesRunningPaymentAmountUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => RunningAmountEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getSalesRunningPaymentAmount: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => RunningAmountEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getSalesRunningPaymentAmount: $err');
+      return [];
+    }
   }
 
-  Future<List<RunningAmountEntry>> getPurchaseRunningPaymentAmount(int c, String s, String e) async {
+  Future<List<RunningAmountEntry>> getPurchaseRunningPaymentAmount(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getPurchaseRunningPaymentAmountUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getPurchaseRunningPaymentAmountUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => RunningAmountEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getPurchaseRunningPaymentAmount: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => RunningAmountEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getPurchaseRunningPaymentAmount: $err');
+      return [];
+    }
   }
 
-  Future<List<PartyAnalyticsEntry>> getSalesByCustomer(int c, String s, String e) async {
+  Future<List<PartyAnalyticsEntry>> getSalesByCustomer(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getSalesByCustomerUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getSalesByCustomerUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => PartyAnalyticsEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getSalesByCustomer: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => PartyAnalyticsEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getSalesByCustomer: $err');
+      return [];
+    }
   }
 
-  Future<List<PartyAnalyticsEntry>> getPurchaseByVendor(int c, String s, String e) async {
+  Future<List<PartyAnalyticsEntry>> getPurchaseByVendor(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getPurchaseByVendorUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getPurchaseByVendorUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => PartyAnalyticsEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getPurchaseByVendor: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => PartyAnalyticsEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getPurchaseByVendor: $err');
+      return [];
+    }
   }
 
-  Future<List<ItemAnalyticsEntry>> getSalesByItem(int c, String s, String e) async {
+  Future<List<ItemAnalyticsEntry>> getSalesByItem(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getSalesByItemUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getSalesByItemUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => ItemAnalyticsEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getSalesByItem: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => ItemAnalyticsEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getSalesByItem: $err');
+      return [];
+    }
   }
 
-  Future<List<ItemAnalyticsEntry>> getPurchaseByItem(int c, String s, String e) async {
+  Future<List<ItemAnalyticsEntry>> getPurchaseByItem(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getPurchaseByItemUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getPurchaseByItemUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => ItemAnalyticsEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getPurchaseByItem: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => ItemAnalyticsEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getPurchaseByItem: $err');
+      return [];
+    }
   }
 
-  Future<List<ProfitByItemEntry>> getProfitByItem(int c, String s, String e) async {
+  Future<List<ProfitByItemEntry>> getProfitByItem(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getProfitByItemUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getProfitByItemUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => ProfitByItemEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getProfitByItem: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => ProfitByItemEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getProfitByItem: $err');
+      return [];
+    }
   }
 
-  Future<List<ItemAnalyticsEntry>> getTopSellingItems(int c, String s, String e) async {
+  Future<List<ItemAnalyticsEntry>> getTopSellingItems(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getTopSellingItemsUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getTopSellingItemsUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => ItemAnalyticsEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getTopSellingItems: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => ItemAnalyticsEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getTopSellingItems: $err');
+      return [];
+    }
   }
 
-  Future<List<ItemAnalyticsEntry>> getTopProfitableItems(int c, String s, String e) async {
+  Future<List<ItemAnalyticsEntry>> getTopProfitableItems(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getTopProfitableItemsUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getTopProfitableItemsUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => ItemAnalyticsEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getTopProfitableItems: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => ItemAnalyticsEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getTopProfitableItems: $err');
+      return [];
+    }
   }
 
-  Future<List<PaymentModeEntry>> getPaymentModeDistribution(int c, String s, String e) async {
+  Future<List<PaymentModeEntry>> getPaymentModeDistribution(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getPaymentModeDistributionUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getPaymentModeDistributionUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => PaymentModeEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getPaymentModeDistribution: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => PaymentModeEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getPaymentModeDistribution: $err');
+      return [];
+    }
   }
 
-  Future<List<MonthlyTrendEntry>> getMonthlyTrend(int c, String s, String e) async {
+  Future<List<MonthlyTrendEntry>> getMonthlyTrend(
+    int c,
+    String s,
+    String e,
+  ) async {
     try {
-      final r = await _apiService.get(Uri.parse(AppConfig.getMonthlyTrendUrl(c, s, e)));
+      final r = await _apiService.get(
+        Uri.parse(AppConfig.getMonthlyTrendUrl(c, s, e)),
+      );
       if (r.statusCode != 200) return [];
       final d = jsonDecode(r.body);
       if (d['responseStatus'] != true) return [];
-      return (d['responseData'] as List).map((x) => MonthlyTrendEntry.fromJson(x)).toList();
-    } catch (err) { debugPrint('getMonthlyTrend: $err'); return []; }
+      return (d['responseData'] as List)
+          .map((x) => MonthlyTrendEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getMonthlyTrend: $err');
+      return [];
+    }
   }
 }

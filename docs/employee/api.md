@@ -1067,19 +1067,19 @@ GET /api/companies/1/modemp/salary/periods/901/slip
 ## Employee Auth APIs
 
 ### 35. Employee Login
-- API: `POST /api/auth/employee/company/{companyId}`
+- API: `POST /api/auth/employee/login`
 - Auth: **No JWT required** (public endpoint)
 - Request example:
 
 ```http
-POST /api/auth/employee/company/1
+POST /api/auth/employee/login
 Content-Type: application/json
 ```
 
 ```json
 {
   "username": "ravi.emp",
-  "password": "Ravi@123"
+  "password": "12345678900"
 }
 ```
 

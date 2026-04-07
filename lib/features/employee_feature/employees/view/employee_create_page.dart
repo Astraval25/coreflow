@@ -2,6 +2,7 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/data/repositories/employee_repository/employee_repository.dart';
 import 'package:coreflow/domain/model/employee_model/create_employee_request.dart';
+import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
 import 'package:coreflow/features/employee_feature/employees/view_model/employee_edit_view_model.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:flutter/material.dart';
@@ -48,8 +49,11 @@ class _EmployeeCreateScreenState extends State<_EmployeeCreateScreen> {
   final _designationController = TextEditingController();
   final _joinedDateController = TextEditingController();
   final _monthlyAmountController = TextEditingController();
+  final _portalUsernameController = TextEditingController();
+  final _portalPasswordController = TextEditingController();
 
   String _salaryType = 'MONTHLY';
+  bool _needsPortalAccess = false;
 
   @override
   void dispose() {
@@ -60,6 +64,8 @@ class _EmployeeCreateScreenState extends State<_EmployeeCreateScreen> {
     _designationController.dispose();
     _joinedDateController.dispose();
     _monthlyAmountController.dispose();
+    _portalUsernameController.dispose();
+    _portalPasswordController.dispose();
     super.dispose();
   }
 
@@ -106,12 +112,57 @@ class _EmployeeCreateScreenState extends State<_EmployeeCreateScreen> {
 
     final ok = await vm.createEmployee(widget.companyId, request);
     if (!mounted) return;
-    if (ok) {
+    if (!ok) return;
+    final employeeMessage =
+        vm.message ??
+        vm.editResponse?.responseMessage ??
+        'Employee created successfully';
+
+    if (_needsPortalAccess) {
+      final responseData = vm.editResponse?.responseData;
+      final employeeId = responseData is Map<String, dynamic>
+          ? employeeParseInt(responseData['employeeId'])
+          : null;
+
+      if (employeeId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '$employeeMessage Portal access could not be created because the employee id was not returned.',
+            ),
+          ),
+        );
+        context.pop(true);
+        return;
+      }
+
+      final portalOk = await vm.createPortalUser(
+        widget.companyId,
+        employeeId,
+        CreatePortalUserRequest(
+          username: _portalUsernameController.text.trim(),
+          password: _portalPasswordController.text,
+        ),
+      );
+
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Employee created successfully')),
+        SnackBar(
+          content: Text(
+            portalOk
+                ? '$employeeMessage ${vm.message ?? 'Portal access created successfully'}'
+                : '$employeeMessage ${vm.error ?? 'Portal access could not be created.'}',
+          ),
+        ),
       );
       context.pop(true);
+      return;
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(employeeMessage)),
+    );
+    context.pop(true);
   }
 
   @override
@@ -258,6 +309,62 @@ class _EmployeeCreateScreenState extends State<_EmployeeCreateScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              _card(
+                title: 'Portal Access',
+                icon: Icons.admin_panel_settings_outlined,
+                child: Column(
+                  children: [
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text(
+                        'Does this employee need portal access?',
+                      ),
+                      subtitle: const Text(
+                        'Enable employee login credentials while creating the employee.',
+                      ),
+                      value: _needsPortalAccess,
+                      onChanged: (value) {
+                        setState(() {
+                          _needsPortalAccess = value;
+                        });
+                      },
+                    ),
+                    if (_needsPortalAccess) ...[
+                      const SizedBox(height: 12),
+                      _textField(
+                        controller: _portalUsernameController,
+                        label: 'Portal Username',
+                        hint: 'ravi.emp',
+                        validator: (value) {
+                          if (!_needsPortalAccess) return null;
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Portal username is required';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _textField(
+                        controller: _portalPasswordController,
+                        label: 'Portal Password',
+                        hint: 'Ravi@123',
+                        obscureText: true,
+                        validator: (value) {
+                          if (!_needsPortalAccess) return null;
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Portal password is required';
+                          }
+                          if (value.trim().length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
               const SizedBox(height: 24),
               FilledButton.icon(
                 onPressed: vm.isSaving ? null : () => _save(vm),
@@ -332,11 +439,13 @@ class _EmployeeCreateScreenState extends State<_EmployeeCreateScreen> {
     required String label,
     String? hint,
     TextInputType? keyboardType,
+    bool obscureText = false,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      obscureText: obscureText,
       validator: validator,
       decoration: InputDecoration(
         labelText: label,

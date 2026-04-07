@@ -8,6 +8,28 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+void _closeDrawerAndNavigate(
+  BuildContext context, {
+  required String path,
+  required String currentLocation,
+  bool push = false,
+}) {
+  final navigator = Navigator.of(context);
+  final router = GoRouter.of(context);
+
+  navigator.pop();
+
+  if (currentLocation == path) return;
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (push) {
+      router.push(path);
+    } else {
+      router.go(path);
+    }
+  });
+}
+
 class DashboardMenuItem extends StatelessWidget {
   final DashboardViewModel vm;
 
@@ -51,10 +73,15 @@ class DashboardMenuItem extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () {
           vm.setSelectedMenu('dashboard');
-          Navigator.pop(context);
           if (!isSelected && vm.companyId != null) {
-            context.go(CfRoutes.dashboard(vm.companyId!));
+            _closeDrawerAndNavigate(
+              context,
+              path: CfRoutes.dashboard(vm.companyId!),
+              currentLocation: currentLocation,
+            );
+            return;
           }
+          Navigator.pop(context);
         },
       ),
     );
@@ -104,10 +131,15 @@ class SalesMenuItem extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () {
           vm.setSelectedMenu('sales');
-          Navigator.pop(context);
           if (!isSelected && vm.companyId != null) {
-            context.go(CfRoutes.sales(vm.companyId!));
+            _closeDrawerAndNavigate(
+              context,
+              path: CfRoutes.sales(vm.companyId!),
+              currentLocation: currentLocation,
+            );
+            return;
           }
+          Navigator.pop(context);
         },
       ),
     );
@@ -157,10 +189,15 @@ class PurchaseMenuItem extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () {
           vm.setSelectedMenu('purchase');
-          Navigator.pop(context);
           if (!isSelected && vm.companyId != null) {
-            context.go(CfRoutes.purchase(vm.companyId!));
+            _closeDrawerAndNavigate(
+              context,
+              path: CfRoutes.purchase(vm.companyId!),
+              currentLocation: currentLocation,
+            );
+            return;
           }
+          Navigator.pop(context);
         },
       ),
     );
@@ -175,7 +212,10 @@ class PaymentMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentLocation = GoRouterState.of(context).matchedLocation;
-    final isSelected = CfRoutes.isSectionActive(currentLocation, 'payment-made');
+    final isSelected = CfRoutes.isSectionActive(
+      currentLocation,
+      'payment-made',
+    );
 
     return _MenuTileContainer(
       isSelected: isSelected,
@@ -210,10 +250,15 @@ class PaymentMenuItem extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () {
           vm.setSelectedMenu('payment-made');
-          Navigator.pop(context);
           if (!isSelected && vm.companyId != null) {
-            context.go(CfRoutes.paymentMade(vm.companyId!));
+            _closeDrawerAndNavigate(
+              context,
+              path: CfRoutes.paymentMade(vm.companyId!),
+              currentLocation: currentLocation,
+            );
+            return;
           }
+          Navigator.pop(context);
         },
       ),
     );
@@ -228,7 +273,10 @@ class PayReceivedMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentLocation = GoRouterState.of(context).matchedLocation;
-    final isSelected = CfRoutes.isSectionActive(currentLocation, 'payment-received');
+    final isSelected = CfRoutes.isSectionActive(
+      currentLocation,
+      'payment-received',
+    );
 
     return _MenuTileContainer(
       isSelected: isSelected,
@@ -263,10 +311,15 @@ class PayReceivedMenuItem extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () {
           vm.setSelectedMenu('payment-received');
-          Navigator.pop(context);
           if (!isSelected && vm.companyId != null) {
-            context.go(CfRoutes.paymentReceived(vm.companyId!));
+            _closeDrawerAndNavigate(
+              context,
+              path: CfRoutes.paymentReceived(vm.companyId!),
+              currentLocation: currentLocation,
+            );
+            return;
           }
+          Navigator.pop(context);
         },
       ),
     );
@@ -285,6 +338,10 @@ class ManageExpansion extends StatelessWidget {
         CfRoutes.isSectionActive(currentLocation, 'customers') ||
         CfRoutes.isSectionActive(currentLocation, 'vendors') ||
         CfRoutes.isSectionActive(currentLocation, 'employees') ||
+        CfRoutes.isSectionActive(currentLocation, 'work-definitions') ||
+        CfRoutes.isSectionActive(currentLocation, 'employee-work-logs') ||
+        CfRoutes.isSectionActive(currentLocation, 'employee-leave-requests') ||
+        CfRoutes.isSectionActive(currentLocation, 'employee-salary') ||
         CfRoutes.isSectionActive(currentLocation, 'items');
     final isExpanded = vm.isCustomersExpanded || isManageRoute;
 
@@ -367,6 +424,34 @@ class ManageExpansion extends StatelessWidget {
               menuKeys: 'employeesadd',
             ),
             SubMenuItem(
+              title: 'Work Definitions',
+              icon: Icons.workspaces_rounded,
+              iconColor: Color(0xFFEC4899), // Pink
+              menuKey: 'work-definitions',
+              menuKeys: '',
+            ),
+            SubMenuItem(
+              title: 'Work Logs',
+              icon: Icons.post_add_rounded,
+              iconColor: Color(0xFF0EA5E9), // Sky
+              menuKey: 'employee-work-logs',
+              menuKeys: '',
+            ),
+            SubMenuItem(
+              title: 'Leave Requests',
+              icon: Icons.event_note_rounded,
+              iconColor: Color(0xFFF97316), // Orange
+              menuKey: 'employee-leave-requests',
+              menuKeys: '',
+            ),
+            SubMenuItem(
+              title: 'Salary',
+              icon: Icons.account_balance_wallet_rounded,
+              iconColor: Color(0xFF14B8A6), // Teal
+              menuKey: 'employee-salary',
+              menuKeys: '',
+            ),
+            SubMenuItem(
               title: 'Items',
               icon: Icons.inventory_2_rounded,
               iconColor: Color(0xFF10B981), // Emerald
@@ -406,7 +491,9 @@ class SubMenuItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
-        color: isSelected ? iconColor.withValues(alpha:0.08) : Colors.transparent,
+        color: isSelected
+            ? iconColor.withValues(alpha: 0.08)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
@@ -473,6 +560,10 @@ class SubMenuItem extends StatelessWidget {
       'customers' => CfRoutes.customers(companyId),
       'vendors' => CfRoutes.vendors(companyId),
       'employees' => CfRoutes.employees(companyId),
+      'work-definitions' => CfRoutes.workDefinitions(companyId),
+      'employee-work-logs' => CfRoutes.employeeWorkLogs(companyId),
+      'employee-leave-requests' => CfRoutes.employeeLeaveRequests(companyId),
+      'employee-salary' => CfRoutes.employeeSalary(companyId),
       'items' => CfRoutes.items(companyId),
       _ => CfRoutes.customers(companyId),
     };
@@ -481,10 +572,11 @@ class SubMenuItem extends StatelessWidget {
     vm.setSelectedMenu(menuKey);
     if (!context.mounted) return;
 
-    Navigator.pop(context);
-    if (currentLocation != targetPath) {
-      context.go(targetPath);
-    }
+    _closeDrawerAndNavigate(
+      context,
+      path: targetPath,
+      currentLocation: currentLocation,
+    );
   }
 
   Future<void> _handleAddTap(BuildContext context) async {
@@ -500,9 +592,6 @@ class SubMenuItem extends StatelessWidget {
 
     if (!context.mounted) return;
 
-    Navigator.pop(context);
-    await Future.delayed(Duration(milliseconds: 80));
-
     final path = switch (menuKeys) {
       'vendoradd' => CfRoutes.vendorCreate(companyId),
       'customersadd' => CfRoutes.customerCreate(companyId),
@@ -512,9 +601,11 @@ class SubMenuItem extends StatelessWidget {
     };
 
     final currentLocation = GoRouterState.of(context).matchedLocation;
-    if (currentLocation != path) {
-      context.go(path);
-    }
+    _closeDrawerAndNavigate(
+      context,
+      path: path,
+      currentLocation: currentLocation,
+    );
   }
 }
 
@@ -581,20 +672,23 @@ class _QuickAddTile extends StatelessWidget {
   Future<void> _handleAddTap(BuildContext context) async {
     final authData = await TokenStorage.getFullAuthData();
     final companyIdRaw = authData?['companyId'];
-    final companyId = companyIdRaw is int ? companyIdRaw : int.tryParse(companyIdRaw?.toString() ?? '');
+    final companyId = companyIdRaw is int
+        ? companyIdRaw
+        : int.tryParse(companyIdRaw?.toString() ?? '');
     if (companyId == null) return;
 
     final vm = context.read<DashboardViewModel>();
     vm.setSelectedMenu(menuKey);
 
     if (!context.mounted) return;
-    Navigator.pop(context);
 
     final path = route.replaceFirst('{companyId}', companyId.toString());
     final currentLocation = GoRouterState.of(context).matchedLocation;
-    if (currentLocation != path) {
-      context.go(path);
-    }
+    _closeDrawerAndNavigate(
+      context,
+      path: path,
+      currentLocation: currentLocation,
+    );
   }
 }
 
@@ -640,10 +734,15 @@ class MarketplaceMenuItem extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () {
           vm.setSelectedMenu('marketplace');
-          Navigator.pop(context);
           if (!isSelected) {
-            context.go(CfRoutes.marketplace);
+            _closeDrawerAndNavigate(
+              context,
+              path: CfRoutes.marketplace,
+              currentLocation: currentLocation,
+            );
+            return;
           }
+          Navigator.pop(context);
         },
       ),
     );
@@ -692,10 +791,16 @@ class ReportMenuItem extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () {
           vm.setSelectedMenu('report');
-          Navigator.pop(context);
           if (vm.companyId != null) {
-            context.push(CfRoutes.reportCustomers(vm.companyId!));
+            _closeDrawerAndNavigate(
+              context,
+              path: CfRoutes.reportCustomers(vm.companyId!),
+              currentLocation: currentLocation,
+              push: true,
+            );
+            return;
           }
+          Navigator.pop(context);
         },
       ),
     );
@@ -744,11 +849,18 @@ class SettingsMenuItem extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () async {
           vm.setSelectedMenu('settings');
-          Navigator.pop(context);
           final authData = await TokenStorage.getFullAuthData();
           final userId = int.tryParse(authData?['userId']?.toString() ?? '');
           if (userId != null && context.mounted) {
-            context.go(CfRoutes.settings(userId));
+            _closeDrawerAndNavigate(
+              context,
+              path: CfRoutes.settings(userId),
+              currentLocation: currentLocation,
+            );
+            return;
+          }
+          if (context.mounted) {
+            Navigator.pop(context);
           }
         },
       ),

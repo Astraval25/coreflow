@@ -12,6 +12,7 @@ class EmployeeDetailViewModel extends ChangeNotifier {
   EmployeeDetailState _state = EmployeeDetailState.initial;
   EmployeeDetailData? _employee;
   String? _errorMessage;
+  String? _message;
   bool _isDeactivating = false;
 
   EmployeeDetailViewModel({
@@ -27,6 +28,7 @@ class EmployeeDetailViewModel extends ChangeNotifier {
   EmployeeDetailState get state => _state;
   EmployeeDetailData? get employee => _employee;
   String? get errorMessage => _errorMessage;
+  String? get message => _message;
   bool get isDeactivating => _isDeactivating;
 
   int get companyId => _companyId;
@@ -73,7 +75,10 @@ class EmployeeDetailViewModel extends ChangeNotifier {
         _employeeId,
       );
       if (response?.responseStatus == true) {
+        final successMessage =
+            response?.responseMessage ?? 'Employee deactivated successfully';
         await loadEmployeeDetail();
+        _message = successMessage;
         return true;
       }
       _errorMessage =
@@ -92,12 +97,16 @@ class EmployeeDetailViewModel extends ChangeNotifier {
 
   void clearError() {
     _errorMessage = null;
+    _message = null;
     notifyListeners();
   }
 
   void _setState(EmployeeDetailState state, {String? error}) {
     _state = state;
     _errorMessage = error;
+    if (state != EmployeeDetailState.loaded) {
+      _message = null;
+    }
     notifyListeners();
   }
 }
