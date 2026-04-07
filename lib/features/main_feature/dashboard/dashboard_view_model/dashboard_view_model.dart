@@ -28,6 +28,7 @@ class DashboardViewModel extends ChangeNotifier {
   bool _isSwitchingCompany = false;
 
   bool _isCustomersExpanded = false;
+  bool _isWorkforceExpanded = false;
   String _selectedMenu = 'badges';
 
   bool _hasLoadedUserData = false;
@@ -136,6 +137,13 @@ class DashboardViewModel extends ChangeNotifier {
 
   void toggleCustomersExpanded(bool expanded) {
     _isCustomersExpanded = expanded;
+    notifyListeners();
+  }
+
+  bool get isWorkforceExpanded => _isWorkforceExpanded;
+
+  void toggleWorkforceExpanded(bool expanded) {
+    _isWorkforceExpanded = expanded;
     notifyListeners();
   }
 

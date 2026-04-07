@@ -338,10 +338,6 @@ class ManageExpansion extends StatelessWidget {
         CfRoutes.isSectionActive(currentLocation, 'customers') ||
         CfRoutes.isSectionActive(currentLocation, 'vendors') ||
         CfRoutes.isSectionActive(currentLocation, 'employees') ||
-        CfRoutes.isSectionActive(currentLocation, 'work-definitions') ||
-        CfRoutes.isSectionActive(currentLocation, 'employee-work-logs') ||
-        CfRoutes.isSectionActive(currentLocation, 'employee-leave-requests') ||
-        CfRoutes.isSectionActive(currentLocation, 'employee-salary') ||
         CfRoutes.isSectionActive(currentLocation, 'items');
     final isExpanded = vm.isCustomersExpanded || isManageRoute;
 
@@ -422,34 +418,6 @@ class ManageExpansion extends StatelessWidget {
               iconColor: Color(0xFF8B5CF6), // Violet
               menuKey: 'employees',
               menuKeys: 'employeesadd',
-            ),
-            SubMenuItem(
-              title: 'Work Definitions',
-              icon: Icons.workspaces_rounded,
-              iconColor: Color(0xFFEC4899), // Pink
-              menuKey: 'work-definitions',
-              menuKeys: '',
-            ),
-            SubMenuItem(
-              title: 'Work Logs',
-              icon: Icons.post_add_rounded,
-              iconColor: Color(0xFF0EA5E9), // Sky
-              menuKey: 'employee-work-logs',
-              menuKeys: '',
-            ),
-            SubMenuItem(
-              title: 'Leave Requests',
-              icon: Icons.event_note_rounded,
-              iconColor: Color(0xFFF97316), // Orange
-              menuKey: 'employee-leave-requests',
-              menuKeys: '',
-            ),
-            SubMenuItem(
-              title: 'Salary',
-              icon: Icons.account_balance_wallet_rounded,
-              iconColor: Color(0xFF14B8A6), // Teal
-              menuKey: 'employee-salary',
-              menuKeys: '',
             ),
             SubMenuItem(
               title: 'Items',
@@ -863,6 +831,113 @@ class SettingsMenuItem extends StatelessWidget {
             Navigator.pop(context);
           }
         },
+      ),
+    );
+  }
+}
+
+class WorkforceExpansion extends StatelessWidget {
+  final DashboardViewModel vm;
+
+  const WorkforceExpansion({super.key, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final currentLocation = GoRouterState.of(context).matchedLocation;
+    final isWorkforceRoute =
+        CfRoutes.isSectionActive(currentLocation, 'work-definitions') ||
+        CfRoutes.isSectionActive(currentLocation, 'employee-work-logs') ||
+        CfRoutes.isSectionActive(currentLocation, 'employee-leave-requests') ||
+        CfRoutes.isSectionActive(currentLocation, 'employee-salary');
+    final isExpanded = vm.isWorkforceExpanded || isWorkforceRoute;
+
+    return _MenuTileContainer(
+      isSelected: isExpanded,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent,
+          expansionTileTheme: ExpansionTileThemeData(
+            backgroundColor: Colors.transparent,
+            collapsedBackgroundColor: Colors.transparent,
+            iconColor: LoginColors.textTertiary,
+            collapsedIconColor: LoginColors.textTertiary,
+            textColor: LoginColors.textPrimary,
+            collapsedTextColor: LoginColors.textPrimary,
+          ),
+        ),
+        child: ExpansionTile(
+          initiallyExpanded: isExpanded,
+          onExpansionChanged: vm.toggleWorkforceExpanded,
+          minTileHeight: 0,
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isExpanded
+                  ? LoginColors.primary.withValues(alpha: 0.1)
+                  : LoginColors.fieldFill,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.engineering_rounded,
+              size: 20,
+              color: isExpanded
+                  ? LoginColors.primary
+                  : LoginColors.textTertiary,
+            ),
+          ),
+          title: Text(
+            'Workforce',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: isExpanded ? FontWeight.w700 : FontWeight.w600,
+              color: isExpanded ? LoginColors.primary : LoginColors.textPrimary,
+              letterSpacing: -0.1,
+            ),
+          ),
+          trailing: Icon(
+            isExpanded
+                ? Icons.keyboard_arrow_down_rounded
+                : Icons.keyboard_arrow_right_rounded,
+            size: 20,
+            color: isExpanded ? LoginColors.primary : LoginColors.textTertiary,
+          ),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+          childrenPadding: const EdgeInsets.only(
+            left: 12,
+            right: 12,
+            bottom: 8,
+          ),
+          children: const [
+            SubMenuItem(
+              title: 'Work Definitions',
+              icon: Icons.workspaces_rounded,
+              iconColor: Color(0xFFEC4899),
+              menuKey: 'work-definitions',
+              menuKeys: '',
+            ),
+            SubMenuItem(
+              title: 'Work Logs',
+              icon: Icons.post_add_rounded,
+              iconColor: Color(0xFF0EA5E9),
+              menuKey: 'employee-work-logs',
+              menuKeys: '',
+            ),
+            SubMenuItem(
+              title: 'Leave Requests',
+              icon: Icons.event_note_rounded,
+              iconColor: Color(0xFFF97316),
+              menuKey: 'employee-leave-requests',
+              menuKeys: '',
+            ),
+            SubMenuItem(
+              title: 'Salary',
+              icon: Icons.account_balance_wallet_rounded,
+              iconColor: Color(0xFF14B8A6),
+              menuKey: 'employee-salary',
+              menuKeys: '',
+            ),
+          ],
+        ),
       ),
     );
   }

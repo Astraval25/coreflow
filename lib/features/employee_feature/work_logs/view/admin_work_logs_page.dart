@@ -2,6 +2,7 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/data/repositories/employee_repository/employee_repository.dart';
+import 'package:coreflow/domain/model/employee_model/employee.dart';
 import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
 import 'package:coreflow/features/employee_feature/work_logs/view_model/admin_work_logs_view_model.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
@@ -106,8 +107,9 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
 
   Future<void> _showCreateDialog(AdminWorkLogsViewModel vm) async {
     final formKey = GlobalKey<FormState>();
-    int? selectedEmployeeId = vm.employees.isNotEmpty
-        ? vm.employees.first.employeeId
+    final workBasedEmployees = _workBasedEmployees(vm);
+    int? selectedEmployeeId = workBasedEmployees.isNotEmpty
+        ? workBasedEmployees.first.employeeId
         : null;
     int? selectedWorkDefId = vm.workDefinitions.isNotEmpty
         ? vm.workDefinitions.first.workDefId
@@ -139,7 +141,7 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
                             labelText: 'Employee',
                             border: OutlineInputBorder(),
                           ),
-                          items: vm.employees.map((employee) {
+                          items: workBasedEmployees.map((employee) {
                             return DropdownMenuItem<int>(
                               value: employee.employeeId,
                               child: Text(
@@ -372,6 +374,7 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
   Widget build(BuildContext context) {
     final vm = context.watch<AdminWorkLogsViewModel>();
     final dashboardVm = context.watch<DashboardViewModel>();
+    final workBasedEmployees = _workBasedEmployees(vm);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -412,13 +415,34 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
         backgroundColor: LoginColors.primary,
         foregroundColor: Colors.white,
         onPressed:
-            vm.employees.isEmpty || vm.workDefinitions.isEmpty || vm.isSaving
+            workBasedEmployees.isEmpty ||
+                vm.workDefinitions.isEmpty ||
+                vm.isSaving
             ? null
             : () => _showCreateDialog(vm),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Work Log'),
+        label: const Text('Add'),
       ),
     );
+  }
+
+  List<Employee> _workBasedEmployees(AdminWorkLogsViewModel vm) {
+    return vm.employees
+        .where(
+          (employee) =>
+              (employee.currentSalaryType ?? '').toUpperCase() == 'WORK_BASED',
+        )
+        .toList();
+  }
+
+  int? _activeEmployeeFilterId(AdminWorkLogsViewModel vm) {
+    final employees = _workBasedEmployees(vm);
+    final selectedId = _selectedEmployeeFilterId;
+    if (selectedId == null) return null;
+    final exists = employees.any(
+      (employee) => employee.employeeId == selectedId,
+    );
+    return exists ? selectedId : null;
   }
 
   Widget _toggleCard() {
@@ -452,6 +476,9 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
   }
 
   Widget _employeeFilterCard(AdminWorkLogsViewModel vm) {
+    final employees = _workBasedEmployees(vm);
+    final selectedEmployeeId = _activeEmployeeFilterId(vm);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -460,7 +487,7 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
         border: Border.all(color: LoginColors.borderLight),
       ),
       child: DropdownButtonFormField<int?>(
-        initialValue: _selectedEmployeeFilterId,
+        initialValue: selectedEmployeeId,
         decoration: const InputDecoration(
           labelText: 'Filter by Employee',
           border: OutlineInputBorder(),
@@ -470,7 +497,7 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
             value: null,
             child: Text('All Employees'),
           ),
-          ...vm.employees.map((employee) {
+          ...employees.map((employee) {
             return DropdownMenuItem<int?>(
               value: employee.employeeId,
               child: Text(
@@ -490,37 +517,28 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
 
   Widget _rangeCard(AdminWorkLogsViewModel vm) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: LoginColors.borderLight),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Text(
-            'Date Range',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: LoginColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _rangeValue('From', vm.fromDate)),
-              const SizedBox(width: 12),
-              Expanded(child: _rangeValue('To', vm.toDate)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: OutlinedButton.icon(
-              onPressed: () => _pickRange(vm),
-              icon: const Icon(Icons.date_range_rounded),
-              label: const Text('Change Range'),
+          _rangeValue('', vm.fromDate),
+          _rangeValue('To', vm.toDate),
+          OutlinedButton.icon(
+            onPressed: () => _pickRange(vm),
+            icon: const Icon(Icons.edit_calendar_rounded, size: 16),
+            label: const Text('Change'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              visualDensity: VisualDensity.compact,
+              textStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -530,19 +548,27 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
 
   Widget _rangeValue(String label, String value) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: LoginColors.background,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: TextStyle(color: LoginColors.textSecondary)),
-          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: LoginColors.textSecondary,
+            ),
+          ),
+          const SizedBox(width: 6),
           Text(
             value,
             style: TextStyle(
+              fontSize: 13,
               fontWeight: FontWeight.w700,
               color: LoginColors.textPrimary,
             ),
@@ -560,11 +586,17 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
       );
     }
 
+    final workBasedEmployeeIds = _workBasedEmployees(
+      vm,
+    ).map((employee) => employee.employeeId).toSet();
     final source = _showPendingOnly ? vm.pendingWorkLogs : vm.workLogs;
+    final selectedEmployeeId = _activeEmployeeFilterId(vm);
     final filtered = source.where((log) {
+      if (!workBasedEmployeeIds.contains(log.employeeId)) {
+        return false;
+      }
       final query = _searchQuery.toLowerCase();
-      if (_selectedEmployeeFilterId != null &&
-          log.employeeId != _selectedEmployeeFilterId) {
+      if (selectedEmployeeId != null && log.employeeId != selectedEmployeeId) {
         return false;
       }
       if (query.isEmpty) return true;

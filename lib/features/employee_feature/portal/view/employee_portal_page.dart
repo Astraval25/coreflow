@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
-import 'package:coreflow/features/employee_feature/salary/service/salary_file_service.dart';
 import 'package:coreflow/features/employee_feature/portal/view_model/employee_portal_view_model.dart';
+import 'package:coreflow/features/employee_feature/salary/service/salary_file_service.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -26,134 +29,116 @@ class _EmployeePortalScreen extends StatefulWidget {
   State<_EmployeePortalScreen> createState() => _EmployeePortalScreenState();
 }
 
-class _EmployeePortalScreenState extends State<_EmployeePortalScreen> {
-  final _workFormKey = GlobalKey<FormState>();
-  final _leaveFormKey = GlobalKey<FormState>();
-
-  final _workDateController = TextEditingController();
-  final _quantityController = TextEditingController();
-  final _workRemarksController = TextEditingController();
-
-  final _leaveDateController = TextEditingController();
-  final _leaveReasonController = TextEditingController();
-
-  int? _selectedWorkDefId;
-  String _leaveType = 'FULL_DAY';
-  String _leaveCategory = 'CASUAL';
+class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
+    with SingleTickerProviderStateMixin {
+  // Per-work-definition input controllers + debounce timers + state.
+  final Map<int, TextEditingController> _qtyControllers = {};
+  final Map<int, Timer> _debounceTimers = {};
+  final Map<int, _SaveState> _saveStates = {};
+  late final TabController _tabController;
+  int _activeTabIndex = 0;
   int? _downloadingSalaryPeriodId;
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_handleTabChange);
+  }
+
+  @override
   void dispose() {
-    _workDateController.dispose();
-    _quantityController.dispose();
-    _workRemarksController.dispose();
-    _leaveDateController.dispose();
-    _leaveReasonController.dispose();
+    _tabController.removeListener(_handleTabChange);
+    _tabController.dispose();
+    for (final c in _qtyControllers.values) {
+      c.dispose();
+    }
+    for (final t in _debounceTimers.values) {
+      t.cancel();
+    }
     super.dispose();
   }
 
-  Future<void> _pickDate(TextEditingController controller) async {
-    final now = DateTime.now();
-    final initial = DateTime.tryParse(controller.text.trim()) ?? now;
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime(now.year - 2),
-      lastDate: DateTime(now.year + 1),
+  TextEditingController _controllerFor(int workDefId) {
+    return _qtyControllers.putIfAbsent(
+      workDefId,
+      () => TextEditingController(),
     );
-    if (picked != null) {
-      final y = picked.year.toString().padLeft(4, '0');
-      final m = picked.month.toString().padLeft(2, '0');
-      final d = picked.day.toString().padLeft(2, '0');
-      controller.text = '$y-$m-$d';
-    }
   }
 
-  Future<void> _submitWorkLog(EmployeePortalViewModel vm) async {
-    if (!_workFormKey.currentState!.validate()) return;
-    final workDefId = _resolvedWorkDefId(vm);
-    if (workDefId == null) {
-      _showMessage('Select a work definition', isError: true);
+  void _onQtyChanged(
+    EmployeePortalViewModel vm,
+    WorkDefinitionData work, {
+    bool isUpdate = false,
+  }) {
+    final id = work.workDefId;
+    _debounceTimers[id]?.cancel();
+    final text = _controllerFor(id).text.trim();
+
+    if (text.isEmpty) {
+      setState(() => _saveStates[id] = _SaveState.idle);
+      return;
+    }
+    final qty = double.tryParse(text);
+    if (qty == null || qty <= 0) {
+      setState(() => _saveStates[id] = _SaveState.invalid);
       return;
     }
 
-    final ok = await vm.createWorkLog(
-      workDefId: workDefId,
-      logDate: _workDateController.text.trim(),
-      quantity: double.parse(_quantityController.text.trim()),
-      remarks: _workRemarksController.text.trim().isEmpty
-          ? null
-          : _workRemarksController.text.trim(),
-    );
-
-    if (!mounted) return;
-    _showMessage(
-      ok
-          ? (vm.message ?? 'Work log submitted successfully')
-          : (vm.error ?? 'Submit failed'),
-      isError: !ok,
-    );
-    if (ok) {
-      _quantityController.clear();
-      _workRemarksController.clear();
-    }
-  }
-
-  int? _resolvedWorkDefId(EmployeePortalViewModel vm) {
-    if (vm.workDefinitions.isEmpty) return null;
-    final currentSelection = _selectedWorkDefId;
-    if (currentSelection != null &&
-        vm.workDefinitions.any((work) => work.workDefId == currentSelection)) {
-      return currentSelection;
-    }
-    return vm.workDefinitions.first.workDefId;
-  }
-
-  WorkDefinitionData? _selectedWorkDefinition(EmployeePortalViewModel vm) {
-    final selectedId = _resolvedWorkDefId(vm);
-    if (selectedId == null) return null;
-    for (final work in vm.workDefinitions) {
-      if (work.workDefId == selectedId) return work;
-    }
-    return null;
-  }
-
-  Future<void> _submitLeave(EmployeePortalViewModel vm) async {
-    if (!_leaveFormKey.currentState!.validate()) return;
-
-    final ok = await vm.createLeaveLog(
-      leaveDate: _leaveDateController.text.trim(),
-      leaveType: _leaveType,
-      leaveCategory: _leaveCategory,
-      reason: _leaveReasonController.text.trim().isEmpty
-          ? null
-          : _leaveReasonController.text.trim(),
-    );
-
-    if (!mounted) return;
-    _showMessage(
-      ok
-          ? (vm.message ?? 'Leave request submitted successfully')
-          : (vm.error ?? 'Submit failed'),
-      isError: !ok,
-    );
-    if (ok) {
-      _leaveReasonController.clear();
-    }
+    setState(() => _saveStates[id] = _SaveState.pending);
+    _debounceTimers[id] = Timer(const Duration(milliseconds: 1200), () async {
+      if (!mounted) return;
+      setState(() => _saveStates[id] = _SaveState.saving);
+      final ok = isUpdate
+          ? await vm.updateWorkLog(
+              workDefId: id,
+              logDate: vm.today,
+              quantity: qty,
+            )
+          : await vm.createWorkLog(
+              workDefId: id,
+              logDate: vm.today,
+              quantity: qty,
+            );
+      if (!mounted) return;
+      setState(() {
+        _saveStates[id] = ok ? _SaveState.saved : _SaveState.error;
+      });
+      if (ok && !isUpdate) {
+        _controllerFor(id).clear();
+      }
+    });
   }
 
   void _showMessage(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? LoginColors.error : null,
+        backgroundColor: isError ? LoginColors.error : LoginColors.success,
       ),
     );
   }
 
-  Future<void> _pickSalaryReportRange(EmployeePortalViewModel vm) async {
-    final fromInitial =
-        DateTime.tryParse(vm.salaryReportFromDate) ?? DateTime.now();
+  String _todayPretty() {
+    return _displayDate(_formatDate(DateTime.now()));
+  }
+
+  void _handleTabChange() {
+    if (!mounted || _activeTabIndex == _tabController.index) return;
+    setState(() {
+      _activeTabIndex = _tabController.index;
+    });
+  }
+
+  bool get _showRangeChip => _activeTabIndex == 0 || _activeTabIndex == 1;
+
+  Future<void> _pickRange({
+    required String fromDate,
+    required String toDate,
+    required Future<void> Function(String fromDate, String toDate)
+    onRangeSelected,
+  }) async {
+    final fromInitial = DateTime.tryParse(fromDate) ?? DateTime.now();
     final pickedFrom = await showDatePicker(
       context: context,
       initialDate: fromInitial,
@@ -162,7 +147,7 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen> {
     );
     if (pickedFrom == null || !mounted) return;
 
-    final toInitial = DateTime.tryParse(vm.salaryReportToDate) ?? pickedFrom;
+    final toInitial = DateTime.tryParse(toDate) ?? pickedFrom;
     final pickedTo = await showDatePicker(
       context: context,
       initialDate: pickedFrom.isAfter(toInitial) ? pickedFrom : toInitial,
@@ -171,150 +156,1079 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen> {
     );
     if (pickedTo == null) return;
 
-    await vm.updateSalaryReportRange(
-      fromDate: _formatDate(pickedFrom),
-      toDate: _formatDate(pickedTo),
-    );
+    await onRangeSelected(_formatDate(pickedFrom), _formatDate(pickedTo));
   }
 
-  Future<void> _downloadSalarySlip(
-    EmployeePortalViewModel vm,
-    SalaryPeriodSummary period,
-  ) async {
-    setState(() {
-      _downloadingSalaryPeriodId = period.salaryPeriodId;
-    });
-
-    try {
-      final bytes = await vm.downloadSalarySlip(period.salaryPeriodId);
-      if (!mounted) return;
-      if (bytes == null || bytes.isEmpty) {
-        _showMessage('Failed to download salary slip', isError: true);
-        return;
-      }
-
-      final fileName = 'salary-slip-${period.period}.pdf';
-      await SalaryFileService.shareSalarySlip(
-        bytes: bytes,
-        fileName: fileName,
+  Future<void> _pickAppBarRange(EmployeePortalViewModel vm) async {
+    if (_activeTabIndex == 0) {
+      await _pickRange(
+        fromDate: vm.activityFromDate,
+        toDate: vm.activityToDate,
+        onRangeSelected: (fromDate, toDate) =>
+            vm.updateActivityRange(fromDate: fromDate, toDate: toDate),
       );
-      if (!mounted) return;
-      _showMessage('Salary slip is ready to share or save');
-    } catch (e) {
-      if (!mounted) return;
-      _showMessage('Failed to download salary slip: $e', isError: true);
-    } finally {
-      if (mounted) {
-        setState(() {
-          _downloadingSalaryPeriodId = null;
-        });
-      }
+      return;
+    }
+
+    if (_activeTabIndex == 1) {
+      await _pickRange(
+        fromDate: vm.salaryReportFromDate,
+        toDate: vm.salaryReportToDate,
+        onRangeSelected: (fromDate, toDate) =>
+            vm.updateSalaryReportRange(fromDate: fromDate, toDate: toDate),
+      );
     }
   }
 
-  Future<void> _showSalaryDetail(
-    BuildContext context,
-    EmployeePortalViewModel vm,
-    SalaryPeriodSummary summary,
-  ) async {
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Salary Detail'),
-          content: SizedBox(
-            width: 500,
-            child: FutureBuilder<SalaryPeriodDetailData?>(
-              future: vm.getSalaryDetail(summary.salaryPeriodId),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const SizedBox(
-                    height: 120,
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                final detail = snapshot.data;
-                if (detail == null) {
-                  return const Text('Failed to load salary detail');
-                }
-                return SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _detailRow('Employee', detail.employeeName),
-                      _detailRow('Period', detail.period),
-                      _detailRow('From', detail.fromDate),
-                      _detailRow('To', detail.toDate),
-                      _detailRow('Status', detail.status),
-                      _detailRow(
-                        'Net Amount',
-                        detail.netAmount?.toStringAsFixed(2) ?? '-',
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Lines',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: LoginColors.textPrimary,
+  String _currentRangeLabel(EmployeePortalViewModel vm) {
+    final fromDate = _activeTabIndex == 1
+        ? vm.salaryReportFromDate
+        : vm.activityFromDate;
+    final toDate = _activeTabIndex == 1
+        ? vm.salaryReportToDate
+        : vm.activityToDate;
+    return '${_displayDate(fromDate)} - ${_displayDate(toDate)}';
+  }
+
+  String _displayDate(String value) {
+    final date = DateTime.tryParse(value);
+    if (date == null) return value;
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year.toString().padLeft(4, '0');
+    return '$day-$month-$year';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<EmployeePortalViewModel>();
+    final name = vm.profile?.employeeName ?? 'Employee';
+
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        backgroundColor: LoginColors.background,
+        appBar: AppBar(
+          backgroundColor: LoginColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Hi, $name',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                ),
+              ),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    _todayPretty(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w400,
+                      fontSize: 12,
+                      color: Colors.white70,
+                    ),
+                  ),
+                  if (_showRangeChip)
+                    InkWell(
+                      onTap: (vm.isActivityLoading || vm.isSalaryLoading)
+                          ? null
+                          : () => _pickAppBarRange(vm),
+                      borderRadius: BorderRadius.circular(999),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      ...detail.lines.map(
-                        (line) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: LoginColors.background,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: LoginColors.borderLight,
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  line.description,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: LoginColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Amount: ${line.amount?.toStringAsFixed(2) ?? '-'}',
-                                ),
-                              ],
-                            ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.22),
                           ),
                         ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.calendar_today_rounded,
+                              size: 12,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _currentRangeLabel(vm),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
-                );
+                    ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              tooltip: 'Logout',
+              icon: const Icon(Icons.logout_rounded),
+              onPressed: () async {
+                await vm.logout();
+                if (context.mounted) context.go(CfRoutes.login);
               },
+            ),
+          ],
+          bottom: TabBar(
+            controller: _tabController,
+            indicatorColor: Colors.white,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+            ),
+            tabs: const [
+              Tab(icon: Icon(Icons.work_history_rounded), text: 'Today'),
+              Tab(icon: Icon(Icons.payments_rounded), text: 'Salary'),
+              Tab(icon: Icon(Icons.person_rounded), text: 'Profile'),
+            ],
+          ),
+        ),
+        body: vm.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : vm.profile == null
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    vm.error ?? 'Failed to load. Please pull to refresh.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              )
+            : TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildTodayTab(vm),
+                  _buildSalaryTab(vm),
+                  _buildProfileTab(vm),
+                ],
+              ),
+      ),
+    );
+  }
+
+  // ----------------------------- TODAY TAB ---------------------------------
+
+  Widget _buildTodayTab(EmployeePortalViewModel vm) {
+    return RefreshIndicator(
+      onRefresh: vm.loadPortal,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          if (vm.isTodayLocked) _lockedBanner(vm),
+          if (vm.isWorkBased) ..._workBasedSection(vm),
+          if (vm.isMonthly) ..._monthlySection(vm),
+          const SizedBox(height: 24),
+          _activitySection(vm),
+        ],
+      ),
+    );
+  }
+
+  Widget _lockedBanner(EmployeePortalViewModel vm) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: LoginColors.error.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: LoginColors.error.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.lock_rounded, color: LoginColors.error, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Today is locked',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    color: LoginColors.error,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  vm.lockedMessage ??
+                      'Salary is already calculated for today. You cannot add work or leave for today. Please contact the admin.',
+                  style: TextStyle(color: LoginColors.textPrimary, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _workBasedSection(EmployeePortalViewModel vm) {
+    return [
+      const SizedBox(height: 14),
+      if (vm.workDefinitions.isEmpty)
+        _emptyCard(
+          icon: Icons.workspaces_outline,
+          title: 'No work types available',
+          subtitle: 'Ask your admin to set up work types.',
+        )
+      else
+        ...vm.workDefinitions.map((work) => _workDefRow(vm, work)),
+    ];
+  }
+
+  Widget _workDefRow(EmployeePortalViewModel vm, WorkDefinitionData work) {
+    final existing = vm.findLogForToday(work.workDefId);
+    // final state = _saveStates[work.workDefId] ?? _SaveState.idle;
+    final locked = vm.isTodayLocked;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(
+              work.workName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: LoginColors.textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            flex: 2,
+            child:
+                existing != null && existing.status.toUpperCase() == 'APPROVED'
+                ? _submittedRow(existing)
+                : existing != null
+                ? _editableRow(vm, work, existing)
+                : locked
+                ? _disabledLockRow()
+                : _qtyInputRow(vm, work),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 36,
+            child: Text(
+              work.unit,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: LoginColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _submittedRow(WorkLogData log) {
+    return Container(
+      height: 42,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: LoginColors.success.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      alignment: Alignment.centerLeft,
+      child: Text(
+        '${log.quantity ?? '-'}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontWeight: FontWeight.w800,
+          color: LoginColors.success,
+          fontSize: 16,
+        ),
+      ),
+    );
+  }
+
+  Widget _editableRow(
+    EmployeePortalViewModel vm,
+    WorkDefinitionData work,
+    WorkLogData existing,
+  ) {
+    final controller = _controllerFor(work.workDefId);
+    if (controller.text.isEmpty &&
+        _saveStates[work.workDefId] == null &&
+        existing.quantity != null) {
+      controller.text = existing.quantity!.toString();
+    }
+
+    return _workInputField(
+      controller: controller,
+      hintText: work.unit,
+      onChanged: (_) => _onQtyChanged(vm, work, isUpdate: true),
+    );
+  }
+
+  Widget _disabledLockRow() {
+    return Container(
+      height: 42,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: LoginColors.background,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      alignment: Alignment.centerLeft,
+      child: Text(
+        'Locked',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: LoginColors.textSecondary,
+        ),
+      ),
+    );
+  }
+
+  Widget _qtyInputRow(EmployeePortalViewModel vm, WorkDefinitionData work) {
+    final controller = _controllerFor(work.workDefId);
+    return _workInputField(
+      controller: controller,
+      hintText: work.unit,
+      onChanged: (_) => _onQtyChanged(vm, work),
+    );
+  }
+
+  Widget _workInputField({
+    required TextEditingController controller,
+    required String hintText,
+    required ValueChanged<String> onChanged,
+  }) {
+    return SizedBox(
+      height: 42,
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+        ],
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: LoginColors.textPrimary,
+        ),
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: TextStyle(
+            color: LoginColors.textTertiary,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+          filled: true,
+          fillColor: LoginColors.background,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 10,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: LoginColors.borderLight),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: LoginColors.borderLight),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: LoginColors.primary, width: 2),
+          ),
+        ),
+        onChanged: onChanged,
+      ),
+    );
+  }
+
+  // ----------------------------- LEAVE / MONTHLY ---------------------------
+
+  List<Widget> _monthlySection(EmployeePortalViewModel vm) {
+    final todayLeave = vm.findLeaveForToday();
+    return [
+      Row(
+        children: [
+          Icon(Icons.event_note_rounded, color: LoginColors.primary, size: 22),
+          const SizedBox(width: 8),
+          Text(
+            'Today\'s Status',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              color: LoginColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      if (todayLeave != null)
+        _todayLeaveCard(todayLeave)
+      else if (vm.isTodayLocked)
+        _disabledLockRow()
+      else
+        _leaveActionCard(vm),
+      const SizedBox(height: 18),
+      Center(
+        child: TextButton.icon(
+          onPressed: vm.isTodayLocked ? null : () => _openLeaveDialog(vm),
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Request leave for another day'),
+        ),
+      ),
+    ];
+  }
+
+  Widget _todayLeaveCard(LeaveLogData log) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: LoginColors.success.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: LoginColors.success.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.check_circle_rounded,
+            color: LoginColors.success,
+            size: 32,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Leave submitted',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  '${log.leaveType} · ${log.leaveCategory} · ${log.status}',
+                  style: TextStyle(color: LoginColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _leaveActionCard(EmployeePortalViewModel vm) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Need to take leave today?',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: LoginColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _bigLeaveButton(
+                  icon: Icons.event_busy_rounded,
+                  label: 'Full Day',
+                  color: LoginColors.error,
+                  onTap: () => _quickLeave(vm, 'FULL_DAY'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _bigLeaveButton(
+                  icon: Icons.brightness_4_rounded,
+                  label: 'Half Day',
+                  color: LoginColors.accent,
+                  onTap: () => _quickLeave(vm, 'HALF_DAY'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _bigLeaveButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: color,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _quickLeave(EmployeePortalViewModel vm, String leaveType) async {
+    final reason = await _askReason();
+    if (reason == null) return;
+    final ok = await vm.createLeaveLog(
+      leaveDate: vm.today,
+      leaveType: leaveType,
+      leaveCategory: 'CASUAL',
+      reason: reason.isEmpty ? null : reason,
+    );
+    if (!mounted) return;
+    _showMessage(
+      ok ? 'Leave submitted' : (vm.error ?? 'Failed to submit leave'),
+      isError: !ok,
+    );
+  }
+
+  Future<String?> _askReason() async {
+    final ctrl = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reason (optional)'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Why are you taking leave?',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+    return result;
+  }
+
+  Future<void> _openLeaveDialog(EmployeePortalViewModel vm) async {
+    DateTime? picked = DateTime.now().add(const Duration(days: 1));
+    String type = 'FULL_DAY';
+    String category = 'CASUAL';
+    final reasonCtrl = TextEditingController();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Request Leave'),
+          content: SizedBox(
+            width: 360,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.calendar_today_rounded),
+                  title: Text(
+                    picked == null
+                        ? 'Pick a date'
+                        : _displayDate(_formatDate(picked!)),
+                  ),
+                  onTap: () async {
+                    final p = await showDatePicker(
+                      context: ctx,
+                      initialDate: picked ?? DateTime.now(),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (p != null) setLocal(() => picked = p);
+                  },
+                ),
+                DropdownButtonFormField<String>(
+                  initialValue: type,
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'FULL_DAY',
+                      child: Text('Full Day'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'HALF_DAY',
+                      child: Text('Half Day'),
+                    ),
+                  ],
+                  onChanged: (v) => setLocal(() => type = v ?? type),
+                  decoration: const InputDecoration(labelText: 'Type'),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  initialValue: category,
+                  items: const [
+                    DropdownMenuItem(value: 'CASUAL', child: Text('Casual')),
+                    DropdownMenuItem(value: 'SICK', child: Text('Sick')),
+                    DropdownMenuItem(value: 'UNPAID', child: Text('Unpaid')),
+                    DropdownMenuItem(value: 'LOP', child: Text('Loss of Pay')),
+                  ],
+                  onChanged: (v) => setLocal(() => category = v ?? category),
+                  decoration: const InputDecoration(labelText: 'Category'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: reasonCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Reason (optional)',
+                  ),
+                ),
+              ],
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
+              onPressed: () => Navigator.pop(dctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                if (picked == null) return;
+                final dateStr =
+                    '${picked!.year}-${picked!.month.toString().padLeft(2, '0')}-${picked!.day.toString().padLeft(2, '0')}';
+                Navigator.pop(dctx);
+                final ok = await vm.createLeaveLog(
+                  leaveDate: dateStr,
+                  leaveType: type,
+                  leaveCategory: category,
+                  reason: reasonCtrl.text.trim().isEmpty
+                      ? null
+                      : reasonCtrl.text.trim(),
+                );
+                if (!mounted) return;
+                _showMessage(
+                  ok ? 'Leave requested' : (vm.error ?? 'Failed'),
+                  isError: !ok,
+                );
+              },
+              child: const Text('Submit'),
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 
-  Widget _detailRow(String label, String value) {
+  // ----------------------------- ACTIVITY SECTION --------------------------
+
+  Widget _activitySection(EmployeePortalViewModel vm) {
+    final logs = vm.isWorkBased
+        ? List<WorkLogData>.from(vm.workLogs)
+        : <WorkLogData>[];
+    final leaves = List<LeaveLogData>.from(vm.leaveLogs);
+    logs.sort((a, b) => b.logDate.compareTo(a.logDate));
+    leaves.sort((a, b) => b.leaveDate.compareTo(a.leaveDate));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.history_rounded, color: LoginColors.primary, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              'Activity',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                color: LoginColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (vm.isActivityLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 32),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (logs.isEmpty && leaves.isEmpty)
+          _emptyCard(
+            icon: Icons.inbox_rounded,
+            title: 'No activity for this range',
+            subtitle: 'Change the date range to see another month.',
+          ),
+        ...logs.map(_recentWorkTileFormatted),
+        ...leaves.map(_recentLeaveTileFormatted),
+      ],
+    );
+  }
+
+  Widget _recentWorkTileFormatted(WorkLogData log) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.handyman_rounded, color: LoginColors.primary, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  log.workName,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  '${_displayDate(log.logDate)} · ${log.quantity ?? '-'} ${log.unit}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: LoginColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _statusBadge(log.status),
+        ],
+      ),
+    );
+  }
+
+  Widget _recentLeaveTileFormatted(LeaveLogData log) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.event_busy_rounded, color: LoginColors.accent, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${log.leaveCategory} · ${log.leaveType}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  _displayDate(log.leaveDate),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: LoginColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _statusBadge(log.status),
+        ],
+      ),
+    );
+  }
+
+  // ignore: unused_element
+  Widget _recentWorkTile(WorkLogData log) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.handyman_rounded, color: LoginColors.primary, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  log.workName,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  '${log.logDate} · ${log.quantity ?? '-'} ${log.unit}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: LoginColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _statusBadge(log.status),
+        ],
+      ),
+    );
+  }
+
+  // ignore: unused_element
+  Widget _recentLeaveTile(LeaveLogData log) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.event_busy_rounded, color: LoginColors.accent, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${log.leaveCategory} · ${log.leaveType}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  log.leaveDate,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: LoginColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _statusBadge(log.status),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusBadge(String status) {
+    final color = _statusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Color _statusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'APPROVED':
+        return LoginColors.success;
+      case 'REJECTED':
+        return LoginColors.error;
+      default:
+        return LoginColors.primary;
+    }
+  }
+
+  Widget _emptyCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 36, color: LoginColors.textTertiary),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: LoginColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: LoginColors.textSecondary, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ----------------------------- SALARY TAB --------------------------------
+
+  Widget _buildSalaryTab(EmployeePortalViewModel vm) {
+    return RefreshIndicator(
+      onRefresh: vm.loadPortal,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          if (vm.isSalaryLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else ...[
+            if (vm.salaryReport != null) ...[
+              _salarySummaryCard(vm.salaryReport!),
+              const SizedBox(height: 16),
+            ],
+            if (vm.salaryPeriods.isEmpty)
+              _emptyCard(
+                icon: Icons.payments_rounded,
+                title: 'No salary for this range',
+                subtitle: 'Change the date range to view another month.',
+              )
+            else
+              ...vm.salaryPeriods.map((p) => _salaryPeriodCard(vm, p)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _salarySummaryCard(SalaryReportData report) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Summary',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: LoginColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _summaryRow('From', _displayDate(report.fromDate)),
+          _summaryRow('To', _displayDate(report.toDate)),
+          _summaryRow('Net', report.totalNetAmount?.toStringAsFixed(2) ?? '-'),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
+            width: 86,
             child: Text(
               label,
               style: TextStyle(color: LoginColors.textSecondary),
@@ -324,8 +1238,8 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen> {
             child: Text(
               value,
               style: TextStyle(
+                fontWeight: FontWeight.w700,
                 color: LoginColors.textPrimary,
-                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -334,747 +1248,126 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final vm = context.watch<EmployeePortalViewModel>();
-    final employeeName = vm.profile?.employeeName ?? 'Employee Portal';
-
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        backgroundColor: LoginColors.background,
-        appBar: AppBar(
-          backgroundColor: LoginColors.background,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-          title: Text(
-            employeeName,
-            style: TextStyle(
-              color: LoginColors.textPrimary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          actions: [
-            IconButton(
-              tooltip: 'Logout',
-              onPressed: () async {
-                await vm.logout();
-                if (context.mounted) {
-                  context.go(CfRoutes.login);
-                }
-              },
-              icon: const Icon(Icons.logout_rounded),
-            ),
-          ],
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Profile'),
-              Tab(text: 'Action'),
-              Tab(text: 'Salary'),
-            ],
-          ),
-        ),
-        body: vm.isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: LoginColors.primary),
-              )
-            : vm.profile == null
-            ? Center(child: Text(vm.error ?? 'Failed to load portal'))
-            : TabBarView(
-                children: [
-                  _buildProfileTab(vm),
-                  _buildActionTab(vm),
-                  _buildSalaryTab(vm),
-                ],
-              ),
-      ),
-    );
-  }
-
-  Widget _buildProfileTab(EmployeePortalViewModel vm) {
-    final profile = vm.profile!;
-    return RefreshIndicator(
-      onRefresh: vm.loadPortal,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _card(
-            title: 'My Profile',
-            icon: Icons.person_outline_rounded,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _detailRow('Code', profile.employeeCode),
-                _detailRow('Name', profile.employeeName),
-                _detailRow('Phone', profile.phone ?? '-'),
-                _detailRow('Email', profile.email ?? '-'),
-                _detailRow('Designation', profile.designation ?? '-'),
-                _detailRow('Joined', profile.joinedDt ?? '-'),
-                _detailRow('Salary Type', profile.currentSalaryType ?? '-'),
-                _detailRow(
-                  'Monthly Amount',
-                  profile.currentMonthlyAmount?.toStringAsFixed(2) ?? '-',
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _card(
-            title: 'Available Work Definitions',
-            icon: Icons.workspaces_outline,
-            child: Column(
-              children: vm.workDefinitions.isEmpty
-                  ? [
-                      Text(
-                        'No work definitions available right now.',
-                        style: TextStyle(color: LoginColors.textSecondary),
-                      ),
-                    ]
-                  : vm.workDefinitions.map((work) {
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: LoginColors.background,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: LoginColors.borderLight),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    work.workName,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      color: LoginColors.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${work.workCode}  ${work.ratePerUnit?.toStringAsFixed(2) ?? '-'} / ${work.unit}',
-                                    style: TextStyle(
-                                      color: LoginColors.textSecondary,
-                                    ),
-                                  ),
-                                  if ((work.description ?? '')
-                                      .trim()
-                                      .isNotEmpty) ...[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      work.description!,
-                                      style: TextStyle(
-                                        color: LoginColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionTab(EmployeePortalViewModel vm) {
-    final selectedWork = _selectedWorkDefinition(vm);
-    final selectedWorkId = selectedWork?.workDefId;
-
-    return RefreshIndicator(
-      onRefresh: vm.loadPortal,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          if (vm.isWorkBased)
-            _card(
-              title: 'Create Work Log',
-              icon: Icons.post_add_rounded,
-              child: Form(
-                key: _workFormKey,
-                child: Column(
-                  children: [
-                    if (vm.workDefinitions.isEmpty)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: LoginColors.background,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: LoginColors.borderLight),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'No work definitions are available to select.',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: LoginColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Ask the admin to create work definitions, then pull to refresh this page.',
-                              style: TextStyle(
-                                color: LoginColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else ...[
-                      DropdownButtonFormField<int>(
-                        key: ValueKey(selectedWorkId),
-                        initialValue: selectedWorkId,
-                        decoration: InputDecoration(
-                          labelText: 'Work Definition',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        items: vm.workDefinitions.map((work) {
-                          return DropdownMenuItem<int>(
-                            value: work.workDefId,
-                            child: Text('${work.workName} (${work.workCode})'),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedWorkDefId = value;
-                          });
-                        },
-                      ),
-                      if (selectedWork != null) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: LoginColors.background,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: LoginColors.borderLight),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                selectedWork.workName,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: LoginColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Code: ${selectedWork.workCode}',
-                                style: TextStyle(
-                                  color: LoginColors.textSecondary,
-                                ),
-                              ),
-                              Text(
-                                'Rate: ${selectedWork.ratePerUnit?.toStringAsFixed(2) ?? '-'} / ${selectedWork.unit}',
-                                style: TextStyle(
-                                  color: LoginColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _workDateController,
-                      readOnly: true,
-                      onTap: () => _pickDate(_workDateController),
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? 'Select log date'
-                          : null,
-                      decoration: InputDecoration(
-                        labelText: 'Log Date',
-                        suffixIcon: const Icon(Icons.calendar_today_outlined),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _quantityController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Quantity is required';
-                        }
-                        if (double.tryParse(value.trim()) == null) {
-                          return 'Enter a valid quantity';
-                        }
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Quantity',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _workRemarksController,
-                      minLines: 2,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        labelText: 'Remarks',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: vm.isSubmitting || vm.workDefinitions.isEmpty
-                          ? null
-                          : () => _submitWorkLog(vm),
-                      icon: const Icon(Icons.save_outlined),
-                      label: Text(
-                        vm.isSubmitting ? 'Submitting...' : 'Submit Work Log',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          if (vm.isMonthly)
-            _card(
-              title: 'Request Leave',
-              icon: Icons.event_busy_outlined,
-              child: Form(
-                key: _leaveFormKey,
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _leaveDateController,
-                      readOnly: true,
-                      onTap: () => _pickDate(_leaveDateController),
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? 'Select leave date'
-                          : null,
-                      decoration: InputDecoration(
-                        labelText: 'Leave Date',
-                        suffixIcon: const Icon(Icons.calendar_today_outlined),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: _leaveType,
-                      decoration: InputDecoration(
-                        labelText: 'Leave Type',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'FULL_DAY',
-                          child: Text('FULL_DAY'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'HALF_DAY',
-                          child: Text('HALF_DAY'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _leaveType = value;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: _leaveCategory,
-                      decoration: InputDecoration(
-                        labelText: 'Leave Category',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'CASUAL',
-                          child: Text('CASUAL'),
-                        ),
-                        DropdownMenuItem(value: 'SICK', child: Text('SICK')),
-                        DropdownMenuItem(
-                          value: 'UNPAID',
-                          child: Text('UNPAID'),
-                        ),
-                        DropdownMenuItem(value: 'LOP', child: Text('LOP')),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _leaveCategory = value;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _leaveReasonController,
-                      minLines: 2,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        labelText: 'Reason',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: vm.isSubmitting
-                          ? null
-                          : () => _submitLeave(vm),
-                      icon: const Icon(Icons.send_outlined),
-                      label: Text(
-                        vm.isSubmitting
-                            ? 'Submitting...'
-                            : 'Submit Leave Request',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          const SizedBox(height: 16),
-          _card(
-            title: vm.isWorkBased ? 'My Work Logs' : 'My Leave Logs',
-            icon: vm.isWorkBased
-                ? Icons.history_rounded
-                : Icons.event_note_rounded,
-            child: Column(
-              children: vm.isWorkBased
-                  ? (vm.workLogs.isEmpty
-                        ? [const Text('No work logs yet')]
-                        : vm.workLogs.map(_workLogTile).toList())
-                  : (vm.leaveLogs.isEmpty
-                        ? [const Text('No leave requests yet')]
-                        : vm.leaveLogs.map(_leaveLogTile).toList()),
-            ),
-          ),
-          if (vm.error != null) ...[
-            const SizedBox(height: 12),
-            Text(vm.error!, style: TextStyle(color: LoginColors.error)),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSalaryTab(EmployeePortalViewModel vm) {
-    return RefreshIndicator(
-      onRefresh: vm.loadPortal,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _card(
-            title: 'Salary Report Range',
-            icon: Icons.summarize_outlined,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _detailRow('From', vm.salaryReportFromDate),
-                _detailRow('To', vm.salaryReportToDate),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: OutlinedButton.icon(
-                    onPressed: vm.isSalaryLoading
-                        ? null
-                        : () => _pickSalaryReportRange(vm),
-                    icon: const Icon(Icons.date_range_rounded),
-                    label: const Text('Change Range'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _card(
-            title: 'My Salary Report',
-            icon: Icons.analytics_outlined,
-            child: vm.isSalaryLoading
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                : _salaryReportContent(vm),
-          ),
-          const SizedBox(height: 16),
-          _card(
-            title: 'My Salary Periods',
-            icon: Icons.account_balance_wallet_outlined,
-            child: Column(
-              children: vm.salaryPeriods.isEmpty
-                  ? [const Text('No salary periods available')]
-                  : vm.salaryPeriods.map((period) {
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        decoration: BoxDecoration(
-                          color: LoginColors.background,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: LoginColors.borderLight),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                title: Text(
-                                  '${period.period}  ${period.netAmount?.toStringAsFixed(2) ?? '-'}',
-                                ),
-                                subtitle: Text(
-                                  '${period.fromDate} to ${period.toDate}\n${period.status}',
-                                ),
-                                isThreeLine: true,
-                                trailing: const Icon(
-                                  Icons.chevron_right_rounded,
-                                ),
-                                onTap: () =>
-                                    _showSalaryDetail(context, vm, period),
-                              ),
-                              Wrap(
-                                spacing: 12,
-                                runSpacing: 12,
-                                children: [
-                                  OutlinedButton.icon(
-                                    onPressed: () =>
-                                        _showSalaryDetail(context, vm, period),
-                                    icon: const Icon(
-                                      Icons.visibility_outlined,
-                                    ),
-                                    label: const Text('View Detail'),
-                                  ),
-                                  OutlinedButton.icon(
-                                    onPressed:
-                                        _downloadingSalaryPeriodId ==
-                                            period.salaryPeriodId
-                                        ? null
-                                        : () => _downloadSalarySlip(vm, period),
-                                    icon:
-                                        _downloadingSalaryPeriodId ==
-                                            period.salaryPeriodId
-                                        ? const SizedBox(
-                                            height: 16,
-                                            width: 16,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : const Icon(Icons.download_rounded),
-                                    label: Text(
-                                      _downloadingSalaryPeriodId ==
-                                              period.salaryPeriodId
-                                          ? 'Preparing...'
-                                          : 'Download Slip',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _salaryReportContent(EmployeePortalViewModel vm) {
-    final report = vm.salaryReport;
-    if (report == null) {
-      return Text(
-        'No salary report available for the selected range',
-        style: TextStyle(color: LoginColors.textSecondary),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _detailRow('Employees', report.totalEmployees.toString()),
-        _detailRow('Gross', report.totalGrossAmount?.toStringAsFixed(2) ?? '-'),
-        _detailRow(
-          'Deductions',
-          report.totalDeductions?.toStringAsFixed(2) ?? '-',
-        ),
-        _detailRow('Net', report.totalNetAmount?.toStringAsFixed(2) ?? '-'),
-        const SizedBox(height: 12),
-        Text(
-          'Report Details',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: LoginColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (report.salaryDetails.isEmpty)
-          Text(
-            'No salary entries found for the selected range',
-            style: TextStyle(color: LoginColors.textSecondary),
-          )
-        else
-          ...report.salaryDetails.map((detail) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: LoginColors.background,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: LoginColors.borderLight),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    detail.period,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: LoginColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  _detailRow('From', detail.fromDate),
-                  _detailRow('To', detail.toDate),
-                  _detailRow(
-                    'Gross',
-                    detail.grossAmount?.toStringAsFixed(2) ?? '-',
-                  ),
-                  _detailRow('Net', detail.netAmount?.toStringAsFixed(2) ?? '-'),
-                  _detailRow('Status', detail.status),
-                ],
-              ),
-            );
-          }),
-      ],
-    );
-  }
-
-  Widget _card({
-    required String title,
-    required IconData icon,
-    required Widget child,
-  }) {
+  Widget _salaryPeriodCard(
+    EmployeePortalViewModel vm,
+    SalaryPeriodSummary period,
+  ) {
+    final downloading = _downloadingSalaryPeriodId == period.salaryPeriodId;
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: LoginColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: LoginColors.borderLight),
       ),
-      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: LoginColors.primary),
-              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: LoginColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.calendar_month_rounded,
+                  color: LoginColors.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      period.period,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: LoginColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      '${_displayDate(period.fromDate)} to ${_displayDate(period.toDate)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: LoginColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _statusBadge(period.status),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
               Text(
-                title,
+                'You will get',
                 style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: LoginColors.textPrimary,
+                  color: LoginColors.textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+              Text(
+                '₹${period.netAmount?.toStringAsFixed(2) ?? '-'}',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: LoginColors.primary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          child,
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: downloading ? null : () => _downloadSlip(vm, period),
+              icon: downloading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.download_rounded),
+              label: Text(downloading ? 'Preparing...' : 'Download Slip'),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _workLogTile(WorkLogData log) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: LoginColors.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: LoginColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            log.workName,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: LoginColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text('${log.logDate}  Qty: ${log.quantity ?? '-'} ${log.unit}'),
-          const SizedBox(height: 4),
-          Text('Status: ${log.status}'),
-        ],
-      ),
-    );
-  }
-
-  Widget _leaveLogTile(LeaveLogData log) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: LoginColors.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: LoginColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${log.leaveCategory}  ${log.leaveType}',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: LoginColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(log.leaveDate),
-          const SizedBox(height: 4),
-          Text('Status: ${log.status}'),
-          if ((log.reason ?? '').trim().isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(log.reason!),
-          ],
-        ],
-      ),
-    );
+  Future<void> _downloadSlip(
+    EmployeePortalViewModel vm,
+    SalaryPeriodSummary period,
+  ) async {
+    setState(() => _downloadingSalaryPeriodId = period.salaryPeriodId);
+    try {
+      final bytes = await vm.downloadSalarySlip(period.salaryPeriodId);
+      if (!mounted) return;
+      if (bytes == null || bytes.isEmpty) {
+        _showMessage('Failed to download', isError: true);
+        return;
+      }
+      await SalaryFileService.shareSalarySlip(
+        bytes: bytes,
+        fileName: 'salary-slip-${period.period}.pdf',
+      );
+    } catch (e) {
+      if (mounted) _showMessage('Failed: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _downloadingSalaryPeriodId = null);
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -1083,4 +1376,113 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen> {
     final day = date.day.toString().padLeft(2, '0');
     return '$year-$month-$day';
   }
+
+  // ----------------------------- PROFILE TAB -------------------------------
+
+  Widget _buildProfileTab(EmployeePortalViewModel vm) {
+    final p = vm.profile!;
+    return RefreshIndicator(
+      onRefresh: vm.loadPortal,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: LoginColors.primary,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 36,
+                  backgroundColor: Colors.white.withValues(alpha: 0.2),
+                  child: Text(
+                    (p.employeeName.isNotEmpty ? p.employeeName[0] : '?')
+                        .toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 30,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  p.employeeName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  p.designation ?? '-',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          _infoTile(Icons.badge_rounded, 'Code', p.employeeCode),
+          _infoTile(Icons.phone_rounded, 'Phone', p.phone ?? '-'),
+          _infoTile(Icons.email_rounded, 'Email', p.email ?? '-'),
+          _infoTile(
+            Icons.calendar_today_rounded,
+            'Joined',
+            _displayDate(p.joinedDt ?? '-'),
+          ),
+          _infoTile(
+            Icons.payments_rounded,
+            'Salary Type',
+            p.currentSalaryType ?? '-',
+          ),
+          if (p.currentMonthlyAmount != null)
+            _infoTile(
+              Icons.account_balance_wallet_rounded,
+              'Monthly',
+              '₹${p.currentMonthlyAmount!.toStringAsFixed(2)}',
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoTile(IconData icon, String label, String value) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: LoginColors.primary, size: 22),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: TextStyle(
+              color: LoginColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const Spacer(),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: LoginColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
+enum _SaveState { idle, invalid, pending, saving, saved, error }

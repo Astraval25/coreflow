@@ -2,6 +2,7 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/data/repositories/employee_repository/employee_repository.dart';
+import 'package:coreflow/domain/model/employee_model/employee.dart';
 import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
 import 'package:coreflow/features/employee_feature/leave_logs/view_model/admin_leave_logs_view_model.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
@@ -106,8 +107,9 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
 
   Future<void> _showCreateDialog(AdminLeaveLogsViewModel vm) async {
     final formKey = GlobalKey<FormState>();
-    int? selectedEmployeeId = vm.employees.isNotEmpty
-        ? vm.employees.first.employeeId
+    final monthlyEmployees = _monthlyEmployees(vm);
+    int? selectedEmployeeId = monthlyEmployees.isNotEmpty
+        ? monthlyEmployees.first.employeeId
         : null;
     String leaveType = 'FULL_DAY';
     String leaveCategory = 'CASUAL';
@@ -137,7 +139,7 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
                             labelText: 'Employee',
                             border: OutlineInputBorder(),
                           ),
-                          items: vm.employees.map((employee) {
+                          items: monthlyEmployees.map((employee) {
                             return DropdownMenuItem<int>(
                               value: employee.employeeId,
                               child: Text(
@@ -351,6 +353,7 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
   Widget build(BuildContext context) {
     final vm = context.watch<AdminLeaveLogsViewModel>();
     final dashboardVm = context.watch<DashboardViewModel>();
+    final monthlyEmployees = _monthlyEmployees(vm);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -390,13 +393,32 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: LoginColors.primary,
         foregroundColor: Colors.white,
-        onPressed: vm.employees.isEmpty || vm.isSaving
+        onPressed: monthlyEmployees.isEmpty || vm.isSaving
             ? null
             : () => _showCreateDialog(vm),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Leave'),
+        label: const Text('Add'),
       ),
     );
+  }
+
+  List<Employee> _monthlyEmployees(AdminLeaveLogsViewModel vm) {
+    return vm.employees
+        .where(
+          (employee) =>
+              (employee.currentSalaryType ?? '').toUpperCase() == 'MONTHLY',
+        )
+        .toList();
+  }
+
+  int? _activeEmployeeFilterId(AdminLeaveLogsViewModel vm) {
+    final employees = _monthlyEmployees(vm);
+    final selectedId = _selectedEmployeeFilterId;
+    if (selectedId == null) return null;
+    final exists = employees.any(
+      (employee) => employee.employeeId == selectedId,
+    );
+    return exists ? selectedId : null;
   }
 
   Widget _toggleCard() {
@@ -430,6 +452,9 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
   }
 
   Widget _employeeFilterCard(AdminLeaveLogsViewModel vm) {
+    final employees = _monthlyEmployees(vm);
+    final selectedEmployeeId = _activeEmployeeFilterId(vm);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -438,7 +463,7 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
         border: Border.all(color: LoginColors.borderLight),
       ),
       child: DropdownButtonFormField<int?>(
-        initialValue: _selectedEmployeeFilterId,
+        initialValue: selectedEmployeeId,
         decoration: const InputDecoration(
           labelText: 'Filter by Employee',
           border: OutlineInputBorder(),
@@ -448,7 +473,7 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
             value: null,
             child: Text('All Employees'),
           ),
-          ...vm.employees.map((employee) {
+          ...employees.map((employee) {
             return DropdownMenuItem<int?>(
               value: employee.employeeId,
               child: Text(
@@ -468,37 +493,30 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
 
   Widget _rangeCard(AdminLeaveLogsViewModel vm) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: LoginColors.borderLight),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Text(
-            'Date Range',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: LoginColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _rangeValue('From', vm.fromDate)),
-              const SizedBox(width: 12),
-              Expanded(child: _rangeValue('To', vm.toDate)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: OutlinedButton.icon(
-              onPressed: () => _pickRange(vm),
-              icon: const Icon(Icons.date_range_rounded),
-              label: const Text('Change Range'),
+          _rangeValue('', vm.fromDate),
+          _rangeValue('To', vm.toDate),
+          OutlinedButton.icon(
+            onPressed: () => _pickRange(vm),
+            icon: const Icon(Icons.edit_calendar_rounded, size: 16),
+            label: const Text('Change'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              visualDensity: VisualDensity.compact,
+              textStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -508,19 +526,27 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
 
   Widget _rangeValue(String label, String value) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: LoginColors.background,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: TextStyle(color: LoginColors.textSecondary)),
-          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: LoginColors.textSecondary,
+            ),
+          ),
+          const SizedBox(width: 6),
           Text(
             value,
             style: TextStyle(
+              fontSize: 13,
               fontWeight: FontWeight.w700,
               color: LoginColors.textPrimary,
             ),
@@ -538,11 +564,18 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
       );
     }
 
+    final monthlyEmployeeIds = _monthlyEmployees(
+      vm,
+    ).map((employee) => employee.employeeId).toSet();
     final source = _showPendingOnly ? vm.pendingLeaveLogs : vm.leaveLogs;
+    final selectedEmployeeId = _activeEmployeeFilterId(vm);
     final filtered = source.where((leave) {
+      if (!monthlyEmployeeIds.contains(leave.employeeId)) {
+        return false;
+      }
       final query = _searchQuery.toLowerCase();
-      if (_selectedEmployeeFilterId != null &&
-          leave.employeeId != _selectedEmployeeFilterId) {
+      if (selectedEmployeeId != null &&
+          leave.employeeId != selectedEmployeeId) {
         return false;
       }
       if (query.isEmpty) return true;

@@ -491,6 +491,10 @@ class AppConfig {
       '/api/companies/{companyId}/modemp/work-definitions/{workDefId}/rate-history';
   static const String workLogsEndpoint =
       '/api/companies/{companyId}/modemp/work-logs';
+  static const String updateWorkLogEmployeeEndpoint =
+      '/api/companies/{companyId}/modemp/work-logs/employee';
+  static const String updateLeaveLogEmployeeEndpoint =
+      '/api/companies/{companyId}/modemp/leave-logs/employee';
   static const String workLogsByEmployeeEndpoint =
       '/api/companies/{companyId}/modemp/work-logs/employee/{employeeId}';
   static const String pendingWorkLogsEndpoint =
@@ -691,11 +695,26 @@ class AppConfig {
 
   static String get employeeMeUrl => '$baseUrl$employeeMeEndpoint';
 
-  static String getEmployeeMySalaryPeriodsUrl({String? period}) {
+  static String getEmployeeMySalaryPeriodsUrl({
+    String? from,
+    String? to,
+    String? period,
+  }) {
     final base = '$baseUrl$employeeMySalaryPeriodsEndpoint';
-    if (period == null || period.isEmpty) return base;
-    return '$base?period=$period';
+    final params = <String>[
+      if (from != null && from.isNotEmpty) 'from=$from',
+      if (to != null && to.isNotEmpty) 'to=$to',
+      if (period != null && period.isNotEmpty) 'period=$period',
+    ];
+    if (params.isEmpty) return base;
+    return '$base?${params.join('&')}';
   }
+
+  static String getUpdateWorkLogEmployeeUrl(int companyId) =>
+      '$baseUrl${updateWorkLogEmployeeEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getUpdateLeaveLogEmployeeUrl(int companyId) =>
+      '$baseUrl${updateLeaveLogEmployeeEndpoint.replaceAll('{companyId}', companyId.toString())}';
 
   static String getEmployeeMySalaryReportUrl({
     required String from,

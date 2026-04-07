@@ -536,10 +536,18 @@ class EmployeeRepository {
     }
   }
 
-  Future<List<SalaryPeriodSummary>> getMySalaryPeriods({String? period}) async {
+  Future<List<SalaryPeriodSummary>> getMySalaryPeriods({
+    String? from,
+    String? to,
+    String? period,
+  }) async {
     try {
       final response = await _apiService.get(
-        Uri.parse(AppConfig.getEmployeeMySalaryPeriodsUrl(period: period)),
+        Uri.parse(AppConfig.getEmployeeMySalaryPeriodsUrl(
+          from: from,
+          to: to,
+          period: period,
+        )),
       );
       return _parseList(response, SalaryPeriodSummary.fromJson);
     } catch (e) {
@@ -641,6 +649,42 @@ class EmployeeRepository {
 
     if (companyId == null) return [];
     return getWorkDefinitions(companyId, activeOnly: activeOnly);
+  }
+
+  /// Update an existing employee work log via the admin "/employee" endpoint.
+  /// Server should reject if the log is already APPROVED.
+  Future<EmployeeEditResponse?> updateMyWorkLog(
+    CreateWorkLogRequest request, {
+    required int companyId,
+  }) async {
+    try {
+      final response = await _apiService.put(
+        AppConfig.getUpdateWorkLogEmployeeUrl(companyId),
+        request.toJson(),
+      );
+      return _parseEditResponse(response);
+    } catch (e) {
+      debugPrint('Update my work log error: $e');
+      return null;
+    }
+  }
+
+  /// Update an existing employee leave log via the admin "/employee" endpoint.
+  /// Server should reject if the leave is already APPROVED.
+  Future<EmployeeEditResponse?> updateMyLeaveLog(
+    CreateLeaveLogRequest request, {
+    required int companyId,
+  }) async {
+    try {
+      final response = await _apiService.put(
+        AppConfig.getUpdateLeaveLogEmployeeUrl(companyId),
+        request.toJson(),
+      );
+      return _parseEditResponse(response);
+    } catch (e) {
+      debugPrint('Update my leave log error: $e');
+      return null;
+    }
   }
 
   Future<EmployeeEditResponse?> createMyWorkLog(
