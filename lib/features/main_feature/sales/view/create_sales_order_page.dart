@@ -162,7 +162,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
           Navigator.pop(context);
           final result = await _showItemDetailDialog(
             item: item,
-            initialQty: 1,
+            initialQty: 0,
             initialPrice: item.price,
             initialDesc: item.description.isNotEmpty ? item.description : null,
           );

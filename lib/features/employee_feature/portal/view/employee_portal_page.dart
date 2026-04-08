@@ -104,9 +104,8 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
       setState(() {
         _saveStates[id] = ok ? _SaveState.saved : _SaveState.error;
       });
-      if (ok && !isUpdate) {
-        _controllerFor(id).clear();
-      }
+      // Keep the entered value visible — after reload, the row becomes
+      // "editable existing" and the controller text already matches.
     });
   }
 
@@ -490,10 +489,9 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
     WorkLogData existing,
   ) {
     final controller = _controllerFor(work.workDefId);
-    if (controller.text.isEmpty &&
-        _saveStates[work.workDefId] == null &&
-        existing.quantity != null) {
-      controller.text = existing.quantity!.toString();
+    if (controller.text.isEmpty && existing.quantity != null) {
+      final q = existing.quantity!;
+      controller.text = q % 1 == 0 ? q.toInt().toString() : q.toString();
     }
 
     return _workInputField(

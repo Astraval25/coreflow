@@ -166,7 +166,7 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
           final canEdit = !vm.vendorHasCompany;
           final result = await _showItemDetailDialog(
             item: item,
-            initialQty: 1,
+            initialQty: 0,
             initialPrice: item.price,
             initialDesc:
                 item.description.isNotEmpty ? item.description : null,
