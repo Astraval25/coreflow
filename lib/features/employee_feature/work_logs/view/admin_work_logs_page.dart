@@ -43,6 +43,7 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
 
   bool _isSearchOpen = false;
   bool _showPendingOnly = false;
+  bool _hasInitializedEmployeeFilter = false;
   String _searchQuery = '';
   int? _selectedEmployeeFilterId;
 
@@ -376,6 +377,8 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
     final dashboardVm = context.watch<DashboardViewModel>();
     final workBasedEmployees = _workBasedEmployees(vm);
 
+    _initializeEmployeeFilter(workBasedEmployees);
+
     return Scaffold(
       key: _scaffoldKey,
       drawerEnableOpenDragGesture: false,
@@ -399,7 +402,7 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _toggleCard(),
+            _toggleCard(vm),
             const SizedBox(height: 16),
             _employeeFilterCard(vm),
             const SizedBox(height: 16),
@@ -435,6 +438,18 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
         .toList();
   }
 
+  void _initializeEmployeeFilter(List<Employee> employees) {
+    if (_hasInitializedEmployeeFilter || employees.isEmpty) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _hasInitializedEmployeeFilter) return;
+      setState(() {
+        _selectedEmployeeFilterId = employees.first.employeeId;
+        _hasInitializedEmployeeFilter = true;
+      });
+    });
+  }
+
   int? _activeEmployeeFilterId(AdminWorkLogsViewModel vm) {
     final employees = _workBasedEmployees(vm);
     final selectedId = _selectedEmployeeFilterId;
@@ -445,9 +460,19 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
     return exists ? selectedId : null;
   }
 
-  Widget _toggleCard() {
+  Widget _toggleCard(AdminWorkLogsViewModel vm) {
+    final workBasedEmployeeIds = _workBasedEmployees(
+      vm,
+    ).map((employee) => employee.employeeId).toSet();
+    final allLogsCount = vm.workLogs
+        .where((log) => workBasedEmployeeIds.contains(log.employeeId))
+        .length;
+    final pendingLogsCount = vm.pendingWorkLogs
+        .where((log) => workBasedEmployeeIds.contains(log.employeeId))
+        .length;
+
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: LoginColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -456,21 +481,138 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
       child: Row(
         children: [
           Expanded(
-            child: ChoiceChip(
-              label: const Text('All Logs'),
-              selected: !_showPendingOnly,
-              onSelected: (_) => setState(() => _showPendingOnly = false),
+            child: _viewToggleOption(
+              label: 'All Logs',
+              caption: allLogsCount == 1 ? '1 record' : '$allLogsCount records',
+              count: allLogsCount,
+              icon: Icons.list_alt_rounded,
+              isSelected: !_showPendingOnly,
+              onTap: () => setState(() => _showPendingOnly = false),
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: ChoiceChip(
-              label: const Text('Pending Review'),
-              selected: _showPendingOnly,
-              onSelected: (_) => setState(() => _showPendingOnly = true),
+            child: _viewToggleOption(
+              label: 'Pending Review',
+              caption: pendingLogsCount == 1
+                  ? '1 awaiting action'
+                  : '$pendingLogsCount awaiting action',
+              count: pendingLogsCount,
+              icon: Icons.pending_actions_rounded,
+              isSelected: _showPendingOnly,
+              onTap: () => setState(() => _showPendingOnly = true),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _viewToggleOption({
+    required String label,
+    required String caption,
+    required int count,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final foregroundColor = isSelected ? Colors.white : LoginColors.textPrimary;
+    final secondaryColor = isSelected
+        ? Colors.white.withValues(alpha: 0.78)
+        : LoginColors.textSecondary;
+    final backgroundColor = isSelected
+        ? LoginColors.primary
+        : LoginColors.surfaceSecondary;
+    final borderColor = isSelected
+        ? LoginColors.primary
+        : LoginColors.borderLight;
+    final badgeBackground = isSelected
+        ? Colors.white.withValues(alpha: 0.16)
+        : LoginColors.background;
+    final iconBackground = isSelected
+        ? Colors.white.withValues(alpha: 0.14)
+        : LoginColors.primary.withValues(alpha: 0.1);
+    final iconColor = isSelected ? Colors.white : LoginColors.primary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: iconBackground,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 18, color: iconColor),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: foregroundColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      caption,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: secondaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: badgeBackground,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: foregroundColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -487,6 +629,7 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
         border: Border.all(color: LoginColors.borderLight),
       ),
       child: DropdownButtonFormField<int?>(
+        key: ValueKey(selectedEmployeeId),
         initialValue: selectedEmployeeId,
         decoration: const InputDecoration(
           labelText: 'Filter by Employee',
@@ -509,6 +652,7 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
         onChanged: (value) {
           setState(() {
             _selectedEmployeeFilterId = value;
+            _hasInitializedEmployeeFilter = true;
           });
         },
       ),
@@ -523,23 +667,37 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: LoginColors.borderLight),
       ),
-      child: Wrap(
-        crossAxisAlignment: WrapCrossAlignment.center,
+      child: Row(
         children: [
-          _rangeValue('', vm.fromDate),
-          _rangeValue('To', vm.toDate),
-          OutlinedButton.icon(
-            onPressed: () => _pickRange(vm),
-            icon: const Icon(Icons.edit_calendar_rounded, size: 16),
-            label: const Text('Change'),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          IconButton(
+            tooltip: 'Previous day',
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.chevron_left_rounded),
+            onPressed: vm.isLoading ? null : () => vm.shiftDay(-1),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _pickRange(vm),
+              child: Center(child: _rangeValue('', vm.fromDate)),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Next day',
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.chevron_right_rounded),
+            onPressed: vm.isLoading ? null : () => vm.shiftDay(1),
+          ),
+          TextButton(
+            onPressed: vm.isLoading ? null : () => vm.goToToday(),
+            style: TextButton.styleFrom(
               visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               textStyle: const TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
               ),
             ),
+            child: const Text('Today'),
           ),
         ],
       ),
@@ -627,70 +785,120 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
 
   Widget _workLogCard(AdminWorkLogsViewModel vm, WorkLogData log) {
     final canReview = log.status.toUpperCase() == 'PENDING';
+    final remarks = (log.employeeRemarks ?? '').trim();
+    final adminNotes = (log.adminRemarks ?? '').trim();
+    final hasNotes = remarks.isNotEmpty || adminNotes.isNotEmpty;
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: LoginColors.borderLight),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Left: name + work
               Expanded(
-                child: Text(
-                  '${log.employeeName} - ${log.workName}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: LoginColors.textPrimary,
-                  ),
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      log.workName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: LoginColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      log.employeeName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: LoginColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              _statusChip(log.status),
+              // Middle: qty x unit
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${log.quantity ?? '-'} ${log.unit}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: LoginColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      log.amountEarned == null
+                          ? '-'
+                          : '₹${log.amountEarned!.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: LoginColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Right: status + actions
+              if (canReview)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _iconBtn(
+                      icon: Icons.close_rounded,
+                      color: LoginColors.error,
+                      tooltip: 'Reject',
+                      onTap: vm.isSaving
+                          ? null
+                          : () => _showReviewDialog(vm, log, 'REJECTED'),
+                    ),
+                    const SizedBox(width: 4),
+                    _iconBtn(
+                      icon: Icons.check_rounded,
+                      color: LoginColors.success,
+                      tooltip: 'Approve',
+                      onTap: vm.isSaving
+                          ? null
+                          : () => _showReviewDialog(vm, log, 'APPROVED'),
+                    ),
+                  ],
+                )
+              else
+                _statusChip(log.status),
             ],
           ),
-          const SizedBox(height: 10),
-          _detailRow('Date', log.logDate),
-          _detailRow('Quantity', '${log.quantity ?? '-'} ${log.unit}'),
-          _detailRow(
-            'Rate',
-            log.rateSnapshot == null
-                ? '-'
-                : '${log.rateSnapshot!.toStringAsFixed(2)} / ${log.unit}',
-          ),
-          _detailRow('Earned', log.amountEarned?.toStringAsFixed(2) ?? '-'),
-          if ((log.employeeRemarks ?? '').trim().isNotEmpty)
-            _detailRow('Remarks', log.employeeRemarks!),
-          if ((log.adminRemarks ?? '').trim().isNotEmpty)
-            _detailRow('Admin Notes', log.adminRemarks!),
-          if (canReview) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: vm.isSaving
-                        ? null
-                        : () => _showReviewDialog(vm, log, 'REJECTED'),
-                    icon: const Icon(Icons.close_rounded),
-                    label: const Text('Reject'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: vm.isSaving
-                        ? null
-                        : () => _showReviewDialog(vm, log, 'APPROVED'),
-                    icon: const Icon(Icons.check_rounded),
-                    label: const Text('Approve'),
-                  ),
-                ),
-              ],
+          if (hasNotes) ...[
+            const SizedBox(height: 6),
+            Text(
+              [
+                if (remarks.isNotEmpty) remarks,
+                if (adminNotes.isNotEmpty) 'Admin: $adminNotes',
+              ].join('  ·  '),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                color: LoginColors.textSecondary,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ],
         ],
@@ -698,26 +906,25 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
     );
   }
 
-  Widget _detailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 88,
-            child: Text(
-              label,
-              style: TextStyle(color: LoginColors.textSecondary),
-            ),
+  Widget _iconBtn({
+    required IconData icon,
+    required Color color,
+    required String tooltip,
+    required VoidCallback? onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(color: LoginColors.textPrimary),
-            ),
-          ),
-        ],
+          child: Icon(icon, size: 18, color: color),
+        ),
       ),
     );
   }

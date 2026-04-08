@@ -42,6 +42,38 @@ class EmployeeDetailPage extends StatelessWidget {
 class _EmployeeDetailScreen extends StatelessWidget {
   const _EmployeeDetailScreen();
 
+  Future<void> _handleMenuAction(
+    BuildContext context,
+    EmployeeDetailViewModel vm,
+    String value,
+  ) async {
+    switch (value) {
+      case 'edit':
+        await context.push(
+          CfRoutes.employeeUpdate(vm.companyId, vm.employeeId),
+        );
+        vm.loadEmployeeDetail();
+        break;
+      case 'deactivate':
+      case 'activate':
+        final activate = value == 'activate';
+        final ok = activate
+            ? await vm.activateEmployee()
+            : await vm.deactivateEmployee();
+        if (!context.mounted) return;
+        final text = ok
+            ? (vm.message ??
+                (activate ? 'Employee activated' : 'Employee deactivated'))
+            : (vm.errorMessage ??
+                (activate
+                    ? 'Failed to activate employee'
+                    : 'Failed to deactivate employee'));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(text)));
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final dashboardVm = context.watch<DashboardViewModel>();
@@ -64,26 +96,7 @@ class _EmployeeDetailScreen extends StatelessWidget {
         actions: [
           if (!vm.isLoading && vm.employee != null)
             PopupMenuButton<String>(
-              onSelected: (value) async {
-                switch (value) {
-                  case 'edit':
-                    await context.push(
-                      CfRoutes.employeeUpdate(vm.companyId, vm.employeeId),
-                    );
-                    vm.loadEmployeeDetail();
-                    break;
-                  case 'deactivate':
-                    final ok = await vm.deactivateEmployee();
-                    if (!context.mounted) return;
-                    final text = ok
-                        ? (vm.message ?? 'Employee deactivated successfully')
-                        : (vm.errorMessage ?? 'Failed to deactivate employee');
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(text)));
-                    break;
-                }
-              },
+              onSelected: (value) => _handleMenuAction(context, vm, value),
               itemBuilder: (context) => [
                 const PopupMenuItem(
                   value: 'edit',
@@ -95,24 +108,31 @@ class _EmployeeDetailScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (vm.isActive)
-                  PopupMenuItem(
-                    value: 'deactivate',
-                    enabled: !vm.isDeactivating,
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.block_outlined,
-                          size: 18,
-                          color: LoginColors.error,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          vm.isDeactivating ? 'Deactivating...' : 'Deactivate',
-                        ),
-                      ],
-                    ),
+                PopupMenuItem(
+                  value: vm.isActive ? 'deactivate' : 'activate',
+                  enabled: !vm.isTogglingStatus,
+                  child: Row(
+                    children: [
+                      Icon(
+                        vm.isActive
+                            ? Icons.block_outlined
+                            : Icons.check_circle_outline,
+                        size: 18,
+                        color: vm.isActive
+                            ? LoginColors.error
+                            : LoginColors.success,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        vm.isTogglingStatus
+                            ? 'Working...'
+                            : vm.isActive
+                                ? 'Deactivate'
+                                : 'Activate',
+                      ),
+                    ],
                   ),
+                ),
               ],
             ),
         ],
@@ -138,7 +158,7 @@ class _EmployeeDetailScreen extends StatelessWidget {
                 onRetry: vm.loadEmployeeDetail,
               );
             }
-            return _EmployeeDetailBody(employee: vm.employee!);
+            return _EmployeeDetailBody(employee: vm.employee!, vm: vm);
           },
         ),
       ),
@@ -148,8 +168,9 @@ class _EmployeeDetailScreen extends StatelessWidget {
 
 class _EmployeeDetailBody extends StatelessWidget {
   final EmployeeDetailData employee;
+  final EmployeeDetailViewModel vm;
 
-  const _EmployeeDetailBody({required this.employee});
+  const _EmployeeDetailBody({required this.employee, required this.vm});
 
   @override
   Widget build(BuildContext context) {
@@ -157,6 +178,8 @@ class _EmployeeDetailBody extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
+        _portalAccessCard(context, vm),
+        const SizedBox(height: 16),
         _sectionCard(
           title: 'Basic Details',
           icon: Icons.badge_outlined,
@@ -298,6 +321,283 @@ class _EmployeeDetailBody extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _portalAccessCard(BuildContext context, EmployeeDetailViewModel vm) {
+    return _sectionCard(
+      title: 'Portal Access',
+      icon: Icons.lock_person_outlined,
+      child: Builder(
+        builder: (_) {
+          if (vm.isLoadingPortal && vm.portalUser == null) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Loading…',
+                style: TextStyle(color: LoginColors.textSecondary),
+              ),
+            );
+          }
+          final pu = vm.portalUser;
+          if (pu == null) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'No portal user. Create one so the employee can log in to the self-service portal.',
+                  style: TextStyle(color: LoginColors.textSecondary),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: vm.isPortalBusy
+                        ? null
+                        : () => _showCreatePortalDialog(context, vm),
+                    icon: const Icon(Icons.person_add_alt_1_outlined),
+                    label: const Text('Create Portal User'),
+                  ),
+                ),
+              ],
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _row('Username', pu.username),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 130,
+                    child: Text(
+                      'Status',
+                      style: TextStyle(
+                        color: LoginColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  _statusBadge(pu.isActive),
+                ],
+              ),
+              if (pu.lastLoginDt != null) ...[
+                const SizedBox(height: 8),
+                _row('Last Login', _formatDate(pu.lastLoginDt)),
+              ],
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: vm.isPortalBusy
+                          ? null
+                          : () => _showResetPasswordDialog(context, vm),
+                      icon: const Icon(Icons.lock_reset_outlined, size: 18),
+                      label: const Text('Reset Password'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: vm.isPortalBusy
+                          ? null
+                          : () => _togglePortalAccess(context, vm),
+                      style: FilledButton.styleFrom(
+                        backgroundColor:
+                            pu.isActive ? LoginColors.error : LoginColors.success,
+                      ),
+                      icon: Icon(
+                        pu.isActive
+                            ? Icons.block_outlined
+                            : Icons.check_circle_outline,
+                        size: 18,
+                      ),
+                      label: Text(pu.isActive ? 'Deactivate' : 'Activate'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _statusBadge(bool isActive) {
+    final color = isActive ? LoginColors.success : LoginColors.error;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        isActive ? 'Active' : 'Inactive',
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCreatePortalDialog(
+    BuildContext context,
+    EmployeeDetailViewModel vm,
+  ) async {
+    final usernameCtrl = TextEditingController();
+    final passwordCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Create Portal User'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: usernameCtrl,
+                decoration: const InputDecoration(labelText: 'Username'),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Required' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: passwordCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Password'),
+                validator: (v) => (v == null || v.length < 6)
+                    ? 'Min 6 characters'
+                    : null,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.pop(ctx, true);
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final success = await vm.createPortalUser(
+      username: usernameCtrl.text.trim(),
+      password: passwordCtrl.text,
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? (vm.message ?? 'Portal user created')
+              : (vm.errorMessage ?? 'Failed to create portal user'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showResetPasswordDialog(
+    BuildContext context,
+    EmployeeDetailViewModel vm,
+  ) async {
+    final passwordCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reset Password'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: passwordCtrl,
+            obscureText: true,
+            decoration: const InputDecoration(labelText: 'New Password'),
+            validator: (v) =>
+                (v == null || v.length < 6) ? 'Min 6 characters' : null,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.pop(ctx, true);
+              }
+            },
+            child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final success = await vm.resetPortalPassword(passwordCtrl.text);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? (vm.message ?? 'Password reset')
+              : (vm.errorMessage ?? 'Failed to reset password'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _togglePortalAccess(
+    BuildContext context,
+    EmployeeDetailViewModel vm,
+  ) async {
+    final activate = !(vm.portalUser?.isActive ?? false);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(activate ? 'Activate access?' : 'Deactivate access?'),
+        content: Text(
+          activate
+              ? 'The employee will be able to log in to the portal again.'
+              : 'The employee will not be able to log in to the portal until reactivated.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(activate ? 'Activate' : 'Deactivate'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final success = await vm.togglePortalAccess();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? (vm.message ?? 'Portal access updated')
+              : (vm.errorMessage ?? 'Failed to update portal access'),
+        ),
       ),
     );
   }

@@ -473,6 +473,8 @@ class AppConfig {
       '/api/companies/{companyId}/modemp/employees/{employeeId}';
   static const String employeeDeactivateEndpoint =
       '/api/companies/{companyId}/modemp/employees/{employeeId}/deactivate';
+  static const String employeeActivateEndpoint =
+      '/api/companies/{companyId}/modemp/employees/{employeeId}/activate';
   static const String employeeSalaryConfigEndpoint =
       '/api/companies/{companyId}/modemp/employees/{employeeId}/salary-config';
   static const String employeeSalaryConfigHistoryEndpoint =
@@ -481,12 +483,18 @@ class AppConfig {
       '/api/companies/{companyId}/modemp/employees/{employeeId}/portal-user';
   static const String employeePortalUserResetPasswordEndpoint =
       '/api/companies/{companyId}/modemp/employees/{employeeId}/portal-user/reset-password';
+  static const String employeePortalUserActivateEndpoint =
+      '/api/companies/{companyId}/modemp/employees/{employeeId}/portal-user/activate';
+  static const String employeePortalUserDeactivateEndpoint =
+      '/api/companies/{companyId}/modemp/employees/{employeeId}/portal-user/deactivate';
   static const String workDefinitionsEndpoint =
       '/api/companies/{companyId}/modemp/work-definitions';
   static const String workDefinitionDetailEndpoint =
       '/api/companies/{companyId}/modemp/work-definitions/{workDefId}';
   static const String workDefinitionDeactivateEndpoint =
       '/api/companies/{companyId}/modemp/work-definitions/{workDefId}/deactivate';
+  static const String workDefinitionActivateEndpoint =
+      '/api/companies/{companyId}/modemp/work-definitions/{workDefId}/activate';
   static const String workDefinitionRateHistoryEndpoint =
       '/api/companies/{companyId}/modemp/work-definitions/{workDefId}/rate-history';
   static const String workLogsEndpoint =
@@ -559,6 +567,21 @@ class AppConfig {
   static String getDeactivateEmployeeUrl(int companyId, int employeeId) =>
       '$baseUrl${employeeDeactivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
 
+  static String getActivateEmployeeUrl(int companyId, int employeeId) =>
+      '$baseUrl${employeeActivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+
+  static String getEmployeePortalUserActivateUrl(
+    int companyId,
+    int employeeId,
+  ) =>
+      '$baseUrl${employeePortalUserActivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+
+  static String getEmployeePortalUserDeactivateUrl(
+    int companyId,
+    int employeeId,
+  ) =>
+      '$baseUrl${employeePortalUserDeactivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+
   static String getEmployeeSalaryConfigUrl(int companyId, int employeeId) =>
       '$baseUrl${employeeSalaryConfigEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
 
@@ -589,6 +612,9 @@ class AppConfig {
 
   static String getDeactivateWorkDefinitionUrl(int companyId, int workDefId) =>
       '$baseUrl${workDefinitionDeactivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{workDefId}', workDefId.toString())}';
+
+  static String getActivateWorkDefinitionUrl(int companyId, int workDefId) =>
+      '$baseUrl${workDefinitionActivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{workDefId}', workDefId.toString())}';
 
   static String getWorkDefinitionRateHistoryUrl(int companyId, int workDefId) =>
       '$baseUrl${workDefinitionRateHistoryEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{workDefId}', workDefId.toString())}';

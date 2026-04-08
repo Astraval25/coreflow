@@ -80,6 +80,17 @@ class EmployeeRepository {
     );
   }
 
+  Future<EmployeeStatusResponse?> activateEmployee(
+    int companyId,
+    int employeeId,
+  ) async {
+    return _patchStatusResponse(
+      AppConfig.getActivateEmployeeUrl(companyId, employeeId),
+      const {},
+      debugLabel: 'Activate employee',
+    );
+  }
+
   Future<EmployeeEditResponse?> createSalaryConfig(
     int companyId,
     int employeeId,
@@ -160,6 +171,28 @@ class EmployeeRepository {
     );
   }
 
+  Future<EmployeeStatusResponse?> activatePortalUser(
+    int companyId,
+    int employeeId,
+  ) async {
+    return _postStatusResponse(
+      AppConfig.getEmployeePortalUserActivateUrl(companyId, employeeId),
+      const {},
+      debugLabel: 'Activate portal user',
+    );
+  }
+
+  Future<EmployeeStatusResponse?> deactivatePortalUser(
+    int companyId,
+    int employeeId,
+  ) async {
+    return _postStatusResponse(
+      AppConfig.getEmployeePortalUserDeactivateUrl(companyId, employeeId),
+      const {},
+      debugLabel: 'Deactivate portal user',
+    );
+  }
+
   Future<EmployeeEditResponse?> createWorkDefinition(
     int companyId,
     CreateWorkDefinitionRequest request,
@@ -223,6 +256,17 @@ class EmployeeRepository {
       AppConfig.getDeactivateWorkDefinitionUrl(companyId, workDefId),
       const {},
       debugLabel: 'Deactivate work definition',
+    );
+  }
+
+  Future<EmployeeStatusResponse?> activateWorkDefinition(
+    int companyId,
+    int workDefId,
+  ) async {
+    return _patchStatusResponse(
+      AppConfig.getActivateWorkDefinitionUrl(companyId, workDefId),
+      const {},
+      debugLabel: 'Activate work definition',
     );
   }
 
@@ -778,6 +822,20 @@ class EmployeeRepository {
   }) async {
     try {
       final response = await _apiService.put(url, body);
+      return _parseStatusResponse(response);
+    } catch (e) {
+      debugPrint('$debugLabel error: $e');
+      return null;
+    }
+  }
+
+  Future<EmployeeStatusResponse?> _postStatusResponse(
+    String url,
+    Map<String, dynamic> body, {
+    required String debugLabel,
+  }) async {
+    try {
+      final response = await _apiService.post(url, body);
       return _parseStatusResponse(response);
     } catch (e) {
       debugPrint('$debugLabel error: $e');

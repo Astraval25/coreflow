@@ -43,6 +43,7 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
 
   bool _isSearchOpen = false;
   bool _showPendingOnly = false;
+  bool _hasInitializedEmployeeFilter = false;
   String _searchQuery = '';
   int? _selectedEmployeeFilterId;
 
@@ -355,6 +356,8 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
     final dashboardVm = context.watch<DashboardViewModel>();
     final monthlyEmployees = _monthlyEmployees(vm);
 
+    _initializeEmployeeFilter(monthlyEmployees);
+
     return Scaffold(
       key: _scaffoldKey,
       drawerEnableOpenDragGesture: false,
@@ -378,7 +381,7 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _toggleCard(),
+            _toggleCard(vm),
             const SizedBox(height: 16),
             _employeeFilterCard(vm),
             const SizedBox(height: 16),
@@ -411,6 +414,18 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
         .toList();
   }
 
+  void _initializeEmployeeFilter(List<Employee> employees) {
+    if (_hasInitializedEmployeeFilter || employees.isEmpty) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _hasInitializedEmployeeFilter) return;
+      setState(() {
+        _selectedEmployeeFilterId = employees.first.employeeId;
+        _hasInitializedEmployeeFilter = true;
+      });
+    });
+  }
+
   int? _activeEmployeeFilterId(AdminLeaveLogsViewModel vm) {
     final employees = _monthlyEmployees(vm);
     final selectedId = _selectedEmployeeFilterId;
@@ -421,32 +436,136 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
     return exists ? selectedId : null;
   }
 
-  Widget _toggleCard() {
+  Widget _toggleCard(AdminLeaveLogsViewModel vm) {
+    final monthlyEmployeeIds = _monthlyEmployees(
+      vm,
+    ).map((employee) => employee.employeeId).toSet();
+    final allRequestsCount = vm.leaveLogs
+        .where((leave) => monthlyEmployeeIds.contains(leave.employeeId))
+        .length;
+    final pendingRequestsCount = vm.pendingLeaveLogs
+        .where((leave) => monthlyEmployeeIds.contains(leave.employeeId))
+        .length;
+
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: LoginColors.surfaceSecondary,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: LoginColors.borderLight),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Expanded(
-            child: ChoiceChip(
-              label: const Text('All Requests'),
-              selected: !_showPendingOnly,
-              onSelected: (_) => setState(() => _showPendingOnly = false),
+          IgnorePointer(
+            child: AnimatedAlign(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              alignment: _showPendingOnly
+                  ? Alignment.centerRight
+                  : Alignment.centerLeft,
+              child: FractionallySizedBox(
+                widthFactor: 0.5,
+                child: Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: LoginColors.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
             ),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: ChoiceChip(
-              label: const Text('Pending Review'),
-              selected: _showPendingOnly,
-              onSelected: (_) => setState(() => _showPendingOnly = true),
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: _viewToggleOption(
+                  label: 'All Requests',
+                  count: allRequestsCount,
+                  icon: Icons.fact_check_outlined,
+                  isSelected: !_showPendingOnly,
+                  onTap: () => setState(() => _showPendingOnly = false),
+                ),
+              ),
+              Expanded(
+                child: _viewToggleOption(
+                  label: 'Pending Review',
+                  count: pendingRequestsCount,
+                  icon: Icons.pending_actions_rounded,
+                  isSelected: _showPendingOnly,
+                  onTap: () => setState(() => _showPendingOnly = true),
+                ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _viewToggleOption({
+    required String label,
+    required int count,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final foregroundColor = isSelected ? Colors.white : LoginColors.textPrimary;
+    final badgeBackground = isSelected
+        ? Colors.white.withValues(alpha: 0.16)
+        : LoginColors.background;
+    final iconColor = isSelected ? Colors.white : LoginColors.primary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          height: 40,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 16, color: iconColor),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: foregroundColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: badgeBackground,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: foregroundColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -463,6 +582,7 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
         border: Border.all(color: LoginColors.borderLight),
       ),
       child: DropdownButtonFormField<int?>(
+        key: ValueKey(selectedEmployeeId),
         initialValue: selectedEmployeeId,
         decoration: const InputDecoration(
           labelText: 'Filter by Employee',
@@ -485,6 +605,7 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
         onChanged: (value) {
           setState(() {
             _selectedEmployeeFilterId = value;
+            _hasInitializedEmployeeFilter = true;
           });
         },
       ),
@@ -499,25 +620,37 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: LoginColors.borderLight),
       ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      child: Row(
         children: [
-          _rangeValue('', vm.fromDate),
-          _rangeValue('To', vm.toDate),
-          OutlinedButton.icon(
-            onPressed: () => _pickRange(vm),
-            icon: const Icon(Icons.edit_calendar_rounded, size: 16),
-            label: const Text('Change'),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          IconButton(
+            tooltip: 'Previous day',
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.chevron_left_rounded),
+            onPressed: vm.isLoading ? null : () => vm.shiftDay(-1),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _pickRange(vm),
+              child: Center(child: _rangeValue('', vm.fromDate)),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Next day',
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.chevron_right_rounded),
+            onPressed: vm.isLoading ? null : () => vm.shiftDay(1),
+          ),
+          TextButton(
+            onPressed: vm.isLoading ? null : () => vm.goToToday(),
+            style: TextButton.styleFrom(
               visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               textStyle: const TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
               ),
             ),
+            child: const Text('Today'),
           ),
         ],
       ),
@@ -606,62 +739,88 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
 
   Widget _leaveCard(AdminLeaveLogsViewModel vm, LeaveLogData leave) {
     final canReview = leave.status.toUpperCase() == 'PENDING';
+    final reason = (leave.reason ?? '').trim();
+    final isHalfDay = leave.leaveType.toUpperCase() == 'HALF_DAY';
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: LoginColors.borderLight),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: Text(
-                  leave.employeeName,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: LoginColors.textPrimary,
-                  ),
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      leave.employeeName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: LoginColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      '${leave.leaveCategory} · ${isHalfDay ? 'Half Day' : 'Full Day'}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: LoginColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              _statusChip(leave.status),
+              const SizedBox(width: 8),
+              if (canReview)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _iconBtn(
+                      icon: Icons.close_rounded,
+                      color: LoginColors.error,
+                      tooltip: 'Reject',
+                      onTap: vm.isSaving
+                          ? null
+                          : () => _reviewLeave(vm, leave, 'REJECTED'),
+                    ),
+                    const SizedBox(width: 4),
+                    _iconBtn(
+                      icon: Icons.check_rounded,
+                      color: LoginColors.success,
+                      tooltip: 'Approve',
+                      onTap: vm.isSaving
+                          ? null
+                          : () => _reviewLeave(vm, leave, 'APPROVED'),
+                    ),
+                  ],
+                )
+              else
+                _statusChip(leave.status),
             ],
           ),
-          const SizedBox(height: 10),
-          _detailRow('Date', leave.leaveDate),
-          _detailRow('Type', leave.leaveType),
-          _detailRow('Category', leave.leaveCategory),
-          if ((leave.reason ?? '').trim().isNotEmpty)
-            _detailRow('Reason', leave.reason!),
-          if (canReview) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: vm.isSaving
-                        ? null
-                        : () => _reviewLeave(vm, leave, 'REJECTED'),
-                    icon: const Icon(Icons.close_rounded),
-                    label: const Text('Reject'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: vm.isSaving
-                        ? null
-                        : () => _reviewLeave(vm, leave, 'APPROVED'),
-                    icon: const Icon(Icons.check_rounded),
-                    label: const Text('Approve'),
-                  ),
-                ),
-              ],
+          if (reason.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              reason,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                color: LoginColors.textSecondary,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ],
         ],
@@ -669,26 +828,25 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
     );
   }
 
-  Widget _detailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 88,
-            child: Text(
-              label,
-              style: TextStyle(color: LoginColors.textSecondary),
-            ),
+  Widget _iconBtn({
+    required IconData icon,
+    required Color color,
+    required String tooltip,
+    required VoidCallback? onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(color: LoginColors.textPrimary),
-            ),
-          ),
-        ],
+          child: Icon(icon, size: 18, color: color),
+        ),
       ),
     );
   }

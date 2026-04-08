@@ -31,9 +31,25 @@ class AdminLeaveLogsViewModel extends ChangeNotifier {
 
   Future<void> loadInitial(int companyId) async {
     _companyId = companyId;
-    final now = DateTime.now();
-    _fromDate = _formatDate(DateTime(now.year, now.month, 1));
-    _toDate = _formatDate(DateTime(now.year, now.month + 1, 0));
+    final today = _formatDate(DateTime.now());
+    _fromDate = today;
+    _toDate = today;
+    await refresh();
+  }
+
+  Future<void> shiftDay(int days) async {
+    final base = DateTime.tryParse(_fromDate) ?? DateTime.now();
+    final next = base.add(Duration(days: days));
+    final str = _formatDate(next);
+    _fromDate = str;
+    _toDate = str;
+    await refresh();
+  }
+
+  Future<void> goToToday() async {
+    final today = _formatDate(DateTime.now());
+    _fromDate = today;
+    _toDate = today;
     await refresh();
   }
 
