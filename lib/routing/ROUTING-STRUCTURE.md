@@ -67,6 +67,49 @@ cf/company/:companyId/payment-made/create
 cf/company/:companyId/payment-made/:paymentMadeId/update
 cf/company/:companyId/payment-made/:paymentMadeId/detail
 
+## Employees
+cf/company/:companyId/employees
+cf/company/:companyId/employees/create
+cf/company/:companyId/employees/:employeeId/detail
+cf/company/:companyId/employees/:employeeId/update
+
+## Work Definitions
+cf/company/:companyId/work-definitions
+cf/company/:companyId/work-definitions/create
+cf/company/:companyId/work-definitions/:workDefId/detail
+cf/company/:companyId/work-definitions/:workDefId/update
+
+## Work Logs (admin)
+cf/company/:companyId/work-logs
+cf/company/:companyId/work-logs/create
+cf/company/:companyId/work-logs/:workLogId/detail
+cf/company/:companyId/work-logs/:workLogId/update
+
+## Leave Logs (admin)
+cf/company/:companyId/leave-logs
+cf/company/:companyId/leave-logs/create
+cf/company/:companyId/leave-logs/:leaveLogId/detail
+cf/company/:companyId/leave-logs/:leaveLogId/update
+
+## Salary
+cf/company/:companyId/salary
+cf/company/:companyId/salary/create
+cf/company/:companyId/salary/:salaryPeriodId/detail
+cf/company/:companyId/salary/:salaryPeriodId/update
+
+## Employee Self-Service Portal
+cf/emp/login
+cf/emp/dashboard
+cf/emp/profile
+cf/emp/work-logs
+cf/emp/work-logs/create
+cf/emp/work-logs/:workLogId/detail
+cf/emp/leave-logs
+cf/emp/leave-logs/create
+cf/emp/leave-logs/:leaveLogId/detail
+cf/emp/salary
+cf/emp/salary/:salaryPeriodId/detail
+
 ## Report
 cf/company/:companyId/report/customers
 cf/company/:companyId/report/vendors

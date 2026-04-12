@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "100245468720",
+    "project_id": "coreflow-2026-04",
+    "storage_bucket": "coreflow-2026-04.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:100245468720:android:c2137b27fdc5595e911ff5",
+        "android_client_info": {
+          "package_name": "com.example.coreflow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPqHlbfaxaWL2J8XOAFbHP_1AxdcTuNVk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
