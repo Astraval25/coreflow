@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:coreflow/core/storage/token_storage.dart';
 import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
+import 'package:coreflow/data/services/push_notification_service.dart';
 import 'package:coreflow/data/repositories/employee_repository/employee_repository.dart';
 import 'package:coreflow/domain/model/employee_model/employee_detail.dart';
 import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
@@ -380,6 +381,7 @@ class EmployeePortalViewModel extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    await PushNotificationService().deregisterToken();
     await _authRepository.clearAuthData();
   }
 

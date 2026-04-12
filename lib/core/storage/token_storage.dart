@@ -17,6 +17,22 @@ class TokenStorage {
   static const _employeeCodeKey = 'employee_code';
   static const _designationKey = 'designation';
   static const _authTypeKey = 'auth_type';
+  static const _fcmTokenKey = 'fcm_token';
+
+  static Future<void> saveFcmToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_fcmTokenKey, token);
+  }
+
+  static Future<String?> getFcmToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_fcmTokenKey);
+  }
+
+  static Future<void> clearFcmToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_fcmTokenKey);
+  }
 
   static Future<bool> saveFullAuthData({
     required String userId,

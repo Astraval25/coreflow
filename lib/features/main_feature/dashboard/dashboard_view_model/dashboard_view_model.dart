@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:coreflow/data/services/push_notification_service.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -156,6 +157,7 @@ class DashboardViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    await PushNotificationService().deregisterToken();
     await _authRepository.clearAuthData();
 
     _hasLoadedUserData = false;

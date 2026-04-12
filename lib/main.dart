@@ -1,5 +1,8 @@
+import 'package:coreflow/data/services/push_notification_service.dart';
 import 'package:coreflow/routing/app_routinf.dart';
 import 'package:coreflow/core/theme/theme_provider.dart';
+import 'package:coreflow/firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +11,8 @@ import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/da
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await PushNotificationService().initialize();
   runApp(
     MultiProvider(
       providers: [

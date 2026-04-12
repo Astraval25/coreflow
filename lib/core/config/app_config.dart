@@ -378,6 +378,10 @@ class AppConfig {
   static String getMarkAllReadUrl(int companyId) =>
       '$baseUrl/api/companies/$companyId/notifications/read-all';
 
+  // ─── Device Tokens (FCM) ───
+  static String get registerDeviceTokenUrl => '$baseUrl/api/device-tokens';
+  static String get deregisterDeviceTokenUrl => '$baseUrl/api/device-tokens';
+
   // ─── Advertisements ───
   static String get adsUrl => '$baseUrl/api/ads';
 

@@ -1,3 +1,4 @@
+import 'package:coreflow/data/services/push_notification_service.dart';
 import 'package:coreflow/domain/model/auth_model/login/login_request.dart';
 import 'package:coreflow/domain/model/employee_model/employee_auth_models.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
@@ -107,6 +108,9 @@ class LoginViewModel extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
+        // Register FCM token with backend
+        await PushNotificationService().registerTokenWithBackend();
+
         if (context.mounted) {
           await context.read<DashboardViewModel>().refresh();
         }
@@ -175,6 +179,9 @@ class LoginViewModel extends ChangeNotifier {
         _successMessage = response.responseMessage;
         _isLoading = false;
         notifyListeners();
+
+        // Register FCM token with backend
+        await PushNotificationService().registerTokenWithBackend();
 
         await Future.delayed(const Duration(milliseconds: 300));
         if (context.mounted) {

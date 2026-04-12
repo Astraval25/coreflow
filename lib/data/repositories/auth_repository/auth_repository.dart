@@ -851,6 +851,36 @@ class AuthRepository {
     }
   }
 
+  // ─── Device Token APIs (FCM) ───
+
+  Future<bool> registerDeviceToken(String fcmToken, String deviceType) async {
+    try {
+      final url = AppConfig.registerDeviceTokenUrl;
+      final response = await _apiService.post(url, {
+        'token': fcmToken,
+        'deviceType': deviceType,
+      });
+      final data = jsonDecode(response.body);
+      return data['responseStatus'] == true;
+    } catch (e) {
+      debugPrint('Register device token error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> deregisterDeviceToken(String fcmToken) async {
+    try {
+      final url =
+          '${AppConfig.deregisterDeviceTokenUrl}?token=${Uri.encodeComponent(fcmToken)}';
+      final response = await _apiService.delete(url);
+      final data = jsonDecode(response.body);
+      return data['responseStatus'] == true;
+    } catch (e) {
+      debugPrint('Deregister device token error: $e');
+      return false;
+    }
+  }
+
   // ─── Advertisement APIs ───
 
   Future<List<Advertisement>> getAdvertisements() async {
