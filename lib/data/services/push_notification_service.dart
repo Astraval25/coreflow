@@ -19,6 +19,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 /// Handles FCM push notifications: token management, foreground display,
 /// and notification tap navigation.
 class PushNotificationService {
+  static const String _channelId = 'coreflow_notifications_v2';
+  static const String _channelName = 'CoreFlow Notifications';
+  static const String _channelDescription = 'Push notifications from CoreFlow';
+
   static final PushNotificationService _instance =
       PushNotificationService._internal();
   factory PushNotificationService() => _instance;
@@ -37,6 +41,7 @@ class PushNotificationService {
 
     // Register background handler FIRST
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    await _messaging.setAutoInitEnabled(true);
 
     // Request permission
     final settings = await _messaging.requestPermission(
@@ -113,8 +118,9 @@ class PushNotificationService {
   }
 
   Future<void> _setupLocalNotifications() async {
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const iosSettings = DarwinInitializationSettings();
     const initSettings = InitializationSettings(
       android: androidSettings,
@@ -133,9 +139,9 @@ class PushNotificationService {
 
     // Create the notification channel for Android
     const channel = AndroidNotificationChannel(
-      'coreflow_notifications',
-      'CoreFlow Notifications',
-      description: 'Push notifications from CoreFlow',
+      _channelId,
+      _channelName,
+      description: _channelDescription,
       importance: Importance.high,
       playSound: true,
       enableVibration: true,
@@ -143,12 +149,15 @@ class PushNotificationService {
 
     await _localNotifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(channel);
   }
 
   void _handleForegroundMessage(RemoteMessage message) {
-    debugPrint('FCM foreground message received: ${message.notification?.title}');
+    debugPrint(
+      'FCM foreground message received: ${message.notification?.title}',
+    );
 
     final notification = message.notification;
     if (notification == null) return;
@@ -159,9 +168,9 @@ class PushNotificationService {
       notification.body,
       const NotificationDetails(
         android: AndroidNotificationDetails(
-          'coreflow_notifications',
-          'CoreFlow Notifications',
-          channelDescription: 'Push notifications from CoreFlow',
+          _channelId,
+          _channelName,
+          channelDescription: _channelDescription,
           importance: Importance.high,
           priority: Priority.high,
           playSound: true,

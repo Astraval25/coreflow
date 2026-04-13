@@ -860,6 +860,8 @@ class AuthRepository {
         'token': fcmToken,
         'deviceType': deviceType,
       });
+      debugPrint('registerDeviceToken status: ${response.statusCode}');
+      debugPrint('registerDeviceToken body: ${response.body}');
       final data = jsonDecode(response.body);
       return data['responseStatus'] == true;
     } catch (e) {
