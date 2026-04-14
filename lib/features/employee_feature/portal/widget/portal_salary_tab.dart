@@ -59,8 +59,8 @@ class _PortalSalaryTabState extends State<PortalSalaryTab> {
               child: Center(child: CircularProgressIndicator()),
             )
           else ...[
-            if (vm.salaryReport != null) ...[
-              _summaryCard(vm.salaryReport!),
+            if (vm.isWorkBased) ...[
+              _dayWiseEarnedCard(vm),
               const SizedBox(height: 16),
             ],
             if (vm.salaryPeriods.isEmpty)
@@ -77,7 +77,8 @@ class _PortalSalaryTabState extends State<PortalSalaryTab> {
     );
   }
 
-  Widget _summaryCard(SalaryReportData report) {
+  Widget _dayWiseEarnedCard(EmployeePortalViewModel vm) {
+    final logs = vm.salaryDayWorkLogs;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -88,45 +89,161 @@ class _PortalSalaryTabState extends State<PortalSalaryTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Summary',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: LoginColors.textPrimary,
-            ),
+          Row(
+            children: [
+              Icon(Icons.today_rounded, size: 20, color: LoginColors.primary),
+              const SizedBox(width: 8),
+              Text(
+                'Day-wise Total Earned',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: LoginColors.textPrimary,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          _summaryRow('From', portalDisplayDate(report.fromDate)),
-          _summaryRow('To', portalDisplayDate(report.toDate)),
-          _summaryRow('Net', report.totalNetAmount?.toStringAsFixed(2) ?? '-'),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              IconButton(
+                onPressed: vm.isSalaryDayLoading
+                    ? null
+                    : () => vm.goToPreviousSalaryDay(),
+                icon: const Icon(Icons.chevron_left_rounded),
+                tooltip: 'Previous day',
+              ),
+              Expanded(
+                child: Text(
+                  portalDisplayDate(vm.salaryDayDate),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: vm.isSalaryDayLoading || !vm.canGoToNextSalaryDay
+                    ? null
+                    : () => vm.goToNextSalaryDay(),
+                icon: const Icon(Icons.chevron_right_rounded),
+                tooltip: 'Next day',
+              ),
+            ],
+          ),
+          if (vm.isSalaryDayLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 18),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else ...[
+            const SizedBox(height: 8),
+            if (logs.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Text(
+                  'No work logs for this day.',
+                  style: TextStyle(color: LoginColors.textSecondary),
+                ),
+              )
+            else
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Table(
+                  border: TableBorder.all(color: LoginColors.borderLight),
+                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                  columnWidths: const {
+                    0: FixedColumnWidth(170),
+                    1: FixedColumnWidth(110),
+                    2: FixedColumnWidth(120),
+                    3: FixedColumnWidth(100),
+                  },
+                  children: [
+                    _dayTableHeaderRow(),
+                    ...logs.map(_dayTableDataRow),
+                    _dayTableTotalRow(vm.salaryDayTotalEarned),
+                  ],
+                ),
+              ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _summaryRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 86,
-            child:
-                Text(label, style: TextStyle(color: LoginColors.textSecondary)),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: LoginColors.textPrimary,
-              ),
-            ),
-          ),
-        ],
-      ),
+  TableRow _dayTableHeaderRow() {
+    return TableRow(
+      decoration: BoxDecoration(color: LoginColors.background),
+      children: const [
+        _DayTableCell(
+          text: 'Work',
+          isHeader: true,
+          alignment: Alignment.centerLeft,
+        ),
+        _DayTableCell(text: 'Qty Unit', isHeader: true),
+        _DayTableCell(
+          text: 'Amount',
+          isHeader: true,
+          alignment: Alignment.centerRight,
+        ),
+        _DayTableCell(text: 'Status', isHeader: true),
+      ],
     );
+  }
+
+  TableRow _dayTableDataRow(WorkLogData log) {
+    final qty = log.quantity;
+    final amount = _resolveRowAmount(log);
+    final qtyLabel = qty == null
+        ? '-'
+        : qty % 1 == 0
+        ? qty.toInt().toString()
+        : qty.toStringAsFixed(2);
+    final qtyWithUnit = qty == null ? '-' : '$qtyLabel ${log.unit}';
+
+    return TableRow(
+      children: [
+        _DayTableCell(text: log.workName, alignment: Alignment.centerLeft),
+        _DayTableCell(text: qtyWithUnit),
+        _DayTableCell(
+          text: '\u20B9${amount.toStringAsFixed(2)}',
+          alignment: Alignment.centerRight,
+        ),
+        _DayTableCell(text: log.status),
+      ],
+    );
+  }
+
+  TableRow _dayTableTotalRow(double totalAmount) {
+    return TableRow(
+      decoration: BoxDecoration(
+        color: LoginColors.primary.withValues(alpha: 0.08),
+      ),
+      children: [
+        const _DayTableCell(
+          text: 'Total',
+          isHeader: true,
+          alignment: Alignment.centerLeft,
+        ),
+        const _DayTableCell(text: '-', isHeader: true),
+        _DayTableCell(
+          text: '\u20B9${totalAmount.toStringAsFixed(2)}',
+          isHeader: true,
+          alignment: Alignment.centerRight,
+        ),
+        const _DayTableCell(text: '-', isHeader: true),
+      ],
+    );
+  }
+
+  double _resolveRowAmount(WorkLogData log) {
+    if (log.status.toUpperCase() == 'REJECTED') return 0;
+    final amountEarned = log.amountEarned;
+    if (amountEarned != null) return amountEarned;
+    final qty = log.quantity;
+    final rate = log.rateSnapshot;
+    if (qty == null || rate == null) return 0;
+    return qty * rate;
   }
 
   Widget _periodCard(SalaryPeriodSummary period) {
@@ -193,7 +310,7 @@ class _PortalSalaryTabState extends State<PortalSalaryTab> {
                 ),
               ),
               Text(
-                '₹${period.netAmount?.toStringAsFixed(2) ?? '-'}',
+                '\u20B9${period.netAmount?.toStringAsFixed(2) ?? '-'}',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
@@ -221,6 +338,39 @@ class _PortalSalaryTabState extends State<PortalSalaryTab> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DayTableCell extends StatelessWidget {
+  final String text;
+  final bool isHeader;
+  final Alignment alignment;
+
+  const _DayTableCell({
+    required this.text,
+    this.isHeader = false,
+    this.alignment = Alignment.center,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: alignment,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      child: Text(
+        text,
+        textAlign: alignment == Alignment.centerRight
+            ? TextAlign.right
+            : alignment == Alignment.centerLeft
+            ? TextAlign.left
+            : TextAlign.center,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: isHeader ? FontWeight.w800 : FontWeight.w600,
+          color: LoginColors.textPrimary,
+        ),
       ),
     );
   }

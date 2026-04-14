@@ -23,7 +23,11 @@ class ApiService {
 
   static Future<String?> _performTokenRefresh() async {
     if (_isRefreshing) {
-      return await _tokenRefreshCompleter?.future;
+      final inFlightRefresh = _tokenRefreshCompleter;
+      if (inFlightRefresh != null) {
+        return inFlightRefresh.future;
+      }
+      return await TokenStorage.getToken();
     }
 
     _isRefreshing = true;
@@ -61,23 +65,20 @@ class ApiService {
     final initialTokens = await _getTokens();
     response = await request(initialTokens['token']);
 
-    if (response.statusCode == 401 && !_isRefreshing) {
-      // debugPrint('401 → Refresh token');
-
+    if (_isUnauthorized(response.statusCode)) {
       final newToken = await _performTokenRefresh();
 
       if (newToken != null && newToken.isNotEmpty) {
-        // debugPrint('Retrying with new token');
         response = await request(newToken);
-        // debugPrint('Retry: ${response.statusCode}');
         return response;
-      } else {
-        // debugPrint('Refresh failed - no new token');
       }
     }
 
     return response;
   }
+
+  bool _isUnauthorized(int statusCode) =>
+      statusCode == 401 || statusCode == 403;
 
   Future<http.Response> post(String url, Map<String, dynamic> data) async {
     debugPrint('POST to: $url');
@@ -147,7 +148,7 @@ class ApiService {
   }
 
   Future<http.Response> delete(String url) async {
-    debugPrint ('DELETE to: $url');
+    debugPrint('DELETE to: $url');
     return _makeRequest((token) async {
       return http
           .delete(
@@ -284,6 +285,4 @@ class ApiService {
       fileFieldName: "file",
     );
   }
-
-  
 }

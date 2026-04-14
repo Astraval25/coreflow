@@ -38,6 +38,9 @@ class EmployeePortalViewModel extends ChangeNotifier {
   List<LeaveLogData> _leaveLogs = [];
   List<SalaryPeriodSummary> _salaryPeriods = [];
   SalaryReportData? _salaryReport;
+  DateTime _salaryDayCursor = DateTime.now();
+  List<WorkLogData> _salaryDayWorkLogs = [];
+  bool _isSalaryDayLoading = false;
   String _activityFromDate = '';
   String _activityToDate = '';
   String _salaryReportFromDate = '';
@@ -46,6 +49,7 @@ class EmployeePortalViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isActivityLoading => _isActivityLoading;
   bool get isSalaryLoading => _isSalaryLoading;
+  bool get isSalaryDayLoading => _isSalaryDayLoading;
   bool get isSubmitting => _isSubmitting;
   bool get isTodayLocked => _isTodayLocked;
   String? get lockedMessage => _lockedMessage;
@@ -86,6 +90,13 @@ class EmployeePortalViewModel extends ChangeNotifier {
   List<SalaryPeriodSummary> get salaryPeriods =>
       List.unmodifiable(_salaryPeriods);
   SalaryReportData? get salaryReport => _salaryReport;
+  List<WorkLogData> get salaryDayWorkLogs =>
+      List.unmodifiable(_salaryDayWorkLogs);
+  String get salaryDayDate => _formatDate(_salaryDayCursor);
+  bool get canGoToNextSalaryDay =>
+      _dateOnly(_salaryDayCursor).isBefore(_dateOnly(DateTime.now()));
+  double get salaryDayTotalEarned =>
+      _salaryDayWorkLogs.fold(0.0, (sum, log) => sum + _workLogEarned(log));
   String get activityFromDate => _activityFromDate;
   String get activityToDate => _activityToDate;
   String get salaryReportFromDate => _salaryReportFromDate;
@@ -97,6 +108,7 @@ class EmployeePortalViewModel extends ChangeNotifier {
 
   Future<void> loadPortal() async {
     _isLoading = true;
+    _isSalaryDayLoading = false;
     _error = null;
     _message = null;
     notifyListeners();
@@ -108,6 +120,8 @@ class EmployeePortalViewModel extends ChangeNotifier {
           authData?['employeeId'] as int? ??
           int.tryParse(authData?['userId']?.toString() ?? '');
       _ensureDefaultRanges();
+      _salaryDayCursor = _clampToToday(_salaryDayCursor);
+      final selectedSalaryDay = _formatDate(_salaryDayCursor);
 
       final profile = await _employeeRepository.getMyProfile();
       _profile = profile;
@@ -135,6 +149,10 @@ class EmployeePortalViewModel extends ChangeNotifier {
           from: _salaryReportFromDate,
           to: _salaryReportToDate,
         ),
+        _employeeRepository.getMyWorkLogs(
+          from: selectedSalaryDay,
+          to: selectedSalaryDay,
+        ),
       ]);
 
       _workDefinitions = results[0] as List<WorkDefinitionData>;
@@ -144,10 +162,12 @@ class EmployeePortalViewModel extends ChangeNotifier {
       _todayLeaveLogs = results[4] as List<LeaveLogData>;
       _salaryPeriods = results[5] as List<SalaryPeriodSummary>;
       _salaryReport = results[6] as SalaryReportData?;
+      _salaryDayWorkLogs = results[7] as List<WorkLogData>;
     } catch (e) {
       _error = 'Failed to load employee portal';
     } finally {
       _isLoading = false;
+      _isSalaryDayLoading = false;
       notifyListeners();
     }
   }
@@ -380,6 +400,14 @@ class EmployeePortalViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> goToPreviousSalaryDay() async {
+    await _shiftSalaryDayBy(-1);
+  }
+
+  Future<void> goToNextSalaryDay() async {
+    await _shiftSalaryDayBy(1);
+  }
+
   Future<void> logout() async {
     await PushNotificationService().deregisterToken();
     await _authRepository.clearAuthData();
@@ -420,6 +448,9 @@ class EmployeePortalViewModel extends ChangeNotifier {
 
     _todayWorkLogs = results[0] as List<WorkLogData>;
     _todayLeaveLogs = results[1] as List<LeaveLogData>;
+    if (salaryDayDate == today) {
+      _salaryDayWorkLogs = List<WorkLogData>.from(_todayWorkLogs);
+    }
   }
 
   Future<void> _reloadActivityData() async {
@@ -452,6 +483,54 @@ class EmployeePortalViewModel extends ChangeNotifier {
 
     _salaryPeriods = results[0] as List<SalaryPeriodSummary>;
     _salaryReport = results[1] as SalaryReportData?;
+  }
+
+  Future<void> _shiftSalaryDayBy(int dayOffset) async {
+    final targetDate = _clampToToday(
+      _dateOnly(_salaryDayCursor).add(Duration(days: dayOffset)),
+    );
+    if (_dateOnly(targetDate) == _dateOnly(_salaryDayCursor)) return;
+
+    _salaryDayCursor = targetDate;
+    _isSalaryDayLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _reloadSalaryDayData();
+    } catch (e) {
+      _error = 'Failed to load day-wise earnings';
+    } finally {
+      _isSalaryDayLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _reloadSalaryDayData() async {
+    _salaryDayWorkLogs = await _employeeRepository.getMyWorkLogs(
+      from: salaryDayDate,
+      to: salaryDayDate,
+    );
+  }
+
+  DateTime _dateOnly(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
+
+  DateTime _clampToToday(DateTime date) {
+    final normalized = _dateOnly(date);
+    final todayDate = _dateOnly(DateTime.now());
+    if (normalized.isAfter(todayDate)) return todayDate;
+    return normalized;
+  }
+
+  double _workLogEarned(WorkLogData log) {
+    if (log.status.toUpperCase() == 'REJECTED') return 0;
+    final amountEarned = log.amountEarned;
+    if (amountEarned != null) return amountEarned;
+    final quantity = log.quantity;
+    final rate = log.rateSnapshot;
+    if (quantity == null || rate == null) return 0;
+    return quantity * rate;
   }
 
   String _formatDate(DateTime date) {
