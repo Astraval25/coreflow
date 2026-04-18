@@ -364,6 +364,8 @@ class AppConfig {
       '$baseUrl${companyActivateEndpoint.replaceAll('{companyId}', companyId.toString())}';
   static String getCompanyDeactivateUrl(int companyId) =>
       '$baseUrl${companyDeactivateEndpoint.replaceAll('{companyId}', companyId.toString())}';
+  static String getCompanyLogoUploadUrl(int companyId) =>
+      '$baseUrl/api/companies/$companyId/logo';
 
   // ─── Notifications ───
   static String getNotificationsUrl(int companyId, {int page = 0}) =>

@@ -1,7 +1,10 @@
+import 'dart:io';
+import 'package:coreflow/core/config/app_config.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/domain/model/main_model/company/company.dart';
 import 'package:coreflow/features/main_feature/company/view_model/company_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 class CompanyFormPage extends StatefulWidget {
@@ -22,6 +25,9 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
   late final TextEditingController _hsnController;
   late final TextEditingController _shortNameController;
 
+  File? _pendingLogo;
+  String? _currentFsId;
+
   bool get isEditing => widget.company != null;
 
   @override
@@ -33,6 +39,7 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
     _gstController = TextEditingController(text: widget.company?.gstNo ?? '');
     _hsnController = TextEditingController(text: widget.company?.hsnCode ?? '');
     _shortNameController = TextEditingController(text: widget.company?.shortName ?? '');
+    _currentFsId = widget.company?.fsId;
   }
 
   @override
@@ -44,6 +51,28 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
     _hsnController.dispose();
     _shortNameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickLogo() async {
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
+      if (picked != null) {
+        setState(() {
+          _pendingLogo = File(picked.path);
+        });
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          duration: Duration(seconds: 2),
+          content: Text('Failed to pick image'),
+        ),
+      );
+    }
   }
 
   @override
@@ -68,6 +97,8 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              _buildLogoPicker(),
+              const SizedBox(height: 20),
               _buildField(
                 controller: _nameController,
                 label: 'Company Name',
@@ -120,7 +151,7 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: vm.isSaving ? null : _submit,
+                  onPressed: (vm.isSaving || vm.isUploadingLogo) ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: LoginColors.primary,
                     foregroundColor: Colors.white,
@@ -132,7 +163,7 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
                     ),
                     elevation: 0,
                   ),
-                  child: vm.isSaving
+                  child: (vm.isSaving || vm.isUploadingLogo)
                       ? const SizedBox(
                           height: 22,
                           width: 22,
@@ -153,6 +184,57 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLogoPicker() {
+    Widget preview;
+    if (_pendingLogo != null) {
+      preview = Image.file(_pendingLogo!, width: 96, height: 96, fit: BoxFit.cover);
+    } else if (_currentFsId != null && _currentFsId!.isNotEmpty) {
+      preview = Image.network(
+        AppConfig.getFileUrl(_currentFsId!),
+        width: 96,
+        height: 96,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _logoPlaceholder(),
+      );
+    } else {
+      preview = _logoPlaceholder();
+    }
+
+    return Center(
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: SizedBox(width: 96, height: 96, child: preview),
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: _pickLogo,
+            icon: const Icon(Icons.photo_camera_rounded, size: 18),
+            label: Text(
+              (_currentFsId != null || _pendingLogo != null)
+                  ? 'Change Logo'
+                  : 'Add Logo',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _logoPlaceholder() {
+    return Container(
+      width: 96,
+      height: 96,
+      color: LoginColors.fieldFill,
+      child: Icon(
+        Icons.business_rounded,
+        size: 40,
+        color: LoginColors.textTertiary,
       ),
     );
   }
@@ -225,10 +307,12 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
 
     final vm = context.read<CompanyViewModel>();
     bool success;
+    int? targetCompanyId;
 
     if (isEditing) {
+      targetCompanyId = widget.company!.companyId;
       success = await vm.updateCompany(
-        companyId: widget.company!.companyId,
+        companyId: targetCompanyId,
         companyName: _nameController.text.trim(),
         industry: _industryController.text.trim(),
         pan: _panController.text.trim(),
@@ -245,6 +329,16 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
         hsnCode: _hsnController.text.trim(),
         shortName: _shortNameController.text.trim(),
       );
+      if (success) {
+        targetCompanyId = vm.companies
+            .where((c) => c.companyName == _nameController.text.trim())
+            .map((c) => c.companyId)
+            .fold<int?>(null, (prev, id) => (prev == null || id > prev) ? id : prev);
+      }
+    }
+
+    if (success && _pendingLogo != null && targetCompanyId != null) {
+      await vm.uploadCompanyLogo(targetCompanyId, _pendingLogo!);
     }
 
     if (!mounted) return;
@@ -252,7 +346,7 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
           content: Text(
             isEditing ? 'Company updated successfully' : 'Company created successfully',
           ),
@@ -263,7 +357,7 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
           content: Text(vm.errorMessage ?? 'Operation failed'),
           backgroundColor: LoginColors.error,
         ),

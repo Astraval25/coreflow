@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/main_model/company/companies_response.dart';
 import 'package:coreflow/domain/model/main_model/company/company.dart';
@@ -105,6 +106,49 @@ class CompanyRepository {
     } catch (e) {
       debugPrint('Deactivate company error: $e');
       return false;
+    }
+  }
+
+  Future<Company?> getCompanyById(int companyId) async {
+    try {
+      final response = await _apiService.get(
+        Uri.parse(AppConfig.getCompanyDetailUrl(companyId)),
+      );
+      if (response.statusCode != 200 && response.statusCode != 202) {
+        debugPrint('Get company detail failed: ${response.statusCode}');
+        return null;
+      }
+      final decoded = jsonDecode(response.body);
+      if (decoded['responseStatus'] == true && decoded['responseData'] != null) {
+        return Company.fromJson(decoded['responseData']);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Get company detail error: $e');
+      return null;
+    }
+  }
+
+  Future<String?> uploadCompanyLogo(int companyId, File file) async {
+    try {
+      final response = await _apiService.multipartPost(
+        url: AppConfig.getCompanyLogoUploadUrl(companyId),
+        fields: {},
+        file: file,
+        fileFieldName: 'file',
+      );
+      if (response.statusCode != 200 && response.statusCode != 203) {
+        debugPrint('Upload company logo failed: ${response.statusCode}');
+        return null;
+      }
+      final decoded = jsonDecode(response.body);
+      if (decoded['responseStatus'] == true && decoded['responseData'] != null) {
+        return decoded['responseData']['fsId'] as String?;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Upload company logo error: $e');
+      return null;
     }
   }
 

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../data/repositories/main_repository/company_repository.dart';
 import '../../../../domain/model/main_model/company/company.dart';
@@ -9,11 +10,13 @@ class CompanyViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   bool _isSaving = false;
+  bool _isUploadingLogo = false;
 
   List<Company> get companies => _companies;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isSaving => _isSaving;
+  bool get isUploadingLogo => _isUploadingLogo;
 
   Future<void> loadCompanies() async {
     _isLoading = true;
@@ -28,6 +31,15 @@ class CompanyViewModel extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<Company?> getCompanyById(int companyId) async {
+    try {
+      return await _companyRepo.getCompanyById(companyId);
+    } catch (e) {
+      debugPrint('Get company detail error: $e');
+      return null;
     }
   }
 
@@ -104,6 +116,29 @@ class CompanyViewModel extends ChangeNotifier {
       return false;
     } finally {
       _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String?> uploadCompanyLogo(int companyId, File file) async {
+    _isUploadingLogo = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final fsId = await _companyRepo.uploadCompanyLogo(companyId, file);
+      if (fsId != null) {
+        await loadCompanies();
+        return fsId;
+      }
+      _errorMessage = 'Failed to upload logo';
+      return null;
+    } catch (e) {
+      _errorMessage = 'Failed to upload logo';
+      debugPrint('Upload logo error: $e');
+      return null;
+    } finally {
+      _isUploadingLogo = false;
       notifyListeners();
     }
   }

@@ -1,8 +1,11 @@
+import 'dart:io';
+import 'package:coreflow/core/config/app_config.dart';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/main_feature/company/view_model/company_view_model.dart';
 import 'package:coreflow/features/main_feature/company/view/company_form_page.dart';
 import 'package:coreflow/domain/model/main_model/company/company.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 class ManageCompaniesPage extends StatelessWidget {
@@ -167,20 +170,7 @@ class _CompanyCard extends StatelessWidget {
         children: [
           ListTile(
             contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
-            leading: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: company.isActive
-                    ? LoginColors.primary.withValues(alpha: 0.08)
-                    : LoginColors.error.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.business_rounded,
-                color: company.isActive ? LoginColors.primary : LoginColors.error,
-                size: 24,
-              ),
-            ),
+            leading: _CompanyLogo(company: company),
             title: Text(
               company.companyName,
               style: TextStyle(
@@ -226,7 +216,7 @@ class _CompanyCard extends StatelessWidget {
             trailing: PopupMenuButton<String>(
               icon: Icon(Icons.more_vert_rounded, color: LoginColors.textSecondary),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              onSelected: (value) {
+              onSelected: (value) async {
                 switch (value) {
                   case 'edit':
                     Navigator.push(
@@ -238,6 +228,9 @@ class _CompanyCard extends StatelessWidget {
                         ),
                       ),
                     );
+                    break;
+                  case 'logo':
+                    await _pickAndUploadLogo(context, vm, company);
                     break;
                   case 'toggle':
                     _confirmToggleStatus(context, vm, company);
@@ -252,6 +245,16 @@ class _CompanyCard extends StatelessWidget {
                       Icon(Icons.edit_rounded, size: 18, color: LoginColors.primary),
                       const SizedBox(width: 10),
                       const Text('Edit'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'logo',
+                  child: Row(
+                    children: [
+                      Icon(Icons.image_outlined, size: 18, color: LoginColors.primary),
+                      const SizedBox(width: 10),
+                      Text(company.fsId == null ? 'Upload Logo' : 'Change Logo'),
                     ],
                   ),
                 ),
@@ -296,6 +299,45 @@ class _CompanyCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _pickAndUploadLogo(
+    BuildContext context,
+    CompanyViewModel vm,
+    Company company,
+  ) async {
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
+      if (picked == null) return;
+      final fsId = await vm.uploadCompanyLogo(
+        company.companyId,
+        File(picked.path),
+      );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(
+            fsId != null
+                ? 'Logo uploaded successfully'
+                : (vm.errorMessage ?? 'Failed to upload logo'),
+          ),
+          backgroundColor: fsId != null ? LoginColors.success : LoginColors.error,
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: const Text('Failed to pick image'),
+          backgroundColor: LoginColors.error,
+        ),
+      );
+    }
   }
 
   void _confirmToggleStatus(
@@ -343,6 +385,47 @@ class _CompanyCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CompanyLogo extends StatelessWidget {
+  final Company company;
+
+  const _CompanyLogo({required this.company});
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = company.isActive
+        ? LoginColors.primary.withValues(alpha: 0.08)
+        : LoginColors.error.withValues(alpha: 0.08);
+    final fgColor = company.isActive ? LoginColors.primary : LoginColors.error;
+
+    if (company.fsId != null && company.fsId!.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(
+          AppConfig.getFileUrl(company.fsId!),
+          width: 44,
+          height: 44,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _fallback(bgColor, fgColor),
+        ),
+      );
+    }
+    return _fallback(bgColor, fgColor);
+  }
+
+  Widget _fallback(Color bgColor, Color fgColor) {
+    return Container(
+      width: 44,
+      height: 44,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(Icons.business_rounded, color: fgColor, size: 24),
     );
   }
 }

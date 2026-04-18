@@ -6,6 +6,7 @@ class Company {
   final String? pan;
   final String? gstNo;
   final String? hsnCode;
+  final String? fsId;
   final bool isActive;
 
   Company({
@@ -16,6 +17,7 @@ class Company {
     this.pan,
     this.gstNo,
     this.hsnCode,
+    this.fsId,
     required this.isActive,
   });
 
@@ -28,6 +30,7 @@ class Company {
       pan: json['pan'],
       gstNo: json['gstNo'],
       hsnCode: json['hsnCode'],
+      fsId: json['fsId'],
       isActive: json['isActive'] ?? false,
     );
   }
@@ -41,6 +44,7 @@ class Company {
       'pan': pan,
       'gstNo': gstNo,
       'hsnCode': hsnCode,
+      'fsId': fsId,
       'isActive': isActive,
     };
   }
