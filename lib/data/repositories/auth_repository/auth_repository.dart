@@ -290,6 +290,48 @@ class AuthRepository {
         {'token': refreshToken},
       ];
 
+      String? pickFirstString(List<dynamic> values) {
+        for (final value in values) {
+          if (value == null) continue;
+          final parsed = value.toString().trim();
+          if (parsed.isNotEmpty && parsed.toLowerCase() != 'null') {
+            return parsed;
+          }
+        }
+        return null;
+      }
+
+      List<int>? parseCompanyIds(dynamic rawValue) {
+        if (rawValue == null) return null;
+
+        if (rawValue is List) {
+          final values = rawValue
+              .map(employeeParseInt)
+              .whereType<int>()
+              .toList(growable: false);
+          return values.isEmpty ? null : values;
+        }
+
+        if (rawValue is String) {
+          final trimmed = rawValue.trim();
+          if (trimmed.isEmpty) return null;
+          try {
+            final decoded = jsonDecode(trimmed);
+            if (decoded is List) {
+              final values = decoded
+                  .map(employeeParseInt)
+                  .whereType<int>()
+                  .toList(growable: false);
+              return values.isEmpty ? null : values;
+            }
+          } catch (_) {
+            return null;
+          }
+        }
+
+        return null;
+      }
+
       for (int i = 0; i < bodies.length; i++) {
         try {
           final response = await http
@@ -306,30 +348,43 @@ class AuthRepository {
           debugPrint(' RAW RESPONSE: ${response.body}');
 
           if (response.statusCode == 200) {
-            final rawData = jsonDecode(response.body);
-
-            dynamic responseData = rawData['responseData'];
-            if (responseData == null) {
-              responseData = rawData;
+            final decoded = jsonDecode(response.body);
+            if (decoded is! Map<String, dynamic>) {
+              debugPrint('Refresh response was not a JSON object');
+              continue;
             }
+            final rawData = decoded;
+            final responseData = rawData['responseData'] is Map<String, dynamic>
+                ? rawData['responseData'] as Map<String, dynamic>
+                : rawData;
 
-            String? newToken =
-                responseData['token']?.toString().trim() ??
-                rawData['token']?.toString().trim() ??
-                responseData['accessToken']?.toString().trim() ??
-                rawData['access_token']?.toString().trim();
+            final newToken = pickFirstString([
+              responseData['token'],
+              responseData['accessToken'],
+              responseData['access_token'],
+              rawData['token'],
+              rawData['accessToken'],
+              rawData['access_token'],
+            ]);
 
-            String? newRefreshToken =
-                responseData['refreshToken']?.toString().trim() ??
-                rawData['refreshToken']?.toString().trim() ??
-                responseData['refresh_token']?.toString().trim();
+            final newRefreshToken = pickFirstString([
+              responseData['refreshToken'],
+              responseData['refresh_token'],
+              rawData['refreshToken'],
+              rawData['refresh_token'],
+            ]);
 
             debugPrint(
               'Found token: ${newToken?.isNotEmpty ?? false}, refresh: ${newRefreshToken?.isNotEmpty ?? false}',
             );
 
             if (newToken?.isNotEmpty == true) {
-              final authCompanyIds = authData['companyIds'];
+              final companyIdsFromResponse = parseCompanyIds(
+                responseData['companyIds'],
+              );
+              final companyIdsFromAuth = parseCompanyIds(
+                authData['companyIds'],
+              );
               final saveSuccess = await TokenStorage.saveFullAuthData(
                 userId:
                     (responseData['userId'] ??
@@ -351,11 +406,7 @@ class AuthRepository {
                 companyId: employeeParseInt(
                   responseData['companyId'] ?? authData['companyId'],
                 ),
-                companyIds: responseData['companyIds'] != null
-                    ? List<int>.from(responseData['companyIds'])
-                    : authCompanyIds != null
-                    ? List<int>.from(jsonDecode(authCompanyIds.toString()))
-                    : null,
+                companyIds: companyIdsFromResponse ?? companyIdsFromAuth,
                 companyName:
                     responseData['companyName']?.toString() ??
                     authData['companyName']?.toString(),
@@ -778,12 +829,14 @@ class AuthRepository {
       final url = AppConfig.getNotificationsUrl(companyId, page: page);
       final response = await _apiService.get(Uri.parse(url));
 
-      if (response.statusCode != 200)
+      if (response.statusCode != 200) {
         return (notifications: <AppNotification>[], hasNext: false);
+      }
 
       final data = jsonDecode(response.body);
-      if (data['responseStatus'] != true)
+      if (data['responseStatus'] != true) {
         return (notifications: <AppNotification>[], hasNext: false);
+      }
 
       final responseData = data['responseData'] as Map<String, dynamic>;
       final list = (responseData['notifications'] as List<dynamic>?) ?? [];
