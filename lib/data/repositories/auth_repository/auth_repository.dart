@@ -710,6 +710,8 @@ class AuthRepository {
       _orderRepo.cancelOrder(companyId, orderId);
   Future<List<PaymentRef>> getOrderPaymentDetails(int companyId, int orderId) =>
       _orderRepo.getOrderPaymentDetails(companyId, orderId);
+  Future<Uint8List?> downloadOrderBill(int companyId, int orderId) =>
+      _orderRepo.downloadOrderBill(companyId, orderId);
 
   // ─── Payment (delegates to PaymentRepository) ───
 

@@ -298,6 +298,9 @@ class AppConfig {
   static String getOrderPaymentDetailsUrl(int companyId, int orderId) =>
       '$baseUrl/api/companies/$companyId/orders/$orderId/payment-details';
 
+  static String getOrderBillDownloadUrl(int companyId, int orderId) =>
+      '$baseUrl/api/companies/$companyId/orders/$orderId/bill';
+
   static String getCreatePaymentSentUrl(int companyId) =>
       '$baseUrl${createPaymentSentEndpoint.replaceAll('{companyId}', companyId.toString())}';
 

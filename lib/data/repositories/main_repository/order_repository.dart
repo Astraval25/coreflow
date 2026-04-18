@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/main_model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/main_model/purchase/create_purchase_order_request.dart';
@@ -100,6 +101,20 @@ class OrderRepository {
       return detailResponse.responseData;
     } catch (e) {
       debugPrint('Get order detail error: $e');
+      return null;
+    }
+  }
+
+  Future<Uint8List?> downloadOrderBill(int companyId, int orderId) async {
+    try {
+      final uri = Uri.parse(
+        AppConfig.getOrderBillDownloadUrl(companyId, orderId),
+      );
+      final response = await _apiService.get(uri);
+      if (response.statusCode != 200) return null;
+      return response.bodyBytes;
+    } catch (e) {
+      debugPrint('Download order bill error: $e');
       return null;
     }
   }
