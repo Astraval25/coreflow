@@ -271,6 +271,49 @@ class AdminWorkLogsViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> updateWorkLog({
+    required int employeeId,
+    required int workDefId,
+    required String logDate,
+    required double quantity,
+    String? employeeRemarks,
+  }) async {
+    if (_companyId <= 0) return false;
+
+    _isSaving = true;
+    _error = null;
+    _message = null;
+    notifyListeners();
+
+    try {
+      final response = await _employeeRepository.updateMyWorkLog(
+        CreateWorkLogRequest(
+          employeeId: employeeId,
+          workDefId: workDefId,
+          logDate: logDate,
+          quantity: quantity,
+          employeeRemarks: employeeRemarks,
+        ),
+        companyId: _companyId,
+      );
+
+      if (response?.responseStatus == true) {
+        _message = response?.responseMessage ?? 'Work log updated successfully';
+        await refresh();
+        return true;
+      }
+
+      _error = response?.responseMessage ?? 'Failed to update work log';
+      return false;
+    } catch (e) {
+      _error = 'Failed to update work log';
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
   String _formatDate(DateTime date) {
     final year = date.year.toString().padLeft(4, '0');
     final month = date.month.toString().padLeft(2, '0');

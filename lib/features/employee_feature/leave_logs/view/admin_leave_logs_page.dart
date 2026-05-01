@@ -319,24 +319,8 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: vm.isSaving
-                  ? null
-                  : () async {
-                      final ok = await vm.reviewLeaveLog(
-                        leaveId: leave.leaveId,
-                        status: status,
-                      );
-                      if (!context.mounted) return;
-                      if (ok) {
-                        Navigator.of(dialogContext).pop(true);
-                      } else if (mounted) {
-                        _showMessage(
-                          vm.error ?? 'Failed to review leave request',
-                          isError: true,
-                        );
-                      }
-                    },
-              child: Text(vm.isSaving ? 'Saving...' : 'Confirm'),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Confirm'),
             ),
           ],
         );
@@ -344,6 +328,12 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
     );
 
     if (!mounted || confirmed != true) return;
+    final ok = await vm.reviewLeaveLog(leaveId: leave.leaveId, status: status);
+    if (!mounted) return;
+    if (!ok) {
+      _showMessage(vm.error ?? 'Failed to review leave request', isError: true);
+      return;
+    }
     _showMessage(
       vm.message ??
           (status == 'APPROVED'
@@ -427,12 +417,12 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
   }
 
   void _initializeEmployeeFilter(List<Employee> employees) {
-    if (_hasInitializedEmployeeFilter || employees.isEmpty) return;
+    if (_hasInitializedEmployeeFilter) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _hasInitializedEmployeeFilter) return;
       setState(() {
-        _selectedEmployeeFilterId = employees.first.employeeId;
+        _selectedEmployeeFilterId = null;
         _hasInitializedEmployeeFilter = true;
       });
     });
@@ -789,6 +779,16 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
                       style: TextStyle(
                         fontSize: 12,
                         color: LoginColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      leave.leaveDate,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: LoginColors.textTertiary,
                       ),
                     ),
                   ],

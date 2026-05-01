@@ -28,7 +28,7 @@ class AdminAddWorkLogsPage extends StatefulWidget {
 class _AdminAddWorkLogsPageState extends State<AdminAddWorkLogsPage> {
   final Map<int, TextEditingController> _qtyControllers = {};
   final Map<int, TextEditingController> _remarksControllers = {};
-  bool _autoApprove = false;
+  bool _autoApprove = true;
   bool _isSaving = false;
 
   @override
@@ -215,12 +215,12 @@ class _AdminAddWorkLogsPageState extends State<AdminAddWorkLogsPage> {
           _autoApproveCard(),
           const SizedBox(height: 12),
           ...widget.workDefinitions.map(_workDefinitionRow),
-          const SizedBox(height: 80), 
+          const SizedBox(height: 80),
         ],
       ),
       bottomNavigationBar: SafeArea(
         top: false,
-        bottom: false, 
+        bottom: false,
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
           decoration: BoxDecoration(

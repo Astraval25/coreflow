@@ -123,8 +123,9 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
           content: const Text('Please select a vendor first'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       return;
@@ -133,15 +134,15 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
     final items = vm.availableItems;
 
     if (items.isEmpty && !vm.isLoadingItems) {
-      ScaffoldMessenger.of(context).showSnackBar( 
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: Duration(seconds: 2),
-          content:
-              const Text('No purchasable items available for this vendor'),
+          content: const Text('No purchasable items available for this vendor'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       return;
@@ -168,8 +169,7 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
             item: item,
             initialQty: 0,
             initialPrice: item.price,
-            initialDesc:
-                item.description.isNotEmpty ? item.description : null,
+            initialDesc: item.description.isNotEmpty ? item.description : null,
             canEditPriceAndDesc: canEdit,
           );
           if (result != null && mounted) {
@@ -212,8 +212,7 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
     );
   }
 
-  void _showEditItemDialog(
-      CreatePurchaseOrderViewModel vm, int index) async {
+  void _showEditItemDialog(CreatePurchaseOrderViewModel vm, int index) async {
     final entry = vm.orderItems[index];
     final result = await _showItemDetailDialog(
       item: entry.item,
@@ -244,8 +243,9 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
           content: const Text('Please select a vendor'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       return;
@@ -258,8 +258,9 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
           content: const Text('Please add at least one item'),
           backgroundColor: LoginColors.error,
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       return;
@@ -267,10 +268,8 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
 
     // Sync text field values to VM
     vm.setTaxAmount(double.tryParse(_taxController.text.trim()) ?? 0);
-    vm.setDiscountAmount(
-        double.tryParse(_discountController.text.trim()) ?? 0);
-    vm.setDeliveryCharge(
-        double.tryParse(_deliveryController.text.trim()) ?? 0);
+    vm.setDiscountAmount(double.tryParse(_discountController.text.trim()) ?? 0);
+    vm.setDeliveryCharge(double.tryParse(_deliveryController.text.trim()) ?? 0);
 
     await vm.submitOrder();
 
@@ -321,36 +320,6 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: FilledButton.icon(
-              icon: vm.isLoading
-                  ? const SizedBox(
-                      height: 16,
-                      width: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.save, size: 18),
-              label: Text(
-                vm.isLoading ? 'Creating' : 'Save',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.4,
-                ),
-              ),
-              onPressed: vm.isLoading ? null : _submit,
-              style: FilledButton.styleFrom(
-                backgroundColor: LoginColors.primary,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ),
-        ],
       ),
       body: Stack(
         children: [
@@ -372,78 +341,6 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
                   // Order Summary (includes editable charges + bill toggle)
                   _buildSummarySection(vm),
                   const SizedBox(height: 28),
-
-                  // Submit Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: FilledButton.icon(
-                      onPressed:
-                          vm.canSubmit && !vm.isLoading ? _submit : null,
-                      icon: vm.isLoading
-                          ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.send_rounded, size: 20),
-                      label: Text(
-                        vm.isLoading
-                            ? 'Creating Order...'
-                            : 'Create Order',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: LoginColors.primary,
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor:
-                            LoginColors.primary.withValues(
-                          alpha: 0.4,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  if (vm.errorMessage != null) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: LoginColors.error.withValues(alpha:0.08),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: LoginColors.error.withValues(alpha:0.3),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.error_outline_rounded,
-                              color: LoginColors.error, size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              vm.errorMessage!,
-                              style: TextStyle(
-                                color: LoginColors.error,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -453,6 +350,84 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
               color: Colors.black.withValues(alpha: 0.15),
               child: const Center(child: CircularProgressIndicator()),
             ),
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        bottom: false,
+        child: Container(
+          color: LoginColors.surface,
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (vm.errorMessage != null) ...[
+                _buildErrorMessage(vm.errorMessage!),
+                const SizedBox(height: 10),
+              ],
+              _buildCreateOrderButton(vm),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCreateOrderButton(CreatePurchaseOrderViewModel vm) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: FilledButton.icon(
+        onPressed: vm.canSubmit && !vm.isLoading ? _submit : null,
+        icon: vm.isLoading
+            ? const SizedBox(
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Icon(Icons.send_rounded, size: 20),
+        label: Text(
+          vm.isLoading ? 'Creating Order...' : 'Create Order',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        style: FilledButton.styleFrom(
+          backgroundColor: LoginColors.primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: LoginColors.primary.withValues(alpha: 0.4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorMessage(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: LoginColors.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: LoginColors.error.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline_rounded, color: LoginColors.error, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: LoginColors.error,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -508,8 +483,9 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundColor:
-                              LoginColors.primary.withValues(alpha:0.15),
+                          backgroundColor: LoginColors.primary.withValues(
+                            alpha: 0.15,
+                          ),
                           child: Text(
                             vendor.displayName.isNotEmpty
                                 ? vendor.displayName[0].toUpperCase()
@@ -595,8 +571,11 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
             child: Center(
               child: Column(
                 children: [
-                  Icon(Icons.add_shopping_cart_rounded,
-                      size: 36, color: LoginColors.textTertiary),
+                  Icon(
+                    Icons.add_shopping_cart_rounded,
+                    size: 36,
+                    color: LoginColors.textTertiary,
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'No items added yet',
@@ -617,19 +596,23 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
               children: [
                 const SizedBox(width: 28),
                 Expanded(
-                  child: Text('Item',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: LoginColors.textTertiary,
-                      )),
-                ),
-                Text('Amount',
+                  child: Text(
+                    'Item',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: LoginColors.textTertiary,
-                    )),
+                    ),
+                  ),
+                ),
+                Text(
+                  'Amount',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: LoginColors.textTertiary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -654,12 +637,12 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.add_rounded, size: 20),
-              label: Text(
-                  vm.isLoadingItems ? 'Loading Items...' : 'Add Item'),
+              label: Text(vm.isLoadingItems ? 'Loading Items...' : 'Add Item'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: LoginColors.primary,
                 side: BorderSide(
-                    color: LoginColors.primary.withValues(alpha:0.4)),
+                  color: LoginColors.primary.withValues(alpha: 0.4),
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -672,9 +655,10 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
   }
 
   Widget _buildOrderItemRow(
-      CreatePurchaseOrderViewModel vm,
-      PurchaseOrderItemEntry entry,
-      int index) {
+    CreatePurchaseOrderViewModel vm,
+    PurchaseOrderItemEntry entry,
+    int index,
+  ) {
     final qtyStr = entry.quantity % 1 == 0
         ? entry.quantity.toInt().toString()
         : entry.quantity.toString();
@@ -695,13 +679,15 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
               borderRadius: BorderRadius.circular(4),
               child: Padding(
                 padding: const EdgeInsets.only(right: 8, top: 1),
-                child: Icon(Icons.close_rounded,
-                    size: 16, color: LoginColors.error),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 16,
+                  color: LoginColors.error,
+                ),
               ),
             ),
             // Item image
-            if (entry.item.fsId != null &&
-                entry.item.fsId!.isNotEmpty) ...[
+            if (entry.item.fsId != null && entry.item.fsId!.isNotEmpty) ...[
               ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: Image.network(
@@ -716,8 +702,11 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
                       color: LoginColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Icon(Icons.image_rounded,
-                        size: 16, color: LoginColors.textTertiary),
+                    child: Icon(
+                      Icons.image_rounded,
+                      size: 16,
+                      color: LoginColors.textTertiary,
+                    ),
                   ),
                 ),
               ),
@@ -785,8 +774,11 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
             padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
             child: Row(
               children: [
-                Icon(Icons.summarize_rounded,
-                    color: LoginColors.primary, size: 18),
+                Icon(
+                  Icons.summarize_rounded,
+                  color: LoginColors.primary,
+                  size: 18,
+                ),
                 const SizedBox(width: 10),
                 Text(
                   'Order Summary',
@@ -811,8 +803,7 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
                     value: vm.hasBill,
                     onChanged: vm.setHasBill,
                     activeThumbColor: LoginColors.primary,
-                    materialTapTargetSize:
-                        MaterialTapTargetSize.shrinkWrap,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
               ],
@@ -830,14 +821,21 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
                     decoration: InputDecoration(
                       labelText: 'Order Date',
                       labelStyle: TextStyle(
-                          fontSize: 13, color: LoginColors.textSecondary),
-                      prefixIcon: Icon(Icons.calendar_today_rounded,
-                          size: 18, color: LoginColors.textTertiary),
+                        fontSize: 13,
+                        color: LoginColors.textSecondary,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.calendar_today_rounded,
+                        size: 18,
+                        color: LoginColors.textTertiary,
+                      ),
                       filled: true,
                       fillColor: LoginColors.fieldFill,
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide(color: LoginColors.borderLight),
@@ -878,8 +876,7 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
                   onChanged: (_) => setState(() {}),
                 ),
                 Divider(color: LoginColors.borderLight, height: 24),
-                _SummaryRow(
-                    label: 'Total', value: total, isBold: true),
+                _SummaryRow(label: 'Total', value: total, isBold: true),
               ],
             ),
           ),
@@ -896,11 +893,7 @@ class _ItemDetailResult {
   final double price;
   final String? description;
 
-  _ItemDetailResult({
-    required this.qty,
-    required this.price,
-    this.description,
-  });
+  _ItemDetailResult({required this.qty, required this.price, this.description});
 }
 
 // ── Item Detail Sheet (Add / Edit) ───────────────────────────
@@ -943,9 +936,10 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
                 : widget.initialQty.toString()),
     );
     _priceController = TextEditingController(
-        text: widget.initialPrice % 1 == 0
-            ? widget.initialPrice.toInt().toString()
-            : widget.initialPrice.toString());
+      text: widget.initialPrice % 1 == 0
+          ? widget.initialPrice.toInt().toString()
+          : widget.initialPrice.toString(),
+    );
     _descController = TextEditingController(text: widget.initialDesc ?? '');
   }
 
@@ -978,7 +972,11 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+        20,
+        16,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
       child: Form(
         key: _formKey,
         child: Column(
@@ -1048,8 +1046,11 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.info_outline_rounded,
-                      size: 14, color: LoginColors.textTertiary),
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 14,
+                    color: LoginColors.textTertiary,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     'Price & description are set by the vendor',
@@ -1077,7 +1078,9 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
                 child: Text(
                   widget.isEdit ? 'Update Item' : 'Add Item',
                   style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w600),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -1110,18 +1113,17 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
       validator: validator,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle:
-            TextStyle(fontSize: 13, color: LoginColors.textSecondary),
-        prefixIcon:
-            Icon(icon, size: 18, color: LoginColors.textTertiary),
+        labelStyle: TextStyle(fontSize: 13, color: LoginColors.textSecondary),
+        prefixIcon: Icon(icon, size: 18, color: LoginColors.textTertiary),
         filled: true,
-        fillColor:
-            enabled
+        fillColor: enabled
             ? LoginColors.fieldFill
-            : LoginColors.fieldFill.withValues(alpha:0.5),
+            : LoginColors.fieldFill.withValues(alpha: 0.5),
         isDense: true,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: LoginColors.borderLight),
@@ -1133,7 +1135,7 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
-            color: LoginColors.borderLight.withValues(alpha:0.5),
+            color: LoginColors.borderLight.withValues(alpha: 0.5),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -1182,14 +1184,12 @@ class _EditableSummaryRow extends StatelessWidget {
           child: TextField(
             controller: controller,
             onChanged: onChanged,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             textAlign: TextAlign.right,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color:
-                  isNegative ? LoginColors.error : LoginColors.textPrimary,
+              color: isNegative ? LoginColors.error : LoginColors.textPrimary,
             ),
             decoration: InputDecoration(
               hintText: '0.00',
@@ -1198,19 +1198,24 @@ class _EditableSummaryRow extends StatelessWidget {
                 color: LoginColors.textTertiary,
               ),
               isDense: true,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 6,
+              ),
               border: UnderlineInputBorder(
                 borderSide: BorderSide(
-                    color: LoginColors.borderLight, width: 0.8),
+                  color: LoginColors.borderLight,
+                  width: 0.8,
+                ),
               ),
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(
-                    color: LoginColors.borderLight, width: 0.8),
+                  color: LoginColors.borderLight,
+                  width: 0.8,
+                ),
               ),
               focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                    color: LoginColors.primary, width: 1.2),
+                borderSide: BorderSide(color: LoginColors.primary, width: 1.2),
               ),
             ),
           ),
@@ -1243,9 +1248,7 @@ class _SummaryRow extends StatelessWidget {
           style: TextStyle(
             fontSize: isBold ? 15 : 14,
             fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
-            color: isBold
-                ? LoginColors.textPrimary
-                : LoginColors.textSecondary,
+            color: isBold ? LoginColors.textPrimary : LoginColors.textSecondary,
           ),
         ),
         Text(
@@ -1299,15 +1302,11 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
   List<SellableItem> _applySearch(List<SellableItem> items) {
     final q = _searchController.text.trim().toLowerCase();
     if (q.isEmpty) return items;
-    return items
-        .where((i) => i.itemName.toLowerCase().contains(q))
-        .toList();
+    return items.where((i) => i.itemName.toLowerCase().contains(q)).toList();
   }
 
-  bool get _hasBaseItems =>
-      widget.items.any((i) => i.source == 'ITEM_BASE');
-  bool get _hasVendorItems =>
-      widget.items.any((i) => i.source != 'ITEM_BASE');
+  bool get _hasBaseItems => widget.items.any((i) => i.source == 'ITEM_BASE');
+  bool get _hasVendorItems => widget.items.any((i) => i.source != 'ITEM_BASE');
 
   Future<void> _openCreateVendorItemFlow() async {
     Navigator.of(context).pop();
@@ -1338,10 +1337,12 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
   Widget build(BuildContext context) {
     final maxHeight = MediaQuery.of(context).size.height * 0.65;
     final vendorItems = _applySearch(
-        widget.items.where((i) => i.source != 'ITEM_BASE').toList());
+      widget.items.where((i) => i.source != 'ITEM_BASE').toList(),
+    );
     final baseItems = _showAll
         ? _applySearch(
-            widget.items.where((i) => i.source == 'ITEM_BASE').toList())
+            widget.items.where((i) => i.source == 'ITEM_BASE').toList(),
+          )
         : <SellableItem>[];
     final allEmpty = vendorItems.isEmpty && baseItems.isEmpty;
 
@@ -1373,33 +1374,39 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
             TextField(
               controller: _searchController,
               onChanged: (_) => setState(() {}),
-              style: TextStyle(
-                  fontSize: 14, color: LoginColors.textPrimary),
+              style: TextStyle(fontSize: 14, color: LoginColors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Search items...',
                 hintStyle: TextStyle(
-                    fontSize: 13, color: LoginColors.textTertiary),
-                prefixIcon: Icon(Icons.search_rounded,
-                    color: LoginColors.textTertiary, size: 20),
+                  fontSize: 13,
+                  color: LoginColors.textTertiary,
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: LoginColors.textTertiary,
+                  size: 20,
+                ),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 filled: true,
                 fillColor: LoginColors.fieldFill,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide:
-                      BorderSide(color: LoginColors.borderLight),
+                  borderSide: BorderSide(color: LoginColors.borderLight),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide:
-                      BorderSide(color: LoginColors.borderLight),
+                  borderSide: BorderSide(color: LoginColors.borderLight),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(
-                      color: LoginColors.primary, width: 1.2),
+                    color: LoginColors.primary,
+                    width: 1.2,
+                  ),
                 ),
               ),
             ),
@@ -1416,9 +1423,7 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
                               _hasVendorItems
                                   ? 'No items found'
                                   : 'No vendor-specific items found',
-                              style: TextStyle(
-                                color: LoginColors.textTertiary,
-                              ),
+                              style: TextStyle(color: LoginColors.textTertiary),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 12),
@@ -1437,7 +1442,8 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
                             if (!_showAll && _hasBaseItems) ...[
                               const SizedBox(height: 8),
                               TextButton(
-                                onPressed: () => setState(() => _showAll = true),
+                                onPressed: () =>
+                                    setState(() => _showAll = true),
                                 child: const Text('Show All Items'),
                               ),
                             ],
@@ -1453,22 +1459,19 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
                         // "Show All Items" button
                         if (!_showAll && _hasBaseItems) ...[
                           const SizedBox(height: 4),
-                          Divider(
-                              color: LoginColors.borderLight,
-                              height: 1),
+                          Divider(color: LoginColors.borderLight, height: 1),
                           InkWell(
-                            onTap: () =>
-                                setState(() => _showAll = true),
+                            onTap: () => setState(() => _showAll = true),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 12),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                               child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.expand_more_rounded,
-                                      size: 20,
-                                      color: LoginColors.primary),
+                                  Icon(
+                                    Icons.expand_more_rounded,
+                                    size: 20,
+                                    color: LoginColors.primary,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     'Show All Items',
@@ -1482,15 +1485,12 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
                               ),
                             ),
                           ),
-                          Divider(
-                              color: LoginColors.borderLight,
-                              height: 1),
+                          Divider(color: LoginColors.borderLight, height: 1),
                         ],
                         // Base items section
                         if (_showAll && baseItems.isNotEmpty) ...[
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                                8, 12, 8, 4),
+                            padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
                             child: Text(
                               'All Items',
                               style: TextStyle(
@@ -1517,8 +1517,7 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
 
     return ListTile(
       dense: true,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       leading: item.fsId != null && item.fsId!.isNotEmpty
           ? ClipRRect(
               borderRadius: BorderRadius.circular(8),
@@ -1529,8 +1528,7 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => CircleAvatar(
                   radius: 18,
-                  backgroundColor:
-                      LoginColors.primary.withValues(alpha: 0.12),
+                  backgroundColor: LoginColors.primary.withValues(alpha: 0.12),
                   child: Text(
                     item.itemName.isNotEmpty
                         ? item.itemName[0].toUpperCase()
@@ -1546,12 +1544,9 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
             )
           : CircleAvatar(
               radius: 18,
-              backgroundColor:
-                  LoginColors.primary.withValues(alpha: 0.12),
+              backgroundColor: LoginColors.primary.withValues(alpha: 0.12),
               child: Text(
-                item.itemName.isNotEmpty
-                    ? item.itemName[0].toUpperCase()
-                    : '?',
+                item.itemName.isNotEmpty ? item.itemName[0].toUpperCase() : '?',
                 style: TextStyle(
                   color: LoginColors.primary,
                   fontWeight: FontWeight.bold,
@@ -1571,18 +1566,20 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
       ),
       subtitle: Text(
         '${item.price.toStringAsFixed(2)}${item.hsnCode.isNotEmpty ? ' | HSN: ${item.hsnCode}' : ''}',
-        style: TextStyle(
-          fontSize: 12,
-          color: LoginColors.textSecondary,
-        ),
+        style: TextStyle(fontSize: 12, color: LoginColors.textSecondary),
       ),
       trailing: alreadyAdded
-          ? Icon(Icons.check_circle_rounded,
-              color: LoginColors.success, size: 20)
-          : Icon(Icons.add_circle_outline_rounded,
-              color: LoginColors.primary, size: 20),
-      onTap:
-          alreadyAdded ? null : () => widget.onItemSelected(item),
+          ? Icon(
+              Icons.check_circle_rounded,
+              color: LoginColors.success,
+              size: 20,
+            )
+          : Icon(
+              Icons.add_circle_outline_rounded,
+              color: LoginColors.primary,
+              size: 20,
+            ),
+      onTap: alreadyAdded ? null : () => widget.onItemSelected(item),
     );
   }
 }

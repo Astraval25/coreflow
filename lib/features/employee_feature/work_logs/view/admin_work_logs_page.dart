@@ -9,6 +9,7 @@ import 'package:coreflow/features/employee_feature/work_logs/view_model/admin_wo
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -101,23 +102,28 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
   }
 
   Future<void> _openAddWorkLogsPage(AdminWorkLogsViewModel vm) async {
-    final selectedEmployeeId = _activeEmployeeFilterId(vm);
-    if (selectedEmployeeId == null) {
-      _showMessage(
-        'Select one employee before adding work logs',
-        isError: true,
-      );
+    final employees = _workBasedEmployees(vm);
+    if (employees.isEmpty) {
+      _showMessage('No work-based employees available', isError: true);
       return;
     }
 
-    final employees = _workBasedEmployees(vm);
-    final selectedEmployee = employees.firstWhere(
-      (employee) => employee.employeeId == selectedEmployeeId,
-    );
+    Employee? selectedEmployee;
+    final selectedEmployeeId = _activeEmployeeFilterId(vm);
+    if (selectedEmployeeId != null) {
+      selectedEmployee = employees.firstWhere(
+        (employee) => employee.employeeId == selectedEmployeeId,
+      );
+    } else {
+      selectedEmployee = await _showEmployeePicker(employees);
+      if (selectedEmployee == null || !mounted) return;
+    }
+    final employee = selectedEmployee;
+
     final existingLogs = vm.workLogs
         .where(
           (log) =>
-              log.employeeId == selectedEmployeeId &&
+              log.employeeId == employee.employeeId &&
               log.logDate == vm.fromDate,
         )
         .toList(growable: false);
@@ -126,7 +132,7 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
       context,
       MaterialPageRoute(
         builder: (_) => AdminAddWorkLogsPage(
-          employee: selectedEmployee,
+          employee: employee,
           logDate: vm.fromDate,
           workDefinitions: vm.workDefinitions,
           existingLogs: existingLogs,
@@ -137,6 +143,60 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
 
     if (!mounted || created != true) return;
     _showMessage(vm.message ?? 'Work logs saved successfully');
+  }
+
+  Future<Employee?> _showEmployeePicker(List<Employee> employees) {
+    int? pickedEmployeeId = employees.first.employeeId;
+
+    return showDialog<Employee>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Choose Employee'),
+              content: DropdownButtonFormField<int>(
+                initialValue: pickedEmployeeId,
+                decoration: const InputDecoration(
+                  labelText: 'Employee',
+                  border: OutlineInputBorder(),
+                ),
+                items: employees.map((employee) {
+                  return DropdownMenuItem<int>(
+                    value: employee.employeeId,
+                    child: Text(
+                      '${employee.employeeName} (${employee.employeeCode})',
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setDialogState(() {
+                    pickedEmployeeId = value;
+                  });
+                },
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: pickedEmployeeId == null
+                      ? null
+                      : () {
+                          final employee = employees.firstWhere(
+                            (item) => item.employeeId == pickedEmployeeId,
+                          );
+                          Navigator.of(dialogContext).pop(employee);
+                        },
+                  child: const Text('Continue'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _goToDashboard() {
@@ -151,7 +211,7 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
     final remarksController = TextEditingController(
       text: log.adminRemarks ?? '',
     );
-    final reviewed = await showDialog<bool>(
+    final adminRemarks = await showDialog<String?>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -181,44 +241,152 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: vm.isSaving
-                  ? null
-                  : () async {
-                      final ok = await vm.reviewWorkLog(
-                        logId: log.logId,
-                        status: status,
-                        adminRemarks: remarksController.text.trim().isEmpty
-                            ? null
-                            : remarksController.text.trim(),
-                      );
-                      if (!context.mounted) return;
-                      if (ok) {
-                        Navigator.of(dialogContext).pop(true);
-                      } else if (mounted) {
-                        _showMessage(
-                          vm.error ?? 'Failed to review work log',
-                          isError: true,
-                        );
-                      }
-                    },
-              child: Text(vm.isSaving ? 'Saving...' : 'Confirm'),
+              onPressed: () => Navigator.of(dialogContext).pop(
+                remarksController.text.trim().isEmpty
+                    ? null
+                    : remarksController.text.trim(),
+              ),
+              child: const Text('Confirm'),
             ),
           ],
         );
       },
     );
+    remarksController.dispose();
 
-    if (!mounted || reviewed != true) return;
+    if (!mounted) return;
+    final ok = await vm.reviewWorkLog(
+      logId: log.logId,
+      status: status,
+      adminRemarks: adminRemarks,
+    );
+    if (!mounted) return;
+    if (!ok) {
+      _showMessage(vm.error ?? 'Failed to review work log', isError: true);
+      return;
+    }
     _showMessage(
       vm.message ??
           (status == 'APPROVED'
               ? 'Work log approved successfully'
               : 'Work log rejected successfully'),
     );
+  }
+
+  Future<void> _showEditDialog(
+    AdminWorkLogsViewModel vm,
+    WorkLogData log,
+  ) async {
+    final qtyController = TextEditingController(
+      text: log.quantity == null
+          ? ''
+          : log.quantity! % 1 == 0
+          ? log.quantity!.toInt().toString()
+          : log.quantity!.toString(),
+    );
+    final remarksController = TextEditingController(
+      text: log.employeeRemarks ?? '',
+    );
+
+    final updated = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            final quantity = double.tryParse(qtyController.text.trim());
+            final canSave = !vm.isSaving && quantity != null && quantity > 0;
+
+            return AlertDialog(
+              title: const Text('Update Work Log'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${log.employeeName} - ${log.workName}'),
+                  const SizedBox(height: 4),
+                  Text('Date: ${log.logDate}'),
+                  const SizedBox(height: 4),
+                  Text('Status: ${log.status.toUpperCase()}'),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: qtyController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                    ],
+                    decoration: InputDecoration(
+                      labelText: 'Quantity',
+                      hintText: log.unit,
+                      border: const OutlineInputBorder(),
+                      errorText: qtyController.text.trim().isEmpty
+                          ? null
+                          : (quantity == null || quantity <= 0)
+                          ? 'Enter a valid quantity'
+                          : null,
+                    ),
+                    onChanged: (_) => setDialogState(() {}),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: remarksController,
+                    minLines: 2,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Employee Remarks',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: canSave
+                      ? () async {
+                          final ok = await vm.updateWorkLog(
+                            employeeId: log.employeeId,
+                            workDefId: log.workDefId,
+                            logDate: log.logDate,
+                            quantity: quantity,
+                            employeeRemarks:
+                                remarksController.text.trim().isEmpty
+                                ? null
+                                : remarksController.text.trim(),
+                          );
+                          if (!context.mounted) return;
+                          if (ok) {
+                            Navigator.of(dialogContext).pop(true);
+                          } else if (mounted) {
+                            _showMessage(
+                              vm.error ?? 'Failed to update work log',
+                              isError: true,
+                            );
+                          }
+                        }
+                      : null,
+                  child: Text(vm.isSaving ? 'Saving...' : 'Update'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    qtyController.dispose();
+    remarksController.dispose();
+
+    if (!mounted || updated != true) return;
+    _showMessage(vm.message ?? 'Work log updated successfully');
   }
 
   @override
@@ -230,7 +398,6 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
     _initializeEmployeeFilter(workBasedEmployees);
 
     final canAdd =
-        _activeEmployeeFilterId(vm) != null &&
         workBasedEmployees.isNotEmpty &&
         vm.workDefinitions.isNotEmpty &&
         !vm.isSaving;
@@ -296,12 +463,12 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
   }
 
   void _initializeEmployeeFilter(List<Employee> employees) {
-    if (_hasInitializedEmployeeFilter || employees.isEmpty) return;
+    if (_hasInitializedEmployeeFilter) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _hasInitializedEmployeeFilter) return;
       setState(() {
-        _selectedEmployeeFilterId = employees.first.employeeId;
+        _selectedEmployeeFilterId = null;
         _hasInitializedEmployeeFilter = true;
       });
     });
@@ -641,7 +808,10 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
   }
 
   Widget _workLogCard(AdminWorkLogsViewModel vm, WorkLogData log) {
-    final canReview = log.status.toUpperCase() == 'PENDING';
+    final normalizedStatus = log.status.toUpperCase();
+    final canReview = normalizedStatus == 'PENDING';
+    final canEdit =
+        normalizedStatus == 'PENDING' || normalizedStatus == 'APPROVED';
     final remarks = (log.employeeRemarks ?? '').trim();
     final adminNotes = (log.adminRemarks ?? '').trim();
     final hasNotes = remarks.isNotEmpty || adminNotes.isNotEmpty;
@@ -684,6 +854,16 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
                         color: LoginColors.textSecondary,
                       ),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      log.logDate,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: LoginColors.textTertiary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -720,6 +900,15 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _iconBtn(
+                      icon: Icons.edit_rounded,
+                      color: LoginColors.primary,
+                      tooltip: 'Edit',
+                      onTap: vm.isSaving
+                          ? null
+                          : () => _showEditDialog(vm, log),
+                    ),
+                    const SizedBox(width: 4),
+                    _iconBtn(
                       icon: Icons.close_rounded,
                       color: LoginColors.error,
                       tooltip: 'Reject',
@@ -739,7 +928,23 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
                   ],
                 )
               else
-                _statusChip(log.status),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (canEdit) ...[
+                      _iconBtn(
+                        icon: Icons.edit_rounded,
+                        color: LoginColors.primary,
+                        tooltip: 'Edit',
+                        onTap: vm.isSaving
+                            ? null
+                            : () => _showEditDialog(vm, log),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    _statusChip(log.status),
+                  ],
+                ),
             ],
           ),
           if (hasNotes) ...[

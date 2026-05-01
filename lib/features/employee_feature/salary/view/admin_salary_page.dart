@@ -2,6 +2,7 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/data/repositories/employee_repository/employee_repository.dart';
+import 'package:coreflow/domain/model/employee_model/employee.dart';
 import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
 import 'package:coreflow/features/employee_feature/salary/service/salary_file_service.dart';
 import 'package:coreflow/features/employee_feature/salary/view_model/admin_salary_view_model.dart';
@@ -83,19 +84,6 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
     );
   }
 
-  Future<void> _pickMonth(AdminSalaryViewModel vm) async {
-    final initial = _monthFromPeriod(vm.selectedPeriod);
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime(initial.year - 5),
-      lastDate: DateTime(initial.year + 5),
-      initialDatePickerMode: DatePickerMode.year,
-    );
-    if (picked == null) return;
-    await vm.updatePeriod(DateTime(picked.year, picked.month));
-  }
-
   Future<void> _pickRange(AdminSalaryViewModel vm) async {
     final fromInitial = DateTime.tryParse(vm.fromDate) ?? DateTime.now();
     final pickedFrom = await showDatePicker(
@@ -122,6 +110,18 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
   }
 
   Future<void> _calculateSalary(AdminSalaryViewModel vm) async {
+    final targets = _calculateTargets(vm);
+    if (targets.isEmpty) {
+      _showMessage(
+        'No employees available for salary calculation',
+        isError: true,
+      );
+      return;
+    }
+
+    final confirmed = await _showCalculateConfirmDialog(vm, targets);
+    if (!mounted || confirmed != true) return;
+
     final ok = await vm.calculateSalary(
       CalculateSalaryRequest(
         fromDate: vm.fromDate,
@@ -135,6 +135,115 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
           ? (vm.message ?? 'Salary calculated successfully')
           : (vm.error ?? 'Failed to calculate salary'),
       isError: !ok,
+    );
+  }
+
+  Future<bool?> _showCalculateConfirmDialog(
+    AdminSalaryViewModel vm,
+    List<Employee> targets,
+  ) {
+    final previewNames = targets
+        .take(6)
+        .map(
+          (employee) => '${employee.employeeName} (${employee.employeeCode})',
+        )
+        .toList();
+    final remainingCount = targets.length - previewNames.length;
+
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirm Salary Run'),
+          content: SizedBox(
+            width: 460,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Please review the payroll details before running salary calculation.',
+                  style: TextStyle(color: LoginColors.textSecondary),
+                ),
+                const SizedBox(height: 16),
+                _confirmInfoRow('From', vm.fromDate),
+                _confirmInfoRow('To', vm.toDate),
+                _confirmInfoRow(
+                  'Employees',
+                  _selectedEmployeeId == null
+                      ? 'All active employees (${targets.length})'
+                      : previewNames.first,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Included in this run',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ...previewNames.map(
+                      (name) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: LoginColors.background,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          name,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: LoginColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (remainingCount > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: LoginColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '+$remainingCount more',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: LoginColors.primary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Run Payroll'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -178,15 +287,12 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
                       _detailRow('From', detail.fromDate),
                       _detailRow('To', detail.toDate),
                       _detailRow('Type', detail.salaryType),
-                      _detailRow(
-                        'Gross',
-                        detail.grossAmount?.toStringAsFixed(2) ?? '-',
-                      ),
-                      _detailRow(
-                        'Net',
-                        detail.netAmount?.toStringAsFixed(2) ?? '-',
-                      ),
+                      _detailRow('Gross', _currency(detail.grossAmount)),
+                      _detailRow('Net', _currency(detail.netAmount)),
                       _detailRow('Status', detail.status),
+                      _detailRow('Present', _decimal(detail.daysPresent)),
+                      _detailRow('Absent', _decimal(detail.daysAbsent)),
+                      _detailRow('LOP', _decimal(detail.lopDays)),
                       if ((detail.paymentRef ?? '').trim().isNotEmpty)
                         _detailRow('Payment Ref', detail.paymentRef!),
                       const SizedBox(height: 12),
@@ -219,9 +325,7 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
                               ),
                               const SizedBox(height: 4),
                               Text('Type: ${line.lineType}'),
-                              Text(
-                                'Amount: ${line.amount?.toStringAsFixed(2) ?? '-'}',
-                              ),
+                              Text('Amount: ${_currency(line.amount)}'),
                             ],
                           ),
                         );
@@ -295,7 +399,7 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
     SalaryPeriodSummary period,
   ) async {
     final controller = TextEditingController();
-    final paid = await showDialog<bool>(
+    final paymentRef = await showDialog<String?>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -309,38 +413,33 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: vm.isSaving
-                  ? null
-                  : () async {
-                      final ok = await vm.markSalaryPaid(
-                        salaryPeriodId: period.salaryPeriodId,
-                        paymentRef: controller.text.trim().isEmpty
-                            ? null
-                            : controller.text.trim(),
-                      );
-                      if (!context.mounted) return;
-                      if (ok) {
-                        Navigator.of(dialogContext).pop(true);
-                      } else if (mounted) {
-                        _showMessage(
-                          vm.error ?? 'Failed to mark salary as paid',
-                          isError: true,
-                        );
-                      }
-                    },
-              child: Text(vm.isSaving ? 'Saving...' : 'Confirm'),
+              onPressed: () => Navigator.of(dialogContext).pop(
+                controller.text.trim().isEmpty ? null : controller.text.trim(),
+              ),
+              child: const Text('Confirm'),
             ),
           ],
         );
       },
     );
+    controller.dispose();
 
-    if (!mounted || paid != true) return;
-    _showMessage(vm.message ?? 'Salary marked as paid successfully');
+    if (!mounted) return;
+    final ok = await vm.markSalaryPaid(
+      salaryPeriodId: period.salaryPeriodId,
+      paymentRef: paymentRef,
+    );
+    if (!mounted) return;
+    _showMessage(
+      ok
+          ? (vm.message ?? 'Salary marked as paid successfully')
+          : (vm.error ?? 'Failed to mark salary as paid'),
+      isError: !ok,
+    );
   }
 
   void _goToDashboard() {
@@ -386,7 +485,10 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
               const SizedBox(height: 16),
               _employeeFilterCard(vm),
               const SizedBox(height: 16),
-              if (vm.salaryReport != null) ...[_reportCard(vm.salaryReport!)],
+              if (vm.salaryReport != null) ...[
+                _reportCard(vm.salaryReport!),
+                const SizedBox(height: 16),
+              ],
               _salaryList(vm),
             ],
           ),
@@ -467,23 +569,10 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
           _periodValueChip('Period', vm.selectedPeriod),
           _periodValueChip('From', vm.fromDate),
           _periodValueChip('To', vm.toDate),
-          // OutlinedButton.icon(
-          //   onPressed: () => _pickMonth(vm),
-          //   icon: const Icon(Icons.calendar_month_rounded, size: 16),
-          //   label: const Text('Month'),
-          //   style: OutlinedButton.styleFrom(
-          //     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          //     visualDensity: VisualDensity.compact,
-          //     textStyle: const TextStyle(
-          //       fontSize: 12,
-          //       fontWeight: FontWeight.w600,
-          //     ),
-          //   ),
-          // ),
           OutlinedButton.icon(
             onPressed: () => _pickRange(vm),
             icon: const Icon(Icons.date_range_rounded, size: 16),
-            label: const Text('Range'),
+            label: const Text('Change Range'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               visualDensity: VisualDensity.compact,
@@ -531,6 +620,8 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
   }
 
   Widget _calculateCard(AdminSalaryViewModel vm) {
+    final targets = _calculateTargets(vm);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -544,6 +635,7 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
           Text(
             'Calculate Salary',
             style: TextStyle(
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: LoginColors.textPrimary,
             ),
@@ -575,11 +667,47 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
               });
             },
           ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: LoginColors.background,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Run Preview',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _detailRow('Range', '${vm.fromDate} to ${vm.toDate}'),
+                _detailRow(
+                  'Scope',
+                  _selectedEmployeeId == null
+                      ? 'All active employees (${targets.length})'
+                      : (targets.isEmpty
+                            ? 'No employee selected'
+                            : '${targets.first.employeeName} (${targets.first.employeeCode})'),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: vm.isSaving ? null : () => _calculateSalary(vm),
-            icon: const Icon(Icons.calculate_rounded),
-            label: Text(vm.isSaving ? 'Calculating...' : 'Calculate Salary'),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: vm.isSaving ? null : () => _calculateSalary(vm),
+              icon: const Icon(Icons.calculate_rounded),
+              label: Text(
+                vm.isSaving ? 'Calculating...' : 'Review and Calculate',
+              ),
+            ),
           ),
         ],
       ),
@@ -588,7 +716,7 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
 
   Widget _reportCard(SalaryReportData report) {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: LoginColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -600,17 +728,23 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
           Text(
             'Summary',
             style: TextStyle(
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: LoginColors.textPrimary,
             ),
           ),
           const SizedBox(height: 12),
-          _detailRow('Employee', report.totalEmployees.toString()),
-          _detailRow(
-            'Gross',
-            report.totalGrossAmount?.toStringAsFixed(2) ?? '-',
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _metricTile('Range', '${report.fromDate} to ${report.toDate}'),
+              _metricTile('Employees', report.totalEmployees.toString()),
+              _metricTile('Gross', _currency(report.totalGrossAmount)),
+              _metricTile('Deductions', _currency(report.totalDeductions)),
+              _metricTile('Net', _currency(report.totalNetAmount)),
+            ],
           ),
-          _detailRow('Net', report.totalNetAmount?.toStringAsFixed(2) ?? '-'),
         ],
       ),
     );
@@ -624,18 +758,7 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
       );
     }
 
-    final filtered = vm.salaryPeriods.where((period) {
-      final query = _searchQuery.toLowerCase();
-      if (_selectedEmployeeFilterId != null &&
-          period.employeeId != _selectedEmployeeFilterId) {
-        return false;
-      }
-      if (query.isEmpty) return true;
-      return period.employeeName.toLowerCase().contains(query) ||
-          period.employeeCode.toLowerCase().contains(query) ||
-          period.period.toLowerCase().contains(query) ||
-          period.status.toLowerCase().contains(query);
-    }).toList();
+    final filtered = _filteredSalaryPeriods(vm);
 
     if (filtered.isEmpty) {
       return Padding(
@@ -649,8 +772,24 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
       );
     }
 
-    return Column(
-      children: filtered.map((period) => _salaryCard(vm, period)).toList(),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle(
+            'Saved Salary Periods',
+            '${filtered.length} records available',
+          ),
+          const SizedBox(height: 12),
+          ...filtered.map((period) => _salaryCard(vm, period)),
+        ],
+      ),
     );
   }
 
@@ -658,10 +797,10 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
     final status = period.status.toUpperCase();
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: LoginColors.background,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: LoginColors.borderLight),
       ),
       child: Column(
@@ -673,7 +812,7 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
                 child: Text(
                   '${period.employeeName} (${period.employeeCode})',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: LoginColors.textPrimary,
                   ),
@@ -682,23 +821,29 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
               _statusChip(status),
             ],
           ),
-          // const SizedBox(height: 10),
-          // _detailRow('Period', period.period),
-          _detailRow('From', period.fromDate),
-          _detailRow('To', period.toDate),
-          // _detailRow('Type', period.salaryType),
-          // _detailRow('Gross', period.grossAmount?.toStringAsFixed(2) ?? '-'),
-          _detailRow('Net', period.netAmount?.toStringAsFixed(2) ?? '-'),
-          // const SizedBox(height: 12),
+          const SizedBox(height: 12),
           Wrap(
             spacing: 12,
             runSpacing: 12,
             children: [
-              // OutlinedButton.icon(
-              //   onPressed: () => _showSalaryDetail(vm, period),
-              //   icon: const Icon(Icons.visibility_outlined),
-              //   label: const Text('View Detail'),
-              // ),
+              _miniInfoChip('Period', period.period),
+              _miniInfoChip('Type', period.salaryType),
+              _miniInfoChip('From', period.fromDate),
+              _miniInfoChip('To', period.toDate),
+              _miniInfoChip('Gross', _currency(period.grossAmount)),
+              _miniInfoChip('Net', _currency(period.netAmount)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _showSalaryDetail(vm, period),
+                icon: const Icon(Icons.visibility_outlined),
+                label: const Text('View Detail'),
+              ),
               OutlinedButton.icon(
                 onPressed: _downloadingSalaryPeriodId == period.salaryPeriodId
                     ? null
@@ -763,6 +908,121 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
     );
   }
 
+  Widget _sectionTitle(String title, String subtitle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: LoginColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: TextStyle(fontSize: 12, color: LoginColors.textSecondary),
+        ),
+      ],
+    );
+  }
+
+  Widget _metricTile(String label, String value) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 150),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: LoginColors.background,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: LoginColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: LoginColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniInfoChip(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: LoginColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: LoginColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _confirmInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 86,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: LoginColors.textSecondary,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(color: LoginColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _statusChip(String status) {
     final color = switch (status) {
       'PAID' => LoginColors.success,
@@ -787,12 +1047,36 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
     );
   }
 
-  DateTime _monthFromPeriod(String period) {
-    if (period.length < 6) return DateTime.now();
-    final year = int.tryParse(period.substring(0, 4));
-    final month = int.tryParse(period.substring(4, 6));
-    if (year == null || month == null) return DateTime.now();
-    return DateTime(year, month);
+  List<Employee> _calculateTargets(AdminSalaryViewModel vm) {
+    if (_selectedEmployeeId == null) return vm.employees;
+    return vm.employees
+        .where((employee) => employee.employeeId == _selectedEmployeeId)
+        .toList();
+  }
+
+  List<SalaryPeriodSummary> _filteredSalaryPeriods(AdminSalaryViewModel vm) {
+    return vm.salaryPeriods.where((period) {
+      final query = _searchQuery.toLowerCase();
+      if (_selectedEmployeeFilterId != null &&
+          period.employeeId != _selectedEmployeeFilterId) {
+        return false;
+      }
+      if (query.isEmpty) return true;
+      return period.employeeName.toLowerCase().contains(query) ||
+          period.employeeCode.toLowerCase().contains(query) ||
+          period.period.toLowerCase().contains(query) ||
+          period.status.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  String _currency(double? value) {
+    if (value == null) return '-';
+    return value.toStringAsFixed(2);
+  }
+
+  String _decimal(double? value) {
+    if (value == null) return '-';
+    return value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(2);
   }
 
   String _formatDate(DateTime date) {
