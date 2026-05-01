@@ -127,6 +127,111 @@ class AdminWorkLogsViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> createWorkLogsBatch(
+    List<CreateWorkLogRequest> requests, {
+    required bool autoApprove,
+  }) async {
+    if (_companyId <= 0 || requests.isEmpty) return false;
+
+    _isSaving = true;
+    _error = null;
+    _message = null;
+    notifyListeners();
+
+    var createdCount = 0;
+    var approvedCount = 0;
+    final failedMessages = <String>[];
+
+    try {
+      for (final request in requests) {
+        final response = await _employeeRepository.createWorkLog(
+          _companyId,
+          request,
+        );
+        if (response?.responseStatus == true) {
+          createdCount++;
+          continue;
+        }
+        failedMessages.add(
+          response?.responseMessage ?? 'Failed to create a work log',
+        );
+      }
+
+      if (autoApprove && createdCount > 0) {
+        approvedCount = await _approvePendingCreatedLogs(requests);
+      }
+
+      await refresh();
+
+      if (createdCount == requests.length) {
+        _message = autoApprove
+            ? 'Saved $createdCount work logs and approved $approvedCount'
+            : 'Saved $createdCount work logs';
+        return true;
+      }
+
+      final partialMessage = failedMessages.isNotEmpty
+          ? 'Saved $createdCount of ${requests.length} work logs. ${failedMessages.first}'
+          : 'Saved $createdCount of ${requests.length} work logs';
+      _message = partialMessage;
+      _error = partialMessage;
+      return createdCount > 0;
+    } catch (e) {
+      _error = 'Failed to save work logs';
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  Future<int> _approvePendingCreatedLogs(
+    List<CreateWorkLogRequest> requests,
+  ) async {
+    var approvedCount = 0;
+    final grouped = <String, List<CreateWorkLogRequest>>{};
+
+    for (final request in requests) {
+      final employeeId = request.employeeId;
+      if (employeeId == null) continue;
+      final key = '$employeeId|${request.logDate}';
+      grouped.putIfAbsent(key, () => <CreateWorkLogRequest>[]).add(request);
+    }
+
+    for (final entry in grouped.entries) {
+      final parts = entry.key.split('|');
+      final employeeId = int.tryParse(parts.first);
+      final logDate = parts.length > 1 ? parts[1] : '';
+      if (employeeId == null || logDate.isEmpty) continue;
+
+      final createdWorkDefIds = entry.value
+          .map((request) => request.workDefId)
+          .toSet();
+      final logs = await _employeeRepository.getWorkLogsByEmployeeDateRange(
+        _companyId,
+        employeeId,
+        from: logDate,
+        to: logDate,
+      );
+
+      for (final log in logs) {
+        if (!createdWorkDefIds.contains(log.workDefId)) continue;
+        if (log.status.toUpperCase() != 'PENDING') continue;
+        final response = await _employeeRepository.reviewWorkLog(
+          _companyId,
+          log.logId,
+          const ReviewWorkLogRequest(
+            status: 'APPROVED',
+            adminRemarks: 'Auto approved by admin',
+          ),
+        );
+        if (response?.responseStatus == true) approvedCount++;
+      }
+    }
+
+    return approvedCount;
+  }
+
   Future<bool> reviewWorkLog({
     required int logId,
     required String status,

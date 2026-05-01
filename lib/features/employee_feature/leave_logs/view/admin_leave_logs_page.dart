@@ -6,7 +6,9 @@ import 'package:coreflow/domain/model/employee_model/employee.dart';
 import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
 import 'package:coreflow/features/employee_feature/leave_logs/view_model/admin_leave_logs_view_model.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class AdminLeaveLogsPage extends StatelessWidget {
@@ -350,6 +352,10 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
     );
   }
 
+  void _goToDashboard() {
+    context.go(CfRoutes.dashboard(widget.companyId));
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<AdminLeaveLogsViewModel>();
@@ -358,49 +364,55 @@ class _AdminLeaveLogsViewState extends State<_AdminLeaveLogsView> {
 
     _initializeEmployeeFilter(monthlyEmployees);
 
-    return Scaffold(
-      key: _scaffoldKey,
-      drawerEnableOpenDragGesture: false,
-      drawer: AppDrawer(vm: dashboardVm),
-      appBar: SearchableEntityAppBar(
-        isSearchOpen: _isSearchOpen,
-        onSearchToggle: _toggleSearch,
-        searchQuery: _searchQuery,
-        searchController: _searchController,
-        onSearchChanged: (value) => setState(() => _searchQuery = value),
-        onClearSearch: () {
-          _searchController.clear();
-          setState(() => _searchQuery = '');
-        },
-        scaffoldKey: _scaffoldKey,
-        title: 'Leave Requests',
-        searchHint: 'Search leave requests...',
-      ),
-      body: RefreshIndicator(
-        onRefresh: vm.refresh,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _toggleCard(vm),
-            const SizedBox(height: 16),
-            _employeeFilterCard(vm),
-            const SizedBox(height: 16),
-            if (!_showPendingOnly) ...[
-              _rangeCard(vm),
-              const SizedBox(height: 16),
-            ],
-            _listSection(vm),
-          ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _goToDashboard();
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        drawerEnableOpenDragGesture: false,
+        drawer: AppDrawer(vm: dashboardVm),
+        appBar: SearchableEntityAppBar(
+          isSearchOpen: _isSearchOpen,
+          onSearchToggle: _toggleSearch,
+          searchQuery: _searchQuery,
+          searchController: _searchController,
+          onSearchChanged: (value) => setState(() => _searchQuery = value),
+          onClearSearch: () {
+            _searchController.clear();
+            setState(() => _searchQuery = '');
+          },
+          scaffoldKey: _scaffoldKey,
+          title: 'Leave Requests',
+          searchHint: 'Search leave requests...',
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: LoginColors.primary,
-        foregroundColor: Colors.white,
-        onPressed: monthlyEmployees.isEmpty || vm.isSaving
-            ? null
-            : () => _showCreateDialog(vm),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add'),
+        body: RefreshIndicator(
+          onRefresh: vm.refresh,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _toggleCard(vm),
+              const SizedBox(height: 16),
+              _employeeFilterCard(vm),
+              const SizedBox(height: 16),
+              if (!_showPendingOnly) ...[
+                _rangeCard(vm),
+                const SizedBox(height: 16),
+              ],
+              _listSection(vm),
+            ],
+          ),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          backgroundColor: LoginColors.primary,
+          foregroundColor: Colors.white,
+          onPressed: monthlyEmployees.isEmpty || vm.isSaving
+              ? null
+              : () => _showCreateDialog(vm),
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Add'),
+        ),
       ),
     );
   }

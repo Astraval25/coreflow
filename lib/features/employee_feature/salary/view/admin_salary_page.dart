@@ -6,7 +6,9 @@ import 'package:coreflow/domain/model/employee_model/employee_module_models.dart
 import 'package:coreflow/features/employee_feature/salary/service/salary_file_service.dart';
 import 'package:coreflow/features/employee_feature/salary/view_model/admin_salary_view_model.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class AdminSalaryPage extends StatelessWidget {
@@ -341,45 +343,53 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
     _showMessage(vm.message ?? 'Salary marked as paid successfully');
   }
 
+  void _goToDashboard() {
+    context.go(CfRoutes.dashboard(widget.companyId));
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<AdminSalaryViewModel>();
     final dashboardVm = context.watch<DashboardViewModel>();
 
-    return Scaffold(
-      key: _scaffoldKey,
-      drawerEnableOpenDragGesture: false,
-      drawer: AppDrawer(vm: dashboardVm),
-      appBar: SearchableEntityAppBar(
-        isSearchOpen: _isSearchOpen,
-        onSearchToggle: _toggleSearch,
-        searchQuery: _searchQuery,
-        searchController: _searchController,
-        onSearchChanged: (value) => setState(() => _searchQuery = value),
-        onClearSearch: () {
-          _searchController.clear();
-          setState(() => _searchQuery = '');
-        },
-        scaffoldKey: _scaffoldKey,
-        title: 'Salary',
-        searchHint: 'Search salary periods...',
-      ),
-      body: RefreshIndicator(
-        onRefresh: vm.refresh,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _periodCard(vm),
-            const SizedBox(height: 16),
-            _calculateCard(vm),
-            const SizedBox(height: 16),
-            _employeeFilterCard(vm),
-            const SizedBox(height: 16),
-            if (vm.salaryReport != null) ...[
-              _reportCard(vm.salaryReport!),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _goToDashboard();
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        drawerEnableOpenDragGesture: false,
+        drawer: AppDrawer(vm: dashboardVm),
+        appBar: SearchableEntityAppBar(
+          isSearchOpen: _isSearchOpen,
+          onSearchToggle: _toggleSearch,
+          searchQuery: _searchQuery,
+          searchController: _searchController,
+          onSearchChanged: (value) => setState(() => _searchQuery = value),
+          onClearSearch: () {
+            _searchController.clear();
+            setState(() => _searchQuery = '');
+          },
+          scaffoldKey: _scaffoldKey,
+          title: 'Salary',
+          searchHint: 'Search salary periods...',
+        ),
+        body: RefreshIndicator(
+          onRefresh: vm.refresh,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _periodCard(vm),
+              const SizedBox(height: 16),
+              _calculateCard(vm),
+              const SizedBox(height: 16),
+              _employeeFilterCard(vm),
+              const SizedBox(height: 16),
+              if (vm.salaryReport != null) ...[_reportCard(vm.salaryReport!)],
+              _salaryList(vm),
             ],
-            _salaryList(vm),
-          ],
+          ),
         ),
       ),
     );
@@ -605,8 +615,6 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
       ),
     );
   }
-
-  
 
   Widget _salaryList(AdminSalaryViewModel vm) {
     if (vm.isLoading && vm.salaryPeriods.isEmpty) {

@@ -4,9 +4,12 @@ import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/data/repositories/employee_repository/employee_repository.dart';
 import 'package:coreflow/domain/model/employee_model/employee.dart';
 import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
+import 'package:coreflow/features/employee_feature/work_logs/view/admin_add_work_logs_page.dart';
 import 'package:coreflow/features/employee_feature/work_logs/view_model/admin_work_logs_view_model.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class AdminWorkLogsPage extends StatelessWidget {
@@ -81,216 +84,63 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
     );
   }
 
-  Future<void> _pickRange(AdminWorkLogsViewModel vm) async {
-    final fromInitial = DateTime.tryParse(vm.fromDate) ?? DateTime.now();
-    final pickedFrom = await showDatePicker(
+  Future<void> _pickDate(AdminWorkLogsViewModel vm) async {
+    final initial = DateTime.tryParse(vm.fromDate) ?? DateTime.now();
+    final picked = await showDatePicker(
       context: context,
-      initialDate: fromInitial,
-      firstDate: DateTime(fromInitial.year - 2),
-      lastDate: DateTime(fromInitial.year + 2),
+      initialDate: initial,
+      firstDate: DateTime(initial.year - 2),
+      lastDate: DateTime(initial.year + 2),
     );
-    if (pickedFrom == null || !mounted) return;
-
-    final toInitial = DateTime.tryParse(vm.toDate) ?? pickedFrom;
-    final pickedTo = await showDatePicker(
-      context: context,
-      initialDate: pickedFrom.isAfter(toInitial) ? pickedFrom : toInitial,
-      firstDate: pickedFrom,
-      lastDate: DateTime(pickedFrom.year + 2),
-    );
-    if (pickedTo == null) return;
+    if (picked == null || !mounted) return;
 
     await vm.updateDateRange(
-      fromDate: _formatDate(pickedFrom),
-      toDate: _formatDate(pickedTo),
+      fromDate: _formatDate(picked),
+      toDate: _formatDate(picked),
     );
   }
 
-  Future<void> _showCreateDialog(AdminWorkLogsViewModel vm) async {
-    final formKey = GlobalKey<FormState>();
-    final workBasedEmployees = _workBasedEmployees(vm);
-    int? selectedEmployeeId = workBasedEmployees.isNotEmpty
-        ? workBasedEmployees.first.employeeId
-        : null;
-    int? selectedWorkDefId = vm.workDefinitions.isNotEmpty
-        ? vm.workDefinitions.first.workDefId
-        : null;
-    final dateController = TextEditingController(
-      text: _formatDate(DateTime.now()),
-    );
-    final quantityController = TextEditingController();
-    final remarksController = TextEditingController();
+  Future<void> _openAddWorkLogsPage(AdminWorkLogsViewModel vm) async {
+    final selectedEmployeeId = _activeEmployeeFilterId(vm);
+    if (selectedEmployeeId == null) {
+      _showMessage(
+        'Select one employee before adding work logs',
+        isError: true,
+      );
+      return;
+    }
 
-    final created = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Add Work Log'),
-              content: SizedBox(
-                width: 420,
-                child: Form(
-                  key: formKey,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        DropdownButtonFormField<int>(
-                          initialValue: selectedEmployeeId,
-                          decoration: const InputDecoration(
-                            labelText: 'Employee',
-                            border: OutlineInputBorder(),
-                          ),
-                          items: workBasedEmployees.map((employee) {
-                            return DropdownMenuItem<int>(
-                              value: employee.employeeId,
-                              child: Text(
-                                '${employee.employeeName} (${employee.employeeCode})',
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setDialogState(() {
-                              selectedEmployeeId = value;
-                            });
-                          },
-                          validator: (value) =>
-                              value == null ? 'Select an employee' : null,
-                        ),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<int>(
-                          initialValue: selectedWorkDefId,
-                          decoration: const InputDecoration(
-                            labelText: 'Work Definition',
-                            border: OutlineInputBorder(),
-                          ),
-                          items: vm.workDefinitions.map((work) {
-                            return DropdownMenuItem<int>(
-                              value: work.workDefId,
-                              child: Text(
-                                '${work.workName} (${work.workCode})',
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setDialogState(() {
-                              selectedWorkDefId = value;
-                            });
-                          },
-                          validator: (value) =>
-                              value == null ? 'Select a work definition' : null,
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: dateController,
-                          readOnly: true,
-                          onTap: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate:
-                                  DateTime.tryParse(dateController.text) ??
-                                  DateTime.now(),
-                              firstDate: DateTime.now().subtract(
-                                const Duration(days: 365 * 2),
-                              ),
-                              lastDate: DateTime.now().add(
-                                const Duration(days: 365),
-                              ),
-                            );
-                            if (picked != null) {
-                              dateController.text = _formatDate(picked);
-                            }
-                          },
-                          decoration: const InputDecoration(
-                            labelText: 'Log Date',
-                            border: OutlineInputBorder(),
-                            suffixIcon: Icon(Icons.calendar_today_outlined),
-                          ),
-                          validator: (value) => value == null || value.isEmpty
-                              ? 'Select log date'
-                              : null,
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: quantityController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          decoration: const InputDecoration(
-                            labelText: 'Quantity',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Enter quantity';
-                            }
-                            if (double.tryParse(value.trim()) == null) {
-                              return 'Enter a valid quantity';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: remarksController,
-                          minLines: 2,
-                          maxLines: 3,
-                          decoration: const InputDecoration(
-                            labelText: 'Remarks',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: vm.isSaving
-                      ? null
-                      : () async {
-                          if (!formKey.currentState!.validate()) return;
-                          final ok = await vm.createWorkLog(
-                            CreateWorkLogRequest(
-                              employeeId: selectedEmployeeId,
-                              workDefId: selectedWorkDefId!,
-                              logDate: dateController.text,
-                              quantity: double.parse(
-                                quantityController.text.trim(),
-                              ),
-                              employeeRemarks:
-                                  remarksController.text.trim().isEmpty
-                                  ? null
-                                  : remarksController.text.trim(),
-                            ),
-                          );
-                          if (!context.mounted) return;
-                          if (ok) {
-                            Navigator.of(dialogContext).pop(true);
-                          } else if (mounted) {
-                            _showMessage(
-                              vm.error ?? 'Failed to create work log',
-                              isError: true,
-                            );
-                          }
-                        },
-                  child: Text(vm.isSaving ? 'Saving...' : 'Save'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+    final employees = _workBasedEmployees(vm);
+    final selectedEmployee = employees.firstWhere(
+      (employee) => employee.employeeId == selectedEmployeeId,
+    );
+    final existingLogs = vm.workLogs
+        .where(
+          (log) =>
+              log.employeeId == selectedEmployeeId &&
+              log.logDate == vm.fromDate,
+        )
+        .toList(growable: false);
+
+    final created = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminAddWorkLogsPage(
+          employee: selectedEmployee,
+          logDate: vm.fromDate,
+          workDefinitions: vm.workDefinitions,
+          existingLogs: existingLogs,
+          viewModel: vm,
+        ),
+      ),
     );
 
     if (!mounted || created != true) return;
-    _showMessage(vm.message ?? 'Work log created successfully');
+    _showMessage(vm.message ?? 'Work logs saved successfully');
+  }
+
+  void _goToDashboard() {
+    context.go(CfRoutes.dashboard(widget.companyId));
   }
 
   Future<void> _showReviewDialog(
@@ -379,52 +229,59 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
 
     _initializeEmployeeFilter(workBasedEmployees);
 
-    return Scaffold(
-      key: _scaffoldKey,
-      drawerEnableOpenDragGesture: false,
-      drawer: AppDrawer(vm: dashboardVm),
-      appBar: SearchableEntityAppBar(
-        isSearchOpen: _isSearchOpen,
-        onSearchToggle: _toggleSearch,
-        searchQuery: _searchQuery,
-        searchController: _searchController,
-        onSearchChanged: (value) => setState(() => _searchQuery = value),
-        onClearSearch: () {
-          _searchController.clear();
-          setState(() => _searchQuery = '');
-        },
-        scaffoldKey: _scaffoldKey,
-        title: 'Work Logs',
-        searchHint: 'Search work logs...',
-      ),
-      body: RefreshIndicator(
-        onRefresh: vm.refresh,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _toggleCard(vm),
-            const SizedBox(height: 16),
-            _employeeFilterCard(vm),
-            const SizedBox(height: 16),
-            if (!_showPendingOnly) ...[
-              _rangeCard(vm),
-              const SizedBox(height: 16),
-            ],
-            _listSection(vm),
-          ],
+    final canAdd =
+        _activeEmployeeFilterId(vm) != null &&
+        workBasedEmployees.isNotEmpty &&
+        vm.workDefinitions.isNotEmpty &&
+        !vm.isSaving;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _goToDashboard();
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        drawerEnableOpenDragGesture: false,
+        drawer: AppDrawer(vm: dashboardVm),
+        appBar: SearchableEntityAppBar(
+          isSearchOpen: _isSearchOpen,
+          onSearchToggle: _toggleSearch,
+          searchQuery: _searchQuery,
+          searchController: _searchController,
+          onSearchChanged: (value) => setState(() => _searchQuery = value),
+          onClearSearch: () {
+            _searchController.clear();
+            setState(() => _searchQuery = '');
+          },
+          scaffoldKey: _scaffoldKey,
+          title: 'Work Logs',
+          searchHint: 'Search work logs...',
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: LoginColors.primary,
-        foregroundColor: Colors.white,
-        onPressed:
-            workBasedEmployees.isEmpty ||
-                vm.workDefinitions.isEmpty ||
-                vm.isSaving
-            ? null
-            : () => _showCreateDialog(vm),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add'),
+        body: RefreshIndicator(
+          onRefresh: vm.refresh,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _toggleCard(vm),
+              const SizedBox(height: 16),
+              _employeeFilterCard(vm),
+              const SizedBox(height: 16),
+              if (!_showPendingOnly) ...[
+                _rangeCard(vm),
+                const SizedBox(height: 16),
+              ],
+              _listSection(vm),
+            ],
+          ),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          backgroundColor: LoginColors.primary,
+          foregroundColor: Colors.white,
+          onPressed: canAdd ? () => _openAddWorkLogsPage(vm) : null,
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Add'),
+        ),
       ),
     );
   }
@@ -677,7 +534,7 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () => _pickRange(vm),
+              onTap: () => _pickDate(vm),
               child: Center(child: _rangeValue('', vm.fromDate)),
             ),
           ),

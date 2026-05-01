@@ -6,7 +6,9 @@ import 'package:coreflow/data/repositories/employee_repository/employee_reposito
 import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
 import 'package:coreflow/features/employee_feature/work_definitions/view_model/work_definitions_view_model.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class WorkDefinitionsPage extends StatelessWidget {
@@ -495,58 +497,68 @@ class _WorkDefinitionsViewState extends State<_WorkDefinitionsView> {
     );
   }
 
+  void _goToDashboard() {
+    context.go(CfRoutes.dashboard(widget.companyId));
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<WorkDefinitionsViewModel>();
     final dashboardVm = context.watch<DashboardViewModel>();
 
-    return Scaffold(
-      key: _scaffoldKey,
-      drawerEnableOpenDragGesture: false,
-      drawer: AppDrawer(vm: dashboardVm),
-      appBar: SearchableEntityAppBar(
-        isSearchOpen: _isSearchOpen,
-        onSearchToggle: _toggleSearch,
-        searchQuery: _searchQuery,
-        searchController: _searchController,
-        onSearchChanged: (value) => setState(() => _searchQuery = value),
-        onClearSearch: () {
-          _searchController.clear();
-          setState(() => _searchQuery = '');
-        },
-        scaffoldKey: _scaffoldKey,
-        title: 'Work Definitions',
-        searchHint: 'Search work definitions...',
-      ),
-      body: Column(
-        children: [
-          StatusToggleTabs(
-            isActiveSelected: vm.showActiveOnly,
-            activeLabel: 'Active',
-            inactiveLabel: 'Inactive',
-            onActiveTap: () {
-              if (!vm.showActiveOnly) vm.toggleActiveFilter();
-            },
-            onInactiveTap: () {
-              if (vm.showActiveOnly) vm.toggleActiveFilter();
-            },
-          ),
-          Expanded(
-            child: RefreshIndicator(
-              backgroundColor: LoginColors.surface,
-              color: LoginColors.primary,
-              onRefresh: vm.refresh,
-              child: _buildBody(vm),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _goToDashboard();
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        drawerEnableOpenDragGesture: false,
+        drawer: AppDrawer(vm: dashboardVm),
+        appBar: SearchableEntityAppBar(
+          isSearchOpen: _isSearchOpen,
+          onSearchToggle: _toggleSearch,
+          searchQuery: _searchQuery,
+          searchController: _searchController,
+          onSearchChanged: (value) => setState(() => _searchQuery = value),
+          onClearSearch: () {
+            _searchController.clear();
+            setState(() => _searchQuery = '');
+          },
+          scaffoldKey: _scaffoldKey,
+          title: 'Work Definitions',
+          searchHint: 'Search work definitions...',
+        ),
+        body: Column(
+          children: [
+            StatusToggleTabs(
+              isActiveSelected: vm.showActiveOnly,
+              activeLabel: 'Active',
+              inactiveLabel: 'Inactive',
+              onActiveTap: () {
+                if (!vm.showActiveOnly) vm.toggleActiveFilter();
+              },
+              onInactiveTap: () {
+                if (vm.showActiveOnly) vm.toggleActiveFilter();
+              },
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: LoginColors.primary,
-        foregroundColor: Colors.white,
-        onPressed: vm.isSaving ? null : () => _showCreateDialog(vm),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Work Definition'),
+            Expanded(
+              child: RefreshIndicator(
+                backgroundColor: LoginColors.surface,
+                color: LoginColors.primary,
+                onRefresh: vm.refresh,
+                child: _buildBody(vm),
+              ),
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          backgroundColor: LoginColors.primary,
+          foregroundColor: Colors.white,
+          onPressed: vm.isSaving ? null : () => _showCreateDialog(vm),
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Add Work Definition'),
+        ),
       ),
     );
   }
