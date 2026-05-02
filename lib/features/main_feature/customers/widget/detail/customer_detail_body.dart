@@ -20,6 +20,7 @@ class CustomerDetailBody extends StatefulWidget {
 
 class _CustomerDetailBodyState extends State<CustomerDetailBody> {
   int _selectedIndex = 0;
+  TransactionFilter _selectedTransactionFilter = TransactionFilter.orders;
   static const double _horizontal = 20;
 
   @override
@@ -46,7 +47,7 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildTabText('Transaction', 0),
+                  _buildTransactionDropdown(),
                   _buildTabText('Items', 1),
                   _buildTabText('Address', 2),
                 ],
@@ -86,12 +87,7 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
         backgroundColor: isSelected
             ? const Color.fromARGB(255, 255, 255, 255).withValues(alpha: 0.1)
             : const Color.fromARGB(0, 255, 255, 255),
-        foregroundColor: const Color.fromARGB(
-          0,
-          255,
-          255,
-          255,
-        ),
+        foregroundColor: const Color.fromARGB(0, 255, 255, 255),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -124,10 +120,94 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
     );
   }
 
+  Widget _buildTransactionDropdown() {
+    final isSelected = _selectedIndex == 0;
+
+    return PopupMenuButton<TransactionFilter>(
+      onSelected: (value) {
+        setState(() {
+          _selectedIndex = 0;
+          _selectedTransactionFilter = value;
+        });
+      },
+      offset: const Offset(0, 38),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: LoginColors.surface,
+      itemBuilder: (context) => [
+        _buildTransactionMenuItem(TransactionFilter.orders, 'Orders'),
+        _buildTransactionMenuItem(TransactionFilter.payments, 'Payments'),
+        _buildTransactionMenuItem(TransactionFilter.all, 'All'),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? LoginColors.primary.withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _transactionFilterLabel(_selectedTransactionFilter),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected
+                    ? LoginColors.primaryDark
+                    : LoginColors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 18,
+              color: isSelected
+                  ? LoginColors.primaryDark
+                  : LoginColors.textSecondary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  PopupMenuItem<TransactionFilter> _buildTransactionMenuItem(
+    TransactionFilter value,
+    String label,
+  ) {
+    final isActive = _selectedTransactionFilter == value;
+    return PopupMenuItem<TransactionFilter>(
+      value: value,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 13.5,
+          fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+          color: isActive ? LoginColors.primary : LoginColors.textPrimary,
+        ),
+      ),
+    );
+  }
+
+  String _transactionFilterLabel(TransactionFilter filter) {
+    switch (filter) {
+      case TransactionFilter.orders:
+        return 'Orders';
+      case TransactionFilter.payments:
+        return 'Payments';
+      case TransactionFilter.all:
+        return 'All';
+    }
+  }
+
   Widget _buildSelectedSection(CustomerDetailData customer) {
     switch (_selectedIndex) {
       case 0:
-        return const CustomerOrdersPaymentsSection();
+        return CustomerOrdersPaymentsSection(
+          filter: _selectedTransactionFilter,
+        );
       case 1:
         return const CustomerItemSection();
       case 2:
@@ -213,5 +293,4 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
       ),
     );
   }
-
 }

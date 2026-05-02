@@ -20,6 +20,8 @@ class VendorDetailBody extends StatefulWidget {
 
 class _VendorDetailBodyState extends State<VendorDetailBody> {
   int _selectedIndex = 0;
+  VendorTransactionFilter _selectedTransactionFilter =
+      VendorTransactionFilter.orders;
   static const double _horizontal = 20;
 
   @override
@@ -48,7 +50,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildTabText('Transaction', 0),
+                  _buildTransactionDropdown(),
                   _buildTabText('Items', 1),
                   _buildTabText('Address', 2),
                 ],
@@ -104,6 +106,88 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
     );
   }
 
+  Widget _buildTransactionDropdown() {
+    final isSelected = _selectedIndex == 0;
+
+    return PopupMenuButton<VendorTransactionFilter>(
+      onSelected: (value) {
+        setState(() {
+          _selectedIndex = 0;
+          _selectedTransactionFilter = value;
+        });
+      },
+      offset: const Offset(0, 38),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: LoginColors.surface,
+      itemBuilder: (context) => [
+        _buildTransactionMenuItem(VendorTransactionFilter.orders, 'Orders'),
+        _buildTransactionMenuItem(VendorTransactionFilter.payments, 'Payments'),
+        _buildTransactionMenuItem(VendorTransactionFilter.all, 'All'),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? LoginColors.primary.withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _transactionFilterLabel(_selectedTransactionFilter),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected
+                    ? LoginColors.primaryDark
+                    : LoginColors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 18,
+              color: isSelected
+                  ? LoginColors.primaryDark
+                  : LoginColors.textSecondary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  PopupMenuItem<VendorTransactionFilter> _buildTransactionMenuItem(
+    VendorTransactionFilter value,
+    String label,
+  ) {
+    final isActive = _selectedTransactionFilter == value;
+    return PopupMenuItem<VendorTransactionFilter>(
+      value: value,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 13.5,
+          fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+          color: isActive ? LoginColors.primary : LoginColors.textPrimary,
+        ),
+      ),
+    );
+  }
+
+  String _transactionFilterLabel(VendorTransactionFilter filter) {
+    switch (filter) {
+      case VendorTransactionFilter.orders:
+        return 'Orders';
+      case VendorTransactionFilter.payments:
+        return 'Payments';
+      case VendorTransactionFilter.all:
+        return 'All';
+    }
+  }
+
   Widget _buildLinkCompanyStrip(
     BuildContext context,
     VendorDetailViewModel vm,
@@ -121,7 +205,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
           border: Border.all(color: LoginColors.borderLight),
           boxShadow: [
             BoxShadow(
-              color: LoginColors.shadowLight.withValues(alpha:0.07),
+              color: LoginColors.shadowLight.withValues(alpha: 0.07),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -133,7 +217,9 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
           invitationCode: vm.invitationData?.invitationCode,
           onGenerateCode: () async {
             final response = await vm.sendInvitation();
-            if (context.mounted && response != null && !response.responseStatus) {
+            if (context.mounted &&
+                response != null &&
+                !response.responseStatus) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   duration: Duration(seconds: 2),
@@ -183,7 +269,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
   Widget _buildSelectedSection(VendorsDetailData vendor) {
     switch (_selectedIndex) {
       case 0:
-        return const VendorOrdersPaymentsSection();
+        return VendorOrdersPaymentsSection(filter: _selectedTransactionFilter);
       case 1:
         return const VendorItemSection();
       case 2:
@@ -219,7 +305,7 @@ class _SectionHeader extends StatelessWidget {
             height: 3,
             width: 50,
             decoration: BoxDecoration(
-              color: LoginColors.textPrimary.withValues(alpha:0.6),
+              color: LoginColors.textPrimary.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -268,4 +354,3 @@ class _AddressSection extends StatelessWidget {
     );
   }
 }
-

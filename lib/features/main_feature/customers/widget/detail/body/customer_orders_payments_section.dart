@@ -7,8 +7,12 @@ import 'package:coreflow/features/main_feature/sales/view/sales_order_detail_pag
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+enum TransactionFilter { orders, payments, all }
+
 class CustomerOrdersPaymentsSection extends StatelessWidget {
-  const CustomerOrdersPaymentsSection({super.key});
+  final TransactionFilter filter;
+
+  const CustomerOrdersPaymentsSection({super.key, required this.filter});
 
   @override
   Widget build(BuildContext context) {
@@ -26,14 +30,24 @@ class CustomerOrdersPaymentsSection extends StatelessWidget {
       );
     }
 
-    final totalCount = vm.ordersPayments.length + (vm.isOrdersPaymentsLoadingMore ? 1 : 0);
+    final filteredEntries = switch (filter) {
+      TransactionFilter.orders =>
+        vm.ordersOnly.map(OrderPaymentEntry.fromOrder).toList(growable: false),
+      TransactionFilter.payments =>
+        vm.paymentsOnly
+            .map(OrderPaymentEntry.fromPayment)
+            .toList(growable: false),
+      TransactionFilter.all => vm.ordersPayments,
+    };
+    final totalCount =
+        filteredEntries.length + (vm.isOrdersPaymentsLoadingMore ? 1 : 0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (vm.ordersPayments.isEmpty)
+        if (filteredEntries.isEmpty)
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -51,7 +65,7 @@ class CustomerOrdersPaymentsSection extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'No orders or payments yet',
+                    _emptyStateText,
                     style: TextStyle(
                       color: LoginColors.textSecondary,
                       fontSize: 14,
@@ -70,7 +84,7 @@ class CustomerOrdersPaymentsSection extends StatelessWidget {
             itemCount: totalCount,
             separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
-              if (index >= vm.ordersPayments.length) {
+              if (index >= filteredEntries.length) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Center(
@@ -83,13 +97,24 @@ class CustomerOrdersPaymentsSection extends StatelessWidget {
               }
               return _buildEntryCard(
                 context,
-                vm.ordersPayments[index],
+                filteredEntries[index],
                 vm.companyId,
               );
             },
           ),
       ],
     );
+  }
+
+  String get _emptyStateText {
+    switch (filter) {
+      case TransactionFilter.orders:
+        return 'No orders yet';
+      case TransactionFilter.payments:
+        return 'No payments yet';
+      case TransactionFilter.all:
+        return 'No orders or payments yet';
+    }
   }
 
   Widget _buildEntryCard(

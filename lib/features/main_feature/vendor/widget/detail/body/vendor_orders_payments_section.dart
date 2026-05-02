@@ -7,8 +7,12 @@ import 'package:coreflow/features/main_feature/vendor/view_model/vendor_detail_v
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+enum VendorTransactionFilter { orders, payments, all }
+
 class VendorOrdersPaymentsSection extends StatelessWidget {
-  const VendorOrdersPaymentsSection({super.key});
+  final VendorTransactionFilter filter;
+
+  const VendorOrdersPaymentsSection({super.key, required this.filter});
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +30,21 @@ class VendorOrdersPaymentsSection extends StatelessWidget {
       );
     }
 
-    if (vm.ordersPayments.isEmpty) {
+    final filteredEntries = switch (filter) {
+      VendorTransactionFilter.orders =>
+        vm.ordersOnly
+            .map(VendorOrderPaymentEntry.fromOrder)
+            .toList(growable: false),
+      VendorTransactionFilter.payments =>
+        vm.paymentsOnly
+            .map(VendorOrderPaymentEntry.fromPayment)
+            .toList(growable: false),
+      VendorTransactionFilter.all => vm.ordersPayments,
+    };
+
+    if (filteredEntries.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -46,7 +62,7 @@ class VendorOrdersPaymentsSection extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'No orders or payments yet',
+                _emptyStateText,
                 style: TextStyle(
                   color: LoginColors.textSecondary,
                   fontSize: 14,
@@ -59,7 +75,8 @@ class VendorOrdersPaymentsSection extends StatelessWidget {
       );
     }
 
-    final totalCount = vm.ordersPayments.length + (vm.isOrdersPaymentsLoadingMore ? 1 : 0);
+    final totalCount =
+        filteredEntries.length + (vm.isOrdersPaymentsLoadingMore ? 1 : 0);
 
     return ListView.separated(
       shrinkWrap: true,
@@ -68,7 +85,7 @@ class VendorOrdersPaymentsSection extends StatelessWidget {
       itemCount: totalCount,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
-        if (index >= vm.ordersPayments.length) {
+        if (index >= filteredEntries.length) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
             child: Center(
@@ -79,7 +96,7 @@ class VendorOrdersPaymentsSection extends StatelessWidget {
             ),
           );
         }
-        final entry = vm.ordersPayments[index];
+        final entry = filteredEntries[index];
         if (entry.isOrder && entry.order != null) {
           return _OrderTile(order: entry.order!, companyId: vm.companyId);
         }
@@ -89,6 +106,17 @@ class VendorOrdersPaymentsSection extends StatelessWidget {
         return const SizedBox.shrink();
       },
     );
+  }
+
+  String get _emptyStateText {
+    switch (filter) {
+      case VendorTransactionFilter.orders:
+        return 'No orders yet';
+      case VendorTransactionFilter.payments:
+        return 'No payments yet';
+      case VendorTransactionFilter.all:
+        return 'No orders or payments yet';
+    }
   }
 }
 
@@ -107,8 +135,10 @@ class _OrderTile extends StatelessWidget {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) =>
-                PurchaseOrderDetailPage(companyId: companyId, orderId: order.orderId),
+            builder: (_) => PurchaseOrderDetailPage(
+              companyId: companyId,
+              orderId: order.orderId,
+            ),
           ),
         );
       },
@@ -155,7 +185,9 @@ class _OrderTile extends StatelessWidget {
                         ),
                       ),
                       _ValueChip(
-                        label: isPaid ? 'Fully Paid' : 'Due ${formatMoney(due)}',
+                        label: isPaid
+                            ? 'Fully Paid'
+                            : 'Due ${formatMoney(due)}',
                         color: isPaid ? LoginColors.success : LoginColors.error,
                       ),
                       Text(

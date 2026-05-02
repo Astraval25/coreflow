@@ -45,82 +45,98 @@ class _EmployeesViewState extends State<EmployeesView> {
     super.dispose();
   }
 
+  void _goToDashboard() {
+    if (_isSearchOpen) {
+      _toggleSearch();
+      return;
+    }
+    context.go(CfRoutes.dashboard(widget.companyId));
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<EmployeesViewModel>();
     final dashboardVm = context.watch<DashboardViewModel>();
 
-    return Scaffold(
-      key: _scaffoldKey,
-      drawerEnableOpenDragGesture: false,
-      drawer: AppDrawer(vm: dashboardVm),
-      appBar: SearchableEntityAppBar(
-        isSearchOpen: _isSearchOpen,
-        onSearchToggle: _toggleSearch,
-        searchQuery: _searchQuery,
-        searchController: _searchController,
-        onSearchChanged: (value) => setState(() => _searchQuery = value),
-        onClearSearch: () {
-          _searchController.clear();
-          setState(() => _searchQuery = '');
-        },
-        scaffoldKey: _scaffoldKey,
-        title: 'Employees',
-        searchHint: 'Search employees...',
-      ),
-      body: Column(
-        children: [
-          _buildTopToggleTabs(viewModel),
-          Expanded(
-            child: RefreshIndicator(
-              backgroundColor: LoginColors.surface,
-              color: LoginColors.primary,
-              onRefresh: viewModel.refresh,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 260),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                transitionBuilder: (child, animation) {
-                  final slide = Tween<Offset>(
-                    begin: const Offset(0, 0.02),
-                    end: Offset.zero,
-                  ).animate(animation);
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(position: slide, child: child),
-                  );
-                },
-                child: _buildBody(viewModel),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _goToDashboard();
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        drawerEnableOpenDragGesture: false,
+        drawer: AppDrawer(vm: dashboardVm),
+        appBar: SearchableEntityAppBar(
+          isSearchOpen: _isSearchOpen,
+          onSearchToggle: _toggleSearch,
+          searchQuery: _searchQuery,
+          searchController: _searchController,
+          onSearchChanged: (value) => setState(() => _searchQuery = value),
+          onClearSearch: () {
+            _searchController.clear();
+            setState(() => _searchQuery = '');
+          },
+          scaffoldKey: _scaffoldKey,
+          title: 'Employees',
+          searchHint: 'Search employees...',
+        ),
+        body: Column(
+          children: [
+            _buildTopToggleTabs(viewModel),
+            Expanded(
+              child: RefreshIndicator(
+                backgroundColor: LoginColors.surface,
+                color: LoginColors.primary,
+                onRefresh: viewModel.refresh,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 260),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, animation) {
+                    final slide = Tween<Offset>(
+                      begin: const Offset(0, 0.02),
+                      end: Offset.zero,
+                    ).animate(animation);
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(position: slide, child: child),
+                    );
+                  },
+                  child: _buildBody(viewModel),
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: LoginColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        onPressed: () async {
-          final result = await context.push<bool>(
-            CfRoutes.employeeCreate(widget.companyId),
-          );
-          if (result == true && context.mounted) {
-            context.read<EmployeesViewModel>().refresh();
-          }
-        },
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: LoginColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 6,
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [LoginColors.primary, LoginColors.primaryDark],
-            ),
           ),
-          child: const Icon(Icons.add_rounded, size: 28),
+          onPressed: () async {
+            final result = await context.push<bool>(
+              CfRoutes.employeeCreate(widget.companyId),
+            );
+            if (result == true && context.mounted) {
+              context.read<EmployeesViewModel>().refresh();
+            }
+          },
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [LoginColors.primary, LoginColors.primaryDark],
+              ),
+            ),
+            child: const Icon(Icons.add_rounded, size: 28),
+          ),
         ),
       ),
     );
