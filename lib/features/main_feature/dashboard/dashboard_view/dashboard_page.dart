@@ -35,34 +35,10 @@ class _DashboardView extends StatefulWidget {
 }
 
 class _DashboardViewState extends State<_DashboardView>
-    with SingleTickerProviderStateMixin {
+{
   static const double _contentHorizontalPadding = 16;
   static const double _promoBannerHeight = 180;
 
-  bool _isRefreshing = false;
-  late final AnimationController _refreshController = AnimationController(
-    vsync: this,
-    duration: Duration(milliseconds: 800),
-  );
-
-  @override
-  void dispose() {
-    _refreshController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _handleRefresh(DashboardViewModel vm) async {
-    if (_isRefreshing) return;
-    setState(() => _isRefreshing = true);
-    _refreshController.repeat();
-    try {
-      await vm.refresh();
-    } finally {
-      _refreshController.stop();
-      _refreshController.reset();
-      if (mounted) setState(() => _isRefreshing = false);
-    }
-  }
   static final Uri _fallbackVideoUrl = Uri.parse(
     'https://youtube.com/shorts/XgM2_m2I6sE?si=MVVTXLzD-l5AUu7e',
   );
@@ -371,20 +347,6 @@ class _DashboardViewState extends State<_DashboardView>
         onPressed: () => Scaffold.of(context).openDrawer(),
       ),
       actions: [
-        RotationTransition(
-          turns: _refreshController,
-          child: IconButton(
-            tooltip: 'Refresh',
-            onPressed: _isRefreshing ? null : () => _handleRefresh(vm),
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: _isRefreshing
-                  ? LoginColors.textTertiary
-                  : LoginColors.textPrimary,
-              size: 24,
-            ),
-          ),
-        ),
         IconButton(
           onPressed: () {
             if (vm.companyId != null) {

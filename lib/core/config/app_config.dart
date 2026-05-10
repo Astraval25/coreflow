@@ -475,6 +475,12 @@ class AppConfig {
   static String getMonthlyTrendUrl(int c, String s, String e) =>
       '$baseUrl/api/companies/$c/analytics/dashboard/monthly-trend?startDate=$s&endDate=$e';
 
+  static String getOrderHistoryUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/history/orders?startDate=$s&endDate=$e';
+
+  static String getPaymentHistoryUrl(int c, String s, String e) =>
+      '$baseUrl/api/companies/$c/analytics/history/payments?startDate=$s&endDate=$e';
+
   // ─── Employee Module (modemp) ───
   static const String employeesEndpoint =
       '/api/companies/{companyId}/modemp/employees';
@@ -546,8 +552,7 @@ class AppConfig {
   static const String employeeMeEndpoint = '/api/emp/me';
   static const String employeeMySalaryPeriodsEndpoint =
       '/api/emp/salary/periods';
-  static const String employeeMySalaryReportEndpoint =
-      '/api/emp/salary/report';
+  static const String employeeMySalaryReportEndpoint = '/api/emp/salary/report';
   static const String employeeMySalaryDetailEndpoint =
       '/api/emp/salary/periods/{salaryPeriodId}';
   static const String employeeMySalarySlipEndpoint =

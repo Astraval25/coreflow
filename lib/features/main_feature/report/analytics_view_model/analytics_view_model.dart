@@ -6,6 +6,8 @@ import '../../../../domain/model/main_model/analytics/item_analytics.dart';
 import '../../../../domain/model/main_model/analytics/item_frequency.dart';
 import '../../../../domain/model/main_model/analytics/monthly_trend.dart';
 import '../../../../domain/model/main_model/analytics/order_frequency.dart';
+import '../../../../domain/model/main_model/analytics/order_history.dart';
+import '../../../../domain/model/main_model/analytics/payment_history.dart';
 import '../../../../domain/model/main_model/analytics/party_analytics.dart';
 import '../../../../domain/model/main_model/analytics/payment_mode.dart';
 import '../../../../domain/model/main_model/analytics/revenue_expense.dart';
@@ -41,35 +43,65 @@ enum ReportType {
   profitByItem,
   topSellingItems,
   topProfitableItems,
+  orderHistory,
+  paymentHistory,
 }
 
 extension ReportTypeLabel on ReportType {
   String get label {
     switch (this) {
-      case ReportType.dashboardKpi:           return 'Dashboard KPI';
-      case ReportType.cashFlow:               return 'Cash Flow Statement';
-      case ReportType.revenueExpense:         return 'Revenue vs Expense';
-      case ReportType.monthlyTrend:           return 'Monthly Trend';
-      case ReportType.paymentModeDistribution:return 'Payment Mode Distribution';
-      case ReportType.salesSummary:           return 'Sales Summary';
-      case ReportType.salesByCustomer:        return 'Sales by Customer';
-      case ReportType.salesByItem:            return 'Sales by Item';
-      case ReportType.salesOrderFrequency:    return 'Sales Order Frequency';
-      case ReportType.salesPaymentFrequency:  return 'Sales Payment Frequency';
-      case ReportType.salesItemFrequency:     return 'Sales Item Frequency';
-      case ReportType.salesRunningOrderAmount: return 'Sales Running Order Amount';
-      case ReportType.salesRunningPaymentAmount: return 'Sales Running Payment Amount';
-      case ReportType.purchaseSummary:        return 'Purchase Summary';
-      case ReportType.purchaseByVendor:       return 'Purchase by Vendor';
-      case ReportType.purchaseByItem:         return 'Purchase by Item';
-      case ReportType.purchaseOrderFrequency: return 'Purchase Order Frequency';
-      case ReportType.purchasePaymentFrequency: return 'Purchase Payment Frequency';
-      case ReportType.purchaseItemFrequency:  return 'Purchase Item Frequency';
-      case ReportType.purchaseRunningOrderAmount: return 'Purchase Running Order Amount';
-      case ReportType.purchaseRunningPaymentAmount: return 'Purchase Running Payment Amount';
-      case ReportType.profitByItem:           return 'Profit by Item';
-      case ReportType.topSellingItems:        return 'Top Selling Items';
-      case ReportType.topProfitableItems:     return 'Top Profitable Items';
+      case ReportType.dashboardKpi:
+        return 'Dashboard KPI';
+      case ReportType.cashFlow:
+        return 'Cash Flow Statement';
+      case ReportType.revenueExpense:
+        return 'Revenue vs Expense';
+      case ReportType.monthlyTrend:
+        return 'Monthly Trend';
+      case ReportType.paymentModeDistribution:
+        return 'Payment Mode Distribution';
+      case ReportType.salesSummary:
+        return 'Sales Summary';
+      case ReportType.salesByCustomer:
+        return 'Sales by Customer';
+      case ReportType.salesByItem:
+        return 'Sales by Item';
+      case ReportType.salesOrderFrequency:
+        return 'Sales Order Frequency';
+      case ReportType.salesPaymentFrequency:
+        return 'Sales Payment Frequency';
+      case ReportType.salesItemFrequency:
+        return 'Sales Item Frequency';
+      case ReportType.salesRunningOrderAmount:
+        return 'Sales Running Order Amount';
+      case ReportType.salesRunningPaymentAmount:
+        return 'Sales Running Payment Amount';
+      case ReportType.purchaseSummary:
+        return 'Purchase Summary';
+      case ReportType.purchaseByVendor:
+        return 'Purchase by Vendor';
+      case ReportType.purchaseByItem:
+        return 'Purchase by Item';
+      case ReportType.purchaseOrderFrequency:
+        return 'Purchase Order Frequency';
+      case ReportType.purchasePaymentFrequency:
+        return 'Purchase Payment Frequency';
+      case ReportType.purchaseItemFrequency:
+        return 'Purchase Item Frequency';
+      case ReportType.purchaseRunningOrderAmount:
+        return 'Purchase Running Order Amount';
+      case ReportType.purchaseRunningPaymentAmount:
+        return 'Purchase Running Payment Amount';
+      case ReportType.profitByItem:
+        return 'Profit by Item';
+      case ReportType.topSellingItems:
+        return 'Top Selling Items';
+      case ReportType.topProfitableItems:
+        return 'Top Profitable Items';
+      case ReportType.orderHistory:
+        return 'Order History';
+      case ReportType.paymentHistory:
+        return 'Payment History';
     }
   }
 }
@@ -86,12 +118,18 @@ enum AnalyticsDateRange {
 extension AnalyticsDateRangeLabel on AnalyticsDateRange {
   String get label {
     switch (this) {
-      case AnalyticsDateRange.thisMonth:    return 'This Month';
-      case AnalyticsDateRange.lastMonth:    return 'Last Month';
-      case AnalyticsDateRange.thisQuarter:  return 'This Quarter';
-      case AnalyticsDateRange.lastQuarter:  return 'Last Quarter';
-      case AnalyticsDateRange.thisYear:     return 'This Year';
-      case AnalyticsDateRange.custom:       return 'Custom';
+      case AnalyticsDateRange.thisMonth:
+        return 'This Month';
+      case AnalyticsDateRange.lastMonth:
+        return 'Last Month';
+      case AnalyticsDateRange.thisQuarter:
+        return 'This Quarter';
+      case AnalyticsDateRange.lastQuarter:
+        return 'Last Quarter';
+      case AnalyticsDateRange.thisYear:
+        return 'This Year';
+      case AnalyticsDateRange.custom:
+        return 'Custom';
     }
   }
 }
@@ -135,6 +173,8 @@ class AnalyticsViewModel extends ChangeNotifier {
   List<ProfitByItemEntry> profitByItem = [];
   List<ItemAnalyticsEntry> topSellingItems = [];
   List<ItemAnalyticsEntry> topProfitableItems = [];
+  List<OrderHistoryEntry> orderHistory = [];
+  List<PaymentHistoryEntry> paymentHistory = [];
 
   AnalyticsDateRange get selectedRange => _selectedRange;
   DateTime get startDate => _startDate;
@@ -218,7 +258,11 @@ class AnalyticsViewModel extends ChangeNotifier {
           monthlyTrend = await _repo.getMonthlyTrend(c, s, e);
           break;
         case ReportType.paymentModeDistribution:
-          paymentModeDistribution = await _repo.getPaymentModeDistribution(c, s, e);
+          paymentModeDistribution = await _repo.getPaymentModeDistribution(
+            c,
+            s,
+            e,
+          );
           break;
         case ReportType.salesSummary:
           salesSummary = await _repo.getSalesSummary(c, s, e);
@@ -239,10 +283,18 @@ class AnalyticsViewModel extends ChangeNotifier {
           salesItemFrequency = await _repo.getSalesItemFrequency(c, s, e);
           break;
         case ReportType.salesRunningOrderAmount:
-          salesRunningOrderAmount = await _repo.getSalesRunningOrderAmount(c, s, e);
+          salesRunningOrderAmount = await _repo.getSalesRunningOrderAmount(
+            c,
+            s,
+            e,
+          );
           break;
         case ReportType.salesRunningPaymentAmount:
-          salesRunningPaymentAmount = await _repo.getSalesRunningPaymentAmount(c, s, e);
+          salesRunningPaymentAmount = await _repo.getSalesRunningPaymentAmount(
+            c,
+            s,
+            e,
+          );
           break;
         case ReportType.purchaseSummary:
           purchaseSummary = await _repo.getPurchaseSummary(c, s, e);
@@ -254,19 +306,29 @@ class AnalyticsViewModel extends ChangeNotifier {
           purchaseByItem = await _repo.getPurchaseByItem(c, s, e);
           break;
         case ReportType.purchaseOrderFrequency:
-          purchaseOrderFrequency = await _repo.getPurchaseOrderFrequency(c, s, e);
+          purchaseOrderFrequency = await _repo.getPurchaseOrderFrequency(
+            c,
+            s,
+            e,
+          );
           break;
         case ReportType.purchasePaymentFrequency:
-          purchasePaymentFrequency = await _repo.getPurchasePaymentFrequency(c, s, e);
+          purchasePaymentFrequency = await _repo.getPurchasePaymentFrequency(
+            c,
+            s,
+            e,
+          );
           break;
         case ReportType.purchaseItemFrequency:
           purchaseItemFrequency = await _repo.getPurchaseItemFrequency(c, s, e);
           break;
         case ReportType.purchaseRunningOrderAmount:
-          purchaseRunningOrderAmount = await _repo.getPurchaseRunningOrderAmount(c, s, e);
+          purchaseRunningOrderAmount = await _repo
+              .getPurchaseRunningOrderAmount(c, s, e);
           break;
         case ReportType.purchaseRunningPaymentAmount:
-          purchaseRunningPaymentAmount = await _repo.getPurchaseRunningPaymentAmount(c, s, e);
+          purchaseRunningPaymentAmount = await _repo
+              .getPurchaseRunningPaymentAmount(c, s, e);
           break;
         case ReportType.profitByItem:
           profitByItem = await _repo.getProfitByItem(c, s, e);
@@ -276,6 +338,12 @@ class AnalyticsViewModel extends ChangeNotifier {
           break;
         case ReportType.topProfitableItems:
           topProfitableItems = await _repo.getTopProfitableItems(c, s, e);
+          break;
+        case ReportType.orderHistory:
+          orderHistory = await _repo.getOrderHistory(c, s, e);
+          break;
+        case ReportType.paymentHistory:
+          paymentHistory = await _repo.getPaymentHistory(c, s, e);
           break;
       }
     } catch (err) {

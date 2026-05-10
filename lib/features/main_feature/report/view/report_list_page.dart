@@ -54,6 +54,8 @@ class ReportListPage extends StatelessWidget {
               ReportType.salesItemFrequency,
               ReportType.salesRunningOrderAmount,
               ReportType.salesRunningPaymentAmount,
+              ReportType.orderHistory,
+              ReportType.paymentHistory,
             ],
             companyId: companyId,
           ),
@@ -132,11 +134,7 @@ class _ReportSection extends StatelessWidget {
               for (int i = 0; i < items.length; i++) ...[
                 _ReportTile(reportType: items[i], companyId: companyId),
                 if (i < items.length - 1)
-                  Divider(
-                    height: 1,
-                    indent: 16,
-                    color: LoginColors.border,
-                  ),
+                  Divider(height: 1, indent: 16, color: LoginColors.border),
               ],
             ],
           ),
@@ -162,7 +160,11 @@ class _ReportTile extends StatelessWidget {
           color: LoginColors.textPrimary,
         ),
       ),
-      trailing: Icon(Icons.chevron_right, color: LoginColors.textTertiary, size: 20),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: LoginColors.textTertiary,
+        size: 20,
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       onTap: () => Navigator.push(
         context,

@@ -69,6 +69,8 @@ import 'package:coreflow/domain/model/main_model/analytics/party_analytics.dart'
 import 'package:coreflow/domain/model/main_model/analytics/item_analytics.dart';
 import 'package:coreflow/domain/model/main_model/analytics/payment_mode.dart';
 import 'package:coreflow/domain/model/main_model/analytics/monthly_trend.dart';
+import 'package:coreflow/domain/model/main_model/analytics/order_history.dart';
+import 'package:coreflow/domain/model/main_model/analytics/payment_history.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors_edit_response.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors_status_response.dart';
 import 'package:coreflow/domain/model/auth_model/verify_otp/verify_otp_request.dart';
@@ -1451,6 +1453,59 @@ class AuthRepository {
           .toList();
     } catch (err) {
       debugPrint('getMonthlyTrend: $err');
+      return [];
+    }
+  }
+
+  Future<List<OrderHistoryEntry>> getOrderHistory(
+    int c,
+    String s,
+    String e, {
+    String orderType = 'ALL',
+    String paidState = 'ALL',
+    List<String> statuses = const [],
+  }) async {
+    try {
+      final statusParam = statuses.isNotEmpty
+          ? '&statuses=${statuses.join(',')}'
+          : '';
+      final url =
+          '${AppConfig.getOrderHistoryUrl(c, s, e)}&orderType=$orderType&paidState=$paidState$statusParam';
+      final r = await _apiService.get(Uri.parse(url));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List)
+          .map((x) => OrderHistoryEntry.fromJson(x as Map<String, dynamic>))
+          .toList();
+    } catch (err) {
+      debugPrint('getOrderHistory: $err');
+      return [];
+    }
+  }
+
+  Future<List<PaymentHistoryEntry>> getPaymentHistory(
+    int c,
+    String s,
+    String e, {
+    String paymentType = 'ALL',
+    List<String> statuses = const [],
+  }) async {
+    try {
+      final statusParam = statuses.isNotEmpty
+          ? '&statuses=${statuses.join(',')}'
+          : '';
+      final url =
+          '${AppConfig.getPaymentHistoryUrl(c, s, e)}&paymentType=$paymentType$statusParam';
+      final r = await _apiService.get(Uri.parse(url));
+      if (r.statusCode != 200) return [];
+      final d = jsonDecode(r.body);
+      if (d['responseStatus'] != true) return [];
+      return (d['responseData'] as List)
+          .map((x) => PaymentHistoryEntry.fromJson(x as Map<String, dynamic>))
+          .toList();
+    } catch (err) {
+      debugPrint('getPaymentHistory: $err');
       return [];
     }
   }
