@@ -1,23 +1,87 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 
+import 'package:app_badge_plus/app_badge_plus.dart';
 import 'package:coreflow/core/storage/token_storage.dart';
 import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
+import 'package:coreflow/firebase_options.dart';
 import 'package:coreflow/routing/app_routinf.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-/// Top-level background message handler — MUST be a top-level function,
-/// not a class method, for Firebase to invoke it from a background isolate.
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
+  DartPluginRegistrant.ensureInitialized();
+
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
+
+  await _applyBadgeCountFromData(message.data);
   debugPrint('FCM background message: ${message.messageId}');
 }
 
-/// Handles FCM push notifications: token management, foreground display,
-/// and notification tap navigation.
+Future<void> _applyBadgeCountFromData(Map<String, dynamic> data) async {
+  final badgeCount = _parseBadgeCount(data);
+  if (badgeCount != null) {
+    await _setLauncherBadge(badgeCount);
+  }
+}
+
+Future<void> _setLauncherBadge(int count) async {
+  if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+    return;
+  }
+
+  final safeCount = count < 0 ? 0 : count;
+  try {
+    final supported = await AppBadgePlus.isSupported();
+    if (supported || Platform.isIOS || Platform.isMacOS) {
+      await AppBadgePlus.updateBadge(safeCount);
+    }
+  } catch (e) {
+    debugPrint('Launcher badge update failed: $e');
+  }
+}
+
+int? _parseBadgeCount(Map<String, dynamic> data) {
+  const keys = ['badge', 'badgeCount', 'unreadCount', 'notificationCount'];
+
+  for (final key in keys) {
+    final value = data[key];
+    if (value == null) continue;
+    if (value is int) return value;
+    if (value is num) return value.round();
+    final parsed = int.tryParse(value.toString().trim());
+    if (parsed != null) return parsed;
+  }
+
+  return null;
+}
+
+int? _parseIntValue(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is num) return value.round();
+  return int.tryParse(value.toString().trim());
+}
+
+String? _firstNonEmpty(Map<String, dynamic> data, List<String> keys) {
+  for (final key in keys) {
+    final value = data[key]?.toString().trim();
+    if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+      return value;
+    }
+  }
+  return null;
+}
+
 class PushNotificationService {
   static const String _channelId = 'coreflow_notifications_v2';
   static const String _channelName = 'CoreFlow Notifications';
@@ -34,110 +98,163 @@ class PushNotificationService {
   final AuthRepository _authRepository = AuthRepository();
 
   bool _initialized = false;
+  int _lastBadgeCount = 0;
 
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
 
-    // Register background handler FIRST
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     await _messaging.setAutoInitEnabled(true);
 
-    // Request permission
-    final settings = await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-    debugPrint('FCM permission status: ${settings.authorizationStatus}');
-
-    // Enable foreground notification display on Android
-    await _messaging.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    // Set up local notifications for foreground display
     await _setupLocalNotifications();
+    await _requestNotificationPermissions();
+    await _saveCurrentToken();
 
-    // Get and save FCM token
-    final token = await _messaging.getToken();
-    if (token != null) {
-      await TokenStorage.saveFcmToken(token);
-      debugPrint('FCM token: ${token.substring(0, 30)}...');
-    } else {
-      debugPrint('FCM token is NULL — push will not work');
-    }
-
-    // Listen for token refresh
     _messaging.onTokenRefresh.listen((newToken) async {
       debugPrint('FCM token refreshed');
       await TokenStorage.saveFcmToken(newToken);
       if (await TokenStorage.hasValidToken()) {
         await _registerWithBackend(newToken);
+        await syncBadgeFromBackend();
       }
     });
 
-    // Foreground messages — show as local notification
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    FirebaseMessaging.onMessage.listen((message) {
+      unawaited(_handleForegroundMessage(message));
+    });
 
-    // Background/terminated notification tap
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      unawaited(_handleNotificationTap(message));
+    });
 
-    // App opened from terminated state via notification
     final initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
-      _handleNotificationTap(initialMessage);
+      unawaited(_handleNotificationTap(initialMessage));
     }
+
+    await syncBadgeFromBackend();
   }
 
-  /// Register the saved FCM token with the backend. Call after login.
   Future<void> registerTokenWithBackend() async {
     final fcmToken = await TokenStorage.getFcmToken();
     if (fcmToken != null) {
       debugPrint('Registering FCM token with backend...');
       final success = await _registerWithBackend(fcmToken);
       debugPrint('FCM token registration: ${success ? 'SUCCESS' : 'FAILED'}');
+      if (success) {
+        await syncBadgeFromBackend();
+      }
     } else {
-      debugPrint('No FCM token to register — skipping');
+      debugPrint('No FCM token to register, skipping');
     }
   }
 
-  /// Deregister the FCM token from the backend. Call before logout.
   Future<void> deregisterToken() async {
     final fcmToken = await TokenStorage.getFcmToken();
     if (fcmToken != null) {
       await _authRepository.deregisterDeviceToken(fcmToken);
     }
+    await clearBadge();
+  }
+
+  Future<void> setBadgeCount(int count) async {
+    _lastBadgeCount = count < 0 ? 0 : count;
+    await _setLauncherBadge(_lastBadgeCount);
+  }
+
+  Future<void> clearBadge() => setBadgeCount(0);
+
+  Future<int?> syncBadgeFromBackend({int? companyId}) async {
+    if (!await TokenStorage.hasValidToken()) return null;
+
+    final resolvedCompanyId = companyId ?? await _storedCompanyId();
+    if (resolvedCompanyId == null) return null;
+
+    final unreadCount = await _authRepository.getUnreadNotificationCount(
+      resolvedCompanyId,
+    );
+    await setBadgeCount(unreadCount);
+    return unreadCount;
   }
 
   Future<bool> _registerWithBackend(String fcmToken) async {
     final deviceType = Platform.isAndroid ? 'ANDROID' : 'IOS';
-    return await _authRepository.registerDeviceToken(fcmToken, deviceType);
+    return _authRepository.registerDeviceToken(fcmToken, deviceType);
+  }
+
+  Future<void> _saveCurrentToken() async {
+    final token = await _messaging.getToken();
+    if (token != null) {
+      await TokenStorage.saveFcmToken(token);
+      debugPrint('FCM token: ${token.substring(0, 30)}...');
+    } else {
+      debugPrint('FCM token is null, push will not work on this device');
+    }
+  }
+
+  Future<void> _requestNotificationPermissions() async {
+    final settings = await _messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+    debugPrint('FCM permission status: ${settings.authorizationStatus}');
+
+    if (Platform.isAndroid) {
+      final granted = await _localNotifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.requestNotificationsPermission();
+      debugPrint('Android notification permission granted: $granted');
+    } else if (Platform.isIOS) {
+      final granted = await _localNotifications
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >()
+          ?.requestPermissions(alert: true, badge: true, sound: true);
+      debugPrint('iOS notification permission granted: $granted');
+    }
+
+    await _messaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
   }
 
   Future<void> _setupLocalNotifications() async {
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
     );
-    const iosSettings = DarwinInitializationSettings();
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+      defaultPresentAlert: true,
+      defaultPresentBadge: true,
+      defaultPresentSound: true,
+    );
     const initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
 
     await _localNotifications.initialize(
-      initSettings,
+      settings: initSettings,
       onDidReceiveNotificationResponse: (response) {
         final payload = response.payload;
         if (payload != null && payload.isNotEmpty) {
-          _navigateToRoute(payload);
+          unawaited(_handleLocalNotificationPayload(payload));
         }
       },
     );
 
-    // Create the notification channel for Android
     const channel = AndroidNotificationChannel(
       _channelId,
       _channelName,
@@ -145,6 +262,7 @@ class PushNotificationService {
       importance: Importance.high,
       playSound: true,
       enableVibration: true,
+      showBadge: true,
     );
 
     await _localNotifications
@@ -154,19 +272,29 @@ class PushNotificationService {
         ?.createNotificationChannel(channel);
   }
 
-  void _handleForegroundMessage(RemoteMessage message) {
+  Future<void> _handleForegroundMessage(RemoteMessage message) async {
     debugPrint(
-      'FCM foreground message received: ${message.notification?.title}',
+      'FCM foreground message received: ${message.notification?.title ?? message.data['title']}',
     );
 
+    final badgeCount = await _updateBadgeForMessage(message);
     final notification = message.notification;
-    if (notification == null) return;
+    final title =
+        notification?.title ??
+        _firstNonEmpty(message.data, ['title', 'notificationTitle', 'subject']);
+    final body =
+        notification?.body ??
+        _firstNonEmpty(message.data, ['body', 'message', 'notificationBody']);
 
-    _localNotifications.show(
-      message.hashCode,
-      notification.title,
-      notification.body,
-      const NotificationDetails(
+    if ((title == null || title.isEmpty) && (body == null || body.isEmpty)) {
+      return;
+    }
+
+    await _localNotifications.show(
+      id: message.hashCode,
+      title: title,
+      body: body,
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _channelId,
           _channelName,
@@ -175,25 +303,88 @@ class PushNotificationService {
           priority: Priority.high,
           playSound: true,
           enableVibration: true,
+          channelShowBadge: true,
+          number: badgeCount ?? _lastBadgeCount,
           icon: '@mipmap/ic_launcher',
         ),
         iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
+          badgeNumber: badgeCount ?? _lastBadgeCount,
         ),
       ),
-      payload: message.data['actionUrl'] ?? '',
+      payload: _buildLocalPayload(message),
     );
   }
 
-  void _handleNotificationTap(RemoteMessage message) {
+  Future<void> _handleNotificationTap(RemoteMessage message) async {
+    await _markNotificationReadFromData(message.data);
+    final companyId = _companyIdFromData(message.data);
+    await syncBadgeFromBackend(companyId: companyId);
+
     final actionUrl = message.data['actionUrl'];
     if (actionUrl != null && actionUrl.isNotEmpty) {
       Future.delayed(const Duration(milliseconds: 500), () {
         _navigateToRoute(actionUrl);
       });
     }
+  }
+
+  Future<int?> _updateBadgeForMessage(RemoteMessage message) async {
+    final badgeCount = _parseBadgeCount(message.data);
+    if (badgeCount != null) {
+      await setBadgeCount(badgeCount);
+      return badgeCount;
+    }
+
+    return syncBadgeFromBackend(companyId: _companyIdFromData(message.data));
+  }
+
+  String _buildLocalPayload(RemoteMessage message) {
+    return jsonEncode({
+      'actionUrl': message.data['actionUrl'] ?? '',
+      'notificationId': message.data['notificationId'] ?? '',
+      'toCompanyId': message.data['toCompanyId'] ?? '',
+      'companyId': message.data['companyId'] ?? '',
+    });
+  }
+
+  Future<void> _handleLocalNotificationPayload(String payload) async {
+    String route = payload;
+    try {
+      final decoded = jsonDecode(payload);
+      if (decoded is Map<String, dynamic>) {
+        await _markNotificationReadFromData(decoded);
+        await syncBadgeFromBackend(companyId: _companyIdFromData(decoded));
+        route = decoded['actionUrl']?.toString() ?? '';
+      }
+    } catch (_) {
+      // Older payloads were plain routes.
+    }
+
+    if (route.isNotEmpty) {
+      _navigateToRoute(route);
+    }
+  }
+
+  Future<void> _markNotificationReadFromData(Map<String, dynamic> data) async {
+    final notificationId = _parseIntValue(data['notificationId']);
+    final companyId = _companyIdFromData(data);
+    if (notificationId == null || companyId == null) return;
+    if (!await TokenStorage.hasValidToken()) return;
+
+    await _authRepository.markNotificationRead(companyId, notificationId);
+  }
+
+  int? _companyIdFromData(Map<String, dynamic> data) {
+    return _parseIntValue(data['toCompanyId']) ??
+        _parseIntValue(data['companyId']);
+  }
+
+  Future<int?> _storedCompanyId() async {
+    final data = await TokenStorage.getFullAuthData();
+    return _parseIntValue(data?['companyId']);
   }
 
   void _navigateToRoute(String route) {
