@@ -12,7 +12,11 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await PushNotificationService().initialize();
+  try {
+    await PushNotificationService().initialize();
+  } catch (e) {
+    debugPrint('Push notification initialization failed: $e');
+  }
   runApp(
     MultiProvider(
       providers: [

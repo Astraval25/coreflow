@@ -11,6 +11,12 @@ class AppConfig {
   static const String resendOtpEndpoint = '/api/auth/send-otp';
   static const String companyEndpoint = '/api/companies/my-companies';
   static const String allCompaniesEndpoint = '/api/companies';
+  static const String marketplaceCompaniesEndpoint =
+      '/api/marketplace/companies';
+  static const String marketplaceCompanyDetailEndpoint =
+      '/api/marketplace/companies/{companyId}';
+  static const String marketplaceCompanyItemsEndpoint =
+      '/api/marketplace/companies/{companyId}/items';
   static const String refreshTokenEndpoint = '/api/auth/refresh-token';
 
   // Company CRUD endpoints
@@ -105,6 +111,23 @@ class AppConfig {
       '/api/companies/{companyId}/payments/payment-proof';
   static const String paymentProofFileEndpoint =
       '/api/companies/{companyId}/payments/payment-proof/{fsId}';
+  static const String expenseAccountsEndpoint =
+      '/api/companies/{companyId}/expense-accounts';
+  static const String expenseAccountTypesEndpoint =
+      '/api/companies/{companyId}/expense-accounts/account-types';
+  static const String expenseAccountDetailEndpoint =
+      '/api/companies/{companyId}/expense-accounts/{expenseAccountId}';
+  static const String expenseAccountActivateEndpoint =
+      '/api/companies/{companyId}/expense-accounts/{expenseAccountId}/activate';
+  static const String expenseAccountDeactivateEndpoint =
+      '/api/companies/{companyId}/expense-accounts/{expenseAccountId}/deactivate';
+  static const String expensesEndpoint = '/api/companies/{companyId}/expenses';
+  static const String expenseDetailEndpoint =
+      '/api/companies/{companyId}/expenses/{expenseId}';
+  static const String expenseActivateEndpoint =
+      '/api/companies/{companyId}/expenses/{expenseId}/activate';
+  static const String expenseDeactivateEndpoint =
+      '/api/companies/{companyId}/expenses/{expenseId}/deactivate';
 
   static const String updatePurchaseOrderEndpoint =
       '/api/companies/{companyId}/purchase/orders/{orderId}';
@@ -134,7 +157,13 @@ class AppConfig {
   static String get resendOtpUrl => '$baseUrl$resendOtpEndpoint';
   static String get companyUrl => '$baseUrl$companyEndpoint';
   static String get allCompaniesUrl => '$baseUrl$allCompaniesEndpoint';
+  static String get marketplaceCompaniesUrl =>
+      '$baseUrl$marketplaceCompaniesEndpoint';
   static String get refreshTokenUrl => '$baseUrl$refreshTokenEndpoint';
+  static String getMarketplaceCompanyDetailUrl(int companyId) =>
+      '$baseUrl${marketplaceCompanyDetailEndpoint.replaceAll('{companyId}', companyId.toString())}';
+  static String getMarketplaceCompanyItemsUrl(int companyId) =>
+      '$baseUrl${marketplaceCompanyItemsEndpoint.replaceAll('{companyId}', companyId.toString())}';
   static String getCustomersUrl(int companyId) =>
       '$baseUrl${customersEndpoint.replaceAll('{companyId}', companyId.toString())}';
 
@@ -312,6 +341,50 @@ class AppConfig {
 
   static String getPaymentProofFileUrl(int companyId, String fsId) =>
       '$baseUrl${paymentProofFileEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{fsId}', fsId)}';
+
+  static String getExpenseAccountTypesUrl(int companyId) =>
+      '$baseUrl${expenseAccountTypesEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getExpenseAccountsUrl(int companyId, {bool? activeOnly}) {
+    final base =
+        '$baseUrl${expenseAccountsEndpoint.replaceAll('{companyId}', companyId.toString())}';
+    if (activeOnly == null) return base;
+    return '$base?activeOnly=$activeOnly';
+  }
+
+  static String getExpenseAccountDetailUrl(
+    int companyId,
+    int expenseAccountId,
+  ) =>
+      '$baseUrl${expenseAccountDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{expenseAccountId}', expenseAccountId.toString())}';
+
+  static String getExpenseAccountActivateUrl(
+    int companyId,
+    int expenseAccountId,
+  ) =>
+      '$baseUrl${expenseAccountActivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{expenseAccountId}', expenseAccountId.toString())}';
+
+  static String getExpenseAccountDeactivateUrl(
+    int companyId,
+    int expenseAccountId,
+  ) =>
+      '$baseUrl${expenseAccountDeactivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{expenseAccountId}', expenseAccountId.toString())}';
+
+  static String getExpensesUrl(int companyId, {bool? activeOnly}) {
+    final base =
+        '$baseUrl${expensesEndpoint.replaceAll('{companyId}', companyId.toString())}';
+    if (activeOnly == null) return base;
+    return '$base?activeOnly=$activeOnly';
+  }
+
+  static String getExpenseDetailUrl(int companyId, int expenseId) =>
+      '$baseUrl${expenseDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{expenseId}', expenseId.toString())}';
+
+  static String getExpenseActivateUrl(int companyId, int expenseId) =>
+      '$baseUrl${expenseActivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{expenseId}', expenseId.toString())}';
+
+  static String getExpenseDeactivateUrl(int companyId, int expenseId) =>
+      '$baseUrl${expenseDeactivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{expenseId}', expenseId.toString())}';
 
   static String getCreatePaymentReceivedUrl(int companyId) =>
       '$baseUrl${createPaymentReceivedEndpoint.replaceAll('{companyId}', companyId.toString())}';
@@ -524,6 +597,10 @@ class AppConfig {
       '/api/companies/{companyId}/modemp/work-logs/pending';
   static const String reviewWorkLogEndpoint =
       '/api/companies/{companyId}/modemp/work-logs/{logId}/review';
+  static const String updateWorkLogByAdminEndpoint =
+      '/api/companies/{companyId}/modemp/work-logs/{logId}';
+  static const String deleteWorkLogByAdminEndpoint =
+      '/api/companies/{companyId}/modemp/work-logs/{logId}';
   static const String leaveLogsEndpoint =
       '/api/companies/{companyId}/modemp/leave-logs';
   static const String leaveLogsByEmployeeEndpoint =
@@ -665,6 +742,12 @@ class AppConfig {
 
   static String getReviewWorkLogUrl(int companyId, int logId) =>
       '$baseUrl${reviewWorkLogEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{logId}', logId.toString())}';
+
+  static String getUpdateWorkLogByAdminUrl(int companyId, int logId) =>
+      '$baseUrl${updateWorkLogByAdminEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{logId}', logId.toString())}';
+
+  static String getDeleteWorkLogByAdminUrl(int companyId, int logId) =>
+      '$baseUrl${deleteWorkLogByAdminEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{logId}', logId.toString())}';
 
   static String getLeaveLogsUrl(int companyId, {String? from, String? to}) {
     final base =

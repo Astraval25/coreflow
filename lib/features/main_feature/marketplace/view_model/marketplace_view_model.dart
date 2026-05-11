@@ -21,7 +21,7 @@ class MarketplaceViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _companies = await _authRepository.getAllCompanies();
+      _companies = await _authRepository.getMarketplaceCompanies();
     } catch (e) {
       _error = 'Failed to load companies';
     } finally {

@@ -137,7 +137,11 @@ class PushNotificationService {
   }
 
   Future<void> registerTokenWithBackend() async {
-    final fcmToken = await TokenStorage.getFcmToken();
+    var fcmToken = await TokenStorage.getFcmToken();
+    if (fcmToken == null || fcmToken.isEmpty) {
+      await _saveCurrentToken();
+      fcmToken = await TokenStorage.getFcmToken();
+    }
     if (fcmToken != null) {
       debugPrint('Registering FCM token with backend...');
       final success = await _registerWithBackend(fcmToken);
@@ -184,12 +188,35 @@ class PushNotificationService {
   }
 
   Future<void> _saveCurrentToken() async {
-    final token = await _messaging.getToken();
-    if (token != null) {
-      await TokenStorage.saveFcmToken(token);
-      debugPrint('FCM token: ${token.substring(0, 30)}...');
-    } else {
-      debugPrint('FCM token is null, push will not work on this device');
+    const maxAttempts = 4;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        final token = await _messaging.getToken();
+        if (token != null && token.isNotEmpty) {
+          await TokenStorage.saveFcmToken(token);
+          final previewLength = token.length < 30 ? token.length : 30;
+          debugPrint('FCM token: ${token.substring(0, previewLength)}...');
+          return;
+        }
+        debugPrint('FCM token is null, push may not work on this device yet');
+      } catch (e) {
+        final message = e.toString().toUpperCase();
+        final isRetryable =
+            message.contains('SERVICE_NOT_AVAILABLE') ||
+            message.contains('INTERNAL_SERVER_ERROR') ||
+            message.contains('IOEXCEPTION');
+        debugPrint('FCM getToken attempt $attempt failed: $e');
+        if (!isRetryable || attempt == maxAttempts) {
+          debugPrint(
+            'FCM token fetch failed after $attempt attempts. The app will continue and retry later.',
+          );
+          return;
+        }
+      }
+
+      if (attempt < maxAttempts) {
+        await Future.delayed(Duration(seconds: attempt * 2));
+      }
     }
   }
 

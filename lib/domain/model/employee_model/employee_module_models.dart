@@ -405,6 +405,9 @@ class SalaryPeriodSummary {
   final String salaryType;
   final double? grossAmount;
   final double? netAmount;
+  final double? paidAmount;
+  final double? balanceAmount;
+  final int? paymentCount;
   final String status;
 
   const SalaryPeriodSummary({
@@ -418,6 +421,9 @@ class SalaryPeriodSummary {
     required this.salaryType,
     this.grossAmount,
     this.netAmount,
+    this.paidAmount,
+    this.balanceAmount,
+    this.paymentCount,
     required this.status,
   });
 
@@ -433,6 +439,9 @@ class SalaryPeriodSummary {
       salaryType: (json['salaryType'] ?? '').toString(),
       grossAmount: employeeParseDouble(json['grossAmount']),
       netAmount: employeeParseDouble(json['netAmount']),
+      paidAmount: employeeParseDouble(json['paidAmount']),
+      balanceAmount: employeeParseDouble(json['balanceAmount']),
+      paymentCount: employeeParseInt(json['paymentCount']),
       status: (json['status'] ?? '').toString(),
     );
   }
@@ -476,6 +485,35 @@ class SalaryLineData {
   }
 }
 
+class SalaryPaymentData {
+  final int? expenseId;
+  final String expenseDate;
+  final String paymentMode;
+  final double? amount;
+  final String? invoiceNo;
+  final String? remark;
+
+  const SalaryPaymentData({
+    this.expenseId,
+    required this.expenseDate,
+    required this.paymentMode,
+    this.amount,
+    this.invoiceNo,
+    this.remark,
+  });
+
+  factory SalaryPaymentData.fromJson(Map<String, dynamic> json) {
+    return SalaryPaymentData(
+      expenseId: employeeParseInt(json['expenseId']),
+      expenseDate: (json['expenseDate'] ?? '').toString(),
+      paymentMode: (json['paymentMode'] ?? '').toString(),
+      amount: employeeParseDouble(json['amount']),
+      invoiceNo: json['invoiceNo']?.toString(),
+      remark: json['remark']?.toString(),
+    );
+  }
+}
+
 class SalaryPeriodDetailData {
   final int salaryPeriodId;
   final int employeeId;
@@ -493,12 +531,16 @@ class SalaryPeriodDetailData {
   final double? lopDeduction;
   final double? otherDeductions;
   final double? netAmount;
+  final double? paidAmount;
+  final double? balanceAmount;
+  final int? paymentCount;
   final String status;
   final int? approvedBy;
   final String? approvedDt;
   final String? paidDt;
   final String? paymentRef;
   final String? computedDt;
+  final List<SalaryPaymentData> payments;
   final List<SalaryLineData> lines;
 
   const SalaryPeriodDetailData({
@@ -518,12 +560,16 @@ class SalaryPeriodDetailData {
     this.lopDeduction,
     this.otherDeductions,
     this.netAmount,
+    this.paidAmount,
+    this.balanceAmount,
+    this.paymentCount,
     required this.status,
     this.approvedBy,
     this.approvedDt,
     this.paidDt,
     this.paymentRef,
     this.computedDt,
+    this.payments = const [],
     this.lines = const [],
   });
 
@@ -545,12 +591,19 @@ class SalaryPeriodDetailData {
       lopDeduction: employeeParseDouble(json['lopDeduction']),
       otherDeductions: employeeParseDouble(json['otherDeductions']),
       netAmount: employeeParseDouble(json['netAmount']),
+      paidAmount: employeeParseDouble(json['paidAmount']),
+      balanceAmount: employeeParseDouble(json['balanceAmount']),
+      paymentCount: employeeParseInt(json['paymentCount']),
       status: (json['status'] ?? '').toString(),
       approvedBy: employeeParseInt(json['approvedBy']),
       approvedDt: json['approvedDt']?.toString(),
       paidDt: json['paidDt']?.toString(),
       paymentRef: json['paymentRef']?.toString(),
       computedDt: json['computedDt']?.toString(),
+      payments: (json['payments'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(SalaryPaymentData.fromJson)
+          .toList(),
       lines: (json['lines'] as List<dynamic>? ?? const [])
           .whereType<Map<String, dynamic>>()
           .map(SalaryLineData.fromJson)

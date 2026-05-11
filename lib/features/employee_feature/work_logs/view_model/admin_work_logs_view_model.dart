@@ -272,6 +272,7 @@ class AdminWorkLogsViewModel extends ChangeNotifier {
   }
 
   Future<bool> updateWorkLog({
+    required int logId,
     required int employeeId,
     required int workDefId,
     required String logDate,
@@ -286,7 +287,9 @@ class AdminWorkLogsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _employeeRepository.updateMyWorkLog(
+      final response = await _employeeRepository.updateWorkLogByAdmin(
+        _companyId,
+        logId,
         CreateWorkLogRequest(
           employeeId: employeeId,
           workDefId: workDefId,
@@ -294,7 +297,6 @@ class AdminWorkLogsViewModel extends ChangeNotifier {
           quantity: quantity,
           employeeRemarks: employeeRemarks,
         ),
-        companyId: _companyId,
       );
 
       if (response?.responseStatus == true) {
@@ -307,6 +309,35 @@ class AdminWorkLogsViewModel extends ChangeNotifier {
       return false;
     } catch (e) {
       _error = 'Failed to update work log';
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> deleteWorkLog(int logId) async {
+    if (_companyId <= 0) return false;
+
+    _isSaving = true;
+    _error = null;
+    _message = null;
+    notifyListeners();
+
+    try {
+      final response = await _employeeRepository.deleteWorkLogByAdmin(
+        _companyId,
+        logId,
+      );
+      if (response?.responseStatus == true) {
+        _message = response?.responseMessage ?? 'Work log deleted successfully';
+        await refresh();
+        return true;
+      }
+      _error = response?.responseMessage ?? 'Failed to delete work log';
+      return false;
+    } catch (e) {
+      _error = 'Failed to delete work log';
       return false;
     } finally {
       _isSaving = false;

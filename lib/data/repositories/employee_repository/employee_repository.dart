@@ -587,11 +587,13 @@ class EmployeeRepository {
   }) async {
     try {
       final response = await _apiService.get(
-        Uri.parse(AppConfig.getEmployeeMySalaryPeriodsUrl(
-          from: from,
-          to: to,
-          period: period,
-        )),
+        Uri.parse(
+          AppConfig.getEmployeeMySalaryPeriodsUrl(
+            from: from,
+            to: to,
+            period: period,
+          ),
+        ),
       );
       return _parseList(response, SalaryPeriodSummary.fromJson);
     } catch (e) {
@@ -695,8 +697,7 @@ class EmployeeRepository {
     return getWorkDefinitions(companyId, activeOnly: activeOnly);
   }
 
-  /// Update an existing employee work log via the admin "/employee" endpoint.
-  /// Server should reject if the log is already APPROVED.
+  /// Update an existing employee work log via the employee update endpoint.
   Future<EmployeeEditResponse?> updateMyWorkLog(
     CreateWorkLogRequest request, {
     required int companyId,
@@ -713,8 +714,39 @@ class EmployeeRepository {
     }
   }
 
-  /// Update an existing employee leave log via the admin "/employee" endpoint.
-  /// Server should reject if the leave is already APPROVED.
+  Future<EmployeeEditResponse?> updateWorkLogByAdmin(
+    int companyId,
+    int logId,
+    CreateWorkLogRequest request,
+  ) async {
+    try {
+      final response = await _apiService.put(
+        AppConfig.getUpdateWorkLogByAdminUrl(companyId, logId),
+        request.toJson(),
+      );
+      return _parseEditResponse(response);
+    } catch (e) {
+      debugPrint('Update work log by admin error: $e');
+      return null;
+    }
+  }
+
+  Future<EmployeeStatusResponse?> deleteWorkLogByAdmin(
+    int companyId,
+    int logId,
+  ) async {
+    try {
+      final response = await _apiService.delete(
+        AppConfig.getDeleteWorkLogByAdminUrl(companyId, logId),
+      );
+      return _parseStatusResponse(response);
+    } catch (e) {
+      debugPrint('Delete work log by admin error: $e');
+      return null;
+    }
+  }
+
+  /// Update an existing employee leave log via the employee update endpoint.
   Future<EmployeeEditResponse?> updateMyLeaveLog(
     CreateLeaveLogRequest request, {
     required int companyId,
@@ -909,43 +941,47 @@ class EmployeeRepository {
     final fromDate = DateTime.tryParse(from);
     final toDate = DateTime.tryParse(to);
 
-    final filtered = periods.where((period) {
-      if (fromDate == null || toDate == null) return true;
-      final periodFrom = DateTime.tryParse(period.fromDate);
-      final periodTo = DateTime.tryParse(period.toDate);
-      if (periodFrom == null || periodTo == null) return true;
-      return !periodTo.isBefore(fromDate) && !periodFrom.isAfter(toDate);
-    }).toList(growable: false);
+    final filtered = periods
+        .where((period) {
+          if (fromDate == null || toDate == null) return true;
+          final periodFrom = DateTime.tryParse(period.fromDate);
+          final periodTo = DateTime.tryParse(period.toDate);
+          if (periodFrom == null || periodTo == null) return true;
+          return !periodTo.isBefore(fromDate) && !periodFrom.isAfter(toDate);
+        })
+        .toList(growable: false);
 
     var totalGross = 0.0;
     var totalNet = 0.0;
     var totalDeductions = 0.0;
 
-    final details = filtered.map((period) {
-      final gross = period.grossAmount ?? 0;
-      final net = period.netAmount ?? 0;
-      final deductions = gross - net;
+    final details = filtered
+        .map((period) {
+          final gross = period.grossAmount ?? 0;
+          final net = period.netAmount ?? 0;
+          final deductions = gross - net;
 
-      totalGross += gross;
-      totalNet += net;
-      totalDeductions += deductions;
+          totalGross += gross;
+          totalNet += net;
+          totalDeductions += deductions;
 
-      return SalaryPeriodDetailData(
-        salaryPeriodId: period.salaryPeriodId,
-        employeeId: period.employeeId,
-        employeeName: period.employeeName,
-        employeeCode: period.employeeCode,
-        period: period.period,
-        fromDate: period.fromDate,
-        toDate: period.toDate,
-        salaryType: period.salaryType,
-        grossAmount: period.grossAmount,
-        otherDeductions: deductions,
-        netAmount: period.netAmount,
-        status: period.status,
-        lines: const [],
-      );
-    }).toList(growable: false);
+          return SalaryPeriodDetailData(
+            salaryPeriodId: period.salaryPeriodId,
+            employeeId: period.employeeId,
+            employeeName: period.employeeName,
+            employeeCode: period.employeeCode,
+            period: period.period,
+            fromDate: period.fromDate,
+            toDate: period.toDate,
+            salaryType: period.salaryType,
+            grossAmount: period.grossAmount,
+            otherDeductions: deductions,
+            netAmount: period.netAmount,
+            status: period.status,
+            lines: const [],
+          );
+        })
+        .toList(growable: false);
 
     return SalaryReportData(
       fromDate: from,

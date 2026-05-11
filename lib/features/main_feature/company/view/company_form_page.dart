@@ -24,6 +24,17 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
   late final TextEditingController _gstController;
   late final TextEditingController _hsnController;
   late final TextEditingController _shortNameController;
+  late final TextEditingController _contactPersonController;
+  late final TextEditingController _contactEmailController;
+  late final TextEditingController _contactPhoneController;
+  late final TextEditingController _websiteController;
+  late final TextEditingController _addressLine1Controller;
+  late final TextEditingController _addressLine2Controller;
+  late final TextEditingController _cityController;
+  late final TextEditingController _stateController;
+  late final TextEditingController _countryController;
+  late final TextEditingController _postalCodeController;
+  late final TextEditingController _publicDescriptionController;
 
   File? _pendingLogo;
   String? _currentFsId;
@@ -33,12 +44,47 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.company?.companyName ?? '');
-    _industryController = TextEditingController(text: widget.company?.industry ?? '');
+    _nameController = TextEditingController(
+      text: widget.company?.companyName ?? '',
+    );
+    _industryController = TextEditingController(
+      text: widget.company?.industry ?? '',
+    );
     _panController = TextEditingController(text: widget.company?.pan ?? '');
     _gstController = TextEditingController(text: widget.company?.gstNo ?? '');
     _hsnController = TextEditingController(text: widget.company?.hsnCode ?? '');
-    _shortNameController = TextEditingController(text: widget.company?.shortName ?? '');
+    _shortNameController = TextEditingController(
+      text: widget.company?.shortName ?? '',
+    );
+    _contactPersonController = TextEditingController(
+      text: widget.company?.contactPerson ?? '',
+    );
+    _contactEmailController = TextEditingController(
+      text: widget.company?.contactEmail ?? '',
+    );
+    _contactPhoneController = TextEditingController(
+      text: widget.company?.contactPhone ?? '',
+    );
+    _websiteController = TextEditingController(
+      text: widget.company?.website ?? '',
+    );
+    _addressLine1Controller = TextEditingController(
+      text: widget.company?.addressLine1 ?? '',
+    );
+    _addressLine2Controller = TextEditingController(
+      text: widget.company?.addressLine2 ?? '',
+    );
+    _cityController = TextEditingController(text: widget.company?.city ?? '');
+    _stateController = TextEditingController(text: widget.company?.state ?? '');
+    _countryController = TextEditingController(
+      text: widget.company?.country ?? '',
+    );
+    _postalCodeController = TextEditingController(
+      text: widget.company?.postalCode ?? '',
+    );
+    _publicDescriptionController = TextEditingController(
+      text: widget.company?.publicDescription ?? '',
+    );
     _currentFsId = widget.company?.fsId;
   }
 
@@ -50,6 +96,17 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
     _gstController.dispose();
     _hsnController.dispose();
     _shortNameController.dispose();
+    _contactPersonController.dispose();
+    _contactEmailController.dispose();
+    _contactPhoneController.dispose();
+    _websiteController.dispose();
+    _addressLine1Controller.dispose();
+    _addressLine2Controller.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _countryController.dispose();
+    _postalCodeController.dispose();
+    _publicDescriptionController.dispose();
     super.dispose();
   }
 
@@ -104,8 +161,9 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
                 label: 'Company Name',
                 hint: 'Enter company name',
                 icon: Icons.business_rounded,
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Company name is required' : null,
+                validator: (v) => v == null || v.trim().isEmpty
+                    ? 'Company name is required'
+                    : null,
               ),
               const SizedBox(height: 16),
               _buildField(
@@ -113,8 +171,9 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
                 label: 'Industry',
                 hint: 'e.g. Software Development, IT',
                 icon: Icons.category_rounded,
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Industry is required' : null,
+                validator: (v) => v == null || v.trim().isEmpty
+                    ? 'Industry is required'
+                    : null,
               ),
               const SizedBox(height: 16),
               _buildField(
@@ -147,11 +206,94 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
                 icon: Icons.numbers_rounded,
                 keyboardType: TextInputType.number,
               ),
+              const SizedBox(height: 16),
+              _buildField(
+                controller: _contactPersonController,
+                label: 'Contact Person',
+                hint: 'Enter contact person name',
+                icon: Icons.person_rounded,
+              ),
+              const SizedBox(height: 16),
+              _buildField(
+                controller: _contactEmailController,
+                label: 'Contact Email',
+                hint: 'e.g. support@company.com',
+                icon: Icons.email_rounded,
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 16),
+              _buildField(
+                controller: _contactPhoneController,
+                label: 'Contact Phone',
+                hint: 'e.g. 9876543210',
+                icon: Icons.phone_rounded,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 16),
+              _buildField(
+                controller: _websiteController,
+                label: 'Website',
+                hint: 'e.g. https://company.com',
+                icon: Icons.language_rounded,
+                keyboardType: TextInputType.url,
+              ),
+              const SizedBox(height: 16),
+              _buildField(
+                controller: _addressLine1Controller,
+                label: 'Address Line 1',
+                hint: 'Building / Street / Area',
+                icon: Icons.location_on_outlined,
+              ),
+              const SizedBox(height: 16),
+              _buildField(
+                controller: _addressLine2Controller,
+                label: 'Address Line 2',
+                hint: 'Landmark / Industrial area',
+                icon: Icons.map_outlined,
+              ),
+              const SizedBox(height: 16),
+              _buildField(
+                controller: _cityController,
+                label: 'City',
+                hint: 'Enter city',
+                icon: Icons.location_city_rounded,
+              ),
+              const SizedBox(height: 16),
+              _buildField(
+                controller: _stateController,
+                label: 'State',
+                hint: 'Enter state',
+                icon: Icons.flag_outlined,
+              ),
+              const SizedBox(height: 16),
+              _buildField(
+                controller: _countryController,
+                label: 'Country',
+                hint: 'Enter country',
+                icon: Icons.public_rounded,
+              ),
+              const SizedBox(height: 16),
+              _buildField(
+                controller: _postalCodeController,
+                label: 'Postal Code',
+                hint: 'Enter postal code',
+                icon: Icons.markunread_mailbox_outlined,
+              ),
+              const SizedBox(height: 16),
+              _buildField(
+                controller: _publicDescriptionController,
+                label: 'Public Description',
+                hint: 'Short description to show on marketplace profile',
+                icon: Icons.description_outlined,
+                maxLines: 4,
+              ),
               const SizedBox(height: 32),
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: (vm.isSaving || vm.isUploadingLogo) ? null : _submit,
+                  onPressed: (vm.isSaving || vm.isUploadingLogo)
+                      ? null
+                      : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: LoginColors.primary,
                     foregroundColor: Colors.white,
@@ -191,14 +333,19 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
   Widget _buildLogoPicker() {
     Widget preview;
     if (_pendingLogo != null) {
-      preview = Image.file(_pendingLogo!, width: 96, height: 96, fit: BoxFit.cover);
+      preview = Image.file(
+        _pendingLogo!,
+        width: 96,
+        height: 96,
+        fit: BoxFit.cover,
+      );
     } else if (_currentFsId != null && _currentFsId!.isNotEmpty) {
       preview = Image.network(
         AppConfig.getFileUrl(_currentFsId!),
         width: 96,
         height: 96,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _logoPlaceholder(),
+        errorBuilder: (_, _, _) => _logoPlaceholder(),
       );
     } else {
       preview = _logoPlaceholder();
@@ -247,6 +394,7 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
     String? Function(String?)? validator,
     TextInputType? keyboardType,
     TextCapitalization capitalization = TextCapitalization.none,
+    int maxLines = 1,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,6 +413,8 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
           validator: validator,
           keyboardType: keyboardType,
           textCapitalization: capitalization,
+          minLines: maxLines > 1 ? maxLines : 1,
+          maxLines: maxLines,
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w500,
@@ -289,13 +439,19 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: LoginColors.primary, width: 1.5),
+              borderSide: const BorderSide(
+                color: LoginColors.primary,
+                width: 1.5,
+              ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: LoginColors.error),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],
@@ -319,6 +475,17 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
         gstNo: _gstController.text.trim(),
         hsnCode: _hsnController.text.trim(),
         shortName: _shortNameController.text.trim(),
+        contactPerson: _contactPersonController.text.trim(),
+        contactEmail: _contactEmailController.text.trim(),
+        contactPhone: _contactPhoneController.text.trim(),
+        website: _websiteController.text.trim(),
+        addressLine1: _addressLine1Controller.text.trim(),
+        addressLine2: _addressLine2Controller.text.trim(),
+        city: _cityController.text.trim(),
+        state: _stateController.text.trim(),
+        country: _countryController.text.trim(),
+        postalCode: _postalCodeController.text.trim(),
+        publicDescription: _publicDescriptionController.text.trim(),
       );
     } else {
       success = await vm.createCompany(
@@ -328,12 +495,26 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
         gstNo: _gstController.text.trim(),
         hsnCode: _hsnController.text.trim(),
         shortName: _shortNameController.text.trim(),
+        contactPerson: _contactPersonController.text.trim(),
+        contactEmail: _contactEmailController.text.trim(),
+        contactPhone: _contactPhoneController.text.trim(),
+        website: _websiteController.text.trim(),
+        addressLine1: _addressLine1Controller.text.trim(),
+        addressLine2: _addressLine2Controller.text.trim(),
+        city: _cityController.text.trim(),
+        state: _stateController.text.trim(),
+        country: _countryController.text.trim(),
+        postalCode: _postalCodeController.text.trim(),
+        publicDescription: _publicDescriptionController.text.trim(),
       );
       if (success) {
         targetCompanyId = vm.companies
             .where((c) => c.companyName == _nameController.text.trim())
             .map((c) => c.companyId)
-            .fold<int?>(null, (prev, id) => (prev == null || id > prev) ? id : prev);
+            .fold<int?>(
+              null,
+              (prev, id) => (prev == null || id > prev) ? id : prev,
+            );
       }
     }
 
@@ -348,7 +529,9 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
         SnackBar(
           duration: const Duration(seconds: 2),
           content: Text(
-            isEditing ? 'Company updated successfully' : 'Company created successfully',
+            isEditing
+                ? 'Company updated successfully'
+                : 'Company created successfully',
           ),
           backgroundColor: LoginColors.success,
         ),

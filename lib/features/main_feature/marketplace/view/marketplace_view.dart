@@ -82,7 +82,11 @@ class _MarketplaceViewState extends State<MarketplaceView> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: LoginColors.textTertiary),
+            Icon(
+              Icons.error_outline,
+              size: 48,
+              color: LoginColors.textTertiary,
+            ),
             const SizedBox(height: 12),
             Text(
               vm.error ?? 'Something went wrong',
@@ -111,8 +115,11 @@ class _MarketplaceViewState extends State<MarketplaceView> {
           Center(
             child: Column(
               children: [
-                Icon(Icons.store_mall_directory_outlined,
-                    size: 56, color: LoginColors.textTertiary),
+                Icon(
+                  Icons.store_mall_directory_outlined,
+                  size: 56,
+                  color: LoginColors.textTertiary,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   _searchQuery.isNotEmpty
@@ -164,7 +171,8 @@ class _CompanyListItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         splashColor: LoginColors.primaryLight.withValues(alpha: 0.12),
         highlightColor: LoginColors.primaryLight.withValues(alpha: 0.06),
-        onTap: () => context.push(CfRoutes.marketplaceCompany(company.companyId)),
+        onTap: () =>
+            context.push(CfRoutes.marketplaceCompany(company.companyId)),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
@@ -218,17 +226,17 @@ class _CompanyListItem extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: company.isGstVerified
-                      ? LoginColors.success.withValues(alpha:0.12)
-                      : LoginColors.textTertiary.withValues(alpha:0.1),
+                  color: company.isActive
+                      ? LoginColors.success.withValues(alpha: 0.12)
+                      : LoginColors.textTertiary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  company.isGstVerified
-                      ? Icons.verified_rounded
-                      : Icons.gpp_maybe_outlined,
+                  company.isActive
+                      ? Icons.storefront_rounded
+                      : Icons.block_rounded,
                   size: 20,
-                  color: company.isGstVerified
+                  color: company.isActive
                       ? LoginColors.success
                       : LoginColors.textTertiary,
                 ),

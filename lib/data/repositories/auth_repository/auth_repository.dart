@@ -5,6 +5,7 @@ import 'package:coreflow/data/repositories/main_repository/company_ref_repositor
 import 'package:coreflow/data/repositories/main_repository/company_repository.dart';
 import 'package:coreflow/data/repositories/main_repository/config_repository.dart';
 import 'package:coreflow/data/repositories/main_repository/customer_repository.dart';
+import 'package:coreflow/data/repositories/main_repository/expense_repository.dart';
 import 'package:coreflow/data/repositories/employee_repository/employee_repository.dart';
 import 'package:coreflow/data/repositories/main_repository/invitation_repository.dart';
 import 'package:coreflow/data/repositories/main_repository/item_repository.dart';
@@ -14,6 +15,10 @@ import 'package:coreflow/data/repositories/main_repository/vendor_repository.dar
 import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/main_model/company/company.dart';
 import 'package:coreflow/domain/model/main_model/company/marketplace_company.dart';
+import 'package:coreflow/domain/model/main_model/company/marketplace_item.dart';
+import 'package:coreflow/domain/model/main_model/expense/expense.dart';
+import 'package:coreflow/domain/model/main_model/expense/expense_account.dart';
+import 'package:coreflow/domain/model/main_model/expense/expense_requests.dart';
 import 'package:coreflow/domain/model/main_model/company_ref/order_ref.dart';
 import 'package:coreflow/domain/model/main_model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/main_model/config/company_config.dart';
@@ -107,6 +112,7 @@ class AuthRepository {
   final OrderRepository _orderRepo = OrderRepository();
   final PaymentRepository _paymentRepo = PaymentRepository();
   final InvitationRepository _invitationRepo = InvitationRepository();
+  final ExpenseRepository _expenseRepo = ExpenseRepository();
   final EmployeeRepository _employeeRepo = EmployeeRepository();
 
   // ─── Auth ───
@@ -474,8 +480,65 @@ class AuthRepository {
       _companyRepo.activateCompany(companyId);
   Future<bool> deactivateCompany(int companyId) =>
       _companyRepo.deactivateCompany(companyId);
+
   Future<List<MarketplaceCompany>> getAllCompanies() =>
-      _companyRepo.getAllCompanies();
+      _companyRepo.getMarketplaceCompanies();
+  Future<List<MarketplaceCompany>> getMarketplaceCompanies() =>
+      _companyRepo.getMarketplaceCompanies();
+  Future<MarketplaceCompany?> getMarketplaceCompanyById(int companyId) =>
+      _companyRepo.getMarketplaceCompanyById(companyId);
+  Future<List<MarketplaceItem>> getMarketplaceCompanyItems(int companyId) =>
+      _companyRepo.getMarketplaceCompanyItems(companyId);
+
+  // --- Expense Accounts / Expenses (delegates to ExpenseRepository) ---
+
+  Future<List<String>> getExpenseAccountTypes(int companyId) =>
+      _expenseRepo.getExpenseAccountTypes(companyId);
+  Future<ExpenseMutationResult> createExpenseAccount(
+    int companyId,
+    ExpenseAccountRequest request,
+  ) => _expenseRepo.createExpenseAccount(companyId, request);
+  Future<List<ExpenseAccount>> getExpenseAccounts(
+    int companyId, {
+    bool? activeOnly,
+  }) => _expenseRepo.getExpenseAccounts(companyId, activeOnly: activeOnly);
+  Future<ExpenseAccount?> getExpenseAccountDetail(
+    int companyId,
+    int expenseAccountId,
+  ) => _expenseRepo.getExpenseAccountDetail(companyId, expenseAccountId);
+  Future<ExpenseMutationResult> updateExpenseAccount(
+    int companyId,
+    int expenseAccountId,
+    ExpenseAccountRequest request,
+  ) => _expenseRepo.updateExpenseAccount(companyId, expenseAccountId, request);
+  Future<ExpenseMutationResult> activateExpenseAccount(
+    int companyId,
+    int expenseAccountId,
+  ) => _expenseRepo.activateExpenseAccount(companyId, expenseAccountId);
+  Future<ExpenseMutationResult> deactivateExpenseAccount(
+    int companyId,
+    int expenseAccountId,
+  ) => _expenseRepo.deactivateExpenseAccount(companyId, expenseAccountId);
+
+  Future<ExpenseMutationResult> createExpense(
+    int companyId,
+    ExpenseRequest request,
+  ) => _expenseRepo.createExpense(companyId, request);
+  Future<List<Expense>> getExpenses(int companyId, {bool? activeOnly}) =>
+      _expenseRepo.getExpenses(companyId, activeOnly: activeOnly);
+  Future<Expense?> getExpenseDetail(int companyId, int expenseId) =>
+      _expenseRepo.getExpenseDetail(companyId, expenseId);
+  Future<ExpenseMutationResult> updateExpense(
+    int companyId,
+    int expenseId,
+    ExpenseRequest request,
+  ) => _expenseRepo.updateExpense(companyId, expenseId, request);
+  Future<ExpenseMutationResult> activateExpense(int companyId, int expenseId) =>
+      _expenseRepo.activateExpense(companyId, expenseId);
+  Future<ExpenseMutationResult> deactivateExpense(
+    int companyId,
+    int expenseId,
+  ) => _expenseRepo.deactivateExpense(companyId, expenseId);
 
   // ─── Customer (delegates to CustomerRepository) ───
 

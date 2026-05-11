@@ -353,6 +353,7 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
                   onPressed: canSave
                       ? () async {
                           final ok = await vm.updateWorkLog(
+                            logId: log.logId,
                             employeeId: log.employeeId,
                             workDefId: log.workDefId,
                             logDate: log.logDate,
@@ -387,6 +388,44 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
 
     if (!mounted || updated != true) return;
     _showMessage(vm.message ?? 'Work log updated successfully');
+  }
+
+  Future<void> _confirmDeleteWorkLog(
+    AdminWorkLogsViewModel vm,
+    WorkLogData log,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Work Log'),
+          content: Text(
+            'Delete work log for ${log.employeeName} on ${log.logDate}?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: LoginColors.error),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || confirmed != true) return;
+    final ok = await vm.deleteWorkLog(log.logId);
+    if (!mounted) return;
+    _showMessage(
+      ok
+          ? (vm.message ?? 'Work log deleted successfully')
+          : (vm.error ?? 'Failed to delete work log'),
+      isError: !ok,
+    );
   }
 
   @override
@@ -811,7 +850,9 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
     final normalizedStatus = log.status.toUpperCase();
     final canReview = normalizedStatus == 'PENDING';
     final canEdit =
-        normalizedStatus == 'PENDING' || normalizedStatus == 'APPROVED';
+        normalizedStatus == 'PENDING' ||
+        normalizedStatus == 'APPROVED' ||
+        normalizedStatus == 'REJECTED';
     final remarks = (log.employeeRemarks ?? '').trim();
     final adminNotes = (log.adminRemarks ?? '').trim();
     final hasNotes = remarks.isNotEmpty || adminNotes.isNotEmpty;
@@ -909,6 +950,15 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
                     ),
                     const SizedBox(width: 4),
                     _iconBtn(
+                      icon: Icons.delete_outline_rounded,
+                      color: LoginColors.error,
+                      tooltip: 'Delete',
+                      onTap: vm.isSaving
+                          ? null
+                          : () => _confirmDeleteWorkLog(vm, log),
+                    ),
+                    const SizedBox(width: 4),
+                    _iconBtn(
                       icon: Icons.close_rounded,
                       color: LoginColors.error,
                       tooltip: 'Reject',
@@ -939,6 +989,15 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
                         onTap: vm.isSaving
                             ? null
                             : () => _showEditDialog(vm, log),
+                      ),
+                      const SizedBox(width: 6),
+                      _iconBtn(
+                        icon: Icons.delete_outline_rounded,
+                        color: LoginColors.error,
+                        tooltip: 'Delete',
+                        onTap: vm.isSaving
+                            ? null
+                            : () => _confirmDeleteWorkLog(vm, log),
                       ),
                       const SizedBox(width: 6),
                     ],
