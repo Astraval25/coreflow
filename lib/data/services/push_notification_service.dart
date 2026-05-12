@@ -12,6 +12,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/services.dart';
+
+const MethodChannel _coreflowBadgeChannel = MethodChannel('coreflow/badge');
+const String _notificationChannelId = 'coreflow_notifications_v2';
+const String _notificationChannelName = 'CoreFlow Notifications';
+const String _notificationChannelDescription =
+    'Push notifications from CoreFlow';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -23,15 +30,85 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     );
   }
 
-  await _applyBadgeCountFromData(message.data);
+  final badgeCount = await _updateBadgeFromMessageData(message.data);
+  await _showBackgroundLocalNotification(message, badgeCount);
   debugPrint('FCM background message: ${message.messageId}');
 }
 
-Future<void> _applyBadgeCountFromData(Map<String, dynamic> data) async {
+Future<int?> _updateBadgeFromMessageData(Map<String, dynamic> data) async {
   final badgeCount = _parseBadgeCount(data);
   if (badgeCount != null) {
     await _setLauncherBadge(badgeCount);
+    return badgeCount;
   }
+
+  return PushNotificationService().syncBadgeFromBackend(
+    companyId: _companyIdFromMessageData(data),
+  );
+}
+
+Future<void> _showBackgroundLocalNotification(
+  RemoteMessage message,
+  int? badgeCount,
+) async {
+  if (!Platform.isAndroid) return;
+
+  final title =
+      message.notification?.title ??
+      _firstNonEmpty(message.data, ['title', 'notificationTitle', 'subject']);
+  final body =
+      message.notification?.body ??
+      _firstNonEmpty(message.data, ['body', 'message', 'notificationBody']);
+
+  if ((title == null || title.isEmpty) && (body == null || body.isEmpty)) {
+    return;
+  }
+
+  final localNotifications = FlutterLocalNotificationsPlugin();
+  const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const initSettings = InitializationSettings(android: androidSettings);
+  await localNotifications.initialize(settings: initSettings);
+
+  const channel = AndroidNotificationChannel(
+    _notificationChannelId,
+    _notificationChannelName,
+    description: _notificationChannelDescription,
+    importance: Importance.high,
+    playSound: true,
+    enableVibration: true,
+    showBadge: true,
+  );
+
+  await localNotifications
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.createNotificationChannel(channel);
+
+  final notificationId =
+      _parseIntValue(message.data['notificationId']) ??
+      (message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch);
+
+  await localNotifications.show(
+    id: notificationId,
+    title: title,
+    body: body,
+    notificationDetails: NotificationDetails(
+      android: AndroidNotificationDetails(
+        _notificationChannelId,
+        _notificationChannelName,
+        channelDescription: _notificationChannelDescription,
+        importance: Importance.high,
+        priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+        channelShowBadge: true,
+        number: badgeCount,
+        icon: '@mipmap/ic_launcher',
+      ),
+    ),
+    payload: _buildNotificationPayload(message.data),
+  );
 }
 
 Future<void> _setLauncherBadge(int count) async {
@@ -41,12 +118,20 @@ Future<void> _setLauncherBadge(int count) async {
 
   final safeCount = count < 0 ? 0 : count;
   try {
-    final supported = await AppBadgePlus.isSupported();
-    if (supported || Platform.isIOS || Platform.isMacOS) {
-      await AppBadgePlus.updateBadge(safeCount);
-    }
+    // Do not gate on isSupported(); some launchers report false negatives.
+    await AppBadgePlus.updateBadge(safeCount);
   } catch (e) {
     debugPrint('Launcher badge update failed: $e');
+  }
+
+  if (Platform.isAndroid) {
+    try {
+      await _coreflowBadgeChannel.invokeMethod('setBadge', {
+        'count': safeCount,
+      });
+    } catch (e) {
+      debugPrint('Vendor badge fallback failed: $e');
+    }
   }
 }
 
@@ -82,10 +167,24 @@ String? _firstNonEmpty(Map<String, dynamic> data, List<String> keys) {
   return null;
 }
 
+int? _companyIdFromMessageData(Map<String, dynamic> data) {
+  return _parseIntValue(data['toCompanyId']) ??
+      _parseIntValue(data['companyId']);
+}
+
+String _buildNotificationPayload(Map<String, dynamic> data) {
+  return jsonEncode({
+    'actionUrl': data['actionUrl'] ?? '',
+    'notificationId': data['notificationId'] ?? '',
+    'toCompanyId': data['toCompanyId'] ?? '',
+    'companyId': data['companyId'] ?? '',
+  });
+}
+
 class PushNotificationService {
-  static const String _channelId = 'coreflow_notifications_v2';
-  static const String _channelName = 'CoreFlow Notifications';
-  static const String _channelDescription = 'Push notifications from CoreFlow';
+  static const String _channelId = _notificationChannelId;
+  static const String _channelName = _notificationChannelName;
+  static const String _channelDescription = _notificationChannelDescription;
 
   static final PushNotificationService _instance =
       PushNotificationService._internal();
@@ -369,12 +468,7 @@ class PushNotificationService {
   }
 
   String _buildLocalPayload(RemoteMessage message) {
-    return jsonEncode({
-      'actionUrl': message.data['actionUrl'] ?? '',
-      'notificationId': message.data['notificationId'] ?? '',
-      'toCompanyId': message.data['toCompanyId'] ?? '',
-      'companyId': message.data['companyId'] ?? '',
-    });
+    return _buildNotificationPayload(message.data);
   }
 
   Future<void> _handleLocalNotificationPayload(String payload) async {
@@ -405,8 +499,7 @@ class PushNotificationService {
   }
 
   int? _companyIdFromData(Map<String, dynamic> data) {
-    return _parseIntValue(data['toCompanyId']) ??
-        _parseIntValue(data['companyId']);
+    return _companyIdFromMessageData(data);
   }
 
   Future<int?> _storedCompanyId() async {

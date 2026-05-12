@@ -34,8 +34,7 @@ class _DashboardView extends StatefulWidget {
   State<_DashboardView> createState() => _DashboardViewState();
 }
 
-class _DashboardViewState extends State<_DashboardView>
-{
+class _DashboardViewState extends State<_DashboardView> {
   static const double _contentHorizontalPadding = 16;
   static const double _promoBannerHeight = 180;
 
@@ -86,8 +85,7 @@ class _DashboardViewState extends State<_DashboardView>
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: LoginColors.shadowLight
-                                          .withValues(
+                                      color: LoginColors.shadowLight.withValues(
                                         alpha: 0.12,
                                       ),
                                       blurRadius: 18,
@@ -220,7 +218,7 @@ class _DashboardViewState extends State<_DashboardView>
                   Icon(Icons.campaign_rounded, color: Colors.white, size: 16),
                   const SizedBox(width: 6),
                   Text(
-                    'Place your ad · admin@coreflow.com',
+                    'Place your ad · admin@astraval.com',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
