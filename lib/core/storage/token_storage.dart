@@ -18,6 +18,11 @@ class TokenStorage {
   static const _designationKey = 'designation';
   static const _authTypeKey = 'auth_type';
   static const _fcmTokenKey = 'fcm_token';
+  static final ValueNotifier<int> authStateNotifier = ValueNotifier<int>(0);
+
+  static void _notifyAuthStateChanged() {
+    authStateNotifier.value = authStateNotifier.value + 1;
+  }
 
   static Future<void> saveFcmToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
@@ -91,6 +96,9 @@ class TokenStorage {
     debugPrint(
       'Save verify - Token: ${savedToken?.length ?? 0}c, Refresh: ${savedRefresh?.length ?? 0}c, Success: $saveSuccess',
     );
+    if (saveSuccess) {
+      _notifyAuthStateChanged();
+    }
     return saveSuccess;
   }
 
@@ -135,6 +143,54 @@ class TokenStorage {
     return result;
   }
 
+  static Future<String?> getRefreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshToken = prefs.getString(_refreshTokenKey);
+    if (refreshToken == null) return null;
+    final trimmed = refreshToken.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  static Map<String, dynamic>? _tryDecodeJwtPayload(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      final normalized = base64Url.normalize(parts[1]);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final payload = jsonDecode(decoded);
+      if (payload is Map<String, dynamic>) return payload;
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static DateTime? _extractTokenExpiryUtc(String token) {
+    final payload = _tryDecodeJwtPayload(token);
+    if (payload == null) return null;
+    final expRaw = payload['exp'];
+    final expSeconds = expRaw is int
+        ? expRaw
+        : int.tryParse(expRaw?.toString() ?? '');
+    if (expSeconds == null) return null;
+    return DateTime.fromMillisecondsSinceEpoch(expSeconds * 1000, isUtc: true);
+  }
+
+  static Future<bool> isAccessTokenExpired({
+    Duration clockSkew = const Duration(seconds: 30),
+  }) async {
+    final token = await getToken();
+    if (token == null) return true;
+
+    final expiryUtc = _extractTokenExpiryUtc(token);
+    if (expiryUtc == null) {
+      return false;
+    }
+
+    final nowUtc = DateTime.now().toUtc();
+    return nowUtc.isAfter(expiryUtc.subtract(clockSkew));
+  }
+
   static Future<bool> hasValidToken() async {
     final token = await getToken();
     return token != null;
@@ -153,6 +209,7 @@ class TokenStorage {
   static Future<void> clearAllData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+    _notifyAuthStateChanged();
     debugPrint(' All auth data cleared');
   }
 }

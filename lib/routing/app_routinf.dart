@@ -1,4 +1,5 @@
 import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
+import 'package:coreflow/core/storage/token_storage.dart';
 import 'package:coreflow/features/main_feature/customers/view/customer_create_page.dart';
 import 'package:coreflow/features/main_feature/customers/view/customer_detail_page.dart';
 import 'package:coreflow/features/main_feature/customers/view/customer_edit_page.dart';
@@ -49,6 +50,7 @@ import 'package:go_router/go_router.dart';
 final _authRepo = AuthRepository();
 final GoRouter router = GoRouter(
   initialLocation: '/',
+  refreshListenable: TokenStorage.authStateNotifier,
   routes: [
     // Splash
     GoRoute(path: '/', builder: (context, state) => const SplashPage()),

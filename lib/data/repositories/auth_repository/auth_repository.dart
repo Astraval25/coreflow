@@ -214,7 +214,33 @@ class AuthRepository {
   }
 
   Future<bool> isLoggedIn() async {
-    return await TokenStorage.hasValidToken();
+    final token = await TokenStorage.getToken();
+    final storedRefreshToken = await TokenStorage.getRefreshToken();
+
+    if ((token == null || token.isEmpty) &&
+        (storedRefreshToken == null || storedRefreshToken.isEmpty)) {
+      return false;
+    }
+
+    if (token != null && token.isNotEmpty) {
+      final isExpired = await TokenStorage.isAccessTokenExpired();
+      if (!isExpired) {
+        return true;
+      }
+    }
+
+    if (storedRefreshToken == null || storedRefreshToken.isEmpty) {
+      await clearAuthData();
+      return false;
+    }
+
+    final refreshed = await refreshToken();
+    if (refreshed) {
+      return true;
+    }
+
+    await clearAuthData();
+    return false;
   }
 
   Future<RegisterResponse?> register(RegisterRequest request) async {
@@ -289,9 +315,10 @@ class AuthRepository {
           authData['roleCode']?.toString().toUpperCase() == 'EMP' ||
           authData['authType']?.toString().toLowerCase() == 'employee';
       final refreshToken = authData['refreshToken']!.trim();
-      final refreshUrl = isEmployeeAuth
-          ? AppConfig.employeeRefreshTokenUrl
-          : AppConfig.refreshTokenUrl;
+      final refreshUrls = <String>{
+        AppConfig.refreshTokenUrl,
+        if (isEmployeeAuth) AppConfig.employeeRefreshTokenUrl,
+      }.toList(growable: false);
       List<Map<String, dynamic>> bodies = [
         {'refreshToken': refreshToken},
         {'refresh_token': refreshToken},
@@ -340,120 +367,123 @@ class AuthRepository {
         return null;
       }
 
-      for (int i = 0; i < bodies.length; i++) {
-        try {
-          final response = await http
-              .post(
-                Uri.parse(refreshUrl),
-                headers: {'Content-Type': 'application/json'},
-                body: jsonEncode(bodies[i]),
-              )
-              .timeout(Duration(seconds: 10));
-
-          debugPrint(
-            'Refresh try ${i + 1} (${bodies[i].keys.first}): ${response.statusCode}',
-          );
-          debugPrint(' RAW RESPONSE: ${response.body}');
-
-          if (response.statusCode == 200) {
-            final decoded = jsonDecode(response.body);
-            if (decoded is! Map<String, dynamic>) {
-              debugPrint('Refresh response was not a JSON object');
-              continue;
-            }
-            final rawData = decoded;
-            final responseData = rawData['responseData'] is Map<String, dynamic>
-                ? rawData['responseData'] as Map<String, dynamic>
-                : rawData;
-
-            final newToken = pickFirstString([
-              responseData['token'],
-              responseData['accessToken'],
-              responseData['access_token'],
-              rawData['token'],
-              rawData['accessToken'],
-              rawData['access_token'],
-            ]);
-
-            final newRefreshToken = pickFirstString([
-              responseData['refreshToken'],
-              responseData['refresh_token'],
-              rawData['refreshToken'],
-              rawData['refresh_token'],
-            ]);
+      for (final refreshUrl in refreshUrls) {
+        for (int i = 0; i < bodies.length; i++) {
+          try {
+            final response = await http
+                .post(
+                  Uri.parse(refreshUrl),
+                  headers: {'Content-Type': 'application/json'},
+                  body: jsonEncode(bodies[i]),
+                )
+                .timeout(Duration(seconds: 10));
 
             debugPrint(
-              'Found token: ${newToken?.isNotEmpty ?? false}, refresh: ${newRefreshToken?.isNotEmpty ?? false}',
+              'Refresh try (${refreshUrl.split('/').last}) ${i + 1} (${bodies[i].keys.first}): ${response.statusCode}',
             );
+            debugPrint(' RAW RESPONSE: ${response.body}');
 
-            if (newToken?.isNotEmpty == true) {
-              final companyIdsFromResponse = parseCompanyIds(
-                responseData['companyIds'],
-              );
-              final companyIdsFromAuth = parseCompanyIds(
-                authData['companyIds'],
-              );
-              final saveSuccess = await TokenStorage.saveFullAuthData(
-                userId:
-                    (responseData['userId'] ??
-                            responseData['employeeId'] ??
-                            authData['userId'])
-                        .toString(),
-                employeeId: employeeParseInt(
-                  responseData['employeeId'] ?? authData['employeeId'],
-                ),
-                employeeCode:
-                    responseData['employeeCode']?.toString() ??
-                    authData['employeeCode']?.toString(),
-                designation:
-                    responseData['designation']?.toString() ??
-                    authData['designation']?.toString(),
-                authType: isEmployeeAuth
-                    ? 'employee'
-                    : authData['authType']?.toString(),
-                companyId: employeeParseInt(
-                  responseData['companyId'] ?? authData['companyId'],
-                ),
-                companyIds: companyIdsFromResponse ?? companyIdsFromAuth,
-                companyName:
-                    responseData['companyName']?.toString() ??
-                    authData['companyName']?.toString(),
-                token: newToken!,
-                refreshToken: newRefreshToken ?? refreshToken,
-                roleCode:
-                    responseData['roleCode']?.toString() ??
-                    authData['roleCode']?.toString() ??
-                    (isEmployeeAuth ? 'EMP' : null),
-                landingUrl:
-                    responseData['landingUrl']?.toString() ??
-                    authData['landingUrl']?.toString() ??
-                    (isEmployeeAuth
-                        ? CfRoutes.employeePortalHome
-                        : '/dashboard'),
-                email:
-                    authData['email']?.toString() ??
-                    responseData['username']?.toString() ??
-                    '',
-                userName:
-                    responseData['userName']?.toString() ??
-                    responseData['employeeName']?.toString() ??
-                    authData['userName']?.toString() ??
-                    '',
-              );
-
-              debugPrint(' Save result: $saveSuccess');
-              if (saveSuccess) {
-                debugPrint(' Refresh COMPLETELY successful');
-                return true;
-              } else {
-                debugPrint(' Save failed despite API success');
+            if (response.statusCode == 200) {
+              final decoded = jsonDecode(response.body);
+              if (decoded is! Map<String, dynamic>) {
+                debugPrint('Refresh response was not a JSON object');
+                continue;
               }
-            } else {
-              debugPrint(' No valid token found in response ${i + 1}');
+              final rawData = decoded;
+              final responseData =
+                  rawData['responseData'] is Map<String, dynamic>
+                  ? rawData['responseData'] as Map<String, dynamic>
+                  : rawData;
+
+              final newToken = pickFirstString([
+                responseData['token'],
+                responseData['accessToken'],
+                responseData['access_token'],
+                rawData['token'],
+                rawData['accessToken'],
+                rawData['access_token'],
+              ]);
+
+              final newRefreshToken = pickFirstString([
+                responseData['refreshToken'],
+                responseData['refresh_token'],
+                rawData['refreshToken'],
+                rawData['refresh_token'],
+              ]);
+
+              debugPrint(
+                'Found token: ${newToken?.isNotEmpty ?? false}, refresh: ${newRefreshToken?.isNotEmpty ?? false}',
+              );
+
+              if (newToken?.isNotEmpty == true) {
+                final companyIdsFromResponse = parseCompanyIds(
+                  responseData['companyIds'],
+                );
+                final companyIdsFromAuth = parseCompanyIds(
+                  authData['companyIds'],
+                );
+                final saveSuccess = await TokenStorage.saveFullAuthData(
+                  userId:
+                      (responseData['userId'] ??
+                              responseData['employeeId'] ??
+                              authData['userId'])
+                          .toString(),
+                  employeeId: employeeParseInt(
+                    responseData['employeeId'] ?? authData['employeeId'],
+                  ),
+                  employeeCode:
+                      responseData['employeeCode']?.toString() ??
+                      authData['employeeCode']?.toString(),
+                  designation:
+                      responseData['designation']?.toString() ??
+                      authData['designation']?.toString(),
+                  authType: isEmployeeAuth
+                      ? 'employee'
+                      : authData['authType']?.toString(),
+                  companyId: employeeParseInt(
+                    responseData['companyId'] ?? authData['companyId'],
+                  ),
+                  companyIds: companyIdsFromResponse ?? companyIdsFromAuth,
+                  companyName:
+                      responseData['companyName']?.toString() ??
+                      authData['companyName']?.toString(),
+                  token: newToken!,
+                  refreshToken: newRefreshToken ?? refreshToken,
+                  roleCode:
+                      responseData['roleCode']?.toString() ??
+                      authData['roleCode']?.toString() ??
+                      (isEmployeeAuth ? 'EMP' : null),
+                  landingUrl:
+                      responseData['landingUrl']?.toString() ??
+                      authData['landingUrl']?.toString() ??
+                      (isEmployeeAuth
+                          ? CfRoutes.employeePortalHome
+                          : '/dashboard'),
+                  email:
+                      authData['email']?.toString() ??
+                      responseData['username']?.toString() ??
+                      '',
+                  userName:
+                      responseData['userName']?.toString() ??
+                      responseData['employeeName']?.toString() ??
+                      authData['userName']?.toString() ??
+                      '',
+                );
+
+                debugPrint(' Save result: $saveSuccess');
+                if (saveSuccess) {
+                  debugPrint(' Refresh COMPLETELY successful');
+                  return true;
+                } else {
+                  debugPrint(' Save failed despite API success');
+                }
+              } else {
+                debugPrint(' No valid token found in response ${i + 1}');
+              }
             }
+          } catch (e) {
+            debugPrint('Refresh try ${i + 1} error: $e');
           }
-        } catch (e) {
-          debugPrint('Refresh try ${i + 1} error: $e');
         }
       }
 

@@ -13,12 +13,17 @@ class ApiService {
   static bool _isRefreshing = false;
   static Completer<String?>? _tokenRefreshCompleter;
 
-  static Future<Map<String?, String?>> _getTokens() async {
+  static Future<Map<String, String?>> _getTokens() async {
     final prefs = await SharedPreferences.getInstance();
     return {
       'token': prefs.getString('auth_token'),
       'refreshToken': prefs.getString('refresh_token'),
     };
+  }
+
+  bool _shouldAttachAuthHeader(Uri uri) {
+    final path = uri.path.toLowerCase();
+    return !path.startsWith('/api/auth/');
   }
 
   static Future<String?> _performTokenRefresh() async {
@@ -27,7 +32,7 @@ class ApiService {
       if (inFlightRefresh != null) {
         return inFlightRefresh.future;
       }
-      return await TokenStorage.getToken();
+      return null;
     }
 
     _isRefreshing = true;
@@ -36,6 +41,10 @@ class ApiService {
     try {
       final authRepo = AuthRepository();
       final refreshed = await authRepo.refreshToken();
+      if (!refreshed) {
+        _tokenRefreshCompleter?.complete(null);
+        return null;
+      }
 
       await Future.delayed(Duration(milliseconds: 50));
       String? newToken = await TokenStorage.getToken();
@@ -45,7 +54,12 @@ class ApiService {
         newToken = fullData?['token'];
       }
 
-      debugPrint('Refresh: $refreshed, Token: ${newToken?.isNotEmpty == true}');
+      if (newToken == null || newToken.isEmpty) {
+        _tokenRefreshCompleter?.complete(null);
+        return null;
+      }
+
+      debugPrint('Refresh: $refreshed, Token: ${newToken.isNotEmpty}');
       _tokenRefreshCompleter?.complete(newToken);
       return newToken;
     } catch (e) {
@@ -58,34 +72,68 @@ class ApiService {
   }
 
   Future<http.Response> _makeRequest(
-    Future<http.Response> Function(String?) request,
-  ) async {
-    http.Response response;
+    Future<http.Response> Function(String?) request, {
+    required bool includeAuth,
+  }) async {
+    String? token;
+    var refreshedBeforeFirstCall = false;
 
-    final initialTokens = await _getTokens();
-    response = await request(initialTokens['token']);
+    if (includeAuth) {
+      final initialTokens = await _getTokens();
+      token = initialTokens['token'];
 
-    if (_isUnauthorized(response.statusCode)) {
-      final newToken = await _performTokenRefresh();
-
-      if (newToken != null && newToken.isNotEmpty) {
-        response = await request(newToken);
-        return response;
+      if (token != null && token.isNotEmpty) {
+        final isExpired = await TokenStorage.isAccessTokenExpired();
+        if (isExpired) {
+          final refreshedToken = await _performTokenRefresh();
+          if (refreshedToken != null && refreshedToken.isNotEmpty) {
+            token = refreshedToken;
+            refreshedBeforeFirstCall = true;
+          }
+        }
       }
     }
 
-    return response;
+    http.Response response = await request(token);
+
+    if (!includeAuth || !_isUnauthorized(response.statusCode)) {
+      return response;
+    }
+
+    if (token == null || token.isEmpty) {
+      await TokenStorage.clearAllData();
+      return response;
+    }
+
+    if (refreshedBeforeFirstCall) {
+      await TokenStorage.clearAllData();
+      return response;
+    }
+
+    final newToken = await _performTokenRefresh();
+
+    if (newToken == null || newToken.isEmpty) {
+      await TokenStorage.clearAllData();
+      return response;
+    }
+
+    final retryResponse = await request(newToken);
+    if (_isUnauthorized(retryResponse.statusCode)) {
+      await TokenStorage.clearAllData();
+    }
+    return retryResponse;
   }
 
-  bool _isUnauthorized(int statusCode) =>
-      statusCode == 401 || statusCode == 403;
+  bool _isUnauthorized(int statusCode) => statusCode == 401;
 
   Future<http.Response> post(String url, Map<String, dynamic> data) async {
+    final uri = Uri.parse(url);
+    final includeAuth = _shouldAttachAuthHeader(uri);
     debugPrint('POST to: $url');
     return _makeRequest((token) async {
       return http
           .post(
-            Uri.parse(url),
+            uri,
             headers: {
               'Content-Type': 'application/json',
               if (token != null && token.isNotEmpty)
@@ -94,10 +142,11 @@ class ApiService {
             body: jsonEncode(data),
           )
           .timeout(timeout);
-    });
+    }, includeAuth: includeAuth);
   }
 
   Future<http.Response> get(Uri url) async {
+    final includeAuth = _shouldAttachAuthHeader(url);
     debugPrint('GET to: ${url.path}');
     return _makeRequest((token) async {
       return http
@@ -110,15 +159,17 @@ class ApiService {
             },
           )
           .timeout(timeout);
-    });
+    }, includeAuth: includeAuth);
   }
 
   Future<http.Response> put(String url, Map<String, dynamic> data) async {
+    final uri = Uri.parse(url);
+    final includeAuth = _shouldAttachAuthHeader(uri);
     debugPrint('PUT to: $url');
     return _makeRequest((token) async {
       return http
           .put(
-            Uri.parse(url),
+            uri,
             headers: {
               'Content-Type': 'application/json',
               if (token != null && token.isNotEmpty)
@@ -127,15 +178,17 @@ class ApiService {
             body: jsonEncode(data),
           )
           .timeout(timeout);
-    });
+    }, includeAuth: includeAuth);
   }
 
   Future<http.Response> patch(String url, Map<String, dynamic> data) async {
+    final uri = Uri.parse(url);
+    final includeAuth = _shouldAttachAuthHeader(uri);
     debugPrint('PATCH to: $url');
     return _makeRequest((token) async {
       return http
           .patch(
-            Uri.parse(url),
+            uri,
             headers: {
               'Content-Type': 'application/json',
               if (token != null && token.isNotEmpty)
@@ -144,15 +197,17 @@ class ApiService {
             body: jsonEncode(data),
           )
           .timeout(timeout);
-    });
+    }, includeAuth: includeAuth);
   }
 
   Future<http.Response> delete(String url) async {
+    final uri = Uri.parse(url);
+    final includeAuth = _shouldAttachAuthHeader(uri);
     debugPrint('DELETE to: $url');
     return _makeRequest((token) async {
       return http
           .delete(
-            Uri.parse(url),
+            uri,
             headers: {
               'Content-Type': 'application/json',
               if (token != null && token.isNotEmpty)
@@ -160,7 +215,7 @@ class ApiService {
             },
           )
           .timeout(timeout);
-    });
+    }, includeAuth: includeAuth);
   }
 
   Future<http.Response> multipartPost({
@@ -172,6 +227,9 @@ class ApiService {
     // debugPrint('MULTIPART POST → $url');
     // debugPrint('FIELDS → $fields');
     // debugPrint('FILE → ${file?.path}');
+
+    final uri = Uri.parse(url);
+    final includeAuth = _shouldAttachAuthHeader(uri);
 
     return _makeRequest((token) async {
       final uri = Uri.parse(url);
@@ -206,7 +264,7 @@ class ApiService {
 
       final streamedResponse = await request.send().timeout(timeout);
       return await http.Response.fromStream(streamedResponse);
-    });
+    }, includeAuth: includeAuth);
   }
 
   Future<http.Response> multipartPut({
@@ -218,6 +276,9 @@ class ApiService {
     // debugPrint('MULTIPART PUT → $url');
     // debugPrint('FIELDS → $fields');
     // debugPrint('FILE → ${file?.path}');
+
+    final uri = Uri.parse(url);
+    final includeAuth = _shouldAttachAuthHeader(uri);
 
     return _makeRequest((token) async {
       final uri = Uri.parse(url);
@@ -252,7 +313,7 @@ class ApiService {
 
       final streamedResponse = await request.send().timeout(timeout);
       return await http.Response.fromStream(streamedResponse);
-    });
+    }, includeAuth: includeAuth);
   }
 
   Future<http.Response> createItem({

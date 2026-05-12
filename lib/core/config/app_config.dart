@@ -624,8 +624,7 @@ class AppConfig {
   static const String salarySlipEndpoint =
       '/api/companies/{companyId}/modemp/salary/periods/{salaryPeriodId}/slip';
   static const String employeeLoginEndpoint = '/api/auth/employee/login';
-  static const String employeeRefreshTokenEndpoint =
-      '/api/auth/employee/refresh-token';
+  static const String employeeRefreshTokenEndpoint = '/api/auth/refresh-token';
   static const String employeeMeEndpoint = '/api/emp/me';
   static const String employeeMySalaryPeriodsEndpoint =
       '/api/emp/salary/periods';
