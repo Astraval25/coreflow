@@ -82,8 +82,7 @@ class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
             backgroundColor: LoginColors.background,
             drawerEnableOpenDragGesture: false,
             drawer: AppDrawer(vm: dashboardVm),
-            floatingActionButtonLocation:
-                FloatingActionButtonLocation.endFloat,
+            floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
             floatingActionButton: _buildCreateButton(),
             appBar: SearchableEntityAppBar(
               isSearchOpen: false,
@@ -97,17 +96,27 @@ class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
               searchHint: '',
               showSearchAction: false,
               tabs: const [
-                SearchableEntityTab(label: 'Orders'),
-                SearchableEntityTab(label: 'Bills'),
-                SearchableEntityTab(label: 'Paid Orders'),
+                SearchableEntityTab(label: 'Sales'),
+                SearchableEntityTab(label: 'Purchase'),
               ],
-              selectedTabIndex: _selectedTopTab.index,
+              selectedTabIndex: 1,
               onTabSelected: (index) {
-                setState(() => _selectedTopTab = _PurchaseTopTab.values[index]);
+                if (index == 0 && dashboardVm.companyId != null) {
+                  context.go(CfRoutes.sales(dashboardVm.companyId!));
+                }
               },
             ),
-            body:
-                RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
+            body: Column(
+              children: [
+                _buildStatusFilterBar(),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: vm.refresh,
+                    child: _buildBody(vm),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -118,6 +127,46 @@ class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
     final vm = context.read<DashboardViewModel>();
     if (vm.companyId != null) context.go(CfRoutes.dashboard(vm.companyId!));
     return false;
+  }
+
+  Widget _buildStatusFilterBar() {
+    return Container(
+      width: double.infinity,
+      color: LoginColors.background,
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          _buildStatusChip(_PurchaseTopTab.orders, 'Orders'),
+          _buildStatusChip(_PurchaseTopTab.bills, 'Bills'),
+          _buildStatusChip(_PurchaseTopTab.paidOrders, 'Paid Orders'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(_PurchaseTopTab tab, String label) {
+    final selected = _selectedTopTab == tab;
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: selected ? Colors.white : LoginColors.textSecondary,
+        ),
+      ),
+      selected: selected,
+      showCheckmark: false,
+      selectedColor: LoginColors.primary,
+      backgroundColor: LoginColors.surface,
+      side: BorderSide(
+        color: selected ? LoginColors.primary : LoginColors.borderLight,
+      ),
+      onSelected: (_) {
+        setState(() => _selectedTopTab = tab);
+      },
+    );
   }
 
   Widget _buildBody(PurchaseOrderViewModel vm) {
@@ -231,8 +280,10 @@ class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final height = (constraints.maxHeight - 120)
-            .clamp(0.0, double.infinity);
+        final height = (constraints.maxHeight - 120).clamp(
+          0.0,
+          double.infinity,
+        );
         return ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
@@ -243,10 +294,7 @@ class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SvgPicture.asset(
-                      svgAsset,
-                      height: 170,
-                    ),
+                    SvgPicture.asset(svgAsset, height: 170),
                     const SizedBox(height: 18),
                     Text(
                       title,

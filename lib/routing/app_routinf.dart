@@ -33,10 +33,13 @@ import 'package:coreflow/features/main_feature/payment/send_payment/view/payment
 import 'package:coreflow/features/main_feature/payment/send_payment/view/create_payment_sent_page.dart';
 import 'package:coreflow/features/main_feature/payment/receive_payment/view/pay_received_page.dart';
 import 'package:coreflow/features/main_feature/payment/receive_payment/view/create_receive_payment_page.dart';
+import 'package:coreflow/features/main_feature/expense/view/create_expense_page.dart';
+import 'package:coreflow/features/main_feature/expense/view/expenses_page.dart';
 import 'package:coreflow/features/main_feature/report/view/report_list_page.dart';
 import 'package:coreflow/core/utils/splash/view/splash_page.dart';
 import 'package:coreflow/features/employee_feature/employees/view/employees_page.dart';
 import 'package:coreflow/features/employee_feature/employees/view/employee_detail_page.dart';
+import 'package:coreflow/features/employee_feature/employees/view/employee_view_page.dart';
 import 'package:coreflow/features/employee_feature/employees/view/employee_create_page.dart';
 import 'package:coreflow/features/employee_feature/employees/view/employee_edit_page.dart';
 import 'package:coreflow/features/employee_feature/leave_logs/view/admin_leave_logs_page.dart';
@@ -232,6 +235,19 @@ final GoRouter router = GoRouter(
                 final employeeId = int.parse(
                   state.pathParameters['employeeId']!,
                 );
+                return EmployeeViewPage(
+                  companyId: companyId,
+                  employeeId: employeeId,
+                );
+              },
+            ),
+            GoRoute(
+              path: ':employeeId/profile',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                final employeeId = int.parse(
+                  state.pathParameters['employeeId']!,
+                );
                 return EmployeeDetailPage(
                   companyId: companyId,
                   employeeId: employeeId,
@@ -379,6 +395,22 @@ final GoRouter router = GoRouter(
               preSelectedCustomer:
                   extra?['preSelectedCustomer'] as Map<String, dynamic>?,
             );
+          },
+        ),
+
+        // Expenses
+        GoRoute(
+          path: '/cf/company/:companyId/expenses/list',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            return ExpensesPage(companyId: companyId);
+          },
+        ),
+        GoRoute(
+          path: '/cf/company/:companyId/expenses/create',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            return CreateExpensePage(companyId: companyId);
           },
         ),
 

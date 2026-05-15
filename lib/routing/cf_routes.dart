@@ -105,18 +105,28 @@ class CfRoutes {
   static String paymentMadeUpdate(int companyId, int id) =>
       '/cf/company/$companyId/payment-made/$id/update';
 
+  // Expenses
+  static String expenses(int companyId) =>
+      '/cf/company/$companyId/expenses/list';
+  static String expenseCreate(int companyId) =>
+      '/cf/company/$companyId/expenses/create';
+
   // ── Employees ─────────────────────────────────────────────────────
   static String employees(int companyId) => '/cf/company/$companyId/employees';
   static String employeeCreate(int companyId) =>
       '/cf/company/$companyId/employees/create';
   static String employeeDetail(int companyId, int employeeId) =>
       '/cf/company/$companyId/employees/$employeeId/detail';
+  static String employeeProfile(int companyId, int employeeId) =>
+      '/cf/company/$companyId/employees/$employeeId/profile';
   static String employeeUpdate(int companyId, int employeeId) =>
       '/cf/company/$companyId/employees/$employeeId/update';
   static String workDefinitions(int companyId) =>
       '/cf/company/$companyId/work-definitions';
   static String employeeWorkLogs(int companyId) =>
       '/cf/company/$companyId/employee-work-logs';
+  static String employeeWorkLogsByEmployee(int companyId, int employeeId) =>
+      '/cf/company/$companyId/employees/$employeeId/work-logs';
   static String employeeLeaveRequests(int companyId) =>
       '/cf/company/$companyId/employee-leave-requests';
   static String employeeSalary(int companyId) =>

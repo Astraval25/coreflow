@@ -2,6 +2,7 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
 import 'package:coreflow/core/widgets/status_toggle_tabs.dart';
+import 'package:coreflow/domain/model/employee_model/employee.dart';
 import 'package:coreflow/features/employee_feature/employees/view_model/employees_view_model.dart';
 import 'package:coreflow/features/employee_feature/employees/widget/employee_empty_view.dart';
 import 'package:coreflow/features/employee_feature/employees/widget/employee_error_view.dart';
@@ -78,8 +79,9 @@ class _EmployeesViewState extends State<EmployeesView> {
             setState(() => _searchQuery = '');
           },
           scaffoldKey: _scaffoldKey,
-          title: 'Employees',
+          title: 'Employees (${viewModel.employees.length})',
           searchHint: 'Search employees...',
+          onTitleTap: _openEmployeeProfilePage,
         ),
         body: Column(
           children: [
@@ -139,6 +141,83 @@ class _EmployeesViewState extends State<EmployeesView> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _openEmployeeProfilePage() async {
+    final vm = context.read<EmployeesViewModel>();
+    final employees = vm.employees;
+
+    if (employees.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No employees available')));
+      return;
+    }
+
+    if (employees.length == 1) {
+      await context.push(
+        CfRoutes.employeeDetail(widget.companyId, employees.first.employeeId),
+      );
+      return;
+    }
+
+    final selectedEmployee = await showModalBottomSheet<Employee>(
+      context: context,
+      backgroundColor: LoginColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                child: Text(
+                  'Select Employee Profile',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+              ),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  itemCount: employees.length,
+                  separatorBuilder: (_, index) =>
+                      Divider(color: LoginColors.borderLight, height: 1),
+                  itemBuilder: (_, index) {
+                    final employee = employees[index];
+                    return ListTile(
+                      dense: true,
+                      title: Text(
+                        employee.employeeName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(employee.employeeCode),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => Navigator.pop(context, employee),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selectedEmployee == null) return;
+
+    await context.push(
+      CfRoutes.employeeDetail(widget.companyId, selectedEmployee.employeeId),
     );
   }
 

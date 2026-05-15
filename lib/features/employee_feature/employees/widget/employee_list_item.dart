@@ -9,11 +9,13 @@ import 'package:provider/provider.dart';
 class EmployeeListItem extends StatelessWidget {
   final Employee employee;
   final int companyId;
+  final int serialNumber;
 
   const EmployeeListItem({
     super.key,
     required this.employee,
     required this.companyId,
+    required this.serialNumber,
   });
 
   @override
@@ -47,17 +49,29 @@ class EmployeeListItem extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: LoginColors.primary.withValues(alpha: 0.15),
-                child: Text(
-                  avatarText,
-                  style: TextStyle(
-                    color: LoginColors.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: LoginColors.primary.withValues(
+                      alpha: 0.15,
+                    ),
+                    child: Text(
+                      avatarText,
+                      style: TextStyle(
+                        color: LoginColors.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
                   ),
-                ),
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: _NumberBadge(value: serialNumber),
+                  ),
+                ],
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -193,6 +207,32 @@ class EmployeeListItem extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: color,
+        ),
+      ),
+    );
+  }
+}
+
+class _NumberBadge extends StatelessWidget {
+  final int value;
+  const _NumberBadge({required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: LoginColors.primary,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        '$value',
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

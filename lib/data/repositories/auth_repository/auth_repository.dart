@@ -920,24 +920,49 @@ class AuthRepository {
 
   // ─── Notification APIs ───
 
-  Future<({List<AppNotification> notifications, bool hasNext})>
+  Future<
+    ({
+      List<AppNotification> notifications,
+      bool hasNext,
+      int totalUnreadCount,
+      Map<String, int> unreadCountByEntity,
+    })
+  >
   getNotifications(int companyId, {int page = 0}) async {
     try {
       final url = AppConfig.getNotificationsUrl(companyId, page: page);
       final response = await _apiService.get(Uri.parse(url));
 
       if (response.statusCode != 200) {
-        return (notifications: <AppNotification>[], hasNext: false);
+        return (
+          notifications: <AppNotification>[],
+          hasNext: false,
+          totalUnreadCount: 0,
+          unreadCountByEntity: const <String, int>{},
+        );
       }
 
       final data = jsonDecode(response.body);
       if (data['responseStatus'] != true) {
-        return (notifications: <AppNotification>[], hasNext: false);
+        return (
+          notifications: <AppNotification>[],
+          hasNext: false,
+          totalUnreadCount: 0,
+          unreadCountByEntity: const <String, int>{},
+        );
       }
 
       final responseData = data['responseData'] as Map<String, dynamic>;
       final list = (responseData['notifications'] as List<dynamic>?) ?? [];
       final hasNext = responseData['hasNext'] as bool? ?? false;
+      final totalUnreadCount =
+          int.tryParse(responseData['totalUnreadCount']?.toString() ?? '') ?? 0;
+      final unreadRaw =
+          responseData['unreadCountByEntity'] as Map<String, dynamic>? ??
+          const <String, dynamic>{};
+      final unreadByEntity = unreadRaw.map(
+        (key, value) => MapEntry(key, int.tryParse(value.toString()) ?? 0),
+      );
 
       return (
         notifications: list
@@ -946,10 +971,17 @@ class AuthRepository {
             )
             .toList(),
         hasNext: hasNext,
+        totalUnreadCount: totalUnreadCount,
+        unreadCountByEntity: unreadByEntity,
       );
     } catch (e) {
       debugPrint('Get notifications error: $e');
-      return (notifications: <AppNotification>[], hasNext: false);
+      return (
+        notifications: <AppNotification>[],
+        hasNext: false,
+        totalUnreadCount: 0,
+        unreadCountByEntity: const <String, int>{},
+      );
     }
   }
 

@@ -11,6 +11,7 @@ class CustomerListItem extends StatelessWidget {
   final int companyId;
   final bool isPinned;
   final VoidCallback onTogglePin;
+  final int serialNumber;
 
   const CustomerListItem({
     super.key,
@@ -18,6 +19,7 @@ class CustomerListItem extends StatelessWidget {
     required this.companyId,
     required this.isPinned,
     required this.onTogglePin,
+    required this.serialNumber,
   });
 
   @override
@@ -45,10 +47,12 @@ class CustomerListItem extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        splashColor: LoginColors.primaryLight.withValues(alpha:0.12),
-        highlightColor: LoginColors.primaryLight.withValues(alpha:0.06),
+        splashColor: LoginColors.primaryLight.withValues(alpha: 0.12),
+        highlightColor: LoginColors.primaryLight.withValues(alpha: 0.06),
         onTap: () async {
-          await context.push(CfRoutes.customerDetail(companyId, customer.customerId));
+          await context.push(
+            CfRoutes.customerDetail(companyId, customer.customerId),
+          );
           if (context.mounted) {
             context.read<ActiveCustomersViewModel>().refresh();
           }
@@ -62,25 +66,39 @@ class CustomerListItem extends StatelessWidget {
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: customer.customerCompanyId != null
-                    ? () => context.push(CfRoutes.marketplaceCompany(customer.customerCompanyId!))
+                    ? () => context.push(
+                        CfRoutes.marketplaceCompany(
+                          customer.customerCompanyId!,
+                        ),
+                      )
                     : null,
                 child: Padding(
                   padding: const EdgeInsets.only(right: 0),
-                  child: CircleAvatar(
-                    radius: 26,
-                    backgroundColor: customer.customerCompanyId != null
-                        ? LoginColors.success.withValues(alpha:0.15)
-                        : primaryColor.withValues(alpha:0.15),
-                    child: Text(
-                      avatarText,
-                      style: TextStyle(
-                        color: customer.customerCompanyId != null
-                            ? LoginColors.success
-                            : primaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      CircleAvatar(
+                        radius: 26,
+                        backgroundColor: customer.customerCompanyId != null
+                            ? LoginColors.success.withValues(alpha: 0.15)
+                            : primaryColor.withValues(alpha: 0.15),
+                        child: Text(
+                          avatarText,
+                          style: TextStyle(
+                            color: customer.customerCompanyId != null
+                                ? LoginColors.success
+                                : primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
+                        ),
                       ),
-                    ),
+                      Positioned(
+                        right: -2,
+                        top: -2,
+                        child: _NumberBadge(value: serialNumber),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -215,7 +233,7 @@ class CustomerListItem extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color.withValues(alpha:0.7)),
+          Icon(icon, size: 12, color: color.withValues(alpha: 0.7)),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
@@ -231,6 +249,32 @@ class CustomerListItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _NumberBadge extends StatelessWidget {
+  final int value;
+  const _NumberBadge({required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: LoginColors.primary,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        '$value',
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

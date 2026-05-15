@@ -1,5 +1,6 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer.dart';
 import 'package:coreflow/features/main_feature/customers/view_model/customers_view_model.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
@@ -91,10 +92,10 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
                 setState(() => _searchQuery = '');
               },
               scaffoldKey: _scaffoldKey,
-              title: 'Customers',
+              title: 'Customers (${viewModel.customers.length})',
               searchHint: 'Search customers...',
+              onTitleTap: _openCustomerProfilePage,
             ),
-
             body: Column(
               children: [
                 _buildTopToggleTabs(context, viewModel),
@@ -158,6 +159,81 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
           );
         },
       ),
+    );
+  }
+
+  Future<void> _openCustomerProfilePage() async {
+    final vm = context.read<ActiveCustomersViewModel>();
+    final customers = vm.customers;
+    if (customers.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No customers available')));
+      return;
+    }
+
+    if (customers.length == 1) {
+      await context.push(
+        CfRoutes.customerDetail(widget.companyId, customers.first.customerId),
+      );
+      return;
+    }
+
+    final selectedCustomer = await showModalBottomSheet<Customer>(
+      context: context,
+      backgroundColor: LoginColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                child: Text(
+                  'Select Customer Profile',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+              ),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  itemCount: customers.length,
+                  separatorBuilder: (_, index) =>
+                      Divider(color: LoginColors.borderLight, height: 1),
+                  itemBuilder: (_, index) {
+                    final customer = customers[index];
+                    return ListTile(
+                      dense: true,
+                      title: Text(
+                        customer.displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(customer.customerCompanyName),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => Navigator.pop(context, customer),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selectedCustomer == null) return;
+    await context.push(
+      CfRoutes.customerDetail(widget.companyId, selectedCustomer.customerId),
     );
   }
 

@@ -559,6 +559,8 @@ class AppConfig {
       '/api/companies/{companyId}/modemp/employees';
   static const String employeeDetailEndpoint =
       '/api/companies/{companyId}/modemp/employees/{employeeId}';
+  static const String employeeActivityLogsEndpoint =
+      '/api/companies/{companyId}/modemp/employees/{employeeId}/activity-logs';
   static const String employeeDeactivateEndpoint =
       '/api/companies/{companyId}/modemp/employees/{employeeId}/deactivate';
   static const String employeeActivateEndpoint =
@@ -609,6 +611,10 @@ class AppConfig {
       '/api/companies/{companyId}/modemp/leave-logs/pending';
   static const String reviewLeaveLogEndpoint =
       '/api/companies/{companyId}/modemp/leave-logs/{leaveId}/review';
+  static const String updateLeaveLogByAdminEndpoint =
+      '/api/companies/{companyId}/modemp/leave-logs/{leaveId}';
+  static const String deleteLeaveLogByAdminEndpoint =
+      '/api/companies/{companyId}/modemp/leave-logs/{leaveId}';
   static const String salaryCalculateEndpoint =
       '/api/companies/{companyId}/modemp/salary/calculate';
   static const String salaryPeriodsEndpoint =
@@ -647,6 +653,22 @@ class AppConfig {
 
   static String getEmployeeDetailUrl(int companyId, int employeeId) =>
       '$baseUrl${employeeDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+
+  static String getEmployeeActivityLogsUrl(
+    int companyId,
+    int employeeId, {
+    String? from,
+    String? to,
+  }) {
+    final base =
+        '$baseUrl${employeeActivityLogsEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{employeeId}', employeeId.toString())}';
+    final params = <String>[
+      if (from != null && from.isNotEmpty) 'from=$from',
+      if (to != null && to.isNotEmpty) 'to=$to',
+    ];
+    if (params.isEmpty) return base;
+    return '$base?${params.join('&')}';
+  }
 
   static String getCreateEmployeeUrl(int companyId) =>
       '$baseUrl${employeesEndpoint.replaceAll('{companyId}', companyId.toString())}';
@@ -780,6 +802,12 @@ class AppConfig {
 
   static String getReviewLeaveLogUrl(int companyId, int leaveId) =>
       '$baseUrl${reviewLeaveLogEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{leaveId}', leaveId.toString())}';
+
+  static String getUpdateLeaveLogByAdminUrl(int companyId, int leaveId) =>
+      '$baseUrl${updateLeaveLogByAdminEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{leaveId}', leaveId.toString())}';
+
+  static String getDeleteLeaveLogByAdminUrl(int companyId, int leaveId) =>
+      '$baseUrl${deleteLeaveLogByAdminEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{leaveId}', leaveId.toString())}';
 
   static String getSalaryCalculateUrl(int companyId) =>
       '$baseUrl${salaryCalculateEndpoint.replaceAll('{companyId}', companyId.toString())}';

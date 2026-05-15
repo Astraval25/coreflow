@@ -46,10 +46,18 @@ class _MainLayoutState extends State<MainLayout> {
     final section = CfRoutes.getCompanySection(location);
     if (section == null) return 0;
     if (section.startsWith('dashboard')) return 0;
-    if (section.startsWith('sales')) return 1;
-    if (section.startsWith('purchase') || section.startsWith('items')) return 2;
-    if (section.startsWith('payment-made')) return 3;
-    if (section.startsWith('payment-received')) return 4;
+    if (section.startsWith('customers')) {
+      return 1;
+    }
+    if (section.startsWith('vendors')) return 2;
+    if (section.startsWith('employees') ||
+        section.startsWith('work-definitions') ||
+        section.startsWith('employee-work-logs') ||
+        section.startsWith('employee-leave-requests') ||
+        section.startsWith('employee-salary')) {
+      return 3;
+    }
+    if (section.startsWith('expenses')) return 4;
     return 0;
   }
 
@@ -62,16 +70,16 @@ class _MainLayoutState extends State<MainLayout> {
         context.go(CfRoutes.dashboard(companyId));
         break;
       case 1:
-        context.go(CfRoutes.sales(companyId));
+        context.go(CfRoutes.customers(companyId));
         break;
       case 2:
-        context.go(CfRoutes.purchase(companyId));
+        context.go(CfRoutes.vendors(companyId));
         break;
       case 3:
-        context.go(CfRoutes.paymentMade(companyId));
+        context.go(CfRoutes.employees(companyId));
         break;
       case 4:
-        context.go(CfRoutes.paymentReceived(companyId));
+        context.go(CfRoutes.expenses(companyId));
         break;
     }
   }
@@ -161,31 +169,30 @@ class _MainLayoutState extends State<MainLayout> {
                             ),
                             _buildNavItem(
                               1,
-                              Icons.receipt_long_rounded,
-                              Icons.receipt_long_outlined,
-                              'Sales',
+                              Icons.group_rounded,
+                              Icons.group_outlined,
+                              'Customer',
                               animValue,
-                              hasBadge: true,
                             ),
                             _buildNavItem(
                               2,
-                              Icons.inventory_2_rounded,
-                              Icons.inventory_2_outlined,
-                              'Purchase',
+                              Icons.store_rounded,
+                              Icons.store_outlined,
+                              'Vendor',
                               animValue,
                             ),
                             _buildNavItem(
                               3,
-                              Icons.payments_rounded,
-                              Icons.payments_outlined,
-                              'Pay',
+                              Icons.badge_rounded,
+                              Icons.badge_outlined,
+                              'Employee',
                               animValue,
                             ),
                             _buildNavItem(
                               4,
-                              Icons.account_balance_wallet_rounded,
-                              Icons.account_balance_wallet_outlined,
-                              'Received',
+                              Icons.receipt_long_rounded,
+                              Icons.receipt_long_outlined,
+                              'Expense',
                               animValue,
                             ),
                           ],

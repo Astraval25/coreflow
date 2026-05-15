@@ -82,8 +82,7 @@ class _PaymentContentState extends State<_PaymentContent> {
             backgroundColor: LoginColors.background,
             drawerEnableOpenDragGesture: false,
             drawer: AppDrawer(vm: dashboardVm),
-            floatingActionButtonLocation:
-                FloatingActionButtonLocation.endFloat,
+            floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
             floatingActionButton: _buildCreateButton(),
             appBar: SearchableEntityAppBar(
               isSearchOpen: false,
@@ -97,15 +96,13 @@ class _PaymentContentState extends State<_PaymentContent> {
               searchHint: '',
               showSearchAction: false,
               tabs: const [
-                SearchableEntityTab(label: 'Sent'),
+                SearchableEntityTab(label: 'Pay'),
                 SearchableEntityTab(label: 'Received'),
               ],
               selectedTabIndex: _selectedTopTab.index,
               onTabSelected: (index) {
                 if (index == _PaymentTopTab.payments.index) {
-                  setState(
-                    () => _selectedTopTab = _PaymentTopTab.payments,
-                  );
+                  setState(() => _selectedTopTab = _PaymentTopTab.payments);
                   return;
                 }
                 if (index == _PaymentTopTab.received.index) {
@@ -116,8 +113,10 @@ class _PaymentContentState extends State<_PaymentContent> {
                 }
               },
             ),
-            body:
-                RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
+            body: RefreshIndicator(
+              onRefresh: vm.refresh,
+              child: _buildBody(vm),
+            ),
           ),
         );
       },
@@ -126,7 +125,9 @@ class _PaymentContentState extends State<_PaymentContent> {
 
   Future<bool> _handleWillPop() async {
     final dashVm = context.read<DashboardViewModel>();
-    if (dashVm.companyId != null) context.go(CfRoutes.dashboard(dashVm.companyId!));
+    if (dashVm.companyId != null) {
+      context.go(CfRoutes.dashboard(dashVm.companyId!));
+    }
     return false;
   }
 
@@ -179,8 +180,7 @@ class _PaymentContentState extends State<_PaymentContent> {
   }
 
   Widget _buildCreateButton() {
-    final companyId =
-        context.read<DashboardViewModel>().companyId;
+    final companyId = context.read<DashboardViewModel>().companyId;
     return FloatingActionButton.extended(
       backgroundColor: LoginColors.primary,
       foregroundColor: Colors.white,

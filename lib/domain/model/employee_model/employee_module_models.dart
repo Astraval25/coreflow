@@ -376,6 +376,29 @@ class LeaveLogData {
   }
 }
 
+class EmployeeActivityLogsData {
+  final List<WorkLogData> workLogs;
+  final List<LeaveLogData> leaveLogs;
+
+  const EmployeeActivityLogsData({
+    this.workLogs = const [],
+    this.leaveLogs = const [],
+  });
+
+  factory EmployeeActivityLogsData.fromJson(Map<String, dynamic> json) {
+    return EmployeeActivityLogsData(
+      workLogs: (json['workLogs'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(WorkLogData.fromJson)
+          .toList(),
+      leaveLogs: (json['leaveLogs'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(LeaveLogData.fromJson)
+          .toList(),
+    );
+  }
+}
+
 class CalculateSalaryRequest {
   final String fromDate;
   final String toDate;

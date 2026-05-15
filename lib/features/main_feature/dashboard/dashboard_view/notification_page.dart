@@ -52,21 +52,65 @@ class _NotificationPageState extends State<NotificationPage> {
 
   void _navigateToAction(String actionUrl) {
     if (actionUrl.isEmpty) return;
-    // actionUrl format: /companies/{companyId}/purchase/orders etc.
-    final parts = actionUrl.split('/');
-    // e.g. ["", "companies", "3", "purchase", "orders"]
-    if (parts.length >= 4) {
-      final companyId = int.tryParse(parts[2]);
-      if (companyId == null) return;
-      final rest = parts.sublist(3).join('/');
-      if (rest == 'purchase/orders') {
+
+    var normalized = actionUrl.trim();
+    if (normalized.startsWith('/cf/')) {
+      normalized = normalized.substring(3);
+    }
+
+    final uri = Uri.tryParse(normalized);
+    final segments = uri?.pathSegments ?? const <String>[];
+    if (segments.length < 3) return;
+
+    final root = segments[0].toLowerCase();
+    final companyId = int.tryParse(segments[1]);
+    if (companyId == null) return;
+
+    final rest = segments.sublist(2).join('/').toLowerCase();
+    if (root == 'companies') {
+      if (rest.startsWith('purchase/orders')) {
         context.push(CfRoutes.purchase(companyId));
-      } else if (rest == 'sales/orders') {
+      } else if (rest.startsWith('sales/orders')) {
         context.push(CfRoutes.sales(companyId));
+      } else if (rest.startsWith('payments/received')) {
+        context.push(CfRoutes.paymentReceived(companyId));
+      } else if (rest.startsWith('payments/sent')) {
+        context.push(CfRoutes.paymentMade(companyId));
       } else if (rest.startsWith('customers')) {
         context.push(CfRoutes.customers(companyId));
       } else if (rest.startsWith('vendors')) {
         context.push(CfRoutes.vendors(companyId));
+      } else if (rest.startsWith('modemp/work-logs')) {
+        context.push(CfRoutes.employeeWorkLogs(companyId));
+      } else if (rest.startsWith('modemp/leave-logs')) {
+        context.push(CfRoutes.employeeLeaveRequests(companyId));
+      } else {
+        context.push(CfRoutes.dashboard(companyId));
+      }
+      return;
+    }
+
+    if (root == 'company') {
+      if (rest.startsWith('purchase/list')) {
+        context.push(CfRoutes.purchase(companyId));
+      } else if (rest.startsWith('sales')) {
+        context.push(CfRoutes.sales(companyId));
+      } else if (rest.startsWith('payment-received')) {
+        context.push(CfRoutes.paymentReceived(companyId));
+      } else if (rest.startsWith('payment-made')) {
+        context.push(CfRoutes.paymentMade(companyId));
+      } else if (rest.startsWith('customers')) {
+        context.push(CfRoutes.customers(companyId));
+      } else if (rest.startsWith('vendors')) {
+        context.push(CfRoutes.vendors(companyId));
+      } else if (rest.startsWith('employee-work-logs')) {
+        context.push(CfRoutes.employeeWorkLogs(companyId));
+      } else if (rest.startsWith('employee-leave-requests')) {
+        context.push(CfRoutes.employeeLeaveRequests(companyId));
+      } else if (rest.startsWith('work-logs')) {
+        context.push(CfRoutes.employeeWorkLogs(companyId));
+      } else if (rest.startsWith('leave-logs')) {
+        context.push(CfRoutes.employeeLeaveRequests(companyId));
       } else {
         context.push(CfRoutes.dashboard(companyId));
       }
@@ -107,12 +151,12 @@ class _NotificationPageState extends State<NotificationPage> {
           ListenableBuilder(
             listenable: _vm,
             builder: (context, _) {
-              final hasUnread = _vm.notifications.any((n) => !n.isRead);
+              final hasUnread = _vm.notifications.isNotEmpty;
               if (!hasUnread) return const SizedBox.shrink();
               return TextButton(
                 onPressed: _markAllRead,
                 child: Text(
-                  'Mark all read',
+                  'Clear all',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -129,9 +173,7 @@ class _NotificationPageState extends State<NotificationPage> {
         listenable: _vm,
         builder: (context, _) {
           if (_vm.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (_vm.notifications.isEmpty) {
@@ -142,7 +184,8 @@ class _NotificationPageState extends State<NotificationPage> {
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: SizedBox(
-                  height: MediaQuery.of(context).size.height -
+                  height:
+                      MediaQuery.of(context).size.height -
                       AppBar().preferredSize.height -
                       MediaQuery.of(context).padding.top,
                   child: Center(
@@ -171,30 +214,42 @@ class _NotificationPageState extends State<NotificationPage> {
             );
           }
 
-          return RefreshIndicator(
-            onRefresh: _vm.refresh,
-            backgroundColor: LoginColors.surface,
-            color: LoginColors.primary,
-            child: ListView.separated(
-              controller: _scrollController,
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: _vm.notifications.length + (_vm.hasNext ? 1 : 0),
-              separatorBuilder: (_, _) =>
-                  Divider(height: 1, color: LoginColors.borderLight),
-              itemBuilder: (context, index) {
-                if (index == _vm.notifications.length) {
-                  return const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                return _NotificationTile(
-                  notification: _vm.notifications[index],
-                  onTap: () => _onNotificationTap(_vm.notifications[index]),
-                );
-              },
-            ),
+          return Column(
+            children: [
+              if (_vm.unreadCountByEntity.isNotEmpty)
+                _EntityActivitySummary(
+                  unreadCountByEntity: _vm.unreadCountByEntity,
+                  totalUnreadCount: _vm.totalUnreadCount,
+                ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _vm.refresh,
+                  backgroundColor: LoginColors.surface,
+                  color: LoginColors.primary,
+                  child: ListView.separated(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: _vm.notifications.length + (_vm.hasNext ? 1 : 0),
+                    separatorBuilder: (_, _) =>
+                        Divider(height: 1, color: LoginColors.borderLight),
+                    itemBuilder: (context, index) {
+                      if (index == _vm.notifications.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      return _NotificationTile(
+                        notification: _vm.notifications[index],
+                        onTap: () =>
+                            _onNotificationTap(_vm.notifications[index]),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -202,14 +257,88 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 }
 
+class _EntityActivitySummary extends StatelessWidget {
+  final Map<String, int> unreadCountByEntity;
+  final int totalUnreadCount;
+
+  const _EntityActivitySummary({
+    required this.unreadCountByEntity,
+    required this.totalUnreadCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = unreadCountByEntity.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return Container(
+      width: double.infinity,
+      color: LoginColors.surface,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Active updates: $totalUnreadCount',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: LoginColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: entries
+                  .map(
+                    (entry) => Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: LoginColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Text(
+                        '${_labelForEntity(entry.key)} (${entry.value})',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: LoginColors.primary,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _labelForEntity(String key) {
+    final normalized = key.trim();
+    if (normalized.isEmpty) return 'General';
+    return normalized
+        .toLowerCase()
+        .split('_')
+        .map((segment) {
+          if (segment.isEmpty) return '';
+          return segment[0].toUpperCase() + segment.substring(1);
+        })
+        .join(' ');
+  }
+}
+
 class _NotificationTile extends StatelessWidget {
   final AppNotification notification;
   final VoidCallback onTap;
 
-  const _NotificationTile({
-    required this.notification,
-    required this.onTap,
-  });
+  const _NotificationTile({required this.notification, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -230,11 +359,7 @@ class _NotificationTile extends StatelessWidget {
                 color: _iconColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                _icon,
-                size: 20,
-                color: _iconColor,
-              ),
+              child: Icon(_icon, size: 20, color: _iconColor),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -245,8 +370,9 @@ class _NotificationTile extends StatelessWidget {
                     notification.title,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight:
-                          notification.isRead ? FontWeight.w500 : FontWeight.w700,
+                      fontWeight: notification.isRead
+                          ? FontWeight.w500
+                          : FontWeight.w700,
                       color: LoginColors.textPrimary,
                     ),
                   ),

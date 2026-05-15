@@ -437,6 +437,30 @@ class EmployeeRepository {
     );
   }
 
+  Future<EmployeeActivityLogsData?> getEmployeeActivityLogs(
+    int companyId,
+    int employeeId, {
+    String? from,
+    String? to,
+  }) async {
+    try {
+      final response = await _apiService.get(
+        Uri.parse(
+          AppConfig.getEmployeeActivityLogsUrl(
+            companyId,
+            employeeId,
+            from: from,
+            to: to,
+          ),
+        ),
+      );
+      return _parseData(response, EmployeeActivityLogsData.fromJson);
+    } catch (e) {
+      debugPrint('Get employee activity logs error: $e');
+      return null;
+    }
+  }
+
   Future<EmployeeEditResponse?> calculateSalary(
     int companyId,
     CalculateSalaryRequest request,
@@ -742,6 +766,38 @@ class EmployeeRepository {
       return _parseStatusResponse(response);
     } catch (e) {
       debugPrint('Delete work log by admin error: $e');
+      return null;
+    }
+  }
+
+  Future<EmployeeEditResponse?> updateLeaveLogByAdmin(
+    int companyId,
+    int leaveId,
+    CreateLeaveLogRequest request,
+  ) async {
+    try {
+      final response = await _apiService.put(
+        AppConfig.getUpdateLeaveLogByAdminUrl(companyId, leaveId),
+        request.toJson(),
+      );
+      return _parseEditResponse(response);
+    } catch (e) {
+      debugPrint('Update leave log by admin error: $e');
+      return null;
+    }
+  }
+
+  Future<EmployeeStatusResponse?> deleteLeaveLogByAdmin(
+    int companyId,
+    int leaveId,
+  ) async {
+    try {
+      final response = await _apiService.delete(
+        AppConfig.getDeleteLeaveLogByAdminUrl(companyId, leaveId),
+      );
+      return _parseStatusResponse(response);
+    } catch (e) {
+      debugPrint('Delete leave log by admin error: $e');
       return null;
     }
   }

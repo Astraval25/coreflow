@@ -2,15 +2,13 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/link_company_section.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
 import 'package:coreflow/features/main_feature/customers/view_model/customer_detail_view_model.dart';
-import 'package:coreflow/features/main_feature/customers/widget/detail/body/customer_detail_sections.dart';
-import 'package:coreflow/features/main_feature/customers/widget/detail/body/customer_item_section.dart';
 import 'package:coreflow/features/main_feature/customers/widget/detail/body/customer_orders_payments_section.dart';
-import 'package:coreflow/features/main_feature/customers/widget/detail/customer_financial_strip.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class CustomerDetailBody extends StatefulWidget {
   final CustomerDetailData customer;
+  static const double _horizontal = 20;
 
   const CustomerDetailBody({super.key, required this.customer});
 
@@ -19,9 +17,7 @@ class CustomerDetailBody extends StatefulWidget {
 }
 
 class _CustomerDetailBodyState extends State<CustomerDetailBody> {
-  int _selectedIndex = 0;
-  TransactionFilter _selectedTransactionFilter = TransactionFilter.orders;
-  static const double _horizontal = 20;
+  TransactionFilter _selectedFilter = TransactionFilter.all;
 
   @override
   Widget build(BuildContext context) {
@@ -31,141 +27,70 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
 
     return Column(
       children: [
-        CustomerFinancialStrip(customer: customer),
         _buildLinkCompanyStrip(context, vm, isLinked),
-        const SizedBox(height: 10),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: _horizontal),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(
-              color: LoginColors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: LoginColors.borderLight),
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildTransactionDropdown(),
-                  _buildTabText('Items', 1),
-                  _buildTabText('Address', 2),
-                ],
+          padding: const EdgeInsets.fromLTRB(
+            CustomerDetailBody._horizontal,
+            6,
+            CustomerDetailBody._horizontal,
+            8,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                'Orders & Payments',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: LoginColors.textPrimary,
+                ),
+                ),
               ),
-            ),
+              _buildFilterDropdown(),
+            ],
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(_horizontal, 14, _horizontal, 120),
-          child: Container(
-            decoration: BoxDecoration(
-              color: LoginColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: LoginColors.borderLight),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: _buildSelectedSection(customer),
-            ),
-          ),
+          padding: EdgeInsets.only(bottom: 120),
+          child: CustomerOrdersPaymentsSection(filter: _selectedFilter),
         ),
       ],
     );
   }
 
-  Widget _buildTabText(String title, int index) {
-    final isSelected = _selectedIndex == index;
-
-    return TextButton(
-      onPressed: () {
-        setState(() => _selectedIndex = index);
-      },
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        backgroundColor: isSelected
-            ? const Color.fromARGB(255, 255, 255, 255).withValues(alpha: 0.1)
-            : const Color.fromARGB(0, 255, 255, 255),
-        foregroundColor: const Color.fromARGB(0, 255, 255, 255),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 15.5,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-              color: isSelected
-                  ? LoginColors.primaryDark
-                  : LoginColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 1),
-          AnimatedContainer(
-            duration: Duration(milliseconds: 120),
-            curve: Curves.easeInOut,
-            height: 3,
-            width: isSelected ? 44 : 0,
-            decoration: BoxDecoration(
-              color: LoginColors.primary,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(4),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTransactionDropdown() {
-    final isSelected = _selectedIndex == 0;
-
+  Widget _buildFilterDropdown() {
     return PopupMenuButton<TransactionFilter>(
-      onSelected: (value) {
-        setState(() {
-          _selectedIndex = 0;
-          _selectedTransactionFilter = value;
-        });
-      },
-      offset: const Offset(0, 38),
+      onSelected: (value) => setState(() => _selectedFilter = value),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: LoginColors.surface,
-      itemBuilder: (context) => [
-        _buildTransactionMenuItem(TransactionFilter.orders, 'Orders'),
-        _buildTransactionMenuItem(TransactionFilter.payments, 'Payments'),
-        _buildTransactionMenuItem(TransactionFilter.all, 'All'),
+      itemBuilder: (context) => const [
+        PopupMenuItem(value: TransactionFilter.all, child: Text('All')),
+        PopupMenuItem(value: TransactionFilter.payments, child: Text('Payment')),
+        PopupMenuItem(value: TransactionFilter.orders, child: Text('Order')),
       ],
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected
-              ? LoginColors.primary.withValues(alpha: 0.08)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          color: LoginColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: LoginColors.borderLight),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              _transactionFilterLabel(_selectedTransactionFilter),
+              _labelFor(_selectedFilter),
               style: TextStyle(
-                fontSize: 14,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                color: isSelected
-                    ? LoginColors.primaryDark
-                    : LoginColors.textSecondary,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: LoginColors.textPrimary,
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 2),
             Icon(
               Icons.keyboard_arrow_down_rounded,
               size: 18,
-              color: isSelected
-                  ? LoginColors.primaryDark
-                  : LoginColors.textSecondary,
+              color: LoginColors.textSecondary,
             ),
           ],
         ),
@@ -173,47 +98,14 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
     );
   }
 
-  PopupMenuItem<TransactionFilter> _buildTransactionMenuItem(
-    TransactionFilter value,
-    String label,
-  ) {
-    final isActive = _selectedTransactionFilter == value;
-    return PopupMenuItem<TransactionFilter>(
-      value: value,
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13.5,
-          fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-          color: isActive ? LoginColors.primary : LoginColors.textPrimary,
-        ),
-      ),
-    );
-  }
-
-  String _transactionFilterLabel(TransactionFilter filter) {
+  String _labelFor(TransactionFilter filter) {
     switch (filter) {
-      case TransactionFilter.orders:
-        return 'Orders';
-      case TransactionFilter.payments:
-        return 'Payments';
       case TransactionFilter.all:
         return 'All';
-    }
-  }
-
-  Widget _buildSelectedSection(CustomerDetailData customer) {
-    switch (_selectedIndex) {
-      case 0:
-        return CustomerOrdersPaymentsSection(
-          filter: _selectedTransactionFilter,
-        );
-      case 1:
-        return const CustomerItemSection();
-      case 2:
-        return CustomerAddressSection(customer: customer);
-      default:
-        return const SizedBox.shrink();
+      case TransactionFilter.payments:
+        return 'Payment';
+      case TransactionFilter.orders:
+        return 'Order';
     }
   }
 
@@ -225,7 +117,12 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
     if (isLinked) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(_horizontal, 6, _horizontal, 0),
+      padding: const EdgeInsets.fromLTRB(
+        CustomerDetailBody._horizontal,
+        6,
+        CustomerDetailBody._horizontal,
+        6,
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: LoginColors.surface,

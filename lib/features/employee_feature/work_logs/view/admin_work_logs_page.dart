@@ -15,8 +15,17 @@ import 'package:provider/provider.dart';
 
 class AdminWorkLogsPage extends StatelessWidget {
   final int companyId;
+  final int? initialEmployeeId;
+  final bool lockEmployeeFilter;
+  final bool returnToDashboardOnBack;
 
-  const AdminWorkLogsPage({super.key, required this.companyId});
+  const AdminWorkLogsPage({
+    super.key,
+    required this.companyId,
+    this.initialEmployeeId,
+    this.lockEmployeeFilter = false,
+    this.returnToDashboardOnBack = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,15 +36,28 @@ class AdminWorkLogsPage extends StatelessWidget {
           create: (_) => AdminWorkLogsViewModel(EmployeeRepository()),
         ),
       ],
-      child: _AdminWorkLogsView(companyId: companyId),
+      child: _AdminWorkLogsView(
+        companyId: companyId,
+        initialEmployeeId: initialEmployeeId,
+        lockEmployeeFilter: lockEmployeeFilter,
+        returnToDashboardOnBack: returnToDashboardOnBack,
+      ),
     );
   }
 }
 
 class _AdminWorkLogsView extends StatefulWidget {
   final int companyId;
+  final int? initialEmployeeId;
+  final bool lockEmployeeFilter;
+  final bool returnToDashboardOnBack;
 
-  const _AdminWorkLogsView({required this.companyId});
+  const _AdminWorkLogsView({
+    required this.companyId,
+    this.initialEmployeeId,
+    required this.lockEmployeeFilter,
+    required this.returnToDashboardOnBack,
+  });
 
   @override
   State<_AdminWorkLogsView> createState() => _AdminWorkLogsViewState();
@@ -54,6 +76,10 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialEmployeeId != null) {
+      _selectedEmployeeFilterId = widget.initialEmployeeId;
+      _hasInitializedEmployeeFilter = true;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<AdminWorkLogsViewModel>().loadInitial(widget.companyId);
@@ -102,7 +128,7 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
   }
 
   Future<void> _openAddWorkLogsPage(AdminWorkLogsViewModel vm) async {
-    final employees = _workBasedEmployees(vm);
+    final employees = _eligibleEmployees(vm);
     if (employees.isEmpty) {
       _showMessage('No work-based employees available', isError: true);
       return;
@@ -199,7 +225,11 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
     );
   }
 
-  void _goToDashboard() {
+  void _handleBackNavigation() {
+    if (!widget.returnToDashboardOnBack && Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+      return;
+    }
     context.go(CfRoutes.dashboard(widget.companyId));
   }
 
@@ -432,19 +462,20 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
   Widget build(BuildContext context) {
     final vm = context.watch<AdminWorkLogsViewModel>();
     final dashboardVm = context.watch<DashboardViewModel>();
-    final workBasedEmployees = _workBasedEmployees(vm);
+    final eligibleEmployees = _eligibleEmployees(vm);
+    final selectedEmployeeName = _selectedEmployeeName(eligibleEmployees);
 
-    _initializeEmployeeFilter(workBasedEmployees);
+    _initializeEmployeeFilter();
 
     final canAdd =
-        workBasedEmployees.isNotEmpty &&
+        eligibleEmployees.isNotEmpty &&
         vm.workDefinitions.isNotEmpty &&
         !vm.isSaving;
 
     return PopScope(
-      canPop: false,
+      canPop: !widget.returnToDashboardOnBack,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) _goToDashboard();
+        if (!didPop) _handleBackNavigation();
       },
       child: Scaffold(
         key: _scaffoldKey,
@@ -461,7 +492,9 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
             setState(() => _searchQuery = '');
           },
           scaffoldKey: _scaffoldKey,
-          title: 'Work Logs',
+          title: widget.lockEmployeeFilter
+              ? '${selectedEmployeeName ?? 'Employee'} Work Logs'
+              : 'Work Logs',
           searchHint: 'Search work logs...',
         ),
         body: RefreshIndicator(
@@ -492,7 +525,10 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
     );
   }
 
-  List<Employee> _workBasedEmployees(AdminWorkLogsViewModel vm) {
+  List<Employee> _eligibleEmployees(AdminWorkLogsViewModel vm) {
+    if (widget.lockEmployeeFilter) {
+      return vm.employees;
+    }
     return vm.employees
         .where(
           (employee) =>
@@ -501,7 +537,19 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
         .toList();
   }
 
-  void _initializeEmployeeFilter(List<Employee> employees) {
+  String? _selectedEmployeeName(List<Employee> employees) {
+    if (!widget.lockEmployeeFilter || widget.initialEmployeeId == null) {
+      return null;
+    }
+    for (final employee in employees) {
+      if (employee.employeeId == widget.initialEmployeeId) {
+        return employee.employeeName;
+      }
+    }
+    return null;
+  }
+
+  void _initializeEmployeeFilter() {
     if (_hasInitializedEmployeeFilter) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -514,8 +562,10 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
   }
 
   int? _activeEmployeeFilterId(AdminWorkLogsViewModel vm) {
-    final employees = _workBasedEmployees(vm);
-    final selectedId = _selectedEmployeeFilterId;
+    final employees = _eligibleEmployees(vm);
+    final selectedId = widget.lockEmployeeFilter
+        ? widget.initialEmployeeId
+        : _selectedEmployeeFilterId;
     if (selectedId == null) return null;
     final exists = employees.any(
       (employee) => employee.employeeId == selectedId,
@@ -524,14 +574,14 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
   }
 
   Widget _toggleCard(AdminWorkLogsViewModel vm) {
-    final workBasedEmployeeIds = _workBasedEmployees(
+    final eligibleEmployeeIds = _eligibleEmployees(
       vm,
     ).map((employee) => employee.employeeId).toSet();
     final allLogsCount = vm.workLogs
-        .where((log) => workBasedEmployeeIds.contains(log.employeeId))
+        .where((log) => eligibleEmployeeIds.contains(log.employeeId))
         .length;
     final pendingLogsCount = vm.pendingWorkLogs
-        .where((log) => workBasedEmployeeIds.contains(log.employeeId))
+        .where((log) => eligibleEmployeeIds.contains(log.employeeId))
         .length;
 
     return Container(
@@ -681,8 +731,44 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
   }
 
   Widget _employeeFilterCard(AdminWorkLogsViewModel vm) {
-    final employees = _workBasedEmployees(vm);
+    final employees = _eligibleEmployees(vm);
     final selectedEmployeeId = _activeEmployeeFilterId(vm);
+
+    if (widget.lockEmployeeFilter) {
+      Employee? selectedEmployee;
+      for (final employee in employees) {
+        if (employee.employeeId == selectedEmployeeId) {
+          selectedEmployee = employee;
+          break;
+        }
+      }
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: LoginColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: LoginColors.borderLight),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.person_outline_rounded, color: LoginColors.primary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                selectedEmployee == null
+                    ? 'Employee selection unavailable'
+                    : '${selectedEmployee.employeeName} (${selectedEmployee.employeeCode})',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: LoginColors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -807,13 +893,13 @@ class _AdminWorkLogsViewState extends State<_AdminWorkLogsView> {
       );
     }
 
-    final workBasedEmployeeIds = _workBasedEmployees(
+    final eligibleEmployeeIds = _eligibleEmployees(
       vm,
     ).map((employee) => employee.employeeId).toSet();
     final source = _showPendingOnly ? vm.pendingWorkLogs : vm.workLogs;
     final selectedEmployeeId = _activeEmployeeFilterId(vm);
     final filtered = source.where((log) {
-      if (!workBasedEmployeeIds.contains(log.employeeId)) {
+      if (!eligibleEmployeeIds.contains(log.employeeId)) {
         return false;
       }
       final query = _searchQuery.toLowerCase();
