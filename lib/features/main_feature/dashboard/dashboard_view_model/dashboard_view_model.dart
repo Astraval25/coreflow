@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:coreflow/data/services/push_notification_service.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -28,6 +30,7 @@ class DashboardViewModel extends ChangeNotifier {
   bool _isSwitchingCompany = false;
 
   bool _isCustomersExpanded = false;
+  bool _isWorkforceExpanded = false;
   String _selectedMenu = 'badges';
 
   bool _hasLoadedUserData = false;
@@ -109,10 +112,7 @@ class DashboardViewModel extends ChangeNotifier {
 
   Future<void> refresh() async {
     _hasLoadedAppOpenData = false;
-    await Future.wait([
-      loadUserData(force: true),
-      loadCompanies(force: true),
-    ]);
+    await Future.wait([loadUserData(force: true), loadCompanies(force: true)]);
     if (_companyId != null) {
       await Future.wait([
         _loadUnreadCount(),
@@ -139,6 +139,13 @@ class DashboardViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool get isWorkforceExpanded => _isWorkforceExpanded;
+
+  void toggleWorkforceExpanded(bool expanded) {
+    _isWorkforceExpanded = expanded;
+    notifyListeners();
+  }
+
   void setSelectedMenu(String menu) {
     _selectedMenu = menu;
     notifyListeners();
@@ -148,6 +155,7 @@ class DashboardViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    await PushNotificationService().deregisterToken();
     await _authRepository.clearAuthData();
 
     _hasLoadedUserData = false;
@@ -262,8 +270,9 @@ class DashboardViewModel extends ChangeNotifier {
   Future<void> _loadUnreadCount() async {
     if (_companyId == null) return;
     try {
-      _unreadNotificationCount =
-          await _authRepository.getUnreadNotificationCount(_companyId!);
+      _unreadNotificationCount = await _authRepository
+          .getUnreadNotificationCount(_companyId!);
+      await PushNotificationService().setBadgeCount(_unreadNotificationCount);
       notifyListeners();
     } catch (e) {
       debugPrint('Load unread count error: $e');
@@ -302,12 +311,16 @@ class DashboardViewModel extends ChangeNotifier {
   void decrementUnreadCount() {
     if (_unreadNotificationCount > 0) {
       _unreadNotificationCount--;
+      unawaited(
+        PushNotificationService().setBadgeCount(_unreadNotificationCount),
+      );
       notifyListeners();
     }
   }
 
   void clearUnreadCount() {
     _unreadNotificationCount = 0;
+    unawaited(PushNotificationService().clearBadge());
     notifyListeners();
   }
 

@@ -194,6 +194,25 @@ PATCH /api/companies/1/modemp/employees/101/deactivate
 }
 ```
 
+### 5a. Activate Employee
+- API: `PATCH /api/companies/{companyId}/modemp/employees/{employeeId}/activate`
+- Request example:
+
+```http
+PATCH /api/companies/1/modemp/employees/101/activate
+```
+
+- Response example:
+
+```json
+{
+  "responseStatus": true,
+  "responseCode": 203,
+  "responseMessage": "Employee activated successfully",
+  "responseData": null
+}
+```
+
 ## Salary Config APIs
 
 ### 6. Create Salary Config
@@ -367,6 +386,44 @@ Content-Type: application/json
 }
 ```
 
+### 11a. Deactivate Portal Access
+- API: `POST /api/companies/{companyId}/modemp/employees/{employeeId}/portal-user/deactivate`
+- Request example:
+
+```http
+POST /api/companies/1/modemp/employees/101/portal-user/deactivate
+```
+
+- Response example:
+
+```json
+{
+  "responseStatus": true,
+  "responseCode": 203,
+  "responseMessage": "Portal access deactivated successfully",
+  "responseData": null
+}
+```
+
+### 11b. Activate Portal Access
+- API: `POST /api/companies/{companyId}/modemp/employees/{employeeId}/portal-user/activate`
+- Request example:
+
+```http
+POST /api/companies/1/modemp/employees/101/portal-user/activate
+```
+
+- Response example:
+
+```json
+{
+  "responseStatus": true,
+  "responseCode": 203,
+  "responseMessage": "Portal access activated successfully",
+  "responseData": null
+}
+```
+
 ## Work Definition APIs
 
 ### 12. Create Work Definition
@@ -505,6 +562,25 @@ PATCH /api/companies/1/modemp/work-definitions/201/deactivate
 }
 ```
 
+### 16a. Activate Work Definition
+- API: `PATCH /api/companies/{companyId}/modemp/work-definitions/{workDefId}/activate`
+- Request example:
+
+```http
+PATCH /api/companies/1/modemp/work-definitions/201/activate
+```
+
+- Response example:
+
+```json
+{
+  "responseStatus": true,
+  "responseCode": 203,
+  "responseMessage": "Work definition activated successfully",
+  "responseData": null
+}
+```
+
 ### 17. Get Rate History
 - API: `GET /api/companies/{companyId}/modemp/work-definitions/{workDefId}/rate-history`
 - Request example:
@@ -541,7 +617,7 @@ GET /api/companies/1/modemp/work-definitions/201/rate-history
 
 ## Work Log APIs
 
-### 18. Create Work Log
+### 18. Create Work Log (employee self-service)
 - API: `POST /api/companies/{companyId}/modemp/work-logs`
 - Request example:
 
@@ -673,9 +749,55 @@ Content-Type: application/json
 }
 ```
 
+### 22a. Update Work Log (employee self-service)
+- API: `PUT /api/companies/{companyId}/modemp/work-logs/employee`
+- Auth: **Requires ROLE_EMP JWT**
+- Allowed only when the existing work log status is **not** `APPROVED`.
+- Identifies the row by `(employeeId, workDefId, logDate)`.
+- The `employeeId` in the body must match the logged-in employee.
+- Request example:
+
+```http
+PUT /api/companies/1/modemp/work-logs/employee
+Authorization: Bearer <employee-jwt>
+Content-Type: application/json
+```
+
+```json
+{
+  "employeeId": 3,
+  "workDefId": 1,
+  "logDate": "2026-04-14",
+  "quantity": 60.0,
+  "employeeRemarks": "Completed morning shift"
+}
+```
+
+- Response example:
+
+```json
+{
+  "responseStatus": true,
+  "responseCode": 203,
+  "responseMessage": "Work log updated successfully",
+  "responseData": null
+}
+```
+
+- Rejection example (already approved):
+
+```json
+{
+  "responseStatus": false,
+  "responseCode": 406,
+  "responseMessage": "Cannot update an APPROVED work log",
+  "responseData": null
+}
+```
+
 ## Leave Log APIs
 
-### 23. Create Leave Log
+### 23. Create Leave Log (employee self-service)
 - API: `POST /api/companies/{companyId}/modemp/leave-logs`
 - Request example:
 
@@ -797,6 +919,52 @@ Content-Type: application/json
   "responseStatus": true,
   "responseCode": 203,
   "responseMessage": "Leave log reviewed successfully",
+  "responseData": null
+}
+```
+
+### 27a. Update Leave Log (employee self-service)
+- API: `PUT /api/companies/{companyId}/modemp/leave-logs/employee`
+- Auth: **Requires ROLE_EMP JWT**
+- Allowed only when the existing leave log status is **not** `APPROVED`.
+- Identifies the row by `(employeeId, leaveDate)`.
+- The `employeeId` in the body must match the logged-in employee.
+- Request example:
+
+```http
+PUT /api/companies/1/modemp/leave-logs/employee
+Authorization: Bearer <employee-jwt>
+Content-Type: application/json
+```
+
+```json
+{
+  "employeeId": 3,
+  "leaveDate": "2026-04-21",
+  "leaveType": "FULL_DAY",
+  "leaveCategory": "SICK",
+  "reason": "Fever"
+}
+```
+
+- Response example:
+
+```json
+{
+  "responseStatus": true,
+  "responseCode": 203,
+  "responseMessage": "Leave log updated successfully",
+  "responseData": null
+}
+```
+
+- Rejection example (already approved):
+
+```json
+{
+  "responseStatus": false,
+  "responseCode": 406,
+  "responseMessage": "Cannot update an APPROVED leave log",
   "responseData": null
 }
 ```
@@ -1067,12 +1235,13 @@ GET /api/companies/1/modemp/salary/periods/901/slip
 ## Employee Auth APIs
 
 ### 35. Employee Login
-- API: `POST /api/auth/employee/company/{companyId}`
+- API: `POST /api/auth/employee/login`
 - Auth: **No JWT required** (public endpoint)
+- No `companyId` needed — username is globally unique, company is resolved automatically.
 - Request example:
 
 ```http
-POST /api/auth/employee/company/1
+POST /api/auth/employee/login
 Content-Type: application/json
 ```
 
@@ -1108,13 +1277,18 @@ Content-Type: application/json
   - Employee tokens can **only** access `/api/emp/**` endpoints (not admin/company APIs)
   - Employee and portal user must both be active
 
-### 36. Employee Refresh Token
-- API: `POST /api/auth/employee/refresh-token`
+### 36. Refresh Token (Unified — handles both admin and employee)
+- API: `POST /api/auth/refresh-token`
 - Auth: **No JWT required** (public endpoint)
+- **SECURITY**: A single endpoint handles both user and employee token refresh.
+  The `type` claim inside the refresh token determines which flow runs:
+  - `type: "USER"` (or missing) → returns `LoginResponse` (admin/user token)
+  - `type: "EMP"` → returns `EmployeeLoginResponse` (employee token)
+  - **An employee refresh token can NEVER produce an admin token**, and vice versa.
 - Request example:
 
 ```http
-POST /api/auth/employee/refresh-token
+POST /api/auth/refresh-token
 Content-Type: application/json
 ```
 
@@ -1124,101 +1298,5 @@ Content-Type: application/json
 }
 ```
 
-- Response example: same shape as API #35.
-- Notes:
-  - Only accepts employee-type refresh tokens (contains `type: "EMP"` claim)
-  - Admin refresh tokens are rejected and vice versa
-
-## Employee Portal APIs (Self-Service)
-
-Base prefix: `/api/emp`
-Auth: **Requires ROLE_EMP JWT** (from employee login)
-All endpoints automatically scope to the logged-in employee — no `companyId` or `employeeId` in the URL.
-
-### 37. Get My Profile
-- API: `GET /api/emp/me`
-- Request example:
-
-```http
-GET /api/emp/me
-Authorization: Bearer <employee-jwt>
-```
-
-- Response example:
-
-```json
-{
-  "responseStatus": true,
-  "responseCode": 202,
-  "responseMessage": "Profile retrieved successfully",
-  "responseData": {
-    "employeeId": 101,
-    "employeeCode": "EMP-001",
-    "employeeName": "Ravi Kumar",
-    "phone": "9876543210",
-    "email": "ravi@company.com",
-    "designation": "Machine Operator",
-    "joinedDt": "2026-01-10",
-    "isActive": true,
-    "currentSalaryType": "MONTHLY",
-    "currentMonthlyAmount": 28000,
-    "salaryConfigHistory": [ "..." ]
-  }
-}
-```
-
-### 38. Get My Salary Periods
-- API: `GET /api/emp/salary/periods?period={YYYYMM}`
-- Request example:
-
-```http
-GET /api/emp/salary/periods?period=202604
-Authorization: Bearer <employee-jwt>
-```
-
-- Response example: same shape as API #29, filtered to the logged-in employee only.
-
-### 39. Get My Salary Detail
-- API: `GET /api/emp/salary/periods/{salaryPeriodId}`
-- Request example:
-
-```http
-GET /api/emp/salary/periods/901
-Authorization: Bearer <employee-jwt>
-```
-
-- Response example: same shape as API #30.
-- Returns `403` if the salary period does not belong to the logged-in employee.
-
-### 40. Download My Salary Slip (PDF)
-- API: `GET /api/emp/salary/periods/{salaryPeriodId}/slip`
-- Request example:
-
-```http
-GET /api/emp/salary/periods/901/slip
-Authorization: Bearer <employee-jwt>
-```
-
-- Response: Binary PDF file. Returns `403` if the salary period does not belong to the logged-in employee.
-
-### 41. Get My Work Logs
-- API: `GET /api/emp/work-logs?from={YYYY-MM-DD}&to={YYYY-MM-DD}`
-- Request example:
-
-```http
-GET /api/emp/work-logs?from=2026-04-01&to=2026-04-30
-Authorization: Bearer <employee-jwt>
-```
-
-- Response example: same `WorkLogDto[]` shape as API #19, filtered to the logged-in employee.
-
-### 42. Get My Leave Logs
-- API: `GET /api/emp/leave-logs?from={YYYY-MM-DD}&to={YYYY-MM-DD}`
-- Request example:
-
-```http
-GET /api/emp/leave-logs?from=2026-04-01&to=2026-04-30
-Authorization: Bearer <employee-jwt>
-```
-
-- Response example: same `LeaveLogDto[]` shape as API #24, filtered to the logged-in employee.
+- Response for user token: `LoginResponse` (same as login API #login)
+- Response for employee token: `EmployeeLoginResponse` (same shape as API #35)

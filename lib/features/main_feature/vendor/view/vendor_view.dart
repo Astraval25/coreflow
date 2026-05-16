@@ -1,9 +1,9 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/features/main_feature/vendor/view_model/vendor_view_model.dart';
-
 import 'package:coreflow/features/main_feature/vendor/widget/empty_vendor_view.dart';
 import 'package:coreflow/features/main_feature/vendor/widget/error_view.dart';
 import 'package:coreflow/features/main_feature/vendor/widget/loading_view.dart';
@@ -91,8 +91,9 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
                 setState(() => _searchQuery = '');
               },
               scaffoldKey: _scaffoldKey,
-              title: 'Vendors',
+              title: 'Vendors (${viewModel.vendor.length})',
               searchHint: 'Search vendors...',
+              onTitleTap: _openVendorProfilePage,
             ),
             body: Column(
               children: [
@@ -160,6 +161,81 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
     );
   }
 
+  Future<void> _openVendorProfilePage() async {
+    final vm = context.read<ActiveVendorViewModel>();
+    final vendors = vm.vendor;
+    if (vendors.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No vendors available')));
+      return;
+    }
+
+    if (vendors.length == 1) {
+      await context.push(
+        CfRoutes.vendorDetail(widget.companyId, vendors.first.vendorId),
+      );
+      return;
+    }
+
+    final selectedVendor = await showModalBottomSheet<Vendor>(
+      context: context,
+      backgroundColor: LoginColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                child: Text(
+                  'Select Vendor Profile',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+              ),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  itemCount: vendors.length,
+                  separatorBuilder: (_, index) =>
+                      Divider(color: LoginColors.borderLight, height: 1),
+                  itemBuilder: (_, index) {
+                    final vendor = vendors[index];
+                    return ListTile(
+                      dense: true,
+                      title: Text(
+                        vendor.displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(vendor.vendorCompanyName),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => Navigator.pop(context, vendor),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selectedVendor == null) return;
+    await context.push(
+      CfRoutes.vendorDetail(widget.companyId, selectedVendor.vendorId),
+    );
+  }
+
   Widget _buildBody(ActiveVendorViewModel viewModel, String searchQuery) {
     if (viewModel.isLoading && !viewModel.hasData) {
       return const KeyedSubtree(
@@ -171,33 +247,6 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
     if (viewModel.hasError) {
       return KeyedSubtree(
         key: ValueKey('vendor-error-${viewModel.error}'),
-        child: ErrorDisplayView(
-          error: viewModel.error ?? 'Something went wrong',
-          onRetry: () {
-            setState(() => _hasLoaded = false);
-            viewModel.loadVendor(widget.companyId);
-          },
-        ),
-      );
-    }
-
-    if (viewModel.hasError) {
-      return ErrorDisplayView(
-        error: viewModel.error ?? 'Something went wrong',
-        onRetry: () {
-          setState(() => _hasLoaded = false);
-          viewModel.loadVendor(widget.companyId);
-        },
-      );
-      return const SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
-        child: LoadingDisplayView(),
-      );
-    }
-
-    if (viewModel.hasError) {
-      return SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
         child: ErrorDisplayView(
           error: viewModel.error ?? 'Something went wrong',
           onRetry: () {

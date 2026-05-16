@@ -86,8 +86,7 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
             backgroundColor: LoginColors.background,
             drawerEnableOpenDragGesture: false,
             drawer: AppDrawer(vm: dashboardVm),
-            floatingActionButtonLocation:
-                FloatingActionButtonLocation.endFloat,
+            floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
             floatingActionButton: _buildCreateButton(),
             appBar: SearchableEntityAppBar(
               isSearchOpen: false,
@@ -101,18 +100,26 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
               searchHint: '',
               showSearchAction: false,
               tabs: const [
-                SearchableEntityTab(label: 'Orders'),
-                SearchableEntityTab(label: 'Invoices'),
-                SearchableEntityTab(label: 'Paid Orders'),
+                SearchableEntityTab(label: 'Sales'),
+                SearchableEntityTab(label: 'Purchase'),
               ],
-              selectedTabIndex: _selectedTopTab.index,
+              selectedTabIndex: 0,
               onTabSelected: (index) {
-                setState(() => _selectedTopTab = _SalesTopTab.values[index]);
+                if (index == 1 && dashboardVm.companyId != null) {
+                  context.go(CfRoutes.purchase(dashboardVm.companyId!));
+                }
               },
             ),
-            body: RefreshIndicator(
-              onRefresh: vm.refresh,
-              child: _buildBody(vm, filteredOrders, companyId),
+            body: Column(
+              children: [
+                _buildStatusFilterBar(),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: vm.refresh,
+                    child: _buildBody(vm, filteredOrders, companyId),
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -124,6 +131,46 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
     final vm = context.read<DashboardViewModel>();
     if (vm.companyId != null) context.go(CfRoutes.dashboard(vm.companyId!));
     return false;
+  }
+
+  Widget _buildStatusFilterBar() {
+    return Container(
+      width: double.infinity,
+      color: LoginColors.background,
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          _buildStatusChip(_SalesTopTab.orders, 'Orders'),
+          _buildStatusChip(_SalesTopTab.invoices, 'Invoices'),
+          _buildStatusChip(_SalesTopTab.paidOrders, 'Paid Orders'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(_SalesTopTab tab, String label) {
+    final selected = _selectedTopTab == tab;
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: selected ? Colors.white : LoginColors.textSecondary,
+        ),
+      ),
+      selected: selected,
+      showCheckmark: false,
+      selectedColor: LoginColors.primary,
+      backgroundColor: LoginColors.surface,
+      side: BorderSide(
+        color: selected ? LoginColors.primary : LoginColors.borderLight,
+      ),
+      onSelected: (_) {
+        setState(() => _selectedTopTab = tab);
+      },
+    );
   }
 
   Widget _buildBody(
@@ -157,9 +204,7 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
         svgAsset: 'assets/svgs/empty_sales.svg',
         actionLabel: 'New Sales',
         actionIcon: Icons.add_rounded,
-        onAction: companyId == null
-            ? null
-            : () => _openCreateOrder(companyId),
+        onAction: companyId == null ? null : () => _openCreateOrder(companyId),
       );
     }
 
@@ -243,8 +288,10 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final height = (constraints.maxHeight - 120)
-            .clamp(0.0, double.infinity);
+        final height = (constraints.maxHeight - 120).clamp(
+          0.0,
+          double.infinity,
+        );
         return ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
@@ -255,10 +302,7 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SvgPicture.asset(
-                      svgAsset,
-                      height: 170,
-                    ),
+                    SvgPicture.asset(svgAsset, height: 170),
                     const SizedBox(height: 18),
                     Text(
                       title,

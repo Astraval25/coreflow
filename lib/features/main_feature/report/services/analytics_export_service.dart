@@ -80,9 +80,7 @@ class AnalyticsExportService {
       await Share.shareXFiles([XFile(file.path)], subject: '$title — $period');
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             duration: Duration(seconds: 2),
             content: Text('PDF export failed: $e'),
@@ -121,9 +119,7 @@ class AnalyticsExportService {
       await Share.shareXFiles([XFile(file.path)], subject: '$title — $period');
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             duration: Duration(seconds: 2),
             content: Text('CSV export failed: $e'),
@@ -251,6 +247,17 @@ List<String> _headers(ReportType type) {
       return ['Month', 'Cumulative Amount'];
     case ReportType.profitByItem:
       return ['Item', 'Sales', 'Purchase', 'Profit', 'Margin %'];
+    case ReportType.orderHistory:
+      return [
+        'Date',
+        'Order No',
+        'Status',
+        'Quantity',
+        'Total Amount',
+        'Paid %',
+      ];
+    case ReportType.paymentHistory:
+      return ['Date', 'Payment No', 'Status', 'Mode', 'Amount'];
   }
 }
 
@@ -461,6 +468,35 @@ List<List<String>> _buildRows(AnalyticsViewModel vm, ReportType type) {
               _fmtNum(e.totalPurchaseAmount),
               _fmtNum(e.profit),
               '${e.profitMargin.toStringAsFixed(1)}%',
+            ],
+          )
+          .toList();
+    case ReportType.orderHistory:
+      return vm.orderHistory
+          .map(
+            (e) => [
+              '${e.orderDate.day.toString().padLeft(2, '0')}/${e.orderDate.month.toString().padLeft(2, '0')}/${e.orderDate.year}',
+              e.localOrderNumber.isNotEmpty
+                  ? e.localOrderNumber
+                  : '#${e.orderId}',
+              e.orderStatus,
+              e.totalItemQuantity.toStringAsFixed(2),
+              _fmtNum(e.totalAmount),
+              '${e.paidPercentage}%',
+            ],
+          )
+          .toList();
+    case ReportType.paymentHistory:
+      return vm.paymentHistory
+          .map(
+            (e) => [
+              '${e.paymentDate.day.toString().padLeft(2, '0')}/${e.paymentDate.month.toString().padLeft(2, '0')}/${e.paymentDate.year}',
+              e.localPaymentNumber.isNotEmpty
+                  ? e.localPaymentNumber
+                  : '#${e.paymentId}',
+              e.paymentStatus,
+              e.modeOfPayment,
+              _fmtNum(e.amount),
             ],
           )
           .toList();

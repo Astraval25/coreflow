@@ -23,6 +23,7 @@ class AppDrawer extends StatelessWidget {
               children: [
                 DashboardMenuItem(vm: vm),
                 ManageExpansion(vm: vm),
+                WorkforceExpansion(vm: vm),
                 SalesMenuItem(vm: vm),
                 PurchaseMenuItem(vm: vm),
                 PaymentMenuItem(vm: vm),

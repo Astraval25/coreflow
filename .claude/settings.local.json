@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls lib/features/employee_feature/ lib/features/employee_feature/*/view lib/features/employee_feature/*/view_model)",
+      "Bash(wc -l lib/features/employee_feature/employees/view/*.dart lib/features/employee_feature/work_logs/view/*.dart lib/features/employee_feature/leave_logs/view/*.dart lib/features/employee_feature/salary/view/*.dart lib/features/employee_feature/employees/view_model/*.dart)",
+      "Bash(flutter analyze:*)",
+      "Bash(wc -l e:/workspace/CoreFlow/coreflow/lib/data/repositories/employee_repository/*.dart)"
+    ]
+  }
+}

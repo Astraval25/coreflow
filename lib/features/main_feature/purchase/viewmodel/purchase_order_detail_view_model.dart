@@ -151,6 +151,10 @@ class PurchaseOrderDetailViewModel extends ChangeNotifier {
     await loadOrderDetail();
   }
 
+  Future<Uint8List?> downloadOrderBill() {
+    return _repository.downloadOrderBill(companyId, orderId);
+  }
+
   Future<bool> updateStatus(String action) async {
     _isStatusUpdating = true;
     _statusError = null;

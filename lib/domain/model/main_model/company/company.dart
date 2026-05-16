@@ -6,6 +6,18 @@ class Company {
   final String? pan;
   final String? gstNo;
   final String? hsnCode;
+  final String? fsId;
+  final String? contactPerson;
+  final String? contactEmail;
+  final String? contactPhone;
+  final String? website;
+  final String? addressLine1;
+  final String? addressLine2;
+  final String? city;
+  final String? state;
+  final String? country;
+  final String? postalCode;
+  final String? publicDescription;
   final bool isActive;
 
   Company({
@@ -16,6 +28,18 @@ class Company {
     this.pan,
     this.gstNo,
     this.hsnCode,
+    this.fsId,
+    this.contactPerson,
+    this.contactEmail,
+    this.contactPhone,
+    this.website,
+    this.addressLine1,
+    this.addressLine2,
+    this.city,
+    this.state,
+    this.country,
+    this.postalCode,
+    this.publicDescription,
     required this.isActive,
   });
 
@@ -28,6 +52,18 @@ class Company {
       pan: json['pan'],
       gstNo: json['gstNo'],
       hsnCode: json['hsnCode'],
+      fsId: json['fsId'],
+      contactPerson: json['contactPerson']?.toString(),
+      contactEmail: json['contactEmail']?.toString(),
+      contactPhone: json['contactPhone']?.toString(),
+      website: json['website']?.toString(),
+      addressLine1: json['addressLine1']?.toString(),
+      addressLine2: json['addressLine2']?.toString(),
+      city: json['city']?.toString(),
+      state: json['state']?.toString(),
+      country: json['country']?.toString(),
+      postalCode: json['postalCode']?.toString(),
+      publicDescription: json['publicDescription']?.toString(),
       isActive: json['isActive'] ?? false,
     );
   }
@@ -41,6 +77,18 @@ class Company {
       'pan': pan,
       'gstNo': gstNo,
       'hsnCode': hsnCode,
+      'fsId': fsId,
+      'contactPerson': contactPerson,
+      'contactEmail': contactEmail,
+      'contactPhone': contactPhone,
+      'website': website,
+      'addressLine1': addressLine1,
+      'addressLine2': addressLine2,
+      'city': city,
+      'state': state,
+      'country': country,
+      'postalCode': postalCode,
+      'publicDescription': publicDescription,
       'isActive': isActive,
     };
   }
@@ -53,6 +101,17 @@ class Company {
       'gstNo': gstNo,
       'hsnCode': hsnCode,
       'shortName': shortName,
+      'contactPerson': contactPerson,
+      'contactEmail': contactEmail,
+      'contactPhone': contactPhone,
+      'website': website,
+      'addressLine1': addressLine1,
+      'addressLine2': addressLine2,
+      'city': city,
+      'state': state,
+      'country': country,
+      'postalCode': postalCode,
+      'publicDescription': publicDescription,
     };
   }
 
@@ -64,6 +123,17 @@ class Company {
       'gstNo': gstNo,
       'hsnCode': hsnCode,
       'shortName': shortName,
+      'contactPerson': contactPerson,
+      'contactEmail': contactEmail,
+      'contactPhone': contactPhone,
+      'website': website,
+      'addressLine1': addressLine1,
+      'addressLine2': addressLine2,
+      'city': city,
+      'state': state,
+      'country': country,
+      'postalCode': postalCode,
+      'publicDescription': publicDescription,
     };
   }
 }

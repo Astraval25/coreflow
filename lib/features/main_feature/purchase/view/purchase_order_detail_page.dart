@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:coreflow/core/widgets/skeleton.dart';
 import 'package:coreflow/core/utils/common_formatters.dart';
 import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:coreflow/domain/model/main_model/company_ref/order_ref.dart';
 import 'package:coreflow/domain/model/main_model/company_ref/payment_ref.dart';
 import 'package:coreflow/domain/model/main_model/purchase/purchase_order_detail.dart';
@@ -36,8 +39,57 @@ class PurchaseOrderDetailPage extends StatelessWidget {
   }
 }
 
-class _PurchaseOrderDetailView extends StatelessWidget {
+class _PurchaseOrderDetailView extends StatefulWidget {
   const _PurchaseOrderDetailView();
+
+  @override
+  State<_PurchaseOrderDetailView> createState() =>
+      _PurchaseOrderDetailViewState();
+}
+
+class _PurchaseOrderDetailViewState extends State<_PurchaseOrderDetailView> {
+  bool _isDownloadingBill = false;
+
+  Future<void> _downloadBill(PurchaseOrderDetailViewModel vm) async {
+    if (_isDownloadingBill) return;
+    setState(() => _isDownloadingBill = true);
+    try {
+      final bytes = await vm.downloadOrderBill();
+      if (!mounted) return;
+      if (bytes == null || bytes.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            duration: Duration(seconds: 2),
+            content: Text('Failed to download bill'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+      final orderNumber =
+          vm.orderRef?.localOrderNumber.isNotEmpty == true
+              ? vm.orderRef!.localOrderNumber
+              : vm.orderId.toString();
+      final fileName = 'order-bill-$orderNumber.pdf';
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/$fileName');
+      await file.writeAsBytes(bytes, flush: true);
+      await Share.shareXFiles([
+        XFile(file.path, mimeType: 'application/pdf'),
+      ], subject: fileName);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text('Failed to download bill: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isDownloadingBill = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +127,16 @@ class _PurchaseOrderDetailView extends StatelessWidget {
               ),
             ),
             actions: [
+              if (vm.orderDetail?.hasBill == true)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                  child: _RoundActionIcon(
+                    icon: _isDownloadingBill
+                        ? Icons.hourglass_top_rounded
+                        : Icons.download_rounded,
+                    onTap: _isDownloadingBill ? () {} : () => _downloadBill(vm),
+                  ),
+                ),
               Padding(
                 padding: const EdgeInsets.all(8),
                 child: _RoundActionIcon(

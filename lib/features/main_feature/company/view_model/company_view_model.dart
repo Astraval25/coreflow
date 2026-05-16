@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../data/repositories/main_repository/company_repository.dart';
 import '../../../../domain/model/main_model/company/company.dart';
@@ -9,11 +10,13 @@ class CompanyViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   bool _isSaving = false;
+  bool _isUploadingLogo = false;
 
   List<Company> get companies => _companies;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isSaving => _isSaving;
+  bool get isUploadingLogo => _isUploadingLogo;
 
   Future<void> loadCompanies() async {
     _isLoading = true;
@@ -31,6 +34,15 @@ class CompanyViewModel extends ChangeNotifier {
     }
   }
 
+  Future<Company?> getCompanyById(int companyId) async {
+    try {
+      return await _companyRepo.getCompanyById(companyId);
+    } catch (e) {
+      debugPrint('Get company detail error: $e');
+      return null;
+    }
+  }
+
   Future<bool> createCompany({
     required String companyName,
     required String industry,
@@ -38,20 +50,42 @@ class CompanyViewModel extends ChangeNotifier {
     String? gstNo,
     String? hsnCode,
     String? shortName,
+    String? contactPerson,
+    String? contactEmail,
+    String? contactPhone,
+    String? website,
+    String? addressLine1,
+    String? addressLine2,
+    String? city,
+    String? state,
+    String? country,
+    String? postalCode,
+    String? publicDescription,
   }) async {
     _isSaving = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final data = {
-        'companyName': companyName,
-        'industry': industry,
-        if (pan != null && pan.isNotEmpty) 'pan': pan,
-        if (gstNo != null && gstNo.isNotEmpty) 'gstNo': gstNo,
-        if (hsnCode != null && hsnCode.isNotEmpty) 'hsnCode': hsnCode,
-        if (shortName != null && shortName.isNotEmpty) 'shortName': shortName,
-      };
+      final data = _buildCompanyPayload(
+        companyName: companyName,
+        industry: industry,
+        pan: pan,
+        gstNo: gstNo,
+        hsnCode: hsnCode,
+        shortName: shortName,
+        contactPerson: contactPerson,
+        contactEmail: contactEmail,
+        contactPhone: contactPhone,
+        website: website,
+        addressLine1: addressLine1,
+        addressLine2: addressLine2,
+        city: city,
+        state: state,
+        country: country,
+        postalCode: postalCode,
+        publicDescription: publicDescription,
+      );
       final result = await _companyRepo.createCompany(data);
       if (result != null) {
         await loadCompanies();
@@ -77,20 +111,42 @@ class CompanyViewModel extends ChangeNotifier {
     String? gstNo,
     String? hsnCode,
     String? shortName,
+    String? contactPerson,
+    String? contactEmail,
+    String? contactPhone,
+    String? website,
+    String? addressLine1,
+    String? addressLine2,
+    String? city,
+    String? state,
+    String? country,
+    String? postalCode,
+    String? publicDescription,
   }) async {
     _isSaving = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final data = {
-        'companyName': companyName,
-        'industry': industry,
-        if (pan != null && pan.isNotEmpty) 'pan': pan,
-        if (gstNo != null && gstNo.isNotEmpty) 'gstNo': gstNo,
-        if (hsnCode != null && hsnCode.isNotEmpty) 'hsnCode': hsnCode,
-        if (shortName != null && shortName.isNotEmpty) 'shortName': shortName,
-      };
+      final data = _buildCompanyPayload(
+        companyName: companyName,
+        industry: industry,
+        pan: pan,
+        gstNo: gstNo,
+        hsnCode: hsnCode,
+        shortName: shortName,
+        contactPerson: contactPerson,
+        contactEmail: contactEmail,
+        contactPhone: contactPhone,
+        website: website,
+        addressLine1: addressLine1,
+        addressLine2: addressLine2,
+        city: city,
+        state: state,
+        country: country,
+        postalCode: postalCode,
+        publicDescription: publicDescription,
+      );
       final result = await _companyRepo.updateCompany(companyId, data);
       if (result != null) {
         await loadCompanies();
@@ -104,6 +160,29 @@ class CompanyViewModel extends ChangeNotifier {
       return false;
     } finally {
       _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String?> uploadCompanyLogo(int companyId, File file) async {
+    _isUploadingLogo = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final fsId = await _companyRepo.uploadCompanyLogo(companyId, file);
+      if (fsId != null) {
+        await loadCompanies();
+        return fsId;
+      }
+      _errorMessage = 'Failed to upload logo';
+      return null;
+    } catch (e) {
+      _errorMessage = 'Failed to upload logo';
+      debugPrint('Upload logo error: $e');
+      return null;
+    } finally {
+      _isUploadingLogo = false;
       notifyListeners();
     }
   }
@@ -130,5 +209,54 @@ class CompanyViewModel extends ChangeNotifier {
       debugPrint('Toggle company status error: $e');
       return false;
     }
+  }
+
+  Map<String, dynamic> _buildCompanyPayload({
+    required String companyName,
+    required String industry,
+    String? pan,
+    String? gstNo,
+    String? hsnCode,
+    String? shortName,
+    String? contactPerson,
+    String? contactEmail,
+    String? contactPhone,
+    String? website,
+    String? addressLine1,
+    String? addressLine2,
+    String? city,
+    String? state,
+    String? country,
+    String? postalCode,
+    String? publicDescription,
+  }) {
+    final payload = <String, dynamic>{
+      'companyName': companyName,
+      'industry': industry,
+    };
+
+    void addIfNotBlank(String key, String? value) {
+      if (value == null) return;
+      final trimmed = value.trim();
+      if (trimmed.isNotEmpty) payload[key] = trimmed;
+    }
+
+    addIfNotBlank('pan', pan);
+    addIfNotBlank('gstNo', gstNo);
+    addIfNotBlank('hsnCode', hsnCode);
+    addIfNotBlank('shortName', shortName);
+    addIfNotBlank('contactPerson', contactPerson);
+    addIfNotBlank('contactEmail', contactEmail);
+    addIfNotBlank('contactPhone', contactPhone);
+    addIfNotBlank('website', website);
+    addIfNotBlank('addressLine1', addressLine1);
+    addIfNotBlank('addressLine2', addressLine2);
+    addIfNotBlank('city', city);
+    addIfNotBlank('state', state);
+    addIfNotBlank('country', country);
+    addIfNotBlank('postalCode', postalCode);
+    addIfNotBlank('publicDescription', publicDescription);
+
+    return payload;
   }
 }

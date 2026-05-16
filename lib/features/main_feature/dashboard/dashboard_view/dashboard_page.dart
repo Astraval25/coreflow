@@ -34,35 +34,10 @@ class _DashboardView extends StatefulWidget {
   State<_DashboardView> createState() => _DashboardViewState();
 }
 
-class _DashboardViewState extends State<_DashboardView>
-    with SingleTickerProviderStateMixin {
+class _DashboardViewState extends State<_DashboardView> {
   static const double _contentHorizontalPadding = 16;
   static const double _promoBannerHeight = 180;
 
-  bool _isRefreshing = false;
-  late final AnimationController _refreshController = AnimationController(
-    vsync: this,
-    duration: Duration(milliseconds: 800),
-  );
-
-  @override
-  void dispose() {
-    _refreshController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _handleRefresh(DashboardViewModel vm) async {
-    if (_isRefreshing) return;
-    setState(() => _isRefreshing = true);
-    _refreshController.repeat();
-    try {
-      await vm.refresh();
-    } finally {
-      _refreshController.stop();
-      _refreshController.reset();
-      if (mounted) setState(() => _isRefreshing = false);
-    }
-  }
   static final Uri _fallbackVideoUrl = Uri.parse(
     'https://youtube.com/shorts/XgM2_m2I6sE?si=MVVTXLzD-l5AUu7e',
   );
@@ -110,8 +85,7 @@ class _DashboardViewState extends State<_DashboardView>
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: LoginColors.shadowLight
-                                          .withValues(
+                                      color: LoginColors.shadowLight.withValues(
                                         alpha: 0.12,
                                       ),
                                       blurRadius: 18,
@@ -179,7 +153,7 @@ class _DashboardViewState extends State<_DashboardView>
     // If we have ad banners, use them; otherwise fall back to static assets
     if (adWidgets.isNotEmpty) return adWidgets;
 
-    return [_buildStaticBannerItem(context, 'assets/image1.jpeg')];
+    return [_buildStaticBannerItem(context, 'assets/image1.jpg')];
   }
 
   Widget _buildAdBannerItem(
@@ -244,7 +218,7 @@ class _DashboardViewState extends State<_DashboardView>
                   Icon(Icons.campaign_rounded, color: Colors.white, size: 16),
                   const SizedBox(width: 6),
                   Text(
-                    'Place your ad · admin@coreflow.com',
+                    'Place your ad · admin@astraval.com',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
@@ -371,20 +345,6 @@ class _DashboardViewState extends State<_DashboardView>
         onPressed: () => Scaffold.of(context).openDrawer(),
       ),
       actions: [
-        RotationTransition(
-          turns: _refreshController,
-          child: IconButton(
-            tooltip: 'Refresh',
-            onPressed: _isRefreshing ? null : () => _handleRefresh(vm),
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: _isRefreshing
-                  ? LoginColors.textTertiary
-                  : LoginColors.textPrimary,
-              size: 24,
-            ),
-          ),
-        ),
         IconButton(
           onPressed: () {
             if (vm.companyId != null) {
@@ -435,29 +395,29 @@ class _AssetVideoFullscreenPageState extends State<_AssetVideoFullscreenPage> {
   @override
   void initState() {
     super.initState();
-    _initialize();
+    // _initialize();
   }
 
-  Future<void> _initialize() async {
-    try {
-      final controller = VideoPlayerController.asset('assets/viedios.mp4');
-      await controller.initialize();
-      await controller.setLooping(true);
-      await controller.play();
-      if (!mounted) {
-        await controller.dispose();
-        return;
-      }
-      setState(() {
-        _controller = controller;
-        _isReady = true;
-      });
-    } on PlatformException {
-      if (mounted) setState(() => _hasError = true);
-    } catch (_) {
-      if (mounted) setState(() => _hasError = true);
-    }
-  }
+  // Future<void> _initialize() async {
+  //   try {
+  //     final controller = VideoPlayerController.asset('assets/viedios.mp4');
+  //     await controller.initialize();
+  //     await controller.setLooping(true);
+  //     await controller.play();
+  //     if (!mounted) {
+  //       await controller.dispose();
+  //       return;
+  //     }
+  //     setState(() {
+  //       _controller = controller;
+  //       _isReady = true;
+  //     });
+  //   } on PlatformException {
+  //     if (mounted) setState(() => _hasError = true);
+  //   } catch (_) {
+  //     if (mounted) setState(() => _hasError = true);
+  //   }
+  // }
 
   Future<void> _openFallbackVideo() async {
     try {

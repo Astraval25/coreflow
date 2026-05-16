@@ -13,6 +13,31 @@ class TokenStorage {
   static const _roleCodeKey = 'role_code';
   static const _userEmailKey = 'user_email';
   static const _userNameKey = 'user_name';
+  static const _employeeIdKey = 'employee_id';
+  static const _employeeCodeKey = 'employee_code';
+  static const _designationKey = 'designation';
+  static const _authTypeKey = 'auth_type';
+  static const _fcmTokenKey = 'fcm_token';
+  static final ValueNotifier<int> authStateNotifier = ValueNotifier<int>(0);
+
+  static void _notifyAuthStateChanged() {
+    authStateNotifier.value = authStateNotifier.value + 1;
+  }
+
+  static Future<void> saveFcmToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_fcmTokenKey, token);
+  }
+
+  static Future<String?> getFcmToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_fcmTokenKey);
+  }
+
+  static Future<void> clearFcmToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_fcmTokenKey);
+  }
 
   static Future<bool> saveFullAuthData({
     required String userId,
@@ -25,6 +50,10 @@ class TokenStorage {
     required String landingUrl,
     required String email,
     required String userName,
+    int? employeeId,
+    String? employeeCode,
+    String? designation,
+    String? authType,
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -46,9 +75,19 @@ class TokenStorage {
     if (roleCode?.isNotEmpty == true) {
       await prefs.setString(_roleCodeKey, roleCode!);
     }
+    if (employeeId != null) await prefs.setInt(_employeeIdKey, employeeId);
+    if (employeeCode?.isNotEmpty == true) {
+      await prefs.setString(_employeeCodeKey, employeeCode!);
+    }
+    if (designation?.isNotEmpty == true) {
+      await prefs.setString(_designationKey, designation!);
+    }
+    if (authType?.isNotEmpty == true) {
+      await prefs.setString(_authTypeKey, authType!);
+    }
 
     await Future.delayed(Duration(milliseconds: 50));
-    final verifyPrefs = await SharedPreferences.getInstance(); 
+    final verifyPrefs = await SharedPreferences.getInstance();
     final savedToken = verifyPrefs.getString(_tokenKey);
     final savedRefresh = verifyPrefs.getString(_refreshTokenKey);
     final saveSuccess =
@@ -57,6 +96,9 @@ class TokenStorage {
     debugPrint(
       'Save verify - Token: ${savedToken?.length ?? 0}c, Refresh: ${savedRefresh?.length ?? 0}c, Success: $saveSuccess',
     );
+    if (saveSuccess) {
+      _notifyAuthStateChanged();
+    }
     return saveSuccess;
   }
 
@@ -81,6 +123,10 @@ class TokenStorage {
       'landingUrl': prefs.getString(_landingUrlKey),
       'email': prefs.getString(_userEmailKey),
       'userName': prefs.getString(_userNameKey),
+      'employeeId': prefs.getInt(_employeeIdKey),
+      'employeeCode': prefs.getString(_employeeCodeKey),
+      'designation': prefs.getString(_designationKey),
+      'authType': prefs.getString(_authTypeKey),
     };
 
     final tokenExists = token?.isNotEmpty == true;
@@ -97,12 +143,63 @@ class TokenStorage {
     return result;
   }
 
+  static Future<String?> getRefreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshToken = prefs.getString(_refreshTokenKey);
+    if (refreshToken == null) return null;
+    final trimmed = refreshToken.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  static Map<String, dynamic>? _tryDecodeJwtPayload(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      final normalized = base64Url.normalize(parts[1]);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final payload = jsonDecode(decoded);
+      if (payload is Map<String, dynamic>) return payload;
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static DateTime? _extractTokenExpiryUtc(String token) {
+    final payload = _tryDecodeJwtPayload(token);
+    if (payload == null) return null;
+    final expRaw = payload['exp'];
+    final expSeconds = expRaw is int
+        ? expRaw
+        : int.tryParse(expRaw?.toString() ?? '');
+    if (expSeconds == null) return null;
+    return DateTime.fromMillisecondsSinceEpoch(expSeconds * 1000, isUtc: true);
+  }
+
+  static Future<bool> isAccessTokenExpired({
+    Duration clockSkew = const Duration(seconds: 30),
+  }) async {
+    final token = await getToken();
+    if (token == null) return true;
+
+    final expiryUtc = _extractTokenExpiryUtc(token);
+    if (expiryUtc == null) {
+      return false;
+    }
+
+    final nowUtc = DateTime.now().toUtc();
+    return nowUtc.isAfter(expiryUtc.subtract(clockSkew));
+  }
+
   static Future<bool> hasValidToken() async {
     final token = await getToken();
     return token != null;
   }
 
-  static Future<void> saveSelectedCompany(int companyId, String companyName) async {
+  static Future<void> saveSelectedCompany(
+    int companyId,
+    String companyName,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_companyIdKey, companyId);
     await prefs.setString(_companyNameKey, companyName);
@@ -112,6 +209,7 @@ class TokenStorage {
   static Future<void> clearAllData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+    _notifyAuthStateChanged();
     debugPrint(' All auth data cleared');
   }
 }

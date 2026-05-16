@@ -38,8 +38,19 @@ String _axisLabel(double v) {
 
 String _monthShort(String yyyyMm) {
   const m = [
-    '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    '',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   final p = yyyyMm.split('-');
   if (p.length < 2) return yyyyMm;
@@ -49,8 +60,19 @@ String _monthShort(String yyyyMm) {
 
 String _monthFull(String yyyyMm) {
   const months = [
-    '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    '',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   final p = yyyyMm.split('-');
   if (p.length < 2) return yyyyMm;
@@ -60,11 +82,17 @@ String _monthFull(String yyyyMm) {
 
 double _niceMax(double rawMax) {
   if (rawMax <= 0) return 100;
-  final magnitude =
-      math.pow(10, (math.log(rawMax) / math.ln10).floor()).toDouble();
+  final magnitude = math
+      .pow(10, (math.log(rawMax) / math.ln10).floor())
+      .toDouble();
   final normalized = rawMax / magnitude;
-  final nice =
-      normalized <= 1.5 ? 1.5 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+  final nice = normalized <= 1.5
+      ? 1.5
+      : normalized <= 2
+      ? 2
+      : normalized <= 5
+      ? 5
+      : 10;
   return nice * magnitude;
 }
 
@@ -80,7 +108,10 @@ List<double> _niceTicksRange(double min, double max, int count) {
 }
 
 ({double min, double max, List<double> ticks}) _niceRange(
-    double min, double max, int count) {
+  double min,
+  double max,
+  int count,
+) {
   if (min >= 0) {
     final niceMax = _niceMax(max);
     return (min: 0, max: niceMax, ticks: _niceTicksRange(0, niceMax, count));
@@ -114,7 +145,8 @@ class DashboardAnalyticsSection extends StatefulWidget {
   });
 
   @override
-  State<DashboardAnalyticsSection> createState() => _DashboardAnalyticsSectionState();
+  State<DashboardAnalyticsSection> createState() =>
+      _DashboardAnalyticsSectionState();
 }
 
 class _DashboardAnalyticsSectionState extends State<DashboardAnalyticsSection> {
@@ -175,7 +207,9 @@ class _DashboardAnalyticsSectionState extends State<DashboardAnalyticsSection> {
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading) return const _AnalyticsSkeleton();
-    if (widget.kpi == null && widget.cashFlow.isEmpty && widget.revenueExpense.isEmpty) {
+    if (widget.kpi == null &&
+        widget.cashFlow.isEmpty &&
+        widget.revenueExpense.isEmpty) {
       return const SizedBox.shrink();
     }
     return Column(
@@ -186,11 +220,14 @@ class _DashboardAnalyticsSectionState extends State<DashboardAnalyticsSection> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Analytics',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: LoginColors.textPrimary)),
+              Text(
+                'Analytics',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: LoginColors.textPrimary,
+                ),
+              ),
               GestureDetector(
                 onTap: _periodLoading ? null : _showPeriodSelector,
                 child: _periodLoading
@@ -218,13 +255,17 @@ class _DashboardAnalyticsSectionState extends State<DashboardAnalyticsSection> {
                 ),
               ],
             ),
-            child: _FinancialSummarySection(kpi: widget.kpi!, companyId: widget.companyId),
+            child: _FinancialSummarySection(
+              kpi: widget.kpi!,
+              companyId: widget.companyId,
+            ),
           ),
         if (widget.cashFlow.isNotEmpty || widget.onPeriodChanged != null) ...[
           const SizedBox(height: 16),
           _CashFlowSection(entries: widget.cashFlow),
         ],
-        if (widget.revenueExpense.isNotEmpty || widget.onPeriodChanged != null) ...[
+        if (widget.revenueExpense.isNotEmpty ||
+            widget.onPeriodChanged != null) ...[
           const SizedBox(height: 16),
           _IncomeExpenseSection(entries: widget.revenueExpense),
         ],
@@ -259,9 +300,13 @@ class _FinancialSummarySection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Total Receivables',
-                    style: TextStyle(
-                        fontSize: 12, color: LoginColors.textSecondary)),
+                Text(
+                  'Total Receivables',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: LoginColors.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 GestureDetector(
                   onTap: () => Navigator.push(
@@ -273,23 +318,35 @@ class _FinancialSummarySection extends StatelessWidget {
                       ),
                     ),
                   ),
-                  child: Row(children: [
-                    Flexible(
-                      child: Text(_full(kpi.outstandingReceivables),
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          _full(kpi.outstandingReceivables),
                           style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1E293B))),
-                    ),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                      ),
                       const SizedBox(width: 6),
-                    const Icon(Icons.keyboard_arrow_down_rounded,
-                        size: 16, color: Color(0xFF64748B)),
-                  ]),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 16,
+                        color: Color(0xFF64748B),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 20),
-                Text('Total Payables',
-                    style: TextStyle(
-                        fontSize: 12, color: LoginColors.textSecondary)),
+                Text(
+                  'Total Payables',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: LoginColors.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 GestureDetector(
                   onTap: () => Navigator.push(
@@ -301,18 +358,26 @@ class _FinancialSummarySection extends StatelessWidget {
                       ),
                     ),
                   ),
-                  child: Row(children: [
-                    Flexible(
-                      child: Text(_full(kpi.outstandingPayables),
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          _full(kpi.outstandingPayables),
                           style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1E293B))),
-                    ),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                      ),
                       const SizedBox(width: 6),
-                    const Icon(Icons.keyboard_arrow_down_rounded,
-                        size: 16, color: Color(0xFF64748B)),
-                  ]),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 16,
+                        color: Color(0xFF64748B),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -366,16 +431,14 @@ class _CountCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        final reportType = label == 'Sales' 
-            ? ReportType.salesSummary 
+        final reportType = label == 'Sales'
+            ? ReportType.salesSummary
             : ReportType.purchaseSummary;
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => ReportDetailPage(
-              reportType: reportType,
-              companyId: companyId,
-            ),
+            builder: (_) =>
+                ReportDetailPage(reportType: reportType, companyId: companyId),
           ),
         );
       },
@@ -394,15 +457,23 @@ class _CountCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(count.toString(),
-                      style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1E293B))),
+                  Text(
+                    count.toString(),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(label,
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                      maxLines: 2),
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                    ),
+                    maxLines: 2,
+                  ),
                 ],
               ),
             ),
@@ -528,35 +599,37 @@ class _CashFlowSectionState extends State<_CashFlowSection> {
           children: [
             Row(
               children: [
-                Icon(Icons.radio_button_checked_outlined,
-                    size: 16, color: LoginColors.textSecondary),
+                Icon(
+                  Icons.radio_button_checked_outlined,
+                  size: 16,
+                  color: LoginColors.textSecondary,
+                ),
                 const SizedBox(width: 6),
-                Text('Cash Flow',
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: LoginColors.textPrimary)),
+                Text(
+                  'Cash Flow',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
-            Text('No cash flow data',
-                style: TextStyle(
-                    fontSize: 12, color: LoginColors.textSecondary)),
+            Text(
+              'No cash flow data',
+              style: TextStyle(fontSize: 12, color: LoginColors.textSecondary),
+            ),
           ],
         ),
       );
     }
 
-    final minClose =
-        entries.map((e) => e.closingBalance).reduce(math.min);
-    final maxClose =
-        entries.map((e) => e.closingBalance).reduce(math.max);
+    final minClose = entries.map((e) => e.closingBalance).reduce(math.min);
+    final maxClose = entries.map((e) => e.closingBalance).reduce(math.max);
     final range = _niceRange(minClose, maxClose, 5);
 
-    final first = entries.first;
-    final last = entries.last;
-    final totalIncoming = entries.fold<double>(0, (s, e) => s + e.incoming);
-    final totalOutgoing = entries.fold<double>(0, (s, e) => s + e.outgoing);
+    final monthEntry = _currentMonthEntry(entries) ?? entries.last;
 
     return Container(
       decoration: BoxDecoration(
@@ -578,14 +651,20 @@ class _CashFlowSectionState extends State<_CashFlowSection> {
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
             child: Row(
               children: [
-                Icon(Icons.radio_button_checked_outlined,
-                    size: 16, color: LoginColors.textSecondary),
+                Icon(
+                  Icons.radio_button_checked_outlined,
+                  size: 16,
+                  color: LoginColors.textSecondary,
+                ),
                 const SizedBox(width: 6),
-                Text('Cash Flow',
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: LoginColors.textPrimary)),
+                Text(
+                  'Cash Flow',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -602,13 +681,18 @@ class _CashFlowSectionState extends State<_CashFlowSection> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: range.ticks.reversed
-                        .map((t) => Padding(
-                              padding: const EdgeInsets.only(right: 4),
-                              child: Text(_axisLabel(t),
-                                  style: TextStyle(
-                                      fontSize: 9,
-                                      color: LoginColors.textSecondary)),
-                            ))
+                        .map(
+                          (t) => Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: Text(
+                              _axisLabel(t),
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: LoginColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        )
                         .toList(),
                   ),
                 ),
@@ -621,11 +705,9 @@ class _CashFlowSectionState extends State<_CashFlowSection> {
                           if (entries.isEmpty) return;
                           final chartW = constraints.maxWidth;
                           final x = details.localPosition.dx;
-                          final idx =
-                              ((x / chartW) * entries.length).floor().clamp(
-                                    0,
-                                    entries.length - 1,
-                                  );
+                          final idx = ((x / chartW) * entries.length)
+                              .floor()
+                              .clamp(0, entries.length - 1);
                           _selectPoint(idx);
                         },
                         child: Stack(
@@ -660,26 +742,26 @@ class _CashFlowSectionState extends State<_CashFlowSection> {
             child: Column(
               children: [
                 _SummaryRow(
-                  label: 'Cash as on ${_startDateStr(first.month)}',
-                  value: _full(first.openingBalance),
+                  label: 'Cash as on ${_startDateStr(monthEntry.month)}',
+                  value: _full(monthEntry.openingBalance),
                   labelColor: LoginColors.textPrimary,
                 ),
                 const SizedBox(height: 6),
                 _SummaryRow(
                   label: '+ Incoming',
-                  value: _full(totalIncoming),
+                  value: _full(monthEntry.incoming),
                   labelColor: LoginColors.success,
                 ),
                 const SizedBox(height: 6),
                 _SummaryRow(
                   label: '- Outgoing',
-                  value: _full(totalOutgoing),
+                  value: _full(monthEntry.outgoing),
                   labelColor: LoginColors.error,
                 ),
                 const SizedBox(height: 6),
                 _SummaryRow(
-                  label: '= Cash as on ${_endDateStr(last.month)}',
-                  value: _full(last.closingBalance),
+                  label: '= Cash as on ${_endDateStr(monthEntry.month)}',
+                  value: _full(monthEntry.closingBalance),
                   labelColor: LoginColors.primary,
                   bold: true,
                 ),
@@ -689,6 +771,16 @@ class _CashFlowSectionState extends State<_CashFlowSection> {
         ],
       ),
     );
+  }
+
+  CashFlowEntry? _currentMonthEntry(List<CashFlowEntry> entries) {
+    final now = DateTime.now();
+    final currentMonth = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+
+    for (final entry in entries) {
+      if (entry.month == currentMonth) return entry;
+    }
+    return null;
   }
 
   String _startDateStr(String yyyyMm) {
@@ -734,18 +826,27 @@ class _Tooltip extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_monthFull(entry.month),
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: LoginColors.textPrimary)),
+            Text(
+              _monthFull(entry.month),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: LoginColors.textPrimary,
+              ),
+            ),
             const SizedBox(height: 6),
-            _ttRow('Opening Bal.', _full(entry.openingBalance),
-                LoginColors.textPrimary),
+            _ttRow(
+              'Opening Bal.',
+              _full(entry.openingBalance),
+              LoginColors.textPrimary,
+            ),
             _ttRow('Income', _full(entry.incoming), LoginColors.success),
             _ttRow('Outgoing', _full(entry.outgoing), LoginColors.error),
-            _ttRow('Ending Bal.', _full(entry.closingBalance),
-                LoginColors.primary),
+            _ttRow(
+              'Ending Bal.',
+              _full(entry.closingBalance),
+              LoginColors.primary,
+            ),
           ],
         ),
       ),
@@ -760,14 +861,20 @@ class _Tooltip extends StatelessWidget {
         children: [
           SizedBox(
             width: 84,
-            child: Text(label,
-                style:
-                    TextStyle(fontSize: 12, color: LoginColors.textSecondary)),
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12, color: LoginColors.textSecondary),
+            ),
           ),
           const SizedBox(width: 8),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
@@ -793,19 +900,24 @@ class _SummaryRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Flexible(
-          child: Text(label,
-              style: TextStyle(
-                  fontSize: 13,
-                  color: labelColor,
-                  fontWeight:
-                      bold ? FontWeight.w700 : FontWeight.w500)),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: labelColor,
+              fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
         ),
         const SizedBox(width: 8),
-        Text(value,
-            style: TextStyle(
-                fontSize: 13,
-                color: LoginColors.textPrimary,
-                fontWeight: bold ? FontWeight.w700 : FontWeight.w600)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            color: LoginColors.textPrimary,
+            fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
@@ -849,8 +961,7 @@ class _CashFlowLinePainter extends CustomPainter {
 
     double yOf(double val) =>
         chartH -
-        ((val.clamp(chartMin, chartMax) - chartMin) /
-                (chartMax - chartMin)) *
+        ((val.clamp(chartMin, chartMax) - chartMin) / (chartMax - chartMin)) *
             chartH;
 
     // Fill
@@ -888,7 +999,11 @@ class _CashFlowLinePainter extends CustomPainter {
     for (int i = 0; i < entries.length; i++) {
       final x = xOf(i);
       final y = yOf(entries[i].closingBalance);
-      if (i == 0) { linePath.moveTo(x, y); } else { linePath.lineTo(x, y); }
+      if (i == 0) {
+        linePath.moveTo(x, y);
+      } else {
+        linePath.lineTo(x, y);
+      }
     }
     canvas.drawPath(linePath, linePaint);
 
@@ -901,10 +1016,13 @@ class _CashFlowLinePainter extends CustomPainter {
       final y = yOf(entries[i].closingBalance);
 
       if (selectedIndex == i) {
-        canvas.drawLine(Offset(x, 0), Offset(x, chartH),
-            Paint()
-              ..color = LoginColors.primary.withValues(alpha: 0.25)
-              ..strokeWidth = 1);
+        canvas.drawLine(
+          Offset(x, 0),
+          Offset(x, chartH),
+          Paint()
+            ..color = LoginColors.primary.withValues(alpha: 0.25)
+            ..strokeWidth = 1,
+        );
         dotPaint.color = LoginColors.primary;
         canvas.drawCircle(Offset(x, y), 5, dotPaint);
         dotPaint.color = Colors.white;
@@ -916,7 +1034,10 @@ class _CashFlowLinePainter extends CustomPainter {
 
       if (entries.length <= 6 || i % 2 == 0 || i == entries.length - 1) {
         final tp = TextPainter(
-          text: TextSpan(text: _monthShort(entries[i].month), style: labelStyle),
+          text: TextSpan(
+            text: _monthShort(entries[i].month),
+            style: labelStyle,
+          ),
           textDirection: TextDirection.ltr,
         )..layout();
         tp.paint(canvas, Offset(x - tp.width / 2, chartH + 4));
@@ -943,6 +1064,7 @@ class _IncomeExpenseSection extends StatefulWidget {
 }
 
 class _IncomeExpenseSectionState extends State<_IncomeExpenseSection> {
+  @override
   Widget build(BuildContext context) {
     final entries = widget.entries;
     final maxVal = entries
@@ -951,10 +1073,8 @@ class _IncomeExpenseSectionState extends State<_IncomeExpenseSection> {
     final chartMax = _niceMax(maxVal);
     final ticks = _niceTicks(chartMax, 5);
 
-    final totalRevenue =
-        entries.isEmpty ? 0.0 : entries.last.runningRevenue;
-    final totalExpense =
-        entries.isEmpty ? 0.0 : entries.last.runningExpense;
+    final totalRevenue = entries.isEmpty ? 0.0 : entries.last.runningRevenue;
+    final totalExpense = entries.isEmpty ? 0.0 : entries.last.runningExpense;
 
     return Container(
       decoration: BoxDecoration(
@@ -976,15 +1096,20 @@ class _IncomeExpenseSectionState extends State<_IncomeExpenseSection> {
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
             child: Row(
               children: [
-                Icon(Icons.info_outline_rounded,
-                    size: 16, color: LoginColors.textSecondary),
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: LoginColors.textSecondary,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'Income Vs Expense',
                   style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: LoginColors.textPrimary)),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1000,13 +1125,18 @@ class _IncomeExpenseSectionState extends State<_IncomeExpenseSection> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: ticks.reversed
-                        .map((t) => Padding(
-                              padding: const EdgeInsets.only(right: 4),
-                              child: Text(_axisLabel(t),
-                                  style: TextStyle(
-                                      fontSize: 9,
-                                      color: LoginColors.textSecondary)),
-                            ))
+                        .map(
+                          (t) => Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: Text(
+                              _axisLabel(t),
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: LoginColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        )
                         .toList(),
                   ),
                 ),
@@ -1034,34 +1164,46 @@ class _IncomeExpenseSectionState extends State<_IncomeExpenseSection> {
                 Expanded(
                   child: Column(
                     children: [
-                      Text('Income',
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: LoginColors.primary,
-                              fontWeight: FontWeight.w600)),
+                      Text(
+                        'Income',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: LoginColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      Text(_full(totalRevenue),
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: LoginColors.textPrimary)),
+                      Text(
+                        _full(totalRevenue),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: LoginColors.textPrimary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 Expanded(
                   child: Column(
                     children: [
-                      const Text('Expense',
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFFF59E0B),
-                              fontWeight: FontWeight.w600)),
+                      const Text(
+                        'Expense',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFFF59E0B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      Text(_full(totalExpense),
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: LoginColors.textPrimary)),
+                      Text(
+                        _full(totalExpense),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: LoginColors.textPrimary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1073,7 +1215,6 @@ class _IncomeExpenseSectionState extends State<_IncomeExpenseSection> {
     );
   }
 }
-
 
 class _IncomeExpenseBarPainter extends CustomPainter {
   final List<RevenueExpenseEntry> entries;
@@ -1121,22 +1262,34 @@ class _IncomeExpenseBarPainter extends CustomPainter {
 
       final revH = (e.revenue.clamp(0, chartMax) / chartMax) * chartH;
       canvas.drawRRect(
-        RRect.fromLTRBR(x, chartH - revH, x + barW, chartH,
-            const Radius.circular(3)),
+        RRect.fromLTRBR(
+          x,
+          chartH - revH,
+          x + barW,
+          chartH,
+          const Radius.circular(3),
+        ),
         revPaint,
       );
 
       final expH = (e.expense.clamp(0, chartMax) / chartMax) * chartH;
       canvas.drawRRect(
-        RRect.fromLTRBR(x + barW + barGap, chartH - expH,
-            x + barW * 2 + barGap, chartH, const Radius.circular(3)),
+        RRect.fromLTRBR(
+          x + barW + barGap,
+          chartH - expH,
+          x + barW * 2 + barGap,
+          chartH,
+          const Radius.circular(3),
+        ),
         expPaint,
       );
 
       if (entries.length <= 6 || i % 2 == 0 || i == entries.length - 1) {
         final tp = TextPainter(
-          text:
-              TextSpan(text: _monthShort(entries[i].month), style: labelStyle),
+          text: TextSpan(
+            text: _monthShort(entries[i].month),
+            style: labelStyle,
+          ),
           textDirection: TextDirection.ltr,
         )..layout();
         tp.paint(canvas, Offset(x + groupW / 2 - tp.width / 2, chartH + 4));
@@ -1145,8 +1298,7 @@ class _IncomeExpenseBarPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_IncomeExpenseBarPainter old) =>
-      old.entries != entries;
+  bool shouldRepaint(_IncomeExpenseBarPainter old) => old.entries != entries;
 }
 
 // ─── Period Badge ─────────────────────────────────────────────────────────────
@@ -1161,10 +1313,15 @@ Widget _periodBadge(String text) {
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(text,
-            style: TextStyle(fontSize: 12, color: LoginColors.textSecondary)),
-        Icon(Icons.keyboard_arrow_down_rounded,
-            size: 14, color: LoginColors.textSecondary),
+        Text(
+          text,
+          style: TextStyle(fontSize: 12, color: LoginColors.textSecondary),
+        ),
+        Icon(
+          Icons.keyboard_arrow_down_rounded,
+          size: 14,
+          color: LoginColors.textSecondary,
+        ),
       ],
     ),
   );

@@ -1,12 +1,11 @@
+import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/core/widgets/custom_button.dart';
+import 'package:coreflow/core/widgets/custom_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../view_model/login_view_model.dart';
-import '../../../../core/widgets/custom_textfield.dart';
-import '../../../../core/widgets/custom_button.dart';
-// import 'package:go_router/go_router.dart';
-import '../../../../core/theme/colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../view_model/login_view_model.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -20,7 +19,7 @@ class LoginScreen extends StatelessWidget {
         backgroundColor: LoginColors.background,
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Consumer<LoginViewModel>(
               builder: (context, viewModel, child) {
                 return AutofillGroup(
@@ -29,8 +28,7 @@ class LoginScreen extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const SizedBox(height: 100),
-
+                        const SizedBox(height: 72),
                         Container(
                           width: 100,
                           height: 100,
@@ -44,9 +42,7 @@ class LoginScreen extends StatelessWidget {
                             color: Colors.white,
                           ),
                         ),
-
-                        const SizedBox(height: 32),
-
+                        const SizedBox(height: 28),
                         Text(
                           'CoreFlow',
                           style: TextStyle(
@@ -55,11 +51,10 @@ class LoginScreen extends StatelessWidget {
                             color: LoginColors.primary,
                           ),
                         ),
-
-                        const SizedBox(height: 8),
-
+                        const SizedBox(height: 10),
+                        _buildModeSwitcher(context, viewModel),
                         if (viewModel.errorMessage != null) ...[
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 18),
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(16),
@@ -87,23 +82,25 @@ class LoginScreen extends StatelessWidget {
                             ),
                           ),
                         ],
-
-                        const SizedBox(height: 32),
-
+                        const SizedBox(height: 28),
                         CustomTextField(
                           controller: viewModel.emailController,
-                          labelText: 'Email or username',
-                          keyboardType: TextInputType.emailAddress,
+                          labelText: viewModel.isEmployeeLogin
+                              ? 'Username'
+                              : 'Email or username',
+                          keyboardType: viewModel.isEmployeeLogin
+                              ? TextInputType.text
+                              : TextInputType.emailAddress,
                           prefixIcon: Icons.person_outline,
-                          validator: viewModel.validateEmail,
-                          autofillHints: const [AutofillHints.email],
+                          validator: viewModel.validateIdentifier,
+                          autofillHints: viewModel.isEmployeeLogin
+                              ? const [AutofillHints.username]
+                              : const [AutofillHints.email],
                           enabled: !viewModel.isLoading,
                           onSubmitted: (_) =>
                               FocusScope.of(context).nextFocus(),
                         ),
-
                         const SizedBox(height: 20),
-
                         CustomTextField(
                           controller: viewModel.passwordController,
                           labelText: 'Password',
@@ -134,7 +131,6 @@ class LoginScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-
                         CustomButton(
                           text: viewModel.isLoading
                               ? 'Signing In...'
@@ -145,53 +141,33 @@ class LoginScreen extends StatelessWidget {
                               ? null
                               : () => viewModel.login(context),
                         ),
-
-                        // const SizedBox(height: 24),
-
-                        // TextButton(
-                        //   onPressed: viewModel.isLoading
-                        //       ? null
-                        //       : () => context.push('/register'),
-                        //   child: Text(
-                        //     'Register',
-                        //     style: TextStyle(
-                        //       color: viewModel.isLoading
-                        //           ? Colors.grey
-                        //           : LoginColors.primary,
-                        //       fontSize: 16,
-                        //       fontWeight: FontWeight.w600,
-                        //     ),
-                        //   ),
-                        // ),
-                        
                         const SizedBox(height: 24),
-
-                        TextButton(
-                          onPressed: viewModel.isLoading
-                              ? null
-                              : () async {
-                                  final Uri url = Uri.parse(
-                                    'https://coreflow.astraval.com/signup',
-                                  );
-                                  if (!await launchUrl(
-                                    url,
-                                    mode: LaunchMode.externalApplication,
-                                  )) {
-                                    throw 'Could not launch $url';
-                                  }
-                                },
-                          child: Text(
-                            'Register',
-                            style: TextStyle(
-                              color: viewModel.isLoading
-                                  ? Colors.grey
-                                  : LoginColors.primary,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                        if (!viewModel.isEmployeeLogin)
+                          TextButton(
+                            onPressed: viewModel.isLoading
+                                ? null
+                                : () async {
+                                    final Uri url = Uri.parse(
+                                      'https://coreflow.astraval.com/signup',
+                                    );
+                                    if (!await launchUrl(
+                                      url,
+                                      mode: LaunchMode.externalApplication,
+                                    )) {
+                                      throw 'Could not launch $url';
+                                    }
+                                  },
+                            child: Text(
+                              'Register',
+                              style: TextStyle(
+                                color: viewModel.isLoading
+                                    ? Colors.grey
+                                    : LoginColors.primary,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
-
                         const SizedBox(height: 40),
                       ],
                     ),
@@ -199,6 +175,63 @@ class LoginScreen extends StatelessWidget {
                 );
               },
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModeSwitcher(BuildContext context, LoginViewModel viewModel) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: LoginColors.fieldFill,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _modeButton(
+              label: 'Admin Login',
+              selected: viewModel.loginMode == LoginMode.admin,
+              onTap: () => viewModel.setLoginMode(LoginMode.admin),
+            ),
+          ),
+          Expanded(
+            child: _modeButton(
+              label: 'Employee Login',
+              selected: viewModel.loginMode == LoginMode.employee,
+              onTap: () => viewModel.setLoginMode(LoginMode.employee),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _modeButton({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? LoginColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: selected ? Colors.white : LoginColors.textSecondary,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),

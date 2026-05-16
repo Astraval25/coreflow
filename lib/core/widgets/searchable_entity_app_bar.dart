@@ -18,6 +18,7 @@ class SearchableEntityAppBar extends StatelessWidget
   final bool showSearchAction;
   final Color? backgroundColor;
   final Color? foregroundColor;
+  final VoidCallback? onTitleTap;
 
   const SearchableEntityAppBar({
     super.key,
@@ -36,6 +37,7 @@ class SearchableEntityAppBar extends StatelessWidget
     this.showSearchAction = true,
     this.backgroundColor,
     this.foregroundColor,
+    this.onTitleTap,
   });
 
   static const double _searchBarHeight = 56.0;
@@ -90,13 +92,17 @@ class SearchableEntityAppBar extends StatelessWidget
               selectedTabIndex: selectedTabIndex,
               onTabSelected: onTabSelected,
             )
-          : Text(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: LoginColors.textPrimary,
-                letterSpacing: -0.5,
+          : GestureDetector(
+              onTap: onTitleTap,
+              behavior: HitTestBehavior.opaque,
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: LoginColors.textPrimary,
+                  letterSpacing: -0.5,
+                ),
               ),
             ),
       actions: [

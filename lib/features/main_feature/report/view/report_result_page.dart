@@ -8,8 +8,10 @@ import 'package:coreflow/domain/model/main_model/analytics/item_analytics.dart';
 import 'package:coreflow/domain/model/main_model/analytics/item_frequency.dart';
 import 'package:coreflow/domain/model/main_model/analytics/monthly_trend.dart';
 import 'package:coreflow/domain/model/main_model/analytics/order_frequency.dart';
+import 'package:coreflow/domain/model/main_model/analytics/order_history.dart';
 import 'package:coreflow/domain/model/main_model/analytics/party_analytics.dart';
 import 'package:coreflow/domain/model/main_model/analytics/payment_mode.dart';
+import 'package:coreflow/domain/model/main_model/analytics/payment_history.dart';
 import 'package:coreflow/domain/model/main_model/analytics/revenue_expense.dart';
 import 'package:coreflow/domain/model/main_model/analytics/running_amount.dart';
 import 'package:coreflow/features/main_feature/report/analytics_view_model/analytics_view_model.dart';
@@ -36,8 +38,21 @@ String _fmt(double v) {
 }
 
 String _monthLabel(String yyyyMm) {
-  const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    '',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
   final p = yyyyMm.split('-');
   if (p.length < 2) return yyyyMm;
   final m = int.tryParse(p[1]) ?? 0;
@@ -109,12 +124,15 @@ class _ReportResultPageState extends State<ReportResultPage> {
           icon: Icon(Icons.arrow_back, color: LoginColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(widget.reportType.label,
-            style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: LoginColors.textPrimary,
-                letterSpacing: -0.3)),
+        title: Text(
+          widget.reportType.label,
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: LoginColors.textPrimary,
+            letterSpacing: -0.3,
+          ),
+        ),
         actions: [
           if (_supportsGraph)
             IconButton(
@@ -130,33 +148,47 @@ class _ReportResultPageState extends State<ReportResultPage> {
               ? const Padding(
                   padding: EdgeInsets.all(14),
                   child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2)),
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 )
               : PopupMenuButton<String>(
-                  icon: Icon(Icons.ios_share_rounded,
-                      color: LoginColors.textPrimary, size: 22),
+                  icon: Icon(
+                    Icons.ios_share_rounded,
+                    color: LoginColors.textPrimary,
+                    size: 22,
+                  ),
                   tooltip: 'Export',
                   onSelected: (v) => _export(v, vm),
                   itemBuilder: (_) => const [
                     PopupMenuItem(
                       value: 'pdf',
-                      child: Row(children: [
-                        Icon(Icons.picture_as_pdf_rounded,
-                            color: Color(0xFFEF4444), size: 20),
-                        SizedBox(width: 10),
-                        Text('Export as PDF'),
-                      ]),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.picture_as_pdf_rounded,
+                            color: Color(0xFFEF4444),
+                            size: 20,
+                          ),
+                          SizedBox(width: 10),
+                          Text('Export as PDF'),
+                        ],
+                      ),
                     ),
                     PopupMenuItem(
                       value: 'csv',
-                      child: Row(children: [
-                        Icon(Icons.table_chart_rounded,
-                            color: Color(0xFF10B981), size: 20),
-                        SizedBox(width: 10),
-                        Text('Export as Excel / CSV'),
-                      ]),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.table_chart_rounded,
+                            color: Color(0xFF10B981),
+                            size: 20,
+                          ),
+                          SizedBox(width: 10),
+                          Text('Export as Excel / CSV'),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -191,47 +223,72 @@ class _TableView extends StatelessWidget {
         return _KpiView(kpi: vm.kpi, vm: vm);
       case ReportType.cashFlow:
         return _MonthlyTableView<CashFlowEntry>(
-          entries: vm.cashFlow, vm: vm,
-          columns: const ['Month', 'Opening', 'Incoming', 'Outgoing', 'Closing'],
+          entries: vm.cashFlow,
+          vm: vm,
+          columns: const [
+            'Month',
+            'Opening',
+            'Incoming',
+            'Outgoing',
+            'Closing',
+          ],
           rowBuilder: (e) => [
-            _monthLabel(e.month), _fmt(e.openingBalance),
-            _fmt(e.incoming), _fmt(e.outgoing), _fmt(e.closingBalance),
+            _monthLabel(e.month),
+            _fmt(e.openingBalance),
+            _fmt(e.incoming),
+            _fmt(e.outgoing),
+            _fmt(e.closingBalance),
           ],
           colorBuilder: (col, val) {
             if (col == 2) return LoginColors.success;
             if (col == 3) return LoginColors.error;
-            if (col == 4) return val.startsWith('-') ? LoginColors.error : LoginColors.success;
+            if (col == 4)
+              return val.startsWith('-')
+                  ? LoginColors.error
+                  : LoginColors.success;
             return null;
           },
         );
       case ReportType.revenueExpense:
         return _MonthlyTableView<RevenueExpenseEntry>(
-          entries: vm.revenueExpense, vm: vm,
+          entries: vm.revenueExpense,
+          vm: vm,
           columns: const ['Month', 'Revenue', 'Expense', 'Net Profit'],
           rowBuilder: (e) => [
-            _monthLabel(e.month), _fmt(e.revenue),
-            _fmt(e.expense), _fmt(e.netProfit),
+            _monthLabel(e.month),
+            _fmt(e.revenue),
+            _fmt(e.expense),
+            _fmt(e.netProfit),
           ],
           colorBuilder: (col, val) {
             if (col == 1) return LoginColors.success;
             if (col == 2) return LoginColors.error;
-            if (col == 3) return val.startsWith('-') ? LoginColors.error : LoginColors.success;
+            if (col == 3)
+              return val.startsWith('-')
+                  ? LoginColors.error
+                  : LoginColors.success;
             return null;
           },
-          footer: vm.revenueExpense.isNotEmpty ? [
-            'Total',
-            _fmt(vm.revenueExpense.last.runningRevenue),
-            _fmt(vm.revenueExpense.last.runningExpense),
-            _fmt(vm.revenueExpense.last.runningNetProfit),
-          ] : null,
+          footer: vm.revenueExpense.isNotEmpty
+              ? [
+                  'Total',
+                  _fmt(vm.revenueExpense.last.runningRevenue),
+                  _fmt(vm.revenueExpense.last.runningExpense),
+                  _fmt(vm.revenueExpense.last.runningNetProfit),
+                ]
+              : null,
         );
       case ReportType.monthlyTrend:
         return _MonthlyTableView<MonthlyTrendEntry>(
-          entries: vm.monthlyTrend, vm: vm,
+          entries: vm.monthlyTrend,
+          vm: vm,
           columns: const ['Month', 'Sales', 'Purchase', 'Received', 'Made'],
           rowBuilder: (e) => [
-            _monthLabel(e.month), _fmt(e.salesAmount),
-            _fmt(e.purchaseAmount), _fmt(e.paymentReceived), _fmt(e.paymentMade),
+            _monthLabel(e.month),
+            _fmt(e.salesAmount),
+            _fmt(e.purchaseAmount),
+            _fmt(e.paymentReceived),
+            _fmt(e.paymentMade),
           ],
           colorBuilder: (col, _) {
             if (col == 1) return LoginColors.success;
@@ -244,30 +301,44 @@ class _TableView extends StatelessWidget {
         return _PaymentModeView(entries: vm.paymentModeDistribution, vm: vm);
       case ReportType.salesSummary:
         return _SummaryView(
-          label: 'Sales Summary', vm: vm,
-          rows: vm.salesSummary == null ? [] : [
-            ['Total Orders', vm.salesSummary!.totalOrders.toString()],
-            ['Total Amount', _fmt(vm.salesSummary!.totalAmount)],
-            ['Total Paid', _fmt(vm.salesSummary!.totalPaid)],
-            ['Total Due', _fmt(vm.salesSummary!.totalDue)],
-            ['Avg Order Value', _fmt(vm.salesSummary!.avgOrderValue)],
-          ],
+          label: 'Sales Summary',
+          vm: vm,
+          rows: vm.salesSummary == null
+              ? []
+              : [
+                  ['Total Orders', vm.salesSummary!.totalOrders.toString()],
+                  ['Total Amount', _fmt(vm.salesSummary!.totalAmount)],
+                  ['Total Paid', _fmt(vm.salesSummary!.totalPaid)],
+                  ['Total Due', _fmt(vm.salesSummary!.totalDue)],
+                  ['Avg Order Value', _fmt(vm.salesSummary!.avgOrderValue)],
+                ],
         );
       case ReportType.purchaseSummary:
         return _SummaryView(
-          label: 'Purchase Summary', vm: vm,
-          rows: vm.purchaseSummary == null ? [] : [
-            ['Total Orders', vm.purchaseSummary!.totalOrders.toString()],
-            ['Total Amount', _fmt(vm.purchaseSummary!.totalAmount)],
-            ['Total Paid', _fmt(vm.purchaseSummary!.totalPaid)],
-            ['Total Due', _fmt(vm.purchaseSummary!.totalDue)],
-            ['Avg Order Value', _fmt(vm.purchaseSummary!.avgOrderValue)],
-          ],
+          label: 'Purchase Summary',
+          vm: vm,
+          rows: vm.purchaseSummary == null
+              ? []
+              : [
+                  ['Total Orders', vm.purchaseSummary!.totalOrders.toString()],
+                  ['Total Amount', _fmt(vm.purchaseSummary!.totalAmount)],
+                  ['Total Paid', _fmt(vm.purchaseSummary!.totalPaid)],
+                  ['Total Due', _fmt(vm.purchaseSummary!.totalDue)],
+                  ['Avg Order Value', _fmt(vm.purchaseSummary!.avgOrderValue)],
+                ],
         );
       case ReportType.salesByCustomer:
-        return _PartyView(entries: vm.salesByCustomer, vm: vm, partyLabel: 'Customer');
+        return _PartyView(
+          entries: vm.salesByCustomer,
+          vm: vm,
+          partyLabel: 'Customer',
+        );
       case ReportType.purchaseByVendor:
-        return _PartyView(entries: vm.purchaseByVendor, vm: vm, partyLabel: 'Vendor');
+        return _PartyView(
+          entries: vm.purchaseByVendor,
+          vm: vm,
+          partyLabel: 'Vendor',
+        );
       case ReportType.salesByItem:
         return _ItemAmountView(entries: vm.salesByItem, vm: vm);
       case ReportType.purchaseByItem:
@@ -287,17 +358,30 @@ class _TableView extends StatelessWidget {
       case ReportType.salesRunningOrderAmount:
         return _RunningAmountView(entries: vm.salesRunningOrderAmount, vm: vm);
       case ReportType.purchaseRunningOrderAmount:
-        return _RunningAmountView(entries: vm.purchaseRunningOrderAmount, vm: vm);
+        return _RunningAmountView(
+          entries: vm.purchaseRunningOrderAmount,
+          vm: vm,
+        );
       case ReportType.salesRunningPaymentAmount:
-        return _RunningAmountView(entries: vm.salesRunningPaymentAmount, vm: vm);
+        return _RunningAmountView(
+          entries: vm.salesRunningPaymentAmount,
+          vm: vm,
+        );
       case ReportType.purchaseRunningPaymentAmount:
-        return _RunningAmountView(entries: vm.purchaseRunningPaymentAmount, vm: vm);
+        return _RunningAmountView(
+          entries: vm.purchaseRunningPaymentAmount,
+          vm: vm,
+        );
       case ReportType.profitByItem:
         return _ProfitByItemView(entries: vm.profitByItem, vm: vm);
       case ReportType.topSellingItems:
         return _ItemAmountView(entries: vm.topSellingItems, vm: vm);
       case ReportType.topProfitableItems:
         return _ItemAmountView(entries: vm.topProfitableItems, vm: vm);
+      case ReportType.orderHistory:
+        return _OrderHistoryReportView(entries: vm.orderHistory, vm: vm);
+      case ReportType.paymentHistory:
+        return _PaymentHistoryReportView(entries: vm.paymentHistory, vm: vm);
     }
   }
 }
@@ -330,7 +414,9 @@ class _GraphView extends StatelessWidget {
         if (vm.cashFlow.isEmpty) return _empty();
         return _ChartCard(
           title: 'Cash Flow — Closing Balance',
-          legend: const [_LegendDot(color: Color(0xFF6366F1), label: 'Closing Balance')],
+          legend: const [
+            _LegendDot(color: Color(0xFF6366F1), label: 'Closing Balance'),
+          ],
           child: SizedBox(
             height: 220,
             child: CustomPaint(
@@ -417,14 +503,16 @@ class _GraphView extends StatelessWidget {
         final running = reportType == ReportType.salesRunningOrderAmount
             ? vm.salesRunningOrderAmount
             : reportType == ReportType.purchaseRunningOrderAmount
-                ? vm.purchaseRunningOrderAmount
-                : reportType == ReportType.salesRunningPaymentAmount
-                    ? vm.salesRunningPaymentAmount
-                    : vm.purchaseRunningPaymentAmount;
+            ? vm.purchaseRunningOrderAmount
+            : reportType == ReportType.salesRunningPaymentAmount
+            ? vm.salesRunningPaymentAmount
+            : vm.purchaseRunningPaymentAmount;
         if (running.isEmpty) return _empty();
         return _ChartCard(
           title: 'Cumulative Amount',
-          legend: const [_LegendDot(color: Color(0xFF6366F1), label: 'Running Total')],
+          legend: const [
+            _LegendDot(color: Color(0xFF6366F1), label: 'Running Total'),
+          ],
           child: SizedBox(
             height: 220,
             child: CustomPaint(
@@ -459,7 +547,8 @@ class _GraphView extends StatelessWidget {
         final topP = parties.length > 8 ? parties.sublist(0, 8) : parties;
         return _ChartCard(
           title: reportType == ReportType.salesByCustomer
-              ? 'Sales by Customer' : 'Purchase by Vendor',
+              ? 'Sales by Customer'
+              : 'Purchase by Vendor',
           legend: const [_LegendDot(color: Color(0xFF6366F1), label: 'Amount')],
           child: SizedBox(
             height: 220,
@@ -480,10 +569,10 @@ class _GraphView extends StatelessWidget {
         final items = reportType == ReportType.salesByItem
             ? vm.salesByItem
             : reportType == ReportType.purchaseByItem
-                ? vm.purchaseByItem
-                : reportType == ReportType.topSellingItems
-                    ? vm.topSellingItems
-                    : vm.topProfitableItems;
+            ? vm.purchaseByItem
+            : reportType == ReportType.topSellingItems
+            ? vm.topSellingItems
+            : vm.topProfitableItems;
         if (items.isEmpty) return _empty();
         final topI = items.length > 8 ? items.sublist(0, 8) : items;
         return _ChartCard(
@@ -534,7 +623,11 @@ class _ChartCard extends StatelessWidget {
   final String title;
   final List<Widget> legend;
   final Widget child;
-  const _ChartCard({required this.title, required this.legend, required this.child});
+  const _ChartCard({
+    required this.title,
+    required this.legend,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -547,7 +640,8 @@ class _ChartCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: LoginColors.shadowLight.withValues(alpha: 0.08),
-            blurRadius: 8, offset: const Offset(0, 3),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -557,9 +651,16 @@ class _ChartCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: Text(title,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-                      color: LoginColors.textPrimary))),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+              ),
               if (legend.isNotEmpty) Row(children: legend),
             ],
           ),
@@ -578,12 +679,21 @@ class _LegendDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      Container(width: 8, height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 4),
-      Text(label, style: TextStyle(fontSize: 10, color: LoginColors.textSecondary)),
-    ]);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(fontSize: 10, color: LoginColors.textSecondary),
+        ),
+      ],
+    );
   }
 }
 
@@ -591,9 +701,17 @@ class _LegendDot extends StatelessWidget {
 
 double _niceMax(double rawMax) {
   if (rawMax <= 0) return 100;
-  final mag = math.pow(10, (math.log(rawMax.abs()) / math.ln10).floor()).toDouble();
+  final mag = math
+      .pow(10, (math.log(rawMax.abs()) / math.ln10).floor())
+      .toDouble();
   final norm = rawMax / mag;
-  final nice = norm <= 1.5 ? 1.5 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
+  final nice = norm <= 1.5
+      ? 1.5
+      : norm <= 2
+      ? 2
+      : norm <= 5
+      ? 5
+      : 10;
   return nice * mag;
 }
 
@@ -606,7 +724,21 @@ String _axisLabel(double v) {
 }
 
 String _monthShort(String s) {
-  const m = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const m = [
+    '',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
   final p = s.split('-');
   if (p.length < 2) return s.length > 7 ? '${s.substring(0, 7)}…' : s;
   final idx = int.tryParse(p[1]) ?? 0;
@@ -618,7 +750,9 @@ class _SingleLineChartPainter extends CustomPainter {
   final List<double> values;
   final Color color;
   const _SingleLineChartPainter({
-    required this.labels, required this.values, required this.color,
+    required this.labels,
+    required this.values,
+    required this.color,
   });
 
   @override
@@ -634,44 +768,67 @@ class _SingleLineChartPainter extends CustomPainter {
     final chartH = size.height - labelH;
     final labelStyle = TextStyle(fontSize: 9, color: LoginColors.textSecondary);
     final gridPaint = Paint()
-      ..color = LoginColors.border.withValues(alpha: 0.5) ..strokeWidth = 0.5;
+      ..color = LoginColors.border.withValues(alpha: 0.5)
+      ..strokeWidth = 0.5;
 
     for (int t = 0; t <= 4; t++) {
       final val = chartMax * t / 4;
       final y = chartH - (val / chartMax) * chartH;
       canvas.drawLine(Offset(yAxisW, y), Offset(size.width, y), gridPaint);
       final tp = TextPainter(
-          text: TextSpan(text: _axisLabel(val), style: labelStyle),
-          textDirection: TextDirection.ltr)..layout();
+        text: TextSpan(text: _axisLabel(val), style: labelStyle),
+        textDirection: TextDirection.ltr,
+      )..layout();
       tp.paint(canvas, Offset(yAxisW - tp.width - 4, y - tp.height / 2));
     }
 
     double xOf(int i) =>
-        yAxisW + (values.length == 1 ? chartW / 2 : i * chartW / (values.length - 1));
+        yAxisW +
+        (values.length == 1 ? chartW / 2 : i * chartW / (values.length - 1));
     double yOf(double v) => chartH - (v.clamp(0, chartMax) / chartMax) * chartH;
 
     if (values.length >= 2) {
       final fill = Path()..moveTo(xOf(0), yOf(values[0]));
-      for (int i = 1; i < values.length; i++) { fill.lineTo(xOf(i), yOf(values[i])); }
-      fill..lineTo(xOf(values.length - 1), chartH)..lineTo(xOf(0), chartH)..close();
-      canvas.drawPath(fill, Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter, end: Alignment.bottomCenter,
-          colors: [color.withValues(alpha: 0.18), color.withValues(alpha: 0.0)],
-        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)));
+      for (int i = 1; i < values.length; i++) {
+        fill.lineTo(xOf(i), yOf(values[i]));
+      }
+      fill
+        ..lineTo(xOf(values.length - 1), chartH)
+        ..lineTo(xOf(0), chartH)
+        ..close();
+      canvas.drawPath(
+        fill,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              color.withValues(alpha: 0.18),
+              color.withValues(alpha: 0.0),
+            ],
+          ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+      );
     }
 
     final linePaint = Paint()
-      ..color = color ..strokeWidth = 2.5 ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round ..strokeJoin = StrokeJoin.round;
+      ..color = color
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
     final path = Path();
     for (int i = 0; i < values.length; i++) {
-      if (i == 0) { path.moveTo(xOf(i), yOf(values[i])); }
-      else { path.lineTo(xOf(i), yOf(values[i])); }
+      if (i == 0) {
+        path.moveTo(xOf(i), yOf(values[i]));
+      } else {
+        path.lineTo(xOf(i), yOf(values[i]));
+      }
     }
     canvas.drawPath(path, linePaint);
 
-    final dot = Paint()..style = PaintingStyle.fill ..color = color;
+    final dot = Paint()
+      ..style = PaintingStyle.fill
+      ..color = color;
     for (int i = 0; i < values.length; i++) {
       canvas.drawCircle(Offset(xOf(i), yOf(values[i])), 3, dot);
       if (values.length <= 8 || i % 2 == 0 || i == values.length - 1) {
@@ -695,8 +852,11 @@ class _DualLineChartPainter extends CustomPainter {
   final Color color1;
   final Color color2;
   const _DualLineChartPainter({
-    required this.labels, required this.values1, required this.values2,
-    required this.color1, required this.color2,
+    required this.labels,
+    required this.values1,
+    required this.values2,
+    required this.color1,
+    required this.color2,
   });
 
   @override
@@ -713,15 +873,17 @@ class _DualLineChartPainter extends CustomPainter {
     final n = values1.length;
     final labelStyle = TextStyle(fontSize: 9, color: LoginColors.textSecondary);
     final gridPaint = Paint()
-      ..color = LoginColors.border.withValues(alpha: 0.5) ..strokeWidth = 0.5;
+      ..color = LoginColors.border.withValues(alpha: 0.5)
+      ..strokeWidth = 0.5;
 
     for (int t = 0; t <= 4; t++) {
       final val = chartMax * t / 4;
       final y = chartH - (val / chartMax) * chartH;
       canvas.drawLine(Offset(yAxisW, y), Offset(size.width, y), gridPaint);
       final tp = TextPainter(
-          text: TextSpan(text: _axisLabel(val), style: labelStyle),
-          textDirection: TextDirection.ltr)..layout();
+        text: TextSpan(text: _axisLabel(val), style: labelStyle),
+        textDirection: TextDirection.ltr,
+      )..layout();
       tp.paint(canvas, Offset(yAxisW - tp.width - 4, y - tp.height / 2));
     }
 
@@ -730,15 +892,23 @@ class _DualLineChartPainter extends CustomPainter {
 
     void drawLine(List<double> vals, Color c) {
       final paint = Paint()
-        ..color = c ..strokeWidth = 2.5 ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round ..strokeJoin = StrokeJoin.round;
+        ..color = c
+        ..strokeWidth = 2.5
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
       final p = Path();
       for (int i = 0; i < vals.length; i++) {
-        if (i == 0) { p.moveTo(xOf(i), yOf(vals[i])); }
-        else { p.lineTo(xOf(i), yOf(vals[i])); }
+        if (i == 0) {
+          p.moveTo(xOf(i), yOf(vals[i]));
+        } else {
+          p.lineTo(xOf(i), yOf(vals[i]));
+        }
       }
       canvas.drawPath(p, paint);
-      final dot = Paint()..style = PaintingStyle.fill ..color = c;
+      final dot = Paint()
+        ..style = PaintingStyle.fill
+        ..color = c;
       for (int i = 0; i < vals.length; i++) {
         canvas.drawCircle(Offset(xOf(i), yOf(vals[i])), 3, dot);
       }
@@ -768,7 +938,9 @@ class _BarChartPainter extends CustomPainter {
   final Color color;
   final Color? negativeColor;
   const _BarChartPainter({
-    required this.labels, required this.values, required this.color,
+    required this.labels,
+    required this.values,
+    required this.color,
     this.negativeColor,
   });
 
@@ -785,15 +957,17 @@ class _BarChartPainter extends CustomPainter {
     final chartH = size.height - labelH;
     final labelStyle = TextStyle(fontSize: 9, color: LoginColors.textSecondary);
     final gridPaint = Paint()
-      ..color = LoginColors.border.withValues(alpha: 0.5) ..strokeWidth = 0.5;
+      ..color = LoginColors.border.withValues(alpha: 0.5)
+      ..strokeWidth = 0.5;
 
     for (int t = 0; t <= 4; t++) {
       final val = chartMax * t / 4;
       final y = chartH - (val / chartMax) * chartH;
       canvas.drawLine(Offset(yAxisW, y), Offset(size.width, y), gridPaint);
       final tp = TextPainter(
-          text: TextSpan(text: _axisLabel(val), style: labelStyle),
-          textDirection: TextDirection.ltr)..layout();
+        text: TextSpan(text: _axisLabel(val), style: labelStyle),
+        textDirection: TextDirection.ltr,
+      )..layout();
       tp.paint(canvas, Offset(yAxisW - tp.width - 4, y - tp.height / 2));
     }
 
@@ -805,7 +979,13 @@ class _BarChartPainter extends CustomPainter {
       final barH = (v.abs() / chartMax) * chartH;
       final x = yAxisW + i * (barW + barGap);
       canvas.drawRRect(
-        RRect.fromLTRBR(x, chartH - barH, x + barW, chartH, const Radius.circular(3)),
+        RRect.fromLTRBR(
+          x,
+          chartH - barH,
+          x + barW,
+          chartH,
+          const Radius.circular(3),
+        ),
         Paint()
           ..color = (v < 0 && negativeColor != null) ? negativeColor! : color
           ..style = PaintingStyle.fill,
@@ -830,8 +1010,12 @@ class _PieChartPainter extends CustomPainter {
   const _PieChartPainter({required this.entries});
 
   static const _colors = [
-    Color(0xFF6366F1), Color(0xFF10B981), Color(0xFFF59E0B),
-    Color(0xFFEF4444), Color(0xFF3B82F6), Color(0xFF8B5CF6),
+    Color(0xFF6366F1),
+    Color(0xFF10B981),
+    Color(0xFFF59E0B),
+    Color(0xFFEF4444),
+    Color(0xFF3B82F6),
+    Color(0xFF8B5CF6),
   ];
 
   @override
@@ -846,8 +1030,12 @@ class _PieChartPainter extends CustomPainter {
       final sweep = (entries[i].percentage / 100) * 2 * math.pi;
       canvas.drawArc(
         Rect.fromCircle(center: Offset(cx, cy), radius: radius),
-        startAngle, sweep, true,
-        Paint()..color = _colors[i % _colors.length] ..style = PaintingStyle.fill,
+        startAngle,
+        sweep,
+        true,
+        Paint()
+          ..color = _colors[i % _colors.length]
+          ..style = PaintingStyle.fill,
       );
       if (entries[i].percentage > 5) {
         final mid = startAngle + sweep / 2;
@@ -856,8 +1044,11 @@ class _PieChartPainter extends CustomPainter {
         final tp = TextPainter(
           text: TextSpan(
             text: '${entries[i].percentage.toStringAsFixed(0)}%',
-            style: const TextStyle(fontSize: 10, color: Colors.white,
-                fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           textDirection: TextDirection.ltr,
         )..layout();
@@ -878,8 +1069,10 @@ Widget _header(AnalyticsViewModel vm, String subtitle) {
     padding: const EdgeInsets.symmetric(vertical: 8),
     child: Column(
       children: [
-        Text(subtitle,
-            style: TextStyle(fontSize: 13, color: LoginColors.textSecondary)),
+        Text(
+          subtitle,
+          style: TextStyle(fontSize: 13, color: LoginColors.textSecondary),
+        ),
         Text(
           'From ${vm.formatDateDisplay(vm.startDate)} To ${vm.formatDateDisplay(vm.endDate)}',
           style: TextStyle(fontSize: 12, color: LoginColors.textSecondary),
@@ -890,13 +1083,15 @@ Widget _header(AnalyticsViewModel vm, String subtitle) {
 }
 
 Widget _empty() => Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Text('No data available for selected period.',
-            style: TextStyle(color: LoginColors.textSecondary),
-            textAlign: TextAlign.center),
-      ),
-    );
+  child: Padding(
+    padding: const EdgeInsets.all(40),
+    child: Text(
+      'No data available for selected period.',
+      style: TextStyle(color: LoginColors.textSecondary),
+      textAlign: TextAlign.center,
+    ),
+  ),
+);
 
 // ─── KPI view ─────────────────────────────────────────────────────────────────
 
@@ -917,7 +1112,12 @@ class _KpiView extends StatelessWidget {
       ['Payments Received', kpi!.totalPaymentsReceived.toString(), null, null],
       ['Payments Made', kpi!.totalPaymentsMade.toString(), null, null],
       ['Avg Order Value', _fmt(kpi!.avgOrderValue), null, null],
-      ['Outstanding Receivables', _fmt(kpi!.outstandingReceivables), null, null],
+      [
+        'Outstanding Receivables',
+        _fmt(kpi!.outstandingReceivables),
+        null,
+        null,
+      ],
       ['Outstanding Payables', _fmt(kpi!.outstandingPayables), null, null],
     ];
     return SingleChildScrollView(
@@ -932,8 +1132,12 @@ class _KpiView extends StatelessWidget {
             Color vc = LoginColors.textPrimary;
             if (isPos == true) vc = LoginColors.success;
             if (isPos == false) vc = LoginColors.error;
-            return _row2(r[0] as String, r[1] as String,
-                valueColor: vc, highlight: isHL == true);
+            return _row2(
+              r[0] as String,
+              r[1] as String,
+              valueColor: vc,
+              highlight: isHL == true,
+            );
           }),
           const SizedBox(height: 24),
         ],
@@ -953,8 +1157,12 @@ class _MonthlyTableView<T> extends StatelessWidget {
   final List<String>? footer;
 
   const _MonthlyTableView({
-    required this.entries, required this.vm, required this.columns,
-    required this.rowBuilder, this.colorBuilder, this.footer,
+    required this.entries,
+    required this.vm,
+    required this.columns,
+    required this.rowBuilder,
+    this.colorBuilder,
+    this.footer,
   });
 
   @override
@@ -988,11 +1196,14 @@ class _MonthlyTableView<T> extends StatelessWidget {
   }
 
   TableRow _headerRow(List<String> cols) => TableRow(
-        decoration: BoxDecoration(color: LoginColors.surfaceSecondary),
-        children: cols
-            .map((c) => _cell(c, bold: true, color: LoginColors.textPrimary, padding: 10))
-            .toList(),
-      );
+    decoration: BoxDecoration(color: LoginColors.surfaceSecondary),
+    children: cols
+        .map(
+          (c) =>
+              _cell(c, bold: true, color: LoginColors.textPrimary, padding: 10),
+        )
+        .toList(),
+  );
 
   TableRow _dataRow(List<String> cells, Color? Function(int, String)? cb) =>
       TableRow(
@@ -1004,21 +1215,28 @@ class _MonthlyTableView<T> extends StatelessWidget {
       );
 
   TableRow _footerRow(List<String> cells) => TableRow(
-        decoration: BoxDecoration(color: LoginColors.surfaceSecondary),
-        children: cells
-            .map((c) => _cell(c, bold: true, color: LoginColors.textPrimary))
-            .toList(),
-      );
+    decoration: BoxDecoration(color: LoginColors.surfaceSecondary),
+    children: cells
+        .map((c) => _cell(c, bold: true, color: LoginColors.textPrimary))
+        .toList(),
+  );
 
-  Widget _cell(String text, {bool bold = false, Color? color, double padding = 8}) =>
-      Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: padding),
-        child: Text(text,
-            style: TextStyle(
-                fontSize: 13,
-                color: color ?? LoginColors.textPrimary,
-                fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
-      );
+  Widget _cell(
+    String text, {
+    bool bold = false,
+    Color? color,
+    double padding = 8,
+  }) => Padding(
+    padding: EdgeInsets.symmetric(horizontal: 12, vertical: padding),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 13,
+        color: color ?? LoginColors.textPrimary,
+        fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+      ),
+    ),
+  );
 }
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
@@ -1027,7 +1245,11 @@ class _SummaryView extends StatelessWidget {
   final String label;
   final AnalyticsViewModel vm;
   final List<List<String>> rows;
-  const _SummaryView({required this.label, required this.vm, required this.rows});
+  const _SummaryView({
+    required this.label,
+    required this.vm,
+    required this.rows,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1052,7 +1274,11 @@ class _PartyView extends StatelessWidget {
   final List<PartyAnalyticsEntry> entries;
   final AnalyticsViewModel vm;
   final String partyLabel;
-  const _PartyView({required this.entries, required this.vm, required this.partyLabel});
+  const _PartyView({
+    required this.entries,
+    required this.vm,
+    required this.partyLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1069,10 +1295,15 @@ class _PartyView extends StatelessWidget {
               border: TableBorder.all(color: LoginColors.border, width: 0.5),
               children: [
                 _hRow([partyLabel, 'Orders', 'Amount', 'Paid', 'Due']),
-                ...entries.map((e) => _dRow([
-                  e.partyName, e.totalOrders.toString(),
-                  _fmt(e.totalAmount), _fmt(e.paidAmount), _fmt(e.dueAmount),
-                ])),
+                ...entries.map(
+                  (e) => _dRow([
+                    e.partyName,
+                    e.totalOrders.toString(),
+                    _fmt(e.totalAmount),
+                    _fmt(e.paidAmount),
+                    _fmt(e.dueAmount),
+                  ]),
+                ),
               ],
             ),
           ),
@@ -1083,19 +1314,24 @@ class _PartyView extends StatelessWidget {
   }
 
   TableRow _hRow(List<String> cols) => TableRow(
-        decoration: BoxDecoration(color: LoginColors.surfaceSecondary),
-        children: cols.map((c) => _c(c, bold: true)).toList(),
-      );
+    decoration: BoxDecoration(color: LoginColors.surfaceSecondary),
+    children: cols.map((c) => _c(c, bold: true)).toList(),
+  );
   TableRow _dRow(List<String> cells) => TableRow(
-        decoration: BoxDecoration(color: LoginColors.surface),
-        children: cells.map(_c).toList(),
-      );
+    decoration: BoxDecoration(color: LoginColors.surface),
+    children: cells.map(_c).toList(),
+  );
   Widget _c(String t, {bool bold = false}) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Text(t, style: TextStyle(fontSize: 13,
-            fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
-            color: LoginColors.textPrimary)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    child: Text(
+      t,
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+        color: LoginColors.textPrimary,
+      ),
+    ),
+  );
 }
 
 // ─── Item amount ──────────────────────────────────────────────────────────────
@@ -1116,8 +1352,13 @@ class _ItemAmountView extends StatelessWidget {
         children: [
           _header(vm, 'By Item'),
           _tableHead(['Item Name', 'Qty', 'Amount']),
-          ...entries.map((e) => _row3(
-              e.itemName, e.totalQuantity.toStringAsFixed(2), _fmt(e.totalAmount))),
+          ...entries.map(
+            (e) => _row3(
+              e.itemName,
+              e.totalQuantity.toStringAsFixed(2),
+              _fmt(e.totalAmount),
+            ),
+          ),
           _footerRow3('Total', totalQty.toStringAsFixed(2), _fmt(totalAmt)),
           const SizedBox(height: 24),
         ],
@@ -1143,7 +1384,9 @@ class _OrderFreqView extends StatelessWidget {
         children: [
           _header(vm, 'Order Frequency'),
           _tableHead(['Month', 'Orders']),
-          ...entries.map((e) => _row2(_monthLabel(e.month), e.orderCount.toString())),
+          ...entries.map(
+            (e) => _row2(_monthLabel(e.month), e.orderCount.toString()),
+          ),
           _footerRow2('Total', total.toString()),
           const SizedBox(height: 24),
         ],
@@ -1169,7 +1412,9 @@ class _PaymentFreqView extends StatelessWidget {
         children: [
           _header(vm, 'Payment Frequency'),
           _tableHead(['Month', 'Payments']),
-          ...entries.map((e) => _row2(_monthLabel(e.month), e.paymentCount.toString())),
+          ...entries.map(
+            (e) => _row2(_monthLabel(e.month), e.paymentCount.toString()),
+          ),
           _footerRow2('Total', total.toString()),
           const SizedBox(height: 24),
         ],
@@ -1194,8 +1439,13 @@ class _ItemFreqView extends StatelessWidget {
         children: [
           _header(vm, 'Item Frequency'),
           _tableHead(['Item', 'Qty', 'Orders']),
-          ...entries.map((e) => _row3(
-              e.itemName, e.totalQuantity.toStringAsFixed(2), e.orderCount.toString())),
+          ...entries.map(
+            (e) => _row3(
+              e.itemName,
+              e.totalQuantity.toStringAsFixed(2),
+              e.orderCount.toString(),
+            ),
+          ),
           const SizedBox(height: 24),
         ],
       ),
@@ -1219,14 +1469,91 @@ class _RunningAmountView extends StatelessWidget {
         children: [
           _header(vm, 'Running Amount'),
           _tableHead(['Month', 'Cumulative Amount']),
-          ...entries.map((e) =>
-              _row2(_monthLabel(e.month), _fmt(e.cumulativeAmount),
-                  valueColor: LoginColors.primary)),
+          ...entries.map(
+            (e) => _row2(
+              _monthLabel(e.month),
+              _fmt(e.cumulativeAmount),
+              valueColor: LoginColors.primary,
+            ),
+          ),
           const SizedBox(height: 24),
         ],
       ),
     );
   }
+}
+
+class _OrderHistoryReportView extends StatelessWidget {
+  final List<OrderHistoryEntry> entries;
+  final AnalyticsViewModel vm;
+
+  const _OrderHistoryReportView({required this.entries, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    if (entries.isEmpty) return _empty();
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          _header(vm, 'Order History'),
+          _tableHead(['Date', 'Order No', 'Status', 'Qty', 'Total', 'Paid %']),
+          ...entries.map(
+            (e) => _row6(
+              _date(e.orderDate),
+              e.localOrderNumber.isNotEmpty
+                  ? e.localOrderNumber
+                  : '#${e.orderId}',
+              e.orderStatus,
+              e.totalItemQuantity.toStringAsFixed(2),
+              _fmt(e.totalAmount),
+              '${e.paidPercentage}%',
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  String _date(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+}
+
+class _PaymentHistoryReportView extends StatelessWidget {
+  final List<PaymentHistoryEntry> entries;
+  final AnalyticsViewModel vm;
+
+  const _PaymentHistoryReportView({required this.entries, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    if (entries.isEmpty) return _empty();
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          _header(vm, 'Payment History'),
+          _tableHead(['Date', 'Payment No', 'Status', 'Mode', 'Amount']),
+          ...entries.map(
+            (e) => _row5(
+              _date(e.paymentDate),
+              e.localPaymentNumber.isNotEmpty
+                  ? e.localPaymentNumber
+                  : '#${e.paymentId}',
+              e.paymentStatus,
+              e.modeOfPayment,
+              _fmt(e.amount),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  String _date(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 }
 
 // ─── Profit by item ───────────────────────────────────────────────────────────
@@ -1251,10 +1578,20 @@ class _ProfitByItemView extends StatelessWidget {
               border: TableBorder.all(color: LoginColors.border, width: 0.5),
               children: [
                 _hRow(['Item', 'Sales', 'Purchase', 'Profit', 'Margin %']),
-                ...entries.map((e) => _dRow([
-                  e.itemName, _fmt(e.totalSalesAmount), _fmt(e.totalPurchaseAmount),
-                  _fmt(e.profit), '${e.profitMargin.toStringAsFixed(1)}%',
-                ], profitColor: e.profit >= 0 ? LoginColors.success : LoginColors.error)),
+                ...entries.map(
+                  (e) => _dRow(
+                    [
+                      e.itemName,
+                      _fmt(e.totalSalesAmount),
+                      _fmt(e.totalPurchaseAmount),
+                      _fmt(e.profit),
+                      '${e.profitMargin.toStringAsFixed(1)}%',
+                    ],
+                    profitColor: e.profit >= 0
+                        ? LoginColors.success
+                        : LoginColors.error,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1265,23 +1602,31 @@ class _ProfitByItemView extends StatelessWidget {
   }
 
   TableRow _hRow(List<String> cols) => TableRow(
-        decoration: BoxDecoration(color: LoginColors.surfaceSecondary),
-        children: cols.map((c) => _c(c, bold: true, color: LoginColors.textPrimary)).toList(),
-      );
+    decoration: BoxDecoration(color: LoginColors.surfaceSecondary),
+    children: cols
+        .map((c) => _c(c, bold: true, color: LoginColors.textPrimary))
+        .toList(),
+  );
   TableRow _dRow(List<String> cells, {Color? profitColor}) => TableRow(
-        decoration: BoxDecoration(color: LoginColors.surface),
-        children: cells.asMap().entries.map((e) {
-          Color color = LoginColors.textPrimary;
-          if ((e.key == 3 || e.key == 4) && profitColor != null) color = profitColor;
-          return _c(e.value, color: color);
-        }).toList(),
-      );
+    decoration: BoxDecoration(color: LoginColors.surface),
+    children: cells.asMap().entries.map((e) {
+      Color color = LoginColors.textPrimary;
+      if ((e.key == 3 || e.key == 4) && profitColor != null)
+        color = profitColor;
+      return _c(e.value, color: color);
+    }).toList(),
+  );
   Widget _c(String t, {bool bold = false, Color? color}) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Text(t, style: TextStyle(fontSize: 13,
-            fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
-            color: color ?? LoginColors.textPrimary)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    child: Text(
+      t,
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+        color: color ?? LoginColors.textPrimary,
+      ),
+    ),
+  );
 }
 
 // ─── Payment mode ─────────────────────────────────────────────────────────────
@@ -1308,35 +1653,65 @@ class _PaymentModeView extends StatelessWidget {
   }
 
   Widget _modeRow(PaymentModeEntry e) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: LoginColors.surface,
-          border: Border(
-            bottom: BorderSide(color: LoginColors.border, width: 0.5),
-            left: BorderSide(color: LoginColors.border, width: 0.5),
-            right: BorderSide(color: LoginColors.border, width: 0.5),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(
+      color: LoginColors.surface,
+      border: Border(
+        bottom: BorderSide(color: LoginColors.border, width: 0.5),
+        left: BorderSide(color: LoginColors.border, width: 0.5),
+        right: BorderSide(color: LoginColors.border, width: 0.5),
+      ),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          flex: 3,
+          child: Text(
+            _modeLabel(e.mode),
+            style: TextStyle(fontSize: 13, color: LoginColors.textPrimary),
           ),
         ),
-        child: Row(children: [
-          Expanded(flex: 3, child: Text(_modeLabel(e.mode),
-              style: TextStyle(fontSize: 13, color: LoginColors.textPrimary))),
-          Expanded(flex: 3, child: Text(_fmt(e.totalAmount),
-              style: TextStyle(fontSize: 13, color: LoginColors.success))),
-          Expanded(flex: 1, child: Text(e.transactionCount.toString(),
-              style: TextStyle(fontSize: 13, color: LoginColors.textPrimary))),
-          Expanded(flex: 2, child: Text('${e.percentage.toStringAsFixed(1)}%',
-              style: TextStyle(fontSize: 13, color: LoginColors.primary,
-                  fontWeight: FontWeight.w600))),
-        ]),
-      );
+        Expanded(
+          flex: 3,
+          child: Text(
+            _fmt(e.totalAmount),
+            style: TextStyle(fontSize: 13, color: LoginColors.success),
+          ),
+        ),
+        Expanded(
+          flex: 1,
+          child: Text(
+            e.transactionCount.toString(),
+            style: TextStyle(fontSize: 13, color: LoginColors.textPrimary),
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: Text(
+            '${e.percentage.toStringAsFixed(1)}%',
+            style: TextStyle(
+              fontSize: 13,
+              color: LoginColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 
   String _modeLabel(String mode) {
     switch (mode) {
-      case 'BANK_TRANSFER': return 'Bank Transfer';
-      case 'CASH':          return 'Cash';
-      case 'UPI':           return 'UPI';
-      case 'CHEQUE':        return 'Cheque';
-      default:              return mode;
+      case 'BANK_TRANSFER':
+        return 'Bank Transfer';
+      case 'CASH':
+        return 'Cash';
+      case 'UPI':
+        return 'UPI';
+      case 'CHEQUE':
+        return 'Cheque';
+      default:
+        return mode;
     }
   }
 }
@@ -1344,46 +1719,172 @@ class _PaymentModeView extends StatelessWidget {
 // ─── Shared row / header helpers ──────────────────────────────────────────────
 
 Widget _tableHead(List<String> cols) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: LoginColors.surfaceSecondary,
-        border: Border.all(color: LoginColors.border, width: 0.5),
-      ),
-      child: Row(
-        children: cols.asMap().entries.map((e) => Expanded(
-          child: Text(e.value,
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+  decoration: BoxDecoration(
+    color: LoginColors.surfaceSecondary,
+    border: Border.all(color: LoginColors.border, width: 0.5),
+  ),
+  child: Row(
+    children: cols
+        .asMap()
+        .entries
+        .map(
+          (e) => Expanded(
+            child: Text(
+              e.value,
               textAlign: e.key == 0 ? TextAlign.left : TextAlign.right,
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-                  color: LoginColors.textPrimary)),
-        )).toList(),
-      ),
-    );
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: LoginColors.textPrimary,
+              ),
+            ),
+          ),
+        )
+        .toList(),
+  ),
+);
 
-Widget _row2(String label, String value,
-    {Color? valueColor, bool highlight = false}) =>
-    Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: highlight
-            ? LoginColors.primary.withValues(alpha: 0.06)
-            : LoginColors.surface,
-        border: Border(
-          bottom: BorderSide(color: LoginColors.border, width: 0.5),
-          left: BorderSide(color: LoginColors.border, width: 0.5),
-          right: BorderSide(color: LoginColors.border, width: 0.5),
+Widget _row2(
+  String label,
+  String value, {
+  Color? valueColor,
+  bool highlight = false,
+}) => Container(
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+  decoration: BoxDecoration(
+    color: highlight
+        ? LoginColors.primary.withValues(alpha: 0.06)
+        : LoginColors.surface,
+    border: Border(
+      bottom: BorderSide(color: LoginColors.border, width: 0.5),
+      left: BorderSide(color: LoginColors.border, width: 0.5),
+      right: BorderSide(color: LoginColors.border, width: 0.5),
+    ),
+  ),
+  child: Row(
+    children: [
+      Expanded(
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            color: LoginColors.textPrimary,
+            fontWeight: highlight ? FontWeight.w700 : FontWeight.w400,
+          ),
         ),
       ),
-      child: Row(children: [
-        Expanded(child: Text(label, style: TextStyle(fontSize: 13,
-            color: LoginColors.textPrimary,
-            fontWeight: highlight ? FontWeight.w700 : FontWeight.w400))),
-        Text(value, style: TextStyle(fontSize: 13,
-            color: valueColor ?? LoginColors.textPrimary,
-            fontWeight: highlight ? FontWeight.w700 : FontWeight.w500)),
-      ]),
-    );
+      Text(
+        value,
+        style: TextStyle(
+          fontSize: 13,
+          color: valueColor ?? LoginColors.textPrimary,
+          fontWeight: highlight ? FontWeight.w700 : FontWeight.w500,
+        ),
+      ),
+    ],
+  ),
+);
 
 Widget _row3(String c1, String c2, String c3) => Container(
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+  decoration: BoxDecoration(
+    color: LoginColors.surface,
+    border: Border(
+      bottom: BorderSide(color: LoginColors.border, width: 0.5),
+      left: BorderSide(color: LoginColors.border, width: 0.5),
+      right: BorderSide(color: LoginColors.border, width: 0.5),
+    ),
+  ),
+  child: Row(
+    children: [
+      Expanded(
+        child: Text(
+          c1,
+          style: TextStyle(fontSize: 13, color: LoginColors.textPrimary),
+        ),
+      ),
+      Text(
+        c2,
+        style: TextStyle(fontSize: 13, color: LoginColors.textSecondary),
+      ),
+      const SizedBox(width: 24),
+      Text(
+        c3,
+        style: TextStyle(
+          fontSize: 13,
+          color: LoginColors.textPrimary,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ],
+  ),
+);
+
+Widget _row6(
+  String c1,
+  String c2,
+  String c3,
+  String c4,
+  String c5,
+  String c6,
+) => Container(
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+  decoration: BoxDecoration(
+    color: LoginColors.surface,
+    border: Border(
+      bottom: BorderSide(color: LoginColors.border, width: 0.5),
+      left: BorderSide(color: LoginColors.border, width: 0.5),
+      right: BorderSide(color: LoginColors.border, width: 0.5),
+    ),
+  ),
+  child: Row(
+    children: [
+      Expanded(
+        child: Text(
+          c1,
+          style: TextStyle(fontSize: 12, color: LoginColors.textPrimary),
+        ),
+      ),
+      Expanded(
+        child: Text(
+          c2,
+          style: TextStyle(fontSize: 12, color: LoginColors.textPrimary),
+        ),
+      ),
+      Expanded(
+        child: Text(
+          c3,
+          style: TextStyle(fontSize: 12, color: LoginColors.primary),
+        ),
+      ),
+      Expanded(
+        child: Text(
+          c4,
+          textAlign: TextAlign.end,
+          style: TextStyle(fontSize: 12, color: LoginColors.textSecondary),
+        ),
+      ),
+      Expanded(
+        child: Text(
+          c5,
+          textAlign: TextAlign.end,
+          style: TextStyle(fontSize: 12, color: LoginColors.textPrimary),
+        ),
+      ),
+      Expanded(
+        child: Text(
+          c6,
+          textAlign: TextAlign.end,
+          style: TextStyle(fontSize: 12, color: LoginColors.success),
+        ),
+      ),
+    ],
+  ),
+);
+
+Widget _row5(String c1, String c2, String c3, String c4, String c5) =>
+    Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: LoginColors.surface,
@@ -1393,42 +1894,108 @@ Widget _row3(String c1, String c2, String c3) => Container(
           right: BorderSide(color: LoginColors.border, width: 0.5),
         ),
       ),
-      child: Row(children: [
-        Expanded(child: Text(c1, style: TextStyle(fontSize: 13, color: LoginColors.textPrimary))),
-        Text(c2, style: TextStyle(fontSize: 13, color: LoginColors.textSecondary)),
-        const SizedBox(width: 24),
-        Text(c3, style: TextStyle(fontSize: 13, color: LoginColors.textPrimary,
-            fontWeight: FontWeight.w500)),
-      ]),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              c1,
+              style: TextStyle(fontSize: 12, color: LoginColors.textPrimary),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              c2,
+              style: TextStyle(fontSize: 12, color: LoginColors.textPrimary),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              c3,
+              style: TextStyle(fontSize: 12, color: LoginColors.primary),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              c4,
+              style: TextStyle(fontSize: 12, color: LoginColors.textSecondary),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              c5,
+              textAlign: TextAlign.end,
+              style: TextStyle(fontSize: 12, color: LoginColors.success),
+            ),
+          ),
+        ],
+      ),
     );
 
 Widget _footerRow2(String l, String v) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: LoginColors.surfaceSecondary,
-        border: Border.all(color: LoginColors.border, width: 0.5),
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+  decoration: BoxDecoration(
+    color: LoginColors.surfaceSecondary,
+    border: Border.all(color: LoginColors.border, width: 0.5),
+  ),
+  child: Row(
+    children: [
+      Expanded(
+        child: Text(
+          l,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: LoginColors.textPrimary,
+          ),
+        ),
       ),
-      child: Row(children: [
-        Expanded(child: Text(l, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-            color: LoginColors.textPrimary))),
-        Text(v, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-            color: LoginColors.textPrimary)),
-      ]),
-    );
+      Text(
+        v,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: LoginColors.textPrimary,
+        ),
+      ),
+    ],
+  ),
+);
 
 Widget _footerRow3(String c1, String c2, String c3) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: LoginColors.surfaceSecondary,
-        border: Border.all(color: LoginColors.border, width: 0.5),
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+  decoration: BoxDecoration(
+    color: LoginColors.surfaceSecondary,
+    border: Border.all(color: LoginColors.border, width: 0.5),
+  ),
+  child: Row(
+    children: [
+      Expanded(
+        child: Text(
+          c1,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: LoginColors.textPrimary,
+          ),
+        ),
       ),
-      child: Row(children: [
-        Expanded(child: Text(c1, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-            color: LoginColors.textPrimary))),
-        Text(c2, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-            color: LoginColors.textSecondary)),
-        const SizedBox(width: 24),
-        Text(c3, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-            color: LoginColors.textPrimary)),
-      ]),
-    );
+      Text(
+        c2,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: LoginColors.textSecondary,
+        ),
+      ),
+      const SizedBox(width: 24),
+      Text(
+        c3,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: LoginColors.textPrimary,
+        ),
+      ),
+    ],
+  ),
+);

@@ -39,6 +39,16 @@ class _SplashPageState extends State<SplashPage>
     }
 
     // User is logged in — load dashboard data before navigating
+    final authData = await _authRepo.getAuthData();
+    final isEmployee =
+        authData?['roleCode']?.toString().toUpperCase() == 'EMP' ||
+        authData?['authType']?.toString().toLowerCase() == 'employee';
+
+    if (isEmployee) {
+      context.go(CfRoutes.employeePortalHome);
+      return;
+    }
+
     final dashVm = context.read<DashboardViewModel>();
     await dashVm.loadUserData(force: true);
     if (!mounted) return;

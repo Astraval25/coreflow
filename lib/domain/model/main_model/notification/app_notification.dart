@@ -5,6 +5,8 @@ class AppNotification {
   final String type;
   final String actionLabel;
   final String actionUrl;
+  final String entityKey;
+  final int entityUnreadCount;
   final int fromCompanyId;
   final int toCompanyId;
   final bool isRead;
@@ -18,6 +20,8 @@ class AppNotification {
     required this.type,
     required this.actionLabel,
     required this.actionUrl,
+    required this.entityKey,
+    required this.entityUnreadCount,
     required this.fromCompanyId,
     required this.toCompanyId,
     required this.isRead,
@@ -26,15 +30,24 @@ class AppNotification {
   });
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
+    int toInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      return int.tryParse(value.toString()) ?? 0;
+    }
+
     return AppNotification(
-      notificationId: json['notificationId'] ?? 0,
+      notificationId: toInt(json['notificationId']),
       title: json['title'] ?? '',
       message: json['message'] ?? '',
       type: json['type'] ?? '',
       actionLabel: json['actionLabel'] ?? '',
       actionUrl: json['actionUrl'] ?? '',
-      fromCompanyId: json['fromCompanyId'] ?? 0,
-      toCompanyId: json['toCompanyId'] ?? 0,
+      entityKey: json['entityKey'] ?? '',
+      entityUnreadCount: toInt(json['entityUnreadCount']),
+      fromCompanyId: toInt(json['fromCompanyId']),
+      toCompanyId: toInt(json['toCompanyId']),
       isRead: json['isRead'] ?? false,
       createdDt: json['createdDt'] ?? '',
       readDt: json['readDt'],
@@ -49,6 +62,8 @@ class AppNotification {
       type: type,
       actionLabel: actionLabel,
       actionUrl: actionUrl,
+      entityKey: entityKey,
+      entityUnreadCount: entityUnreadCount,
       fromCompanyId: fromCompanyId,
       toCompanyId: toCompanyId,
       isRead: isRead ?? this.isRead,

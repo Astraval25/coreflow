@@ -82,8 +82,7 @@ class _PayReceivedContentState extends State<_PayReceivedContent> {
             backgroundColor: LoginColors.background,
             drawerEnableOpenDragGesture: false,
             drawer: AppDrawer(vm: dashboardVm),
-            floatingActionButtonLocation:
-                FloatingActionButtonLocation.endFloat,
+            floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
             floatingActionButton: _buildCreateButton(),
             appBar: SearchableEntityAppBar(
               isSearchOpen: false,
@@ -97,7 +96,7 @@ class _PayReceivedContentState extends State<_PayReceivedContent> {
               searchHint: '',
               showSearchAction: false,
               tabs: const [
-                SearchableEntityTab(label: 'Sent'),
+                SearchableEntityTab(label: 'Pay'),
                 SearchableEntityTab(label: 'Received'),
               ],
               selectedTabIndex: _selectedTabIndex,
@@ -112,8 +111,10 @@ class _PayReceivedContentState extends State<_PayReceivedContent> {
                 setState(() => _selectedTabIndex = index);
               },
             ),
-            body:
-                RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
+            body: RefreshIndicator(
+              onRefresh: vm.refresh,
+              child: _buildBody(vm),
+            ),
           ),
         );
       },
@@ -122,7 +123,9 @@ class _PayReceivedContentState extends State<_PayReceivedContent> {
 
   Future<bool> _handleWillPop() async {
     final dashVm = context.read<DashboardViewModel>();
-    if (dashVm.companyId != null) context.go(CfRoutes.dashboard(dashVm.companyId!));
+    if (dashVm.companyId != null) {
+      context.go(CfRoutes.dashboard(dashVm.companyId!));
+    }
     return false;
   }
 
@@ -192,7 +195,7 @@ class _PayReceivedContentState extends State<_PayReceivedContent> {
         builder: (_) => CreateReceivePaymentPage(companyId: companyId),
       ),
     );
-    
+
     if (result == true && mounted) {
       // Refresh the list if payment was created successfully
       final vm = context.read<ReceivePaymentViewModel>();

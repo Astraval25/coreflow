@@ -1,4 +1,5 @@
 import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
+import 'package:coreflow/core/storage/token_storage.dart';
 import 'package:coreflow/features/main_feature/customers/view/customer_create_page.dart';
 import 'package:coreflow/features/main_feature/customers/view/customer_detail_page.dart';
 import 'package:coreflow/features/main_feature/customers/view/customer_edit_page.dart';
@@ -32,22 +33,40 @@ import 'package:coreflow/features/main_feature/payment/send_payment/view/payment
 import 'package:coreflow/features/main_feature/payment/send_payment/view/create_payment_sent_page.dart';
 import 'package:coreflow/features/main_feature/payment/receive_payment/view/pay_received_page.dart';
 import 'package:coreflow/features/main_feature/payment/receive_payment/view/create_receive_payment_page.dart';
+import 'package:coreflow/features/main_feature/expense/view/create_expense_page.dart';
+import 'package:coreflow/features/main_feature/expense/view/expenses_page.dart';
 import 'package:coreflow/features/main_feature/report/view/report_list_page.dart';
 import 'package:coreflow/core/utils/splash/view/splash_page.dart';
+import 'package:coreflow/features/employee_feature/employees/view/employees_page.dart';
+import 'package:coreflow/features/employee_feature/employees/view/employee_detail_page.dart';
+import 'package:coreflow/features/employee_feature/employees/view/employee_view_page.dart';
+import 'package:coreflow/features/employee_feature/employees/view/employee_create_page.dart';
+import 'package:coreflow/features/employee_feature/employees/view/employee_edit_page.dart';
+import 'package:coreflow/features/employee_feature/leave_logs/view/admin_leave_logs_page.dart';
+import 'package:coreflow/features/employee_feature/portal/view/employee_portal_page.dart';
+import 'package:coreflow/features/employee_feature/salary/view/admin_salary_page.dart';
+import 'package:coreflow/features/employee_feature/work_definitions/view/work_definitions_page.dart';
+import 'package:coreflow/features/employee_feature/work_logs/view/admin_work_logs_page.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:go_router/go_router.dart';
-
 
 final _authRepo = AuthRepository();
 final GoRouter router = GoRouter(
   initialLocation: '/',
+  refreshListenable: TokenStorage.authStateNotifier,
   routes: [
     // Splash
     GoRoute(path: '/', builder: (context, state) => const SplashPage()),
 
     // ── Auth ────────────────────────────────────────────────────────────
-    GoRoute(path: CfRoutes.login, builder: (context, state) => const LoginScreen()),
-    GoRoute(path: CfRoutes.register, builder: (context, state) => const RegisterScreen()),
+    GoRoute(
+      path: CfRoutes.login,
+      builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: CfRoutes.register,
+      builder: (context, state) => const RegisterScreen(),
+    ),
     GoRoute(
       path: '/cf/auth/verify/:userPath',
       builder: (context, state) =>
@@ -58,11 +77,24 @@ final GoRouter router = GoRouter(
       builder: (context, state) =>
           VerifyOtpScreen(userPath: state.uri.queryParameters['email']),
     ),
-    GoRoute(path: CfRoutes.resendOtp, builder: (context, state) => const ResendOtpScreen()),
+    GoRoute(
+      path: CfRoutes.resendOtp,
+      builder: (context, state) => const ResendOtpScreen(),
+    ),
+    GoRoute(
+      path: CfRoutes.employeePortalHome,
+      builder: (context, state) => const EmployeePortalPage(),
+    ),
 
     // ── Legal ───────────────────────────────────────────────────────────
-    GoRoute(path: CfRoutes.privacyPolicy, builder: (context, state) => const PrivacyPolicyPage()),
-    GoRoute(path: CfRoutes.termsOfService, builder: (context, state) => const TermsOfServicePage()),
+    GoRoute(
+      path: CfRoutes.privacyPolicy,
+      builder: (context, state) => const PrivacyPolicyPage(),
+    ),
+    GoRoute(
+      path: CfRoutes.termsOfService,
+      builder: (context, state) => const TermsOfServicePage(),
+    ),
 
     // ── Shell Route for Main Layout ─────────────────────────────────────
     ShellRoute(
@@ -119,16 +151,26 @@ final GoRouter router = GoRouter(
               path: ':customerId/detail',
               builder: (context, state) {
                 final companyId = int.parse(state.pathParameters['companyId']!);
-                final customerId = int.parse(state.pathParameters['customerId']!);
-                return CustomerDetailView(companyId: companyId, customerId: customerId);
+                final customerId = int.parse(
+                  state.pathParameters['customerId']!,
+                );
+                return CustomerDetailView(
+                  companyId: companyId,
+                  customerId: customerId,
+                );
               },
             ),
             GoRoute(
               path: ':customerId/update',
               builder: (context, state) {
                 final companyId = int.parse(state.pathParameters['companyId']!);
-                final customerId = int.parse(state.pathParameters['customerId']!);
-                return CustomerEditPage(companyId: companyId, customerId: customerId);
+                final customerId = int.parse(
+                  state.pathParameters['customerId']!,
+                );
+                return CustomerEditPage(
+                  companyId: companyId,
+                  customerId: customerId,
+                );
               },
             ),
           ],
@@ -154,7 +196,10 @@ final GoRouter router = GoRouter(
               builder: (context, state) {
                 final companyId = int.parse(state.pathParameters['companyId']!);
                 final vendorId = int.parse(state.pathParameters['vendorId']!);
-                return VendorDetailView(companyId: companyId, vendorId: vendorId);
+                return VendorDetailView(
+                  companyId: companyId,
+                  vendorId: vendorId,
+                );
               },
             ),
             GoRoute(
@@ -168,7 +213,92 @@ final GoRouter router = GoRouter(
           ],
         ),
 
+        // ── Employees ────────────────────────────────────────────────────
+        GoRoute(
+          path: '/cf/company/:companyId/employees',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            return EmployeesPage(companyId: companyId);
+          },
+          routes: [
+            GoRoute(
+              path: 'create',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                return EmployeeCreatePage(companyId: companyId);
+              },
+            ),
+            GoRoute(
+              path: ':employeeId/detail',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                final employeeId = int.parse(
+                  state.pathParameters['employeeId']!,
+                );
+                return EmployeeViewPage(
+                  companyId: companyId,
+                  employeeId: employeeId,
+                );
+              },
+            ),
+            GoRoute(
+              path: ':employeeId/profile',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                final employeeId = int.parse(
+                  state.pathParameters['employeeId']!,
+                );
+                return EmployeeDetailPage(
+                  companyId: companyId,
+                  employeeId: employeeId,
+                );
+              },
+            ),
+            GoRoute(
+              path: ':employeeId/update',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                final employeeId = int.parse(
+                  state.pathParameters['employeeId']!,
+                );
+                return EmployeeEditPage(
+                  companyId: companyId,
+                  employeeId: employeeId,
+                );
+              },
+            ),
+          ],
+        ),
+
         // ── Items ───────────────────────────────────────────────────────
+        GoRoute(
+          path: '/cf/company/:companyId/work-definitions',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            return WorkDefinitionsPage(companyId: companyId);
+          },
+        ),
+        GoRoute(
+          path: '/cf/company/:companyId/employee-work-logs',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            return AdminWorkLogsPage(companyId: companyId);
+          },
+        ),
+        GoRoute(
+          path: '/cf/company/:companyId/employee-leave-requests',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            return AdminLeaveLogsPage(companyId: companyId);
+          },
+        ),
+        GoRoute(
+          path: '/cf/company/:companyId/employee-salary',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            return AdminSalaryPage(companyId: companyId);
+          },
+        ),
         GoRoute(
           path: '/cf/company/:companyId/items',
           builder: (context, state) {
@@ -206,7 +336,8 @@ final GoRouter router = GoRouter(
                 final extra = state.extra as Map<String, dynamic>?;
                 return CreateSalesOrderPage(
                   companyId: companyId,
-                  preSelectedCustomer: extra?['preSelectedCustomer'] as Map<String, dynamic>?,
+                  preSelectedCustomer:
+                      extra?['preSelectedCustomer'] as Map<String, dynamic>?,
                 );
               },
             ),
@@ -225,7 +356,8 @@ final GoRouter router = GoRouter(
             final extra = state.extra as Map<String, dynamic>?;
             return CreatePurchaseOrderPage(
               companyId: companyId,
-              preSelectedVendor: extra?['preSelectedVendor'] as Map<String, dynamic>?,
+              preSelectedVendor:
+                  extra?['preSelectedVendor'] as Map<String, dynamic>?,
             );
           },
         ),
@@ -242,7 +374,8 @@ final GoRouter router = GoRouter(
             final extra = state.extra as Map<String, dynamic>?;
             return CreatePaymentSentPage(
               companyId: companyId,
-              preSelectedVendor: extra?['preSelectedVendor'] as Map<String, dynamic>?,
+              preSelectedVendor:
+                  extra?['preSelectedVendor'] as Map<String, dynamic>?,
             );
           },
         ),
@@ -259,8 +392,25 @@ final GoRouter router = GoRouter(
             final extra = state.extra as Map<String, dynamic>?;
             return CreateReceivePaymentPage(
               companyId: companyId,
-              preSelectedCustomer: extra?['preSelectedCustomer'] as Map<String, dynamic>?,
+              preSelectedCustomer:
+                  extra?['preSelectedCustomer'] as Map<String, dynamic>?,
             );
+          },
+        ),
+
+        // Expenses
+        GoRoute(
+          path: '/cf/company/:companyId/expenses/list',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            return ExpensesPage(companyId: companyId);
+          },
+        ),
+        GoRoute(
+          path: '/cf/company/:companyId/expenses/create',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            return CreateExpensePage(companyId: companyId);
           },
         ),
 
@@ -310,7 +460,14 @@ final GoRouter router = GoRouter(
     );
 
     if (!isLoggedIn && !isPublicRoute) return CfRoutes.login;
-    if (isLoggedIn && location == CfRoutes.login) return null;
+    if (isLoggedIn && location == CfRoutes.login) {
+      final authData = await _authRepo.getAuthData();
+      final isEmployee =
+          authData?['roleCode']?.toString().toUpperCase() == 'EMP' ||
+          authData?['authType']?.toString().toLowerCase() == 'employee';
+      if (isEmployee) return CfRoutes.employeePortalHome;
+      return null;
+    }
     return null;
   },
 );

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
+import 'package:coreflow/data/services/push_notification_service.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -95,6 +96,7 @@ class ProfileViewModel extends ChangeNotifier {
     _clearError();
 
     try {
+      await PushNotificationService().deregisterToken();
       await _authRepository.clearAuthData();
 
       if (context.mounted) {

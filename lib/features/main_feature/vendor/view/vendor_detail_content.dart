@@ -1,9 +1,12 @@
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/core/utils/common_formatters.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendors_detail.dart';
 import 'package:coreflow/features/main_feature/vendor/widget/detail/vendor_detail_body.dart';
 import 'package:coreflow/features/main_feature/vendor/widget/detail/vendor_error_state.dart';
-import 'package:coreflow/features/main_feature/vendor/widget/detail/vendor_header.dart';
 import 'package:coreflow/features/main_feature/vendor/widget/detail/body/vendor_expand_more_option.dart';
+import 'package:coreflow/features/main_feature/vendor/widget/detail/body/vendor_item_section.dart';
+import 'package:coreflow/features/main_feature/vendor/widget/detail/vendor_address_tile.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:coreflow/core/widgets/skeleton.dart';
@@ -53,19 +56,63 @@ class VendorDetailContent extends StatelessWidget {
         ),
         title: Consumer<VendorDetailViewModel>(
           builder: (context, vm, _) {
-            return Text(
-              vm.isLoading || vm.vendor == null
-                  ? 'Vendor Details'
-                  : vm.vendor!.vendorName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.4,
+            if (vm.isLoading || vm.vendor == null) {
+              return const Text(
+                'Vendor Details',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.4,
+                ),
+              );
+            }
+            final vendor = vm.vendor!;
+            return InkWell(
+              onTap: () => _openVendorProfileSheet(context, vendor),
+              borderRadius: BorderRadius.circular(14),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Colors.white.withValues(alpha: 0.20),
+                      child: const Icon(
+                        Icons.storefront_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        vendor.vendorName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
         ),
         actions: [
+          Consumer<VendorDetailViewModel>(
+            builder: (context, vm, _) {
+              if (vm.isLoading || vm.vendor == null) {
+                return const SizedBox.shrink();
+              }
+              return _VendorBalanceChip(amount: vm.vendor!.dueAmount ?? 0);
+            },
+          ),
+          const SizedBox(width: 6),
           Consumer<VendorDetailViewModel>(
             builder: (context, vm, _) {
               if (vm.vendor == null || vm.isLoading) {
@@ -274,18 +321,290 @@ class VendorDetailContent extends StatelessWidget {
 
     return Column(
       children: [
-        VendorHeader(
-          vendor: vm.vendor!,
-          onToggleStatus: () async {
-            if (vm.isActive) {
-              await vm.deactivateVendor(context);
-            } else {
-              await vm.activateVendor(context);
-            }
-          },
-        ),
         VendorDetailBody(vendor: vm.vendor!),
       ],
+    );
+  }
+
+  void _openVendorProfileSheet(BuildContext context, VendorsDetailData vendor) {
+    final vm = context.read<VendorDetailViewModel>();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ChangeNotifierProvider.value(
+        value: vm,
+        child: _VendorProfileSheet(vendor: vendor),
+      ),
+    );
+  }
+}
+
+class _VendorProfileSheet extends StatelessWidget {
+  final VendorsDetailData vendor;
+
+  const _VendorProfileSheet({required this.vendor});
+
+  @override
+  Widget build(BuildContext context) {
+    final sheetHeight = MediaQuery.of(context).size.height * 0.92;
+    final Address? shippingToShow =
+        (vendor.sameAsBillingAddress || vendor.shippingAddress == null)
+        ? vendor.billingAddress
+        : vendor.shippingAddress;
+
+    return Container(
+      height: sheetHeight,
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 10),
+          Container(
+            width: 44,
+            height: 4,
+            decoration: BoxDecoration(
+              color: LoginColors.border,
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: LoginColors.primary.withValues(alpha: 0.14),
+                  child: Icon(
+                    Icons.storefront_rounded,
+                    color: LoginColors.primaryDark,
+                    size: 21,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    vendor.vendorName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: LoginColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 28),
+              child: Column(
+                children: [
+                  _VendorProfileDetailsSection(vendor: vendor),
+                  _VendorCompanyLinkSection(vendor: vendor),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    child: Column(
+                      children: [
+                        VendorAddressTile(
+                          title: 'Billing Address',
+                          address: vendor.billingAddress,
+                        ),
+                        if (shippingToShow != null)
+                          VendorAddressTile(
+                            title: 'Shipping Address',
+                            address: shippingToShow,
+                          ),
+                      ],
+                    ),
+                  ),
+                  const VendorItemSection(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VendorProfileDetailsSection extends StatelessWidget {
+  final VendorsDetailData vendor;
+
+  const _VendorProfileDetailsSection({required this.vendor});
+
+  @override
+  Widget build(BuildContext context) {
+    String valueOrDash(String? value) {
+      final cleaned = value?.trim() ?? '';
+      return cleaned.isEmpty ? '-' : cleaned;
+    }
+
+    Widget tile({
+      required IconData icon,
+      required String label,
+      required String value,
+    }) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        decoration: BoxDecoration(
+          color: LoginColors.fieldFill,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: LoginColors.borderLight),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: LoginColors.primary),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 78,
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: LoginColors.textSecondary,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: LoginColors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Basic Information',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: LoginColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                height: 3,
+                width: 50,
+                decoration: BoxDecoration(
+                  color: LoginColors.textPrimary.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+          ),
+        ),
+        tile(icon: Icons.email_outlined, label: 'Email', value: valueOrDash(vendor.email)),
+        tile(icon: Icons.phone_outlined, label: 'Phone', value: valueOrDash(vendor.phone)),
+        tile(icon: Icons.badge_outlined, label: 'PAN', value: valueOrDash(vendor.pan)),
+        tile(icon: Icons.receipt_long_outlined, label: 'GST', value: valueOrDash(vendor.gst)),
+        tile(icon: Icons.language_rounded, label: 'Language', value: valueOrDash(vendor.lang)),
+      ],
+    );
+  }
+}
+
+class _VendorCompanyLinkSection extends StatelessWidget {
+  final VendorsDetailData vendor;
+
+  const _VendorCompanyLinkSection({required this.vendor});
+
+  @override
+  Widget build(BuildContext context) {
+    final linkedCompany = vendor.vendorCompany;
+    final linkedName = linkedCompany?.companyName?.trim() ?? '';
+    final companyId = linkedCompany?.companyId;
+    final hasLink = companyId != null && linkedName.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 10),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFB07A00).withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFB07A00).withValues(alpha: 0.55)),
+        ),
+        child: InkWell(
+          onTap: hasLink ? () => context.push(CfRoutes.marketplaceCompany(companyId)) : null,
+          borderRadius: BorderRadius.circular(12),
+          child: Row(
+            children: [
+              const Icon(Icons.link_rounded, size: 18, color: Color(0xFFB07A00)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  hasLink ? linkedName : 'Company not linked',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF8A5A00),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (hasLink)
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 13,
+                  color: Color(0xFF8A5A00),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _VendorBalanceChip extends StatelessWidget {
+  final double amount;
+
+  const _VendorBalanceChip({required this.amount});
+
+  @override
+  Widget build(BuildContext context) {
+    final isAdvance = amount >= 0;
+    final color = isAdvance ? LoginColors.success : LoginColors.error;
+    return Container(
+      margin: const EdgeInsets.only(right: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
+      ),
+      child: Text(
+        '${isAdvance ? 'Adv' : 'Due'} ${formatMoney(amount.abs())}',
+        style: TextStyle(
+          color: color.withValues(alpha: 0.92),
+          fontSize: 11.5,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 }

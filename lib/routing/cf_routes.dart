@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+
 /// Centralized route path definitions for the CoreFlow app.
 ///
 /// All routes follow the structure defined in ROUTING-STRUCTURE.md.
@@ -12,6 +13,11 @@ class CfRoutes {
   static String verify(String userPath) => '/cf/auth/verify/$userPath';
   static const resendOtp = '/cf/auth/resend-otp';
 
+  // Employee portal
+  static const employeePortalHome = '/cf/emp/home';
+  static String employeePortalSalaryDetail(int salaryPeriodId) =>
+      '/cf/emp/salary/$salaryPeriodId';
+
   // ── Legal ─────────────────────────────────────────────────────────────
   static const privacyPolicy = '/cf/legal/privacy-policy';
   static const termsOfService = '/cf/legal/terms-of-service';
@@ -19,14 +25,11 @@ class CfRoutes {
   // ── Company Management ────────────────────────────────────────────────
   static const companyList = '/cf/company/list';
   static const companyCreate = '/cf/company/create';
-  static String companyDetail(int companyId) =>
-      '/cf/company/$companyId/detail';
-  static String companyUpdate(int companyId) =>
-      '/cf/company/$companyId/update';
+  static String companyDetail(int companyId) => '/cf/company/$companyId/detail';
+  static String companyUpdate(int companyId) => '/cf/company/$companyId/update';
 
   // ── Dashboard ─────────────────────────────────────────────────────────
-  static String dashboard(int companyId) =>
-      '/cf/company/$companyId/dashboard';
+  static String dashboard(int companyId) => '/cf/company/$companyId/dashboard';
 
   // ── Notifications ─────────────────────────────────────────────────────
   static String notifications(int companyId) =>
@@ -37,8 +40,7 @@ class CfRoutes {
   static String settings(int userId) => '/cf/user/$userId/settings';
 
   // ── Customers ─────────────────────────────────────────────────────────
-  static String customers(int companyId) =>
-      '/cf/company/$companyId/customers';
+  static String customers(int companyId) => '/cf/company/$companyId/customers';
   static String customerCreate(int companyId) =>
       '/cf/company/$companyId/customers/create';
   static String customerDetail(int companyId, int customerId) =>
@@ -47,8 +49,7 @@ class CfRoutes {
       '/cf/company/$companyId/customers/$customerId/update';
 
   // ── Vendors ───────────────────────────────────────────────────────────
-  static String vendors(int companyId) =>
-      '/cf/company/$companyId/vendors';
+  static String vendors(int companyId) => '/cf/company/$companyId/vendors';
   static String vendorCreate(int companyId) =>
       '/cf/company/$companyId/vendors/create';
   static String vendorDetail(int companyId, int vendorId) =>
@@ -57,8 +58,7 @@ class CfRoutes {
       '/cf/company/$companyId/vendors/$vendorId/update';
 
   // ── Items ─────────────────────────────────────────────────────────────
-  static String items(int companyId) =>
-      '/cf/company/$companyId/items';
+  static String items(int companyId) => '/cf/company/$companyId/items';
   static String itemCreate(int companyId) =>
       '/cf/company/$companyId/items/create';
   static String itemDetail(int companyId, int itemId) =>
@@ -67,8 +67,7 @@ class CfRoutes {
       '/cf/company/$companyId/items/$itemId/update';
 
   // ── Sales ─────────────────────────────────────────────────────────────
-  static String sales(int companyId) =>
-      '/cf/company/$companyId/sales';
+  static String sales(int companyId) => '/cf/company/$companyId/sales';
   static String salesCreate(int companyId) =>
       '/cf/company/$companyId/sales/create';
   static String salesDetail(int companyId, int salesId) =>
@@ -105,6 +104,33 @@ class CfRoutes {
       '/cf/company/$companyId/payment-made/$id/detail';
   static String paymentMadeUpdate(int companyId, int id) =>
       '/cf/company/$companyId/payment-made/$id/update';
+
+  // Expenses
+  static String expenses(int companyId) =>
+      '/cf/company/$companyId/expenses/list';
+  static String expenseCreate(int companyId) =>
+      '/cf/company/$companyId/expenses/create';
+
+  // ── Employees ─────────────────────────────────────────────────────
+  static String employees(int companyId) => '/cf/company/$companyId/employees';
+  static String employeeCreate(int companyId) =>
+      '/cf/company/$companyId/employees/create';
+  static String employeeDetail(int companyId, int employeeId) =>
+      '/cf/company/$companyId/employees/$employeeId/detail';
+  static String employeeProfile(int companyId, int employeeId) =>
+      '/cf/company/$companyId/employees/$employeeId/profile';
+  static String employeeUpdate(int companyId, int employeeId) =>
+      '/cf/company/$companyId/employees/$employeeId/update';
+  static String workDefinitions(int companyId) =>
+      '/cf/company/$companyId/work-definitions';
+  static String employeeWorkLogs(int companyId) =>
+      '/cf/company/$companyId/employee-work-logs';
+  static String employeeWorkLogsByEmployee(int companyId, int employeeId) =>
+      '/cf/company/$companyId/employees/$employeeId/work-logs';
+  static String employeeLeaveRequests(int companyId) =>
+      '/cf/company/$companyId/employee-leave-requests';
+  static String employeeSalary(int companyId) =>
+      '/cf/company/$companyId/employee-salary';
 
   // ── Report ────────────────────────────────────────────────────────────
   static String reportCustomers(int companyId) =>

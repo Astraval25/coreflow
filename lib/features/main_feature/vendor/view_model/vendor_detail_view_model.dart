@@ -49,6 +49,14 @@ class VendorDetailViewModel extends ChangeNotifier {
   bool get isOrdersPaymentsLoading => _isOrdersPaymentsLoading;
   bool get isOrdersPaymentsLoadingMore => _isOrdersPaymentsLoadingMore;
   bool get hasMoreOrdersPayments => _hasMoreOrdersPayments;
+  List<VendorOrder> get ordersOnly => _ordersPayments
+      .where((e) => e.isOrder && e.order != null)
+      .map((e) => e.order!)
+      .toList(growable: false);
+  List<VendorPayment> get paymentsOnly => _ordersPayments
+      .where((e) => !e.isOrder && e.payment != null)
+      .map((e) => e.payment!)
+      .toList(growable: false);
 
   bool get isLoading => _state == VendorViewState.loading;
   bool get hasData => _state == VendorViewState.loaded;
