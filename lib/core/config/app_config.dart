@@ -453,6 +453,13 @@ class AppConfig {
   static String getMarkReadUrl(int companyId, int notificationId) =>
       '$baseUrl/api/companies/$companyId/notifications/$notificationId/read';
 
+  static String getMarkSubjectReadUrl(
+    int companyId,
+    String subjectType,
+    int subjectId,
+  ) =>
+      '$baseUrl/api/companies/$companyId/notifications/subjects/$subjectType/$subjectId/read';
+
   static String getMarkAllReadUrl(int companyId) =>
       '$baseUrl/api/companies/$companyId/notifications/read-all';
 

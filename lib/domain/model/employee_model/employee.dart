@@ -7,6 +7,7 @@ class Employee {
   final bool isActive;
   final String? currentSalaryType;
   final double? currentMonthlyAmount;
+  final int unreadCount;
 
   Employee({
     required this.employeeId,
@@ -17,6 +18,7 @@ class Employee {
     this.isActive = true,
     this.currentSalaryType,
     this.currentMonthlyAmount,
+    this.unreadCount = 0,
   });
 
   factory Employee.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class Employee {
       isActive: json['isActive'] ?? true,
       currentSalaryType: json['currentSalaryType'],
       currentMonthlyAmount: _parseDouble(json['currentMonthlyAmount']),
+      unreadCount: json['unreadCount'] ?? 0,
     );
   }
 
@@ -42,6 +45,7 @@ class Employee {
       'isActive': isActive,
       'currentSalaryType': currentSalaryType,
       'currentMonthlyAmount': currentMonthlyAmount,
+      'unreadCount': unreadCount,
     };
   }
 
@@ -54,6 +58,7 @@ class Employee {
     bool? isActive,
     String? currentSalaryType,
     double? currentMonthlyAmount,
+    int? unreadCount,
   }) {
     return Employee(
       employeeId: employeeId ?? this.employeeId,
@@ -64,6 +69,7 @@ class Employee {
       isActive: isActive ?? this.isActive,
       currentSalaryType: currentSalaryType ?? this.currentSalaryType,
       currentMonthlyAmount: currentMonthlyAmount ?? this.currentMonthlyAmount,
+      unreadCount: unreadCount ?? this.unreadCount,
     );
   }
 

@@ -176,6 +176,9 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
       await context.push(
         CfRoutes.customerDetail(widget.companyId, customers.first.customerId),
       );
+      if (!mounted) return;
+      await context.read<ActiveCustomersViewModel>().refresh();
+      await context.read<DashboardViewModel>().refreshUnreadCount();
       return;
     }
 
@@ -235,6 +238,9 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
     await context.push(
       CfRoutes.customerDetail(widget.companyId, selectedCustomer.customerId),
     );
+    if (!mounted) return;
+    await context.read<ActiveCustomersViewModel>().refresh();
+    await context.read<DashboardViewModel>().refreshUnreadCount();
   }
 
   Widget _buildBody(ActiveCustomersViewModel viewModel, String searchQuery) {

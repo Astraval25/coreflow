@@ -159,6 +159,9 @@ class _EmployeesViewState extends State<EmployeesView> {
       await context.push(
         CfRoutes.employeeDetail(widget.companyId, employees.first.employeeId),
       );
+      if (!mounted) return;
+      await context.read<EmployeesViewModel>().refresh();
+      await context.read<DashboardViewModel>().refreshUnreadCount();
       return;
     }
 
@@ -219,6 +222,9 @@ class _EmployeesViewState extends State<EmployeesView> {
     await context.push(
       CfRoutes.employeeDetail(widget.companyId, selectedEmployee.employeeId),
     );
+    if (!mounted) return;
+    await context.read<EmployeesViewModel>().refresh();
+    await context.read<DashboardViewModel>().refreshUnreadCount();
   }
 
   Widget _buildBody(EmployeesViewModel viewModel) {

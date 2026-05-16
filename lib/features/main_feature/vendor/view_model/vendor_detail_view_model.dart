@@ -29,10 +29,17 @@ class VendorDetailViewModel extends ChangeNotifier {
 
   final int _companyId;
   final int _vendorId;
+  final Future<void> Function()? _refreshUnreadCount;
+  bool _hasClearedUnreadActivity = false;
 
-  VendorDetailViewModel({required int companyId, required int vendorId})
+  VendorDetailViewModel({
+    required int companyId,
+    required int vendorId,
+    Future<void> Function()? refreshUnreadCount,
+  })
     : _companyId = companyId,
-      _vendorId = vendorId {
+      _vendorId = vendorId,
+      _refreshUnreadCount = refreshUnreadCount {
     loadVendorDetail();
   }
 
@@ -79,6 +86,7 @@ class VendorDetailViewModel extends ChangeNotifier {
 
       if (vendorData != null) {
         _vendor = vendorData;
+        await _clearUnreadActivityIfNeeded();
         _updateState(VendorViewState.loaded);
         loadMappedItems();
         loadOrdersPayments(reset: true);
@@ -440,5 +448,17 @@ class VendorDetailViewModel extends ChangeNotifier {
     _state = state;
     _errorMessage = error;
     notifyListeners();
+  }
+
+  Future<void> _clearUnreadActivityIfNeeded() async {
+    if (_hasClearedUnreadActivity) return;
+
+    await _authRepository.markNotificationSubjectRead(
+      _companyId,
+      'VENDOR',
+      _vendorId,
+    );
+    _hasClearedUnreadActivity = true;
+    await _refreshUnreadCount?.call();
   }
 }

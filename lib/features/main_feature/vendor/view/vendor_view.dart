@@ -175,6 +175,9 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
       await context.push(
         CfRoutes.vendorDetail(widget.companyId, vendors.first.vendorId),
       );
+      if (!mounted) return;
+      await context.read<ActiveVendorViewModel>().refresh();
+      await context.read<DashboardViewModel>().refreshUnreadCount();
       return;
     }
 
@@ -234,6 +237,9 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
     await context.push(
       CfRoutes.vendorDetail(widget.companyId, selectedVendor.vendorId),
     );
+    if (!mounted) return;
+    await context.read<ActiveVendorViewModel>().refresh();
+    await context.read<DashboardViewModel>().refreshUnreadCount();
   }
 
   Widget _buildBody(ActiveVendorViewModel viewModel, String searchQuery) {

@@ -6,6 +6,7 @@ class Vendor {
   final String dueAmount;
   final String? email;
   final bool isActive;
+  final int unreadCount;
 
   Vendor({
     required this.vendorId,
@@ -15,6 +16,7 @@ class Vendor {
     this.dueAmount = '',
     this.email,
     this.isActive = true,
+    this.unreadCount = 0,
   });
 
   factory Vendor.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class Vendor {
       dueAmount: json['dueAmount']?.toString() ?? '',
       email: json['email'],
       isActive: json['isActive'] ?? true,
+      unreadCount: json['unreadCount'] ?? 0,
     );
   }
 
@@ -38,6 +41,7 @@ class Vendor {
       'dueAmount': dueAmount,
       'email': email,
       'isActive': isActive,
+      'unreadCount': unreadCount,
     };
   }
 
@@ -49,6 +53,7 @@ class Vendor {
     String? dueAmount,
     String? email,
     bool? isActive,
+    int? unreadCount,
   }) {
     return Vendor(
       vendorId: vendorId ?? this.vendorId,
@@ -58,6 +63,7 @@ class Vendor {
       dueAmount: dueAmount ?? this.dueAmount,
       email: email ?? this.email,
       isActive: isActive ?? this.isActive,
+      unreadCount: unreadCount ?? this.unreadCount,
     );
   }
 }

@@ -7,12 +7,15 @@ class EmployeeViewModel extends ChangeNotifier {
   final EmployeeRepository _repository;
   final int companyId;
   final int employeeId;
+  final Future<void> Function()? _refreshUnreadCount;
 
   EmployeeViewModel({
     required EmployeeRepository repository,
     required this.companyId,
     required this.employeeId,
-  }) : _repository = repository;
+    Future<void> Function()? refreshUnreadCount,
+  }) : _repository = repository,
+       _refreshUnreadCount = refreshUnreadCount;
 
   bool _isLoading = false;
   bool _isSaving = false;
@@ -22,6 +25,7 @@ class EmployeeViewModel extends ChangeNotifier {
   List<WorkDefinitionData> _workDefinitions = const [];
   List<WorkLogData> _workLogs = const [];
   List<LeaveLogData> _leaveLogs = const [];
+  bool _hasClearedUnreadActivity = false;
 
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
@@ -52,6 +56,8 @@ class EmployeeViewModel extends ChangeNotifier {
       _leaveLogs = activity?.leaveLogs ?? const [];
       if (_employee == null) {
         _error = 'Employee details not found';
+      } else {
+        await _clearUnreadActivityIfNeeded();
       }
     } catch (_) {
       _error = 'Failed to load employee view';
@@ -315,5 +321,13 @@ class EmployeeViewModel extends ChangeNotifier {
     );
     _workLogs = activity?.workLogs ?? const [];
     _leaveLogs = activity?.leaveLogs ?? const [];
+  }
+
+  Future<void> _clearUnreadActivityIfNeeded() async {
+    if (_hasClearedUnreadActivity) return;
+
+    await _repository.markEmployeeNotificationsRead(companyId, employeeId);
+    _hasClearedUnreadActivity = true;
+    await _refreshUnreadCount?.call();
   }
 }

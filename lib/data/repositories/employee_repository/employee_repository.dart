@@ -91,6 +91,28 @@ class EmployeeRepository {
     );
   }
 
+  Future<int> markEmployeeNotificationsRead(
+    int companyId,
+    int employeeId,
+  ) async {
+    try {
+      final response = await _apiService.patch(
+        AppConfig.getMarkSubjectReadUrl(companyId, 'EMPLOYEE', employeeId),
+        const {},
+      );
+      final body = _decodeBody(response);
+      if (body == null || body['responseStatus'] != true) return 0;
+      final responseData = body['responseData'];
+      if (responseData is Map<String, dynamic>) {
+        return int.tryParse(responseData['updatedCount']?.toString() ?? '') ?? 0;
+      }
+      return 0;
+    } catch (e) {
+      debugPrint('Mark employee notifications read error: $e');
+      return 0;
+    }
+  }
+
   Future<EmployeeEditResponse?> createSalaryConfig(
     int companyId,
     int employeeId,

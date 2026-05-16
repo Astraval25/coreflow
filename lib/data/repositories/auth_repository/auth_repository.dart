@@ -1021,6 +1021,31 @@ class AuthRepository {
     }
   }
 
+  Future<int> markNotificationSubjectRead(
+    int companyId,
+    String subjectType,
+    int subjectId,
+  ) async {
+    try {
+      final url = AppConfig.getMarkSubjectReadUrl(
+        companyId,
+        subjectType,
+        subjectId,
+      );
+      final response = await _apiService.patch(url, {});
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return 0;
+      final responseData = data['responseData'];
+      if (responseData is Map<String, dynamic>) {
+        return int.tryParse(responseData['updatedCount']?.toString() ?? '') ?? 0;
+      }
+      return 0;
+    } catch (e) {
+      debugPrint('Mark notification subject read error: $e');
+      return 0;
+    }
+  }
+
   Future<bool> markAllNotificationsRead(int companyId) async {
     try {
       final url = AppConfig.getMarkAllReadUrl(companyId);

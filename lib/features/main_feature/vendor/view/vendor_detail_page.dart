@@ -1,6 +1,7 @@
+import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
+
 import '../view_model/vendor_detail_view_model.dart';
 import 'vendor_detail_content.dart';
 
@@ -22,15 +23,15 @@ class VendorDetailView extends StatelessWidget {
           create: (_) => DashboardViewModel()..loadUserData(),
         ),
         ChangeNotifierProvider(
-          create: (_) => VendorDetailViewModel(
+          create: (context) => VendorDetailViewModel(
             companyId: companyId,
             vendorId: vendorId,
-          )..loadVendorDetail(),
+            refreshUnreadCount:
+                context.read<DashboardViewModel>().refreshUnreadCount,
+          ),
         ),
       ],
-      child: const VendorDetailContent(), // ✅ no scroll here
+      child: const VendorDetailContent(),
     );
   }
 }
-
-

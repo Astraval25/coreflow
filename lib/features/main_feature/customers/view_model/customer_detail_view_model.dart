@@ -29,10 +29,17 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
   final int _companyId;
   final int _customerId;
+  final Future<void> Function()? _refreshUnreadCount;
+  bool _hasClearedUnreadActivity = false;
 
-  CustomerDetailViewModel({required int companyId, required int customerId})
+  CustomerDetailViewModel({
+    required int companyId,
+    required int customerId,
+    Future<void> Function()? refreshUnreadCount,
+  })
     : _companyId = companyId,
-      _customerId = customerId {
+      _customerId = customerId,
+      _refreshUnreadCount = refreshUnreadCount {
     loadCustomerDetail();
   }
 
@@ -85,6 +92,7 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
       if (customerData != null) {
         _customer = customerData;
+        await _clearUnreadActivityIfNeeded();
         _updateState(CustomerViewState.loaded);
         loadMappedItems();
         loadOrdersPayments(reset: true);
@@ -455,5 +463,17 @@ class CustomerDetailViewModel extends ChangeNotifier {
     _state = state;
     _errorMessage = error;
     notifyListeners();
+  }
+
+  Future<void> _clearUnreadActivityIfNeeded() async {
+    if (_hasClearedUnreadActivity) return;
+
+    await _authRepository.markNotificationSubjectRead(
+      _companyId,
+      'CUSTOMER',
+      _customerId,
+    );
+    _hasClearedUnreadActivity = true;
+    await _refreshUnreadCount?.call();
   }
 }

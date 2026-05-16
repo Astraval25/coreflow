@@ -22,10 +22,12 @@ class CustomerDetailView extends StatelessWidget {
           create: (_) => DashboardViewModel()..loadUserData(),
         ),
         ChangeNotifierProvider(
-          create: (_) => CustomerDetailViewModel(
+          create: (context) => CustomerDetailViewModel(
             companyId: companyId,
             customerId: customerId,
-          )..loadCustomerDetail(), // ensure initial load
+            refreshUnreadCount:
+                context.read<DashboardViewModel>().refreshUnreadCount,
+          ),
         ),
       ],
       child: const CustomerDetailContent(),

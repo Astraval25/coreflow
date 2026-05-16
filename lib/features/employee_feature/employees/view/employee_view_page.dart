@@ -28,10 +28,12 @@ class EmployeeViewPage extends StatelessWidget {
           create: (_) => DashboardViewModel()..loadUserData(),
         ),
         ChangeNotifierProvider(
-          create: (_) => EmployeeViewModel(
+          create: (context) => EmployeeViewModel(
             repository: EmployeeRepository(),
             companyId: companyId,
             employeeId: employeeId,
+            refreshUnreadCount:
+                context.read<DashboardViewModel>().refreshUnreadCount,
           ),
         ),
       ],

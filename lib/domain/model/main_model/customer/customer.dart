@@ -6,6 +6,7 @@ class Customer {
   final String dueAmount;
   final String? email;
   final bool isActive;
+  final int unreadCount;
 
   Customer({
     required this.customerId,
@@ -15,6 +16,7 @@ class Customer {
     this.dueAmount = '',
     this.email,
     this.isActive = true,
+    this.unreadCount = 0,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class Customer {
       dueAmount: json['dueAmount']?.toString() ?? '',
       email: json['email'],
       isActive: json['isActive'] ?? true,
+      unreadCount: json['unreadCount'] ?? 0,
     );
   }
 
@@ -38,6 +41,7 @@ class Customer {
       'dueAmount': dueAmount,
       'email': email,
       'isActive': isActive,
+      'unreadCount': unreadCount,
     };
   }
 
@@ -49,6 +53,7 @@ class Customer {
     String? dueAmount,
     String? email,
     bool? isActive,
+    int? unreadCount,
   }) {
     return Customer(
       customerId: customerId ?? this.customerId,
@@ -58,6 +63,7 @@ class Customer {
       dueAmount: dueAmount ?? this.dueAmount,
       email: email ?? this.email,
       isActive: isActive ?? this.isActive,
+      unreadCount: unreadCount ?? this.unreadCount,
     );
   }
 }

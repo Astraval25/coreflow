@@ -1,6 +1,7 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/domain/model/employee_model/employee.dart';
 import 'package:coreflow/features/employee_feature/employees/view_model/employees_view_model.dart';
+import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -41,7 +42,8 @@ class EmployeeListItem extends StatelessWidget {
             CfRoutes.employeeDetail(companyId, employee.employeeId),
           );
           if (context.mounted) {
-            context.read<EmployeesViewModel>().refresh();
+            await context.read<EmployeesViewModel>().refresh();
+            await context.read<DashboardViewModel>().refreshUnreadCount();
           }
         },
         child: Padding(
@@ -131,6 +133,10 @@ class EmployeeListItem extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    if (employee.unreadCount > 0) ...[
+                      _UnreadCountBadge(count: employee.unreadCount),
+                      const SizedBox(height: 6),
+                    ],
                     Text(
                       employee.currentSalaryType ?? '',
                       style: TextStyle(
@@ -150,9 +156,18 @@ class EmployeeListItem extends StatelessWidget {
                   ],
                 ),
               ] else ...[
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: LoginColors.textTertiary,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (employee.unreadCount > 0) ...[
+                      _UnreadCountBadge(count: employee.unreadCount),
+                      const SizedBox(height: 6),
+                    ],
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: LoginColors.textTertiary,
+                    ),
+                  ],
                 ),
               ],
             ],
@@ -232,6 +247,33 @@ class _NumberBadge extends StatelessWidget {
         style: const TextStyle(
           color: Colors.white,
           fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _UnreadCountBadge extends StatelessWidget {
+  final int count;
+
+  const _UnreadCountBadge({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        color: LoginColors.error,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '$count',
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
           fontWeight: FontWeight.w700,
         ),
       ),
