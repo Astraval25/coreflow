@@ -13,7 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
-import 'package:coreflow/core/widgets/status_toggle_tabs.dart';
 
 class ActiveVendorView extends StatefulWidget {
   final int companyId;
@@ -60,14 +59,12 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
         ChangeNotifierProvider(
           create: (_) => ActiveVendorViewModel(_authRepository),
         ),
-        ChangeNotifierProvider<DashboardViewModel>(
-          create: (_) => DashboardViewModel()..loadUserData(),
-        ),
       ],
       child: Builder(
         builder: (context) {
           final viewModel = context.watch<ActiveVendorViewModel>();
           final dashboardVm = context.watch<DashboardViewModel>();
+          _syncBottomNavUnreadBadges(viewModel);
 
           if (!_hasLoaded && !viewModel.hasData && !viewModel.isLoading) {
             _hasLoaded = true;
@@ -94,10 +91,40 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
               title: 'Vendors (${viewModel.vendor.length})',
               searchHint: 'Search vendors...',
               onTitleTap: _openVendorProfilePage,
+              leadingActions: [
+                PopupMenuButton<bool>(
+                  tooltip: 'Filter status',
+                  initialValue: viewModel.showActiveOnly,
+                  onSelected: (showActiveOnly) {
+                    if (viewModel.showActiveOnly != showActiveOnly) {
+                      viewModel.toggleActiveFilter();
+                    }
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem<bool>(value: true, child: Text('Active')),
+                    PopupMenuItem<bool>(value: false, child: Text('Inactive')),
+                  ],
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: LoginColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: LoginColors.borderLight,
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.filter_list_rounded,
+                      color: LoginColors.textPrimary,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
             ),
             body: Column(
               children: [
-                _buildTopToggleTabs(context, viewModel),
                 Expanded(
                   child: RefreshIndicator(
                     backgroundColor: LoginColors.surface,
@@ -295,20 +322,21 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
     );
   }
 
-  Widget _buildTopToggleTabs(
-    BuildContext context,
-    ActiveVendorViewModel viewModel,
-  ) {
-    return StatusToggleTabs(
-      isActiveSelected: viewModel.showActiveOnly,
-      activeLabel: 'Active',
-      inactiveLabel: 'Inactive',
-      onActiveTap: () {
-        if (!viewModel.showActiveOnly) viewModel.toggleActiveFilter();
-      },
-      onInactiveTap: () {
-        if (viewModel.showActiveOnly) viewModel.toggleActiveFilter();
-      },
-    );
+  void _syncBottomNavUnreadBadges(ActiveVendorViewModel viewModel) {
+    final totalUnread =
+        viewModel.activeVendor.fold<int>(
+          0,
+          (sum, vendor) => sum + vendor.unreadCount,
+        ) +
+        viewModel.inactiveVendor.fold<int>(
+          0,
+          (sum, vendor) => sum + vendor.unreadCount,
+        );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<DashboardViewModel>().updateEntityUnreadCounts(
+        vendorUnreadCount: totalUnread,
+      );
+    });
   }
 }

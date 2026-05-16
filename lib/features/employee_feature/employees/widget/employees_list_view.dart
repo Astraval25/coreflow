@@ -25,11 +25,7 @@ class EmployeesListView extends StatelessWidget {
         return _AnimatedEmployeeEntry(
           key: ValueKey('employee-entry-${employee.employeeId}-$index'),
           index: index,
-          child: EmployeeListItem(
-            employee: employee,
-            companyId: companyId,
-            serialNumber: index + 1,
-          ),
+          child: EmployeeListItem(employee: employee, companyId: companyId),
         );
       },
     );

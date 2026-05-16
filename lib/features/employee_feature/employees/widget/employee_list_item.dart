@@ -10,13 +10,11 @@ import 'package:provider/provider.dart';
 class EmployeeListItem extends StatelessWidget {
   final Employee employee;
   final int companyId;
-  final int serialNumber;
 
   const EmployeeListItem({
     super.key,
     required this.employee,
     required this.companyId,
-    required this.serialNumber,
   });
 
   @override
@@ -68,11 +66,6 @@ class EmployeeListItem extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Positioned(
-                    right: -2,
-                    top: -2,
-                    child: _NumberBadge(value: serialNumber),
-                  ),
                 ],
               ),
               const SizedBox(width: 14),
@@ -80,23 +73,15 @@ class EmployeeListItem extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            employee.employeeName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w600,
-                              color: LoginColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _statusBadge(employee.isActive),
-                      ],
+                    Text(
+                      employee.employeeName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w600,
+                        color: LoginColors.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -106,148 +91,25 @@ class EmployeeListItem extends StatelessWidget {
                         color: LoginColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: [
-                        if ((employee.designation ?? '').trim().isNotEmpty)
-                          _tag(
-                            icon: Icons.work_outline_rounded,
-                            text: employee.designation!,
-                            color: LoginColors.primary,
-                          ),
-                        if ((employee.phone ?? '').trim().isNotEmpty)
-                          _tag(
-                            icon: Icons.call_outlined,
-                            text: employee.phone!,
-                            color: LoginColors.textSecondary,
-                          ),
-                      ],
-                    ),
                   ],
                 ),
               ),
-              if (employee.currentMonthlyAmount != null) ...[
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (employee.unreadCount > 0) ...[
-                      _UnreadCountBadge(count: employee.unreadCount),
-                      const SizedBox(height: 6),
-                    ],
-                    Text(
-                      employee.currentSalaryType ?? '',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: LoginColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      employee.currentMonthlyAmount!.toStringAsFixed(0),
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: LoginColors.success,
-                      ),
-                    ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (employee.unreadCount > 0) ...[
+                    _UnreadCountBadge(count: employee.unreadCount),
+                    const SizedBox(height: 6),
                   ],
-                ),
-              ] else ...[
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (employee.unreadCount > 0) ...[
-                      _UnreadCountBadge(count: employee.unreadCount),
-                      const SizedBox(height: 6),
-                    ],
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: LoginColors.textTertiary,
-                    ),
-                  ],
-                ),
-              ],
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: LoginColors.textTertiary,
+                  ),
+                ],
+              ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _tag({
-    required IconData icon,
-    required String text,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color.withValues(alpha: 0.75)),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11,
-              color: color,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _statusBadge(bool isActive) {
-    final color = isActive ? LoginColors.success : LoginColors.error;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        isActive ? 'Active' : 'Inactive',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
-class _NumberBadge extends StatelessWidget {
-  final int value;
-  const _NumberBadge({required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 18),
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-      decoration: BoxDecoration(
-        color: LoginColors.primary,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        '$value',
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
         ),
       ),
     );

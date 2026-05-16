@@ -31,6 +31,8 @@ class EmployeesViewModel extends ChangeNotifier {
 
   int get activeEmployeesCount => _activeEmployees.length;
   int get inactiveEmployeesCount => _inactiveEmployees.length;
+  List<Employee> get activeEmployees => List.unmodifiable(_activeEmployees);
+  List<Employee> get inactiveEmployees => List.unmodifiable(_inactiveEmployees);
 
   Future<void> loadEmployees(int companyId) async {
     _companyId = companyId;

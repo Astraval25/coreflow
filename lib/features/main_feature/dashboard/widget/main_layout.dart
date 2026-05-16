@@ -173,6 +173,7 @@ class _MainLayoutState extends State<MainLayout> {
                               Icons.group_outlined,
                               'Customer',
                               animValue,
+                              badgeCount: vm.customerUnreadCount,
                             ),
                             _buildNavItem(
                               2,
@@ -180,6 +181,7 @@ class _MainLayoutState extends State<MainLayout> {
                               Icons.store_outlined,
                               'Vendor',
                               animValue,
+                              badgeCount: vm.vendorUnreadCount,
                             ),
                             _buildNavItem(
                               3,
@@ -187,6 +189,7 @@ class _MainLayoutState extends State<MainLayout> {
                               Icons.badge_outlined,
                               'Employee',
                               animValue,
+                              badgeCount: vm.employeeUnreadCount,
                             ),
                             _buildNavItem(
                               4,
@@ -222,7 +225,7 @@ class _MainLayoutState extends State<MainLayout> {
     IconData unselectedIcon,
     String label,
     double animValue, {
-    bool hasBadge = false,
+    int badgeCount = 0,
   }) {
     // Calculate distance from the active index
     double distance = (animValue - index).abs();
@@ -308,11 +311,11 @@ class _MainLayoutState extends State<MainLayout> {
               ),
 
               // Notification Badge
-              if (hasBadge)
+              if (badgeCount > 0)
                 Positioned(
-                  right: 8,
-                  top: floatOffset + 8,
-                  child: const _RedDotBadge(),
+                  right: 4,
+                  top: floatOffset + 2,
+                  child: _CountBadge(count: badgeCount),
                 ),
             ],
           ),
@@ -322,18 +325,29 @@ class _MainLayoutState extends State<MainLayout> {
   }
 }
 
-class _RedDotBadge extends StatelessWidget {
-  const _RedDotBadge();
+class _CountBadge extends StatelessWidget {
+  final int count;
+  const _CountBadge({required this.count});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 8,
-      height: 8,
+      constraints: const BoxConstraints(minWidth: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
         color: LoginColors.error,
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(color: LoginColors.surface, width: 1.5),
+      ),
+      child: Text(
+        count > 99 ? '99+' : '$count',
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          height: 1,
+        ),
       ),
     );
   }

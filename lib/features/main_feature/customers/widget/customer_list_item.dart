@@ -12,7 +12,6 @@ class CustomerListItem extends StatelessWidget {
   final int companyId;
   final bool isPinned;
   final VoidCallback onTogglePin;
-  final int serialNumber;
 
   const CustomerListItem({
     super.key,
@@ -20,7 +19,6 @@ class CustomerListItem extends StatelessWidget {
     required this.companyId,
     required this.isPinned,
     required this.onTogglePin,
-    required this.serialNumber,
   });
 
   @override
@@ -94,11 +92,6 @@ class CustomerListItem extends StatelessWidget {
                             fontSize: 20,
                           ),
                         ),
-                      ),
-                      Positioned(
-                        right: -2,
-                        top: -2,
-                        child: _NumberBadge(value: serialNumber),
                       ),
                     ],
                   ),
@@ -265,32 +258,6 @@ class CustomerListItem extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _NumberBadge extends StatelessWidget {
-  final int value;
-  const _NumberBadge({required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 18),
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-      decoration: BoxDecoration(
-        color: LoginColors.primary,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        '$value',
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-        ),
       ),
     );
   }

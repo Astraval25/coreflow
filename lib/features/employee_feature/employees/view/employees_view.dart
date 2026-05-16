@@ -1,7 +1,6 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/core/widgets/searchable_entity_app_bar.dart';
-import 'package:coreflow/core/widgets/status_toggle_tabs.dart';
 import 'package:coreflow/domain/model/employee_model/employee.dart';
 import 'package:coreflow/features/employee_feature/employees/view_model/employees_view_model.dart';
 import 'package:coreflow/features/employee_feature/employees/widget/employee_empty_view.dart';
@@ -58,6 +57,7 @@ class _EmployeesViewState extends State<EmployeesView> {
   Widget build(BuildContext context) {
     final viewModel = context.watch<EmployeesViewModel>();
     final dashboardVm = context.watch<DashboardViewModel>();
+    _syncBottomNavUnreadBadges(viewModel);
 
     return PopScope(
       canPop: false,
@@ -82,10 +82,37 @@ class _EmployeesViewState extends State<EmployeesView> {
           title: 'Employees (${viewModel.employees.length})',
           searchHint: 'Search employees...',
           onTitleTap: _openEmployeeProfilePage,
+          leadingActions: [
+            PopupMenuButton<bool>(
+              tooltip: 'Filter status',
+              initialValue: viewModel.showActiveOnly,
+              onSelected: (showActiveOnly) {
+                if (viewModel.showActiveOnly != showActiveOnly) {
+                  viewModel.toggleActiveFilter();
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem<bool>(value: true, child: Text('Active')),
+                PopupMenuItem<bool>(value: false, child: Text('Inactive')),
+              ],
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: LoginColors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: LoginColors.borderLight, width: 1),
+                ),
+                child: Icon(
+                  Icons.filter_list_rounded,
+                  color: LoginColors.textPrimary,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
         ),
         body: Column(
           children: [
-            _buildTopToggleTabs(viewModel),
             Expanded(
               child: RefreshIndicator(
                 backgroundColor: LoginColors.surface,
@@ -274,21 +301,21 @@ class _EmployeesViewState extends State<EmployeesView> {
     );
   }
 
-  Widget _buildTopToggleTabs(EmployeesViewModel viewModel) {
-    return StatusToggleTabs(
-      isActiveSelected: viewModel.showActiveOnly,
-      activeLabel: 'Active',
-      inactiveLabel: 'Inactive',
-      onActiveTap: () {
-        if (!viewModel.showActiveOnly) {
-          viewModel.toggleActiveFilter();
-        }
-      },
-      onInactiveTap: () {
-        if (viewModel.showActiveOnly) {
-          viewModel.toggleActiveFilter();
-        }
-      },
-    );
+  void _syncBottomNavUnreadBadges(EmployeesViewModel viewModel) {
+    final totalUnread =
+        viewModel.activeEmployees.fold<int>(
+          0,
+          (sum, employee) => sum + employee.unreadCount,
+        ) +
+        viewModel.inactiveEmployees.fold<int>(
+          0,
+          (sum, employee) => sum + employee.unreadCount,
+        );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<DashboardViewModel>().updateEntityUnreadCounts(
+        employeeUnreadCount: totalUnread,
+      );
+    });
   }
 }

@@ -1,4 +1,5 @@
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/features/main_feature/history/view/history_page.dart';
 import 'package:coreflow/features/main_feature/payment/receive_payment/view/create_receive_payment_page.dart';
 import 'package:coreflow/features/main_feature/payment/send_payment/view/create_payment_sent_page.dart';
 import 'package:coreflow/features/main_feature/purchase/view/create_purchase_order_page.dart';
@@ -138,6 +139,23 @@ class _CreateSectionState extends State<CreateSection> {
             return;
           }
           context.push(CfRoutes.itemCreate(companyId));
+        },
+      ),
+      DashboardGridItem(
+        icon: Icons.history_rounded,
+        label: 'History',
+        onTap: () {
+          final companyId = widget.vm.companyId;
+          if (companyId == null) {
+            _showSelectCompany(context);
+            return;
+          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => HistoryPage(companyId: companyId),
+            ),
+          );
         },
       ),
     ];

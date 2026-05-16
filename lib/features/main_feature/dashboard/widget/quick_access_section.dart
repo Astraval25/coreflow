@@ -1,5 +1,4 @@
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/features/main_feature/history/view/history_page.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -83,12 +82,14 @@ class _QuickAccessSectionState extends State<QuickAccessSection> {
         icon: Icons.groups_outlined,
         label: 'Customers',
         color: Colors.indigo,
+        badgeCount: widget.vm.customerUnreadCount,
         onTap: () => _pushIfCompany(context, (id) => CfRoutes.customers(id)),
       ),
       DashboardGridItem(
         icon: Icons.store_outlined,
         label: 'Vendors',
         color: Colors.teal,
+        badgeCount: widget.vm.vendorUnreadCount,
         onTap: () => _pushIfCompany(context, (id) => CfRoutes.vendors(id)),
       ),
       DashboardGridItem(
@@ -98,22 +99,11 @@ class _QuickAccessSectionState extends State<QuickAccessSection> {
         onTap: () => _pushIfCompany(context, (id) => CfRoutes.items(id)),
       ),
       DashboardGridItem(
-        icon: Icons.history_rounded,
-        label: 'History',
+        icon: Icons.badge_outlined,
+        label: 'Employees',
         color: Colors.amber,
-        onTap: () {
-          final companyId = widget.vm.companyId;
-          if (companyId == null) {
-            _showSelectCompany(context);
-            return;
-          }
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => HistoryPage(companyId: companyId),
-            ),
-          );
-        },
+        badgeCount: widget.vm.employeeUnreadCount,
+        onTap: () => _pushIfCompany(context, (id) => CfRoutes.employees(id)),
       ),
       // DashboardGridItem(
       //   icon: Icons.receipt_long_outlined,
