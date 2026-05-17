@@ -1,6 +1,7 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/theme/theme_provider.dart';
 import 'package:coreflow/core/share_intent/share_intent_handler.dart';
+import 'package:coreflow/core/storage/dashboard_bottom_nav_storage.dart';
 import 'package:coreflow/core/widgets/company_switch_loading.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
@@ -28,63 +29,53 @@ class _MainLayoutState extends State<MainLayout> {
   final ShareIntentHandler _shareIntentHandler = ShareIntentHandler();
   int? _lastCompanyId;
   DateTime? _lastDashboardBackPressedAt;
+  List<String> _pinnedActionIds = List<String>.from(
+    DashboardBottomNavStorage.defaultPinnedActionIds,
+  );
 
   @override
   void initState() {
     super.initState();
+    DashboardBottomNavStorage.changeToken.addListener(_onPinConfigChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _shareIntentHandler.start(context);
+      _loadPinnedActions();
     });
   }
 
   @override
   void dispose() {
+    DashboardBottomNavStorage.changeToken.removeListener(_onPinConfigChanged);
     _shareIntentHandler.dispose();
     super.dispose();
   }
 
-  int _calculateSelectedIndex(BuildContext context) {
+  int _calculateSelectedIndex(
+    BuildContext context,
+    List<_BottomNavAction> nav,
+  ) {
     final String location = GoRouterState.of(context).matchedLocation;
     final section = CfRoutes.getCompanySection(location);
     if (section == null) return 0;
-    if (section.startsWith('dashboard')) return 0;
-    if (section.startsWith('customers')) {
-      return 1;
+    for (var i = 0; i < nav.length; i++) {
+      if (nav[i].matches(section)) {
+        return i;
+      }
     }
-    if (section.startsWith('vendors')) return 2;
-    if (section.startsWith('employees') ||
-        section.startsWith('work-definitions') ||
-        section.startsWith('employee-work-logs') ||
-        section.startsWith('employee-leave-requests') ||
-        section.startsWith('employee-salary')) {
-      return 3;
-    }
-    if (section.startsWith('expenses')) return 4;
     return 0;
   }
 
-  void _onItemTapped(int index, BuildContext context) {
+  void _onItemTapped(
+    int index,
+    BuildContext context,
+    List<_BottomNavAction> nav,
+  ) {
     final vm = context.read<DashboardViewModel>();
     final companyId = vm.companyId;
     if (companyId == null) return;
-    switch (index) {
-      case 0:
-        context.go(CfRoutes.dashboard(companyId));
-        break;
-      case 1:
-        context.go(CfRoutes.customers(companyId));
-        break;
-      case 2:
-        context.go(CfRoutes.vendors(companyId));
-        break;
-      case 3:
-        context.go(CfRoutes.employees(companyId));
-        break;
-      case 4:
-        context.go(CfRoutes.expenses(companyId));
-        break;
-    }
+    if (index < 0 || index >= nav.length) return;
+    context.go(nav[index].routeBuilder(companyId));
   }
 
   int? _extractCompanyIdFromLocation(String location) {
@@ -146,12 +137,135 @@ class _MainLayoutState extends State<MainLayout> {
     return true;
   }
 
+  Future<void> _loadPinnedActions() async {
+    final companyId = context.read<DashboardViewModel>().companyId;
+    if (companyId == null) return;
+    final ids = await DashboardBottomNavStorage.loadPinnedActionIds(companyId);
+    if (!mounted) return;
+    setState(() {
+      _pinnedActionIds = ids;
+    });
+  }
+
+  void _onPinConfigChanged() {
+    _loadPinnedActions();
+  }
+
+  List<_BottomNavAction> _buildBottomNavActions(DashboardViewModel vm) {
+    final registry = <String, _BottomNavAction>{
+      'customers': _BottomNavAction(
+        id: 'customers',
+        selectedIcon: Icons.group_rounded,
+        unselectedIcon: Icons.group_outlined,
+        label: 'Customer',
+        routeBuilder: CfRoutes.customers,
+        badgeCount: vm.customerUnreadCount,
+        sectionPrefixes: const ['customers'],
+      ),
+      'vendors': _BottomNavAction(
+        id: 'vendors',
+        selectedIcon: Icons.store_rounded,
+        unselectedIcon: Icons.store_outlined,
+        label: 'Vendor',
+        routeBuilder: CfRoutes.vendors,
+        badgeCount: vm.vendorUnreadCount,
+        sectionPrefixes: const ['vendors'],
+      ),
+      'items': _BottomNavAction(
+        id: 'items',
+        selectedIcon: Icons.inventory_2_rounded,
+        unselectedIcon: Icons.inventory_2_outlined,
+        label: 'Items',
+        routeBuilder: CfRoutes.items,
+        sectionPrefixes: const ['items'],
+      ),
+      'employees': _BottomNavAction(
+        id: 'employees',
+        selectedIcon: Icons.badge_rounded,
+        unselectedIcon: Icons.badge_outlined,
+        label: 'Employee',
+        routeBuilder: CfRoutes.employees,
+        badgeCount: vm.employeeUnreadCount,
+        sectionPrefixes: const [
+          'employees',
+          'work-definitions',
+          'employee-work-logs',
+          'employee-leave-requests',
+          'employee-salary',
+        ],
+      ),
+      'sales_orders': _BottomNavAction(
+        id: 'sales_orders',
+        selectedIcon: Icons.receipt_long_rounded,
+        unselectedIcon: Icons.receipt_long_outlined,
+        label: 'Sales',
+        routeBuilder: CfRoutes.sales,
+        sectionPrefixes: const ['sales'],
+      ),
+      'purchase_orders': _BottomNavAction(
+        id: 'purchase_orders',
+        selectedIcon: Icons.shopping_cart_rounded,
+        unselectedIcon: Icons.shopping_cart_outlined,
+        label: 'Purchase',
+        routeBuilder: CfRoutes.purchase,
+        sectionPrefixes: const ['purchase'],
+      ),
+      'payment_made': _BottomNavAction(
+        id: 'payment_made',
+        selectedIcon: Icons.payments_rounded,
+        unselectedIcon: Icons.payments_outlined,
+        label: 'Pay Made',
+        routeBuilder: CfRoutes.paymentMade,
+        sectionPrefixes: const ['payment-made'],
+      ),
+      'payment_received': _BottomNavAction(
+        id: 'payment_received',
+        selectedIcon: Icons.account_balance_wallet_rounded,
+        unselectedIcon: Icons.account_balance_wallet_outlined,
+        label: 'Pay Recv',
+        routeBuilder: CfRoutes.paymentReceived,
+        sectionPrefixes: const ['payment-received'],
+      ),
+      'expenses': _BottomNavAction(
+        id: 'expenses',
+        selectedIcon: Icons.receipt_long_rounded,
+        unselectedIcon: Icons.receipt_long_outlined,
+        label: 'Expense',
+        routeBuilder: CfRoutes.expenses,
+        sectionPrefixes: const ['expenses'],
+      ),
+    };
+
+    final actions = <_BottomNavAction>[
+      _BottomNavAction(
+        id: 'home',
+        selectedIcon: Icons.grid_view_rounded,
+        unselectedIcon: Icons.grid_view_outlined,
+        label: 'Home',
+        routeBuilder: CfRoutes.dashboard,
+        sectionPrefixes: const ['dashboard'],
+      ),
+    ];
+
+    final pinned = _pinnedActionIds.isNotEmpty
+        ? _pinnedActionIds
+        : DashboardBottomNavStorage.defaultPinnedActionIds;
+    for (final id in pinned) {
+      final action = registry[id];
+      if (action != null) {
+        actions.add(action);
+      }
+    }
+    return actions;
+  }
+
   @override
   Widget build(BuildContext context) {
     context.watch<ThemeProvider>();
-    final selectedIndex = _calculateSelectedIndex(context);
     final vm = context.watch<DashboardViewModel>();
     _syncShareCompanyId(vm.companyId);
+    final bottomNav = _buildBottomNavActions(vm);
+    final selectedIndex = _calculateSelectedIndex(context, bottomNav);
     final screenSize = MediaQuery.sizeOf(context);
     final mediaQuery = MediaQuery.of(context);
     final bottomInset = mediaQuery.viewPadding.bottom;
@@ -211,7 +325,7 @@ class _MainLayoutState extends State<MainLayout> {
                           size: Size(MediaQuery.of(context).size.width, 70),
                           painter: CurvedPainter(
                             index: animValue,
-                            total: 5,
+                            total: bottomNav.length,
                             color: LoginColors
                                 .surface, // Theme-aware surface color
                             shadowColor: LoginColors.shadowLight,
@@ -223,46 +337,15 @@ class _MainLayoutState extends State<MainLayout> {
                           height: 70,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _buildNavItem(
-                                0,
-                                Icons.grid_view_rounded,
-                                Icons.grid_view_outlined,
-                                'Home',
+                            children: List.generate(
+                              bottomNav.length,
+                              (index) => _buildNavItem(
+                                index,
+                                bottomNav[index],
                                 animValue,
+                                nav: bottomNav,
                               ),
-                              _buildNavItem(
-                                1,
-                                Icons.group_rounded,
-                                Icons.group_outlined,
-                                'Customer',
-                                animValue,
-                                badgeCount: vm.customerUnreadCount,
-                              ),
-                              _buildNavItem(
-                                2,
-                                Icons.store_rounded,
-                                Icons.store_outlined,
-                                'Vendor',
-                                animValue,
-                                badgeCount: vm.vendorUnreadCount,
-                              ),
-                              _buildNavItem(
-                                3,
-                                Icons.badge_rounded,
-                                Icons.badge_outlined,
-                                'Employee',
-                                animValue,
-                                badgeCount: vm.employeeUnreadCount,
-                              ),
-                              _buildNavItem(
-                                4,
-                                Icons.receipt_long_rounded,
-                                Icons.receipt_long_outlined,
-                                'Expense',
-                                animValue,
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ],
@@ -286,11 +369,9 @@ class _MainLayoutState extends State<MainLayout> {
   // Helper to build nav items with "floating" animation
   Widget _buildNavItem(
     int index,
-    IconData selectedIcon,
-    IconData unselectedIcon,
-    String label,
+    _BottomNavAction action,
     double animValue, {
-    int badgeCount = 0,
+    required List<_BottomNavAction> nav,
   }) {
     // Calculate distance from the active index
     double distance = (animValue - index).abs();
@@ -307,7 +388,7 @@ class _MainLayoutState extends State<MainLayout> {
 
     return Expanded(
       child: GestureDetector(
-        onTap: () => _onItemTapped(index, context),
+        onTap: () => _onItemTapped(index, context, nav),
         behavior: HitTestBehavior.opaque,
         child: Container(
           color: Colors.transparent, // Hit test target
@@ -344,7 +425,9 @@ class _MainLayoutState extends State<MainLayout> {
                             : null,
                       ),
                       child: Icon(
-                        isSelected ? selectedIcon : unselectedIcon,
+                        isSelected
+                            ? action.selectedIcon
+                            : action.unselectedIcon,
                         color: isSelected
                             ? Colors.white
                             : LoginColors.textTertiary,
@@ -356,7 +439,7 @@ class _MainLayoutState extends State<MainLayout> {
                     if (!isSelected) ...[
                       const SizedBox(height: 2),
                       Text(
-                        label,
+                        action.label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -376,17 +459,44 @@ class _MainLayoutState extends State<MainLayout> {
               ),
 
               // Notification Badge
-              if (badgeCount > 0)
+              if (action.badgeCount > 0)
                 Positioned(
                   right: 4,
                   top: floatOffset + 2,
-                  child: _CountBadge(count: badgeCount),
+                  child: _CountBadge(count: action.badgeCount),
                 ),
             ],
           ),
         ),
       ),
     );
+  }
+}
+
+class _BottomNavAction {
+  final String id;
+  final IconData selectedIcon;
+  final IconData unselectedIcon;
+  final String label;
+  final String Function(int companyId) routeBuilder;
+  final List<String> sectionPrefixes;
+  final int badgeCount;
+
+  const _BottomNavAction({
+    required this.id,
+    required this.selectedIcon,
+    required this.unselectedIcon,
+    required this.label,
+    required this.routeBuilder,
+    required this.sectionPrefixes,
+    this.badgeCount = 0,
+  });
+
+  bool matches(String section) {
+    for (final prefix in sectionPrefixes) {
+      if (section.startsWith(prefix)) return true;
+    }
+    return false;
   }
 }
 

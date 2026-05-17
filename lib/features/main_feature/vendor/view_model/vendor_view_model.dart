@@ -18,16 +18,14 @@ class ActiveVendorViewModel extends ChangeNotifier {
   bool _showActiveOnly = true;
   Set<int> _pinnedVendorIds = <int>{};
 
-
   bool get isLoading => _isLoading;
   bool get hasError => _error != null;
   String? get error => _error;
 
   bool get showActiveOnly => _showActiveOnly;
 
-  List<Vendor> get vendor => _sortVendorsByPinned(
-    _showActiveOnly ? _activeVendor : _inactiveVendor,
-  );
+  List<Vendor> get vendor =>
+      _sortVendorsByPinned(_showActiveOnly ? _activeVendor : _inactiveVendor);
 
   bool get hasData => _activeVendor.isNotEmpty || _inactiveVendor.isNotEmpty;
 
@@ -39,7 +37,6 @@ class ActiveVendorViewModel extends ChangeNotifier {
   Set<int> get pinnedVendorIds => Set.unmodifiable(_pinnedVendorIds);
 
   bool isVendorPinned(int vendorId) => _pinnedVendorIds.contains(vendorId);
-
 
   Future<void> loadVendor(int companyId) async {
     _companyId = companyId;
@@ -62,7 +59,10 @@ class ActiveVendorViewModel extends ChangeNotifier {
       final stalePins = _pinnedVendorIds.difference(validIds);
       if (stalePins.isNotEmpty) {
         _pinnedVendorIds.removeAll(stalePins);
-        await VendorPinStorage.savePinnedVendorIds(_companyId, _pinnedVendorIds);
+        await VendorPinStorage.savePinnedVendorIds(
+          _companyId,
+          _pinnedVendorIds,
+        );
       }
     } catch (e) {
       _setError('Failed to load Vendor');
@@ -126,6 +126,9 @@ class ActiveVendorViewModel extends ChangeNotifier {
   List<Vendor> _sortVendorsByPinned(List<Vendor> source) {
     final sorted = List<Vendor>.from(source);
     sorted.sort((a, b) {
+      final unreadCompare = b.unreadCount.compareTo(a.unreadCount);
+      if (unreadCompare != 0) return unreadCompare;
+
       final aPinned = _pinnedVendorIds.contains(a.vendorId);
       final bPinned = _pinnedVendorIds.contains(b.vendorId);
       if (aPinned != bPinned) return aPinned ? -1 : 1;
@@ -133,7 +136,6 @@ class ActiveVendorViewModel extends ChangeNotifier {
     });
     return sorted;
   }
-
 
   void _setLoading(bool value) {
     _isLoading = value;

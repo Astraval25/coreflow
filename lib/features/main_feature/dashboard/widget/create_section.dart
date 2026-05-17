@@ -22,7 +22,7 @@ class CreateSection extends StatefulWidget {
 
 class _CreateSectionState extends State<CreateSection> {
   static const int _firstRowCount = 4;
-  bool _expanded = true;
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {

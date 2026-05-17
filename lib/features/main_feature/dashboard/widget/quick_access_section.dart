@@ -1,4 +1,5 @@
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/core/storage/dashboard_bottom_nav_storage.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +19,24 @@ class QuickAccessSection extends StatefulWidget {
 class _QuickAccessSectionState extends State<QuickAccessSection> {
   static const int _firstRowCount = 4;
   bool _expanded = true;
+  List<String> _pinnedActionIds = [];
+  int? _lastCompanyId;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadPinnedActions();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant QuickAccessSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.vm.companyId != widget.vm.companyId) {
+      _loadPinnedActions();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,60 +96,144 @@ class _QuickAccessSectionState extends State<QuickAccessSection> {
   }
 
   List<DashboardGridItem> _items(BuildContext context) {
-    return [
-      DashboardGridItem(
+    final items = <_QuickAccessItem>[
+      _QuickAccessItem(
+        id: 'customers',
         icon: Icons.groups_outlined,
         label: 'Customers',
         color: Colors.indigo,
         badgeCount: widget.vm.customerUnreadCount,
-        onTap: () => _pushIfCompany(context, (id) => CfRoutes.customers(id)),
+        routeBuilder: CfRoutes.customers,
       ),
-      DashboardGridItem(
+      _QuickAccessItem(
+        id: 'vendors',
         icon: Icons.store_outlined,
         label: 'Vendors',
         color: Colors.teal,
         badgeCount: widget.vm.vendorUnreadCount,
-        onTap: () => _pushIfCompany(context, (id) => CfRoutes.vendors(id)),
+        routeBuilder: CfRoutes.vendors,
       ),
-      DashboardGridItem(
+      _QuickAccessItem(
+        id: 'items',
         icon: Icons.inventory_2_outlined,
         label: 'Items',
         color: Colors.deepPurple,
-        onTap: () => _pushIfCompany(context, (id) => CfRoutes.items(id)),
+        routeBuilder: CfRoutes.items,
       ),
-      DashboardGridItem(
+      _QuickAccessItem(
+        id: 'employees',
         icon: Icons.badge_outlined,
         label: 'Employees',
         color: Colors.amber,
         badgeCount: widget.vm.employeeUnreadCount,
-        onTap: () => _pushIfCompany(context, (id) => CfRoutes.employees(id)),
+        routeBuilder: CfRoutes.employees,
       ),
-      // DashboardGridItem(
-      //   icon: Icons.receipt_long_outlined,
-      //   label: 'Sales',
-      //   color: Colors.blue,
-      //   onTap: () => _pushIfCompany(context, (id) => CfRoutes.sales(id)),
-      // ),
-      // DashboardGridItem(
-      //   icon: Icons.shopping_cart_outlined,
-      //   label: 'Purchase',
-      //   color: Colors.orange,
-      //   onTap: () => _pushIfCompany(context, (id) => CfRoutes.purchase(id)),
-      // ),
-      // DashboardGridItem(
-      //   icon: Icons.payments_outlined,
-      //   label: 'Payment',
-      //   color: Colors.green,
-      //   onTap: () => _pushIfCompany(context, (id) => CfRoutes.paymentMade(id)),
-      // ),
-      // DashboardGridItem(
-      //   icon: Icons.account_balance_wallet_outlined,
-      //   label: 'Received',
-      //   color: Colors.purple,
-      //   onTap: () =>
-      //       _pushIfCompany(context, (id) => CfRoutes.paymentReceived(id)),
-      // ),
+      _QuickAccessItem(
+        id: 'sales_orders',
+        icon: Icons.receipt_long_outlined,
+        label: 'Sales Orders',
+        color: Colors.blue,
+        routeBuilder: CfRoutes.sales,
+      ),
+      _QuickAccessItem(
+        id: 'purchase_orders',
+        icon: Icons.shopping_cart_outlined,
+        label: 'Purchase Orders',
+        color: Colors.orange,
+        routeBuilder: CfRoutes.purchase,
+      ),
+      _QuickAccessItem(
+        id: 'payment_made',
+        icon: Icons.payments_outlined,
+        label: 'Payment Made',
+        color: Colors.green,
+        routeBuilder: CfRoutes.paymentMade,
+      ),
+      _QuickAccessItem(
+        id: 'payment_received',
+        icon: Icons.account_balance_wallet_outlined,
+        label: 'Payment Received',
+        color: Colors.purple,
+        routeBuilder: CfRoutes.paymentReceived,
+      ),
+      _QuickAccessItem(
+        id: 'expenses',
+        icon: Icons.receipt_long_rounded,
+        label: 'Expenses',
+        color: Colors.redAccent,
+        routeBuilder: CfRoutes.expenses,
+      ),
     ];
+
+    return items
+        .map(
+          (item) => DashboardGridItem(
+            icon: item.icon,
+            label: item.label,
+            color: item.color,
+            badgeCount: item.badgeCount,
+            isPinned: _pinnedActionIds.contains(item.id),
+            showPinnedIndicator: true,
+            onTap: () => _pushIfCompany(context, item.routeBuilder),
+            onLongPress: () => _togglePin(item.id, item.label),
+          ),
+        )
+        .toList();
+  }
+
+  Future<void> _loadPinnedActions() async {
+    final companyId = widget.vm.companyId;
+    if (companyId == null) return;
+    if (_lastCompanyId == companyId && _pinnedActionIds.isNotEmpty) return;
+    _lastCompanyId = companyId;
+    final ids = await DashboardBottomNavStorage.loadPinnedActionIds(companyId);
+    if (!mounted) return;
+    setState(() {
+      _pinnedActionIds = ids;
+    });
+  }
+
+  Future<void> _togglePin(String actionId, String label) async {
+    final companyId = widget.vm.companyId;
+    if (companyId == null) {
+      _showSelectCompany(context);
+      return;
+    }
+
+    final next = List<String>.from(_pinnedActionIds);
+    final pinned = next.contains(actionId);
+    if (pinned) {
+      next.remove(actionId);
+    } else {
+      if (next.length >= DashboardBottomNavStorage.maxPinnedActions) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You can pin up to 4 shortcuts in bottom nav'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+      next.add(actionId);
+    }
+
+    await DashboardBottomNavStorage.savePinnedActionIds(companyId, next);
+    if (!mounted) return;
+    setState(() {
+      _pinnedActionIds = next;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          pinned
+              ? '$label removed from bottom nav'
+              : '$label pinned to bottom nav',
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 1),
+      ),
+    );
   }
 
   void _pushIfCompany(
@@ -156,4 +259,22 @@ class _QuickAccessSectionState extends State<QuickAccessSection> {
       ),
     );
   }
+}
+
+class _QuickAccessItem {
+  final String id;
+  final IconData icon;
+  final String label;
+  final Color color;
+  final int badgeCount;
+  final String Function(int companyId) routeBuilder;
+
+  const _QuickAccessItem({
+    required this.id,
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.badgeCount = 0,
+    required this.routeBuilder,
+  });
 }

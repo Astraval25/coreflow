@@ -313,7 +313,10 @@ class DashboardGridItem extends StatelessWidget {
   final String label;
   final Color? color;
   final int badgeCount;
+  final bool isPinned;
+  final bool showPinnedIndicator;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   const DashboardGridItem({
     super.key,
@@ -321,13 +324,17 @@ class DashboardGridItem extends StatelessWidget {
     required this.label,
     this.color,
     this.badgeCount = 0,
+    this.isPinned = false,
+    this.showPinnedIndicator = true,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
@@ -361,6 +368,24 @@ class DashboardGridItem extends StatelessWidget {
                   right: -6,
                   top: -6,
                   child: _DashboardCountBadge(count: badgeCount),
+                ),
+              if (isPinned && showPinnedIndicator)
+                Positioned(
+                  left: -4,
+                  top: -4,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: LoginColors.primary.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: LoginColors.surface, width: 1),
+                    ),
+                    child: const Icon(
+                      Icons.push_pin_rounded,
+                      color: Colors.white,
+                      size: 10,
+                    ),
+                  ),
                 ),
             ],
           ),

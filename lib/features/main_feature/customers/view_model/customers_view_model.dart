@@ -18,7 +18,6 @@ class ActiveCustomersViewModel extends ChangeNotifier {
   bool _showActiveOnly = true;
   Set<int> _pinnedCustomerIds = <int>{};
 
-
   bool get isLoading => _isLoading;
   bool get hasError => _error != null;
   String? get error => _error;
@@ -39,8 +38,8 @@ class ActiveCustomersViewModel extends ChangeNotifier {
   List<Customer> get inactiveCustomers => List.unmodifiable(_inactiveCustomers);
   Set<int> get pinnedCustomerIds => Set.unmodifiable(_pinnedCustomerIds);
 
-  bool isCustomerPinned(int customerId) => _pinnedCustomerIds.contains(customerId);
-
+  bool isCustomerPinned(int customerId) =>
+      _pinnedCustomerIds.contains(customerId);
 
   Future<void> loadCustomers(int companyId) async {
     _companyId = companyId;
@@ -125,13 +124,19 @@ class ActiveCustomersViewModel extends ChangeNotifier {
       _pinnedCustomerIds.add(customerId);
     }
 
-    await CustomerPinStorage.savePinnedCustomerIds(_companyId, _pinnedCustomerIds);
+    await CustomerPinStorage.savePinnedCustomerIds(
+      _companyId,
+      _pinnedCustomerIds,
+    );
     notifyListeners();
   }
 
   List<Customer> _sortCustomersByPinned(List<Customer> source) {
     final sorted = List<Customer>.from(source);
     sorted.sort((a, b) {
+      final unreadCompare = b.unreadCount.compareTo(a.unreadCount);
+      if (unreadCompare != 0) return unreadCompare;
+
       final aPinned = _pinnedCustomerIds.contains(a.customerId);
       final bPinned = _pinnedCustomerIds.contains(b.customerId);
       if (aPinned != bPinned) return aPinned ? -1 : 1;
@@ -139,7 +144,6 @@ class ActiveCustomersViewModel extends ChangeNotifier {
     });
     return sorted;
   }
-
 
   void _setLoading(bool value) {
     _isLoading = value;

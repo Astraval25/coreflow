@@ -22,9 +22,9 @@ class EmployeesViewModel extends ChangeNotifier {
 
   bool get showActiveOnly => _showActiveOnly;
 
-  List<Employee> get employees => _showActiveOnly
-      ? List.unmodifiable(_activeEmployees)
-      : List.unmodifiable(_inactiveEmployees);
+  List<Employee> get employees => _sortEmployeesByUnread(
+    _showActiveOnly ? _activeEmployees : _inactiveEmployees,
+  );
 
   bool get hasData =>
       _activeEmployees.isNotEmpty || _inactiveEmployees.isNotEmpty;
@@ -92,6 +92,18 @@ class EmployeesViewModel extends ChangeNotifier {
     if (_companyId > 0) {
       await loadEmployees(_companyId);
     }
+  }
+
+  List<Employee> _sortEmployeesByUnread(List<Employee> source) {
+    final sorted = List<Employee>.from(source);
+    sorted.sort((a, b) {
+      final unreadCompare = b.unreadCount.compareTo(a.unreadCount);
+      if (unreadCompare != 0) return unreadCompare;
+      return a.employeeName.toLowerCase().compareTo(
+        b.employeeName.toLowerCase(),
+      );
+    });
+    return List.unmodifiable(sorted);
   }
 
   void _setLoading(bool value) {
