@@ -4,6 +4,7 @@ import 'package:coreflow/domain/model/main_model/vendors/vendors.dart';
 import 'package:flutter/material.dart';
 
 class UpdatePaymentAllocationEntry {
+  final int? paymentOrderAllocationId;
   final int orderId;
   final String orderNumber;
   final double balanceAmount;
@@ -11,6 +12,7 @@ class UpdatePaymentAllocationEntry {
   String? remarks;
 
   UpdatePaymentAllocationEntry({
+    this.paymentOrderAllocationId,
     required this.orderId,
     required this.orderNumber,
     required this.balanceAmount,
@@ -80,24 +82,29 @@ class UpdatePaymentSentViewModel extends ChangeNotifier {
     );
 
     _amount = payment.amount;
-    _modeOfPayment =
-        payment.modeOfPayment.isNotEmpty ? payment.modeOfPayment : 'BANK_TRANSFER';
-    _referenceNumber =
-        payment.referenceNumber.isNotEmpty ? payment.referenceNumber : null;
+    _modeOfPayment = payment.modeOfPayment.isNotEmpty
+        ? payment.modeOfPayment
+        : 'BANK_TRANSFER';
+    _referenceNumber = payment.referenceNumber.isNotEmpty
+        ? payment.referenceNumber
+        : null;
     _paymentRemarks = payment.notes.isNotEmpty ? payment.notes : null;
     _paymentDate = payment.paymentDate.toLocal();
     _fsId = payment.paymentProofFile;
 
     _allocations = payment.orderAllocations
-        .map((a) => UpdatePaymentAllocationEntry(
-              orderId: a.orderId,
-              orderNumber: a.orderNumber,
-              balanceAmount: a.amountApplied,
-              amountApplied: a.amountApplied,
-              remarks: a.allocationRemarks.isNotEmpty
-                  ? a.allocationRemarks
-                  : null,
-            ))
+        .map(
+          (a) => UpdatePaymentAllocationEntry(
+            paymentOrderAllocationId: a.paymentOrderAllocationId,
+            orderId: a.orderId,
+            orderNumber: a.orderNumber,
+            balanceAmount: a.amountApplied,
+            amountApplied: a.amountApplied,
+            remarks: a.allocationRemarks.isNotEmpty
+                ? a.allocationRemarks
+                : null,
+          ),
+        )
         .toList();
 
     _initialAllocations.clear();
@@ -120,8 +127,10 @@ class UpdatePaymentSentViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final orders =
-          await _repository.getVendorUnpaidOrders(companyId, vendorId);
+      final orders = await _repository.getVendorUnpaidOrders(
+        companyId,
+        vendorId,
+      );
 
       // Merge with existing allocations to preserve amounts already set
       final Map<int, double> existingAmounts = {
@@ -138,13 +147,15 @@ class UpdatePaymentSentViewModel extends ChangeNotifier {
           .toList();
 
       final fromUnpaid = orders
-          .map((o) => UpdatePaymentAllocationEntry(
-                orderId: o.orderId,
-                orderNumber: o.orderNumber,
-                balanceAmount: o.balanceAmount,
-                amountApplied: existingAmounts[o.orderId] ?? 0,
-                remarks: existingRemarks[o.orderId],
-              ))
+          .map(
+            (o) => UpdatePaymentAllocationEntry(
+              orderId: o.orderId,
+              orderNumber: o.orderNumber,
+              balanceAmount: o.balanceAmount,
+              amountApplied: existingAmounts[o.orderId] ?? 0,
+              remarks: existingRemarks[o.orderId],
+            ),
+          )
           .toList();
 
       _allocations = [...fromUnpaid, ...preserved];
@@ -221,13 +232,18 @@ class UpdatePaymentSentViewModel extends ChangeNotifier {
     try {
       final activeAllocations = _allocations
           .where((e) => e.amountApplied > 0)
-          .map((e) => <String, dynamic>{
-                'orderId': e.orderId,
-                'amountApplied': e.amountApplied,
-                'allocationDate': _paymentDate.toIso8601String(),
-                if (e.remarks != null && e.remarks!.trim().isNotEmpty)
-                  'allocationRemarks': e.remarks!.trim(),
-              })
+          .map(
+            (e) => <String, dynamic>{
+              'orderId': e.orderId,
+              'amountApplied': e.amountApplied,
+              'allocationDate': _paymentDate.toIso8601String(),
+              if (e.paymentOrderAllocationId != null &&
+                  e.paymentOrderAllocationId! > 0)
+                'paymentOrderAllocationId': e.paymentOrderAllocationId,
+              if (e.remarks != null && e.remarks!.trim().isNotEmpty)
+                'allocationRemarks': e.remarks!.trim(),
+            },
+          )
           .toList();
 
       final body = <String, dynamic>{
@@ -239,7 +255,8 @@ class UpdatePaymentSentViewModel extends ChangeNotifier {
           'referenceNumber': _referenceNumber!.trim(),
         if (_paymentRemarks != null && _paymentRemarks!.trim().isNotEmpty)
           'paymentRemarks': _paymentRemarks!.trim(),
-        if (_fsId != null && _fsId!.trim().isNotEmpty) 'paymentProofFsId': _fsId!.trim(),
+        if (_fsId != null && _fsId!.trim().isNotEmpty)
+          'paymentProofFsId': _fsId!.trim(),
         'orderAllocations': activeAllocations,
       };
 
@@ -253,8 +270,9 @@ class UpdatePaymentSentViewModel extends ChangeNotifier {
 
       if (result['success'] == true) {
         _isSuccess = true;
-        final submittedOrderIds =
-            activeAllocations.map((e) => e['orderId'] as int).toSet();
+        final submittedOrderIds = activeAllocations
+            .map((e) => e['orderId'] as int)
+            .toSet();
         for (final orderId in _initialAllocations.keys) {
           if (!submittedOrderIds.contains(orderId)) {
             await _repository.updateOrderStatus(companyId, orderId, 'invoiced');
