@@ -7,8 +7,11 @@ import 'package:coreflow/features/employee_feature/portal/widget/portal_salary_t
 import 'package:coreflow/features/employee_feature/portal/widget/portal_workbased_section.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
+enum _UnsavedAction { cancel, discard, save }
 
 class EmployeePortalPage extends StatelessWidget {
   const EmployeePortalPage({super.key});
@@ -32,6 +35,8 @@ class _EmployeePortalScreen extends StatefulWidget {
 class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  final GlobalKey<PortalWorkBasedSectionState> _workSectionKey =
+      GlobalKey<PortalWorkBasedSectionState>();
   int _activeTabIndex = 0;
 
   @override
@@ -70,7 +75,7 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
     required String fromDate,
     required String toDate,
     required Future<void> Function(String fromDate, String toDate)
-        onRangeSelected,
+    onRangeSelected,
   }) async {
     final fromInitial = DateTime.tryParse(fromDate) ?? DateTime.now();
     final pickedFrom = await showDatePicker(
@@ -117,11 +122,60 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
   }
 
   String _currentRangeLabel(EmployeePortalViewModel vm) {
-    final fromDate =
-        _activeTabIndex == 1 ? vm.salaryReportFromDate : vm.activityFromDate;
-    final toDate =
-        _activeTabIndex == 1 ? vm.salaryReportToDate : vm.activityToDate;
+    final fromDate = _activeTabIndex == 1
+        ? vm.salaryReportFromDate
+        : vm.activityFromDate;
+    final toDate = _activeTabIndex == 1
+        ? vm.salaryReportToDate
+        : vm.activityToDate;
     return '${portalDisplayDate(fromDate)} - ${portalDisplayDate(toDate)}';
+  }
+
+  Future<void> _handleBackNavigation(EmployeePortalViewModel vm) async {
+    final workState = _workSectionKey.currentState;
+    if (vm.isWorkBased && workState != null && workState.hasUnsavedChanges) {
+      final action = await showDialog<_UnsavedAction>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Unsaved work entries'),
+          content: const Text(
+            'You have unsaved work entries. Save before leaving?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, _UnsavedAction.cancel),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, _UnsavedAction.discard),
+              child: const Text('Discard'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, _UnsavedAction.save),
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      );
+
+      if (!mounted || action == null || action == _UnsavedAction.cancel) return;
+      if (action == _UnsavedAction.save) {
+        final ok = await workState.saveAllDrafts();
+        if (!mounted) return;
+        if (!ok) {
+          _showMessage(
+            vm.error ?? 'Please fix errors before leaving',
+            isError: true,
+          );
+          return;
+        }
+      }
+    }
+
+    final didPop = await Navigator.of(context).maybePop();
+    if (!didPop) {
+      await SystemNavigator.pop();
+    }
   }
 
   @override
@@ -131,126 +185,143 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
 
     return DefaultTabController(
       length: 3,
-      child: Scaffold(
-        backgroundColor: LoginColors.background,
-        appBar: AppBar(
-          backgroundColor: LoginColors.primary,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Hi, $name',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
-                ),
-              ),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(
-                    _todayPretty(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w400,
-                      fontSize: 12,
-                      color: Colors.white70,
-                    ),
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          await _handleBackNavigation(vm);
+        },
+        child: Scaffold(
+          backgroundColor: LoginColors.background,
+          appBar: AppBar(
+            backgroundColor: LoginColors.primary,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hi, $name',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
                   ),
-                  if (_showRangeChip)
-                    InkWell(
-                      onTap: (vm.isActivityLoading || vm.isSalaryLoading)
-                          ? null
-                          : () => _pickAppBarRange(vm),
-                      borderRadius: BorderRadius.circular(999),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.22),
+                ),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      _todayPretty(),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
+                    ),
+                    if (_showRangeChip)
+                      InkWell(
+                        onTap: (vm.isActivityLoading || vm.isSalaryLoading)
+                            ? null
+                            : () => _pickAppBarRange(vm),
+                        borderRadius: BorderRadius.circular(999),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
                           ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.calendar_today_rounded,
-                              size: 12,
-                              color: Colors.white,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.22),
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _currentRangeLabel(vm),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.calendar_today_rounded,
+                                size: 12,
                                 color: Colors.white,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 4),
+                              Text(
+                                _currentRangeLabel(vm),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              IconButton(
+                tooltip: 'Logout',
+                icon: const Icon(Icons.logout_rounded),
+                onPressed: () async {
+                  final workState = _workSectionKey.currentState;
+                  if (vm.isWorkBased &&
+                      workState != null &&
+                      workState.hasUnsavedChanges) {
+                    _showMessage(
+                      'Please save or discard work entries first',
+                      isError: true,
+                    );
+                    return;
+                  }
+                  await vm.logout();
+                  if (context.mounted) context.go(CfRoutes.login);
+                },
               ),
             ],
-          ),
-          actions: [
-            IconButton(
-              tooltip: 'Logout',
-              icon: const Icon(Icons.logout_rounded),
-              onPressed: () async {
-                await vm.logout();
-                if (context.mounted) context.go(CfRoutes.login);
-              },
+            bottom: TabBar(
+              controller: _tabController,
+              indicatorColor: Colors.white,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+              tabs: const [
+                Tab(icon: Icon(Icons.work_history_rounded), text: 'Today'),
+                Tab(icon: Icon(Icons.payments_rounded), text: 'Salary'),
+                Tab(icon: Icon(Icons.person_rounded), text: 'Profile'),
+              ],
             ),
-          ],
-          bottom: TabBar(
-            controller: _tabController,
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            labelStyle: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-            ),
-            tabs: const [
-              Tab(icon: Icon(Icons.work_history_rounded), text: 'Today'),
-              Tab(icon: Icon(Icons.payments_rounded), text: 'Salary'),
-              Tab(icon: Icon(Icons.person_rounded), text: 'Profile'),
-            ],
           ),
-        ),
-        body: vm.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : vm.profile == null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        vm.error ?? 'Failed to load. Please pull to refresh.',
-                        textAlign: TextAlign.center,
-                      ),
+          body: vm.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : vm.profile == null
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      vm.error ?? 'Failed to load. Please pull to refresh.',
+                      textAlign: TextAlign.center,
                     ),
-                  )
-                : TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildTodayTab(vm),
-                      PortalSalaryTab(vm: vm),
-                      PortalProfileTab(vm: vm),
-                    ],
                   ),
+                )
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildTodayTab(vm),
+                    PortalSalaryTab(vm: vm),
+                    PortalProfileTab(vm: vm),
+                  ],
+                ),
+        ),
       ),
     );
   }
@@ -264,7 +335,8 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
         padding: const EdgeInsets.all(16),
         children: [
           if (vm.isTodayLocked) _lockedBanner(vm),
-          if (vm.isWorkBased) PortalWorkBasedSection(vm: vm),
+          if (vm.isWorkBased)
+            PortalWorkBasedSection(key: _workSectionKey, vm: vm),
           if (vm.isMonthly) ..._monthlySection(vm),
           const SizedBox(height: 24),
           _activitySection(vm),
@@ -303,8 +375,7 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
                 Text(
                   vm.lockedMessage ??
                       'Salary is already calculated for today. You cannot add work or leave for today. Please contact the admin.',
-                  style:
-                      TextStyle(color: LoginColors.textPrimary, height: 1.4),
+                  style: TextStyle(color: LoginColors.textPrimary, height: 1.4),
                 ),
               ],
             ),
@@ -492,8 +563,7 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
     );
   }
 
-  Future<void> _quickLeave(
-      EmployeePortalViewModel vm, String leaveType) async {
+  Future<void> _quickLeave(EmployeePortalViewModel vm, String leaveType) async {
     final reason = await _askReason();
     if (reason == null) return;
     final ok = await vm.createLeaveLog(
@@ -567,8 +637,7 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
                       context: ctx,
                       initialDate: picked ?? DateTime.now(),
                       firstDate: DateTime.now(),
-                      lastDate:
-                          DateTime.now().add(const Duration(days: 365)),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
                     );
                     if (p != null) setLocal(() => picked = p);
                   },
@@ -577,9 +646,13 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
                   initialValue: type,
                   items: const [
                     DropdownMenuItem(
-                        value: 'FULL_DAY', child: Text('Full Day')),
+                      value: 'FULL_DAY',
+                      child: Text('Full Day'),
+                    ),
                     DropdownMenuItem(
-                        value: 'HALF_DAY', child: Text('Half Day')),
+                      value: 'HALF_DAY',
+                      child: Text('Half Day'),
+                    ),
                   ],
                   onChanged: (v) => setLocal(() => type = v ?? type),
                   decoration: const InputDecoration(labelText: 'Type'),
@@ -600,8 +673,9 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
                 TextField(
                   controller: reasonCtrl,
                   maxLines: 2,
-                  decoration:
-                      const InputDecoration(labelText: 'Reason (optional)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Reason (optional)',
+                  ),
                 ),
               ],
             ),
