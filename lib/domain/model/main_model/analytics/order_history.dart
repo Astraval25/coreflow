@@ -2,20 +2,24 @@ class OrderHistoryEntry {
   final int orderId;
   final String orderType;
   final DateTime orderDate;
+  final String partyName;
   final String localOrderNumber;
   final String orderStatus;
   final double totalItemQuantity;
   final double totalAmount;
+  final double paidAmount;
   final int paidPercentage;
 
   const OrderHistoryEntry({
     required this.orderId,
     required this.orderType,
     required this.orderDate,
+    this.partyName = '',
     required this.localOrderNumber,
     required this.orderStatus,
     required this.totalItemQuantity,
     required this.totalAmount,
+    this.paidAmount = 0,
     required this.paidPercentage,
   });
 
@@ -40,15 +44,40 @@ class OrderHistoryEntry {
       return int.tryParse(value?.toString() ?? '') ?? 0;
     }
 
+    String firstText(List<dynamic> values) {
+      for (final value in values) {
+        final text = (value ?? '').toString().trim();
+        if (text.isNotEmpty) return text;
+      }
+      return '';
+    }
+
+    final totalAmount = parseDouble(json['totalAmount']);
+    final paidPercentage = parseInt(json['paidPercentage']);
+    final explicitPaidAmount = parseDouble(
+      json['paidAmount'] ?? json['totalPaid'] ?? json['amountPaid'],
+    );
+    final computedPaidAmount = (totalAmount * paidPercentage) / 100;
+
     return OrderHistoryEntry(
       orderId: parseInt(json['orderId']),
       orderType: (json['orderType'] ?? '').toString(),
       orderDate: parseDate(json['orderDate']),
+      partyName: firstText([
+        json['partyName'],
+        json['customerName'],
+        json['vendorName'],
+        json['counterpartyName'],
+        json['partyDisplayName'],
+      ]),
       localOrderNumber: (json['localOrderNumber'] ?? '').toString(),
       orderStatus: (json['orderStatus'] ?? '').toString(),
       totalItemQuantity: parseDouble(json['totalItemQuantity']),
-      totalAmount: parseDouble(json['totalAmount']),
-      paidPercentage: parseInt(json['paidPercentage']),
+      totalAmount: totalAmount,
+      paidAmount: explicitPaidAmount > 0
+          ? explicitPaidAmount
+          : computedPaidAmount,
+      paidPercentage: paidPercentage,
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:coreflow/core/share_intent/share_intent_handler.dart';
 import 'package:coreflow/core/widgets/company_switch_loading.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
@@ -21,10 +22,12 @@ class _MainLayoutState extends State<MainLayout> {
   static const double _desktopFrameWidth = 1800;
   static const double _desktopFrameHeight = 900;
   static const double _desktopSidebarWidth = 304;
+  static const Duration _dashboardExitInterval = Duration(seconds: 2);
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ShareIntentHandler _shareIntentHandler = ShareIntentHandler();
   int? _lastCompanyId;
+  DateTime? _lastDashboardBackPressedAt;
 
   @override
   void initState() {
@@ -84,6 +87,65 @@ class _MainLayoutState extends State<MainLayout> {
     }
   }
 
+  int? _extractCompanyIdFromLocation(String location) {
+    final match = RegExp(r'^/cf/company/(\d+)/').firstMatch(location);
+    final idText = match?.group(1);
+    return idText == null ? null : int.tryParse(idText);
+  }
+
+  Future<bool> _onBackPressed() async {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      _lastDashboardBackPressedAt = null;
+      navigator.pop();
+      return true;
+    }
+
+    final router = GoRouter.of(context);
+    if (router.canPop()) {
+      _lastDashboardBackPressedAt = null;
+      router.pop();
+      return true;
+    }
+
+    final location = GoRouterState.of(context).matchedLocation;
+    final vmCompanyId = context.read<DashboardViewModel>().companyId;
+    final locationCompanyId = _extractCompanyIdFromLocation(location);
+    final targetCompanyId = vmCompanyId ?? locationCompanyId;
+    final isDashboard =
+        targetCompanyId != null &&
+        location == CfRoutes.dashboard(targetCompanyId);
+
+    if (!isDashboard && targetCompanyId != null) {
+      _lastDashboardBackPressedAt = null;
+      context.go(CfRoutes.dashboard(targetCompanyId));
+      return true;
+    }
+
+    final now = DateTime.now();
+    final pressedRecently =
+        _lastDashboardBackPressedAt != null &&
+        now.difference(_lastDashboardBackPressedAt!) <= _dashboardExitInterval;
+
+    if (pressedRecently) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      await SystemNavigator.pop();
+      return true;
+    }
+
+    _lastDashboardBackPressedAt = now;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Press back again to exit'),
+        duration: _dashboardExitInterval,
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: LoginColors.textPrimary,
+      ),
+    );
+
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     context.watch<ThemeProvider>();
@@ -103,109 +165,112 @@ class _MainLayoutState extends State<MainLayout> {
       return CompanySwitchLoading(companyName: vm.companyName ?? 'Company');
     }
 
-    return Scaffold(
-      key: _scaffoldKey,
-      extendBody: !useFixedDesktopSidebar,
-      drawer: useFixedDesktopSidebar ? null : AppDrawer(vm: vm),
-      body: useFixedDesktopSidebar
-          ? Center(
-              child: SizedBox(
-                width: _desktopFrameWidth,
-                height: _desktopFrameHeight,
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: _desktopSidebarWidth,
-                      child: AppDrawer(vm: vm),
-                    ),
-                    Expanded(child: widget.child),
-                  ],
-                ),
-              ),
-            )
-          : Padding(
-              padding: EdgeInsets.only(
-                bottom: isKeyboardVisible ? 12 : 80 + bottomInset,
-              ), // Reduce padding when keyboard is open
-              child: widget.child,
-            ),
-      bottomNavigationBar: useFixedDesktopSidebar || isKeyboardVisible
-          ? null
-          : TweenAnimationBuilder<double>(
-              duration: Duration(milliseconds: 350),
-              curve: Curves.easeOutCubic,
-              tween: Tween<double>(begin: 0, end: selectedIndex.toDouble()),
-              builder: (context, animValue, child) {
-                return Container(
-                  height: 90 + bottomInset, // Add safe area for 3-button nav
-                  padding: EdgeInsets.only(bottom: bottomInset),
-                  child: Stack(
-                    alignment: Alignment.bottomCenter,
+    return BackButtonListener(
+      onBackButtonPressed: _onBackPressed,
+      child: Scaffold(
+        key: _scaffoldKey,
+        extendBody: !useFixedDesktopSidebar,
+        drawer: useFixedDesktopSidebar ? null : AppDrawer(vm: vm),
+        body: useFixedDesktopSidebar
+            ? Center(
+                child: SizedBox(
+                  width: _desktopFrameWidth,
+                  height: _desktopFrameHeight,
+                  child: Row(
                     children: [
-                      // Liquid Background with Notch
-                      CustomPaint(
-                        size: Size(MediaQuery.of(context).size.width, 70),
-                        painter: CurvedPainter(
-                          index: animValue,
-                          total: 5,
-                          color:
-                              LoginColors.surface, // Theme-aware surface color
-                          shadowColor: LoginColors.shadowLight,
-                        ),
-                      ),
-
-                      // Navigation Items Row
                       SizedBox(
-                        height: 70,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildNavItem(
-                              0,
-                              Icons.grid_view_rounded,
-                              Icons.grid_view_outlined,
-                              'Home',
-                              animValue,
-                            ),
-                            _buildNavItem(
-                              1,
-                              Icons.group_rounded,
-                              Icons.group_outlined,
-                              'Customer',
-                              animValue,
-                              badgeCount: vm.customerUnreadCount,
-                            ),
-                            _buildNavItem(
-                              2,
-                              Icons.store_rounded,
-                              Icons.store_outlined,
-                              'Vendor',
-                              animValue,
-                              badgeCount: vm.vendorUnreadCount,
-                            ),
-                            _buildNavItem(
-                              3,
-                              Icons.badge_rounded,
-                              Icons.badge_outlined,
-                              'Employee',
-                              animValue,
-                              badgeCount: vm.employeeUnreadCount,
-                            ),
-                            _buildNavItem(
-                              4,
-                              Icons.receipt_long_rounded,
-                              Icons.receipt_long_outlined,
-                              'Expense',
-                              animValue,
-                            ),
-                          ],
-                        ),
+                        width: _desktopSidebarWidth,
+                        child: AppDrawer(vm: vm),
                       ),
+                      Expanded(child: widget.child),
                     ],
                   ),
-                );
-              },
-            ),
+                ),
+              )
+            : Padding(
+                padding: EdgeInsets.only(
+                  bottom: isKeyboardVisible ? 12 : 80 + bottomInset,
+                ), // Reduce padding when keyboard is open
+                child: widget.child,
+              ),
+        bottomNavigationBar: useFixedDesktopSidebar || isKeyboardVisible
+            ? null
+            : TweenAnimationBuilder<double>(
+                duration: Duration(milliseconds: 350),
+                curve: Curves.easeOutCubic,
+                tween: Tween<double>(begin: 0, end: selectedIndex.toDouble()),
+                builder: (context, animValue, child) {
+                  return Container(
+                    height: 90 + bottomInset, // Add safe area for 3-button nav
+                    padding: EdgeInsets.only(bottom: bottomInset),
+                    child: Stack(
+                      alignment: Alignment.bottomCenter,
+                      children: [
+                        // Liquid Background with Notch
+                        CustomPaint(
+                          size: Size(MediaQuery.of(context).size.width, 70),
+                          painter: CurvedPainter(
+                            index: animValue,
+                            total: 5,
+                            color: LoginColors
+                                .surface, // Theme-aware surface color
+                            shadowColor: LoginColors.shadowLight,
+                          ),
+                        ),
+
+                        // Navigation Items Row
+                        SizedBox(
+                          height: 70,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildNavItem(
+                                0,
+                                Icons.grid_view_rounded,
+                                Icons.grid_view_outlined,
+                                'Home',
+                                animValue,
+                              ),
+                              _buildNavItem(
+                                1,
+                                Icons.group_rounded,
+                                Icons.group_outlined,
+                                'Customer',
+                                animValue,
+                                badgeCount: vm.customerUnreadCount,
+                              ),
+                              _buildNavItem(
+                                2,
+                                Icons.store_rounded,
+                                Icons.store_outlined,
+                                'Vendor',
+                                animValue,
+                                badgeCount: vm.vendorUnreadCount,
+                              ),
+                              _buildNavItem(
+                                3,
+                                Icons.badge_rounded,
+                                Icons.badge_outlined,
+                                'Employee',
+                                animValue,
+                                badgeCount: vm.employeeUnreadCount,
+                              ),
+                              _buildNavItem(
+                                4,
+                                Icons.receipt_long_rounded,
+                                Icons.receipt_long_outlined,
+                                'Expense',
+                                animValue,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+      ),
     );
   }
 
