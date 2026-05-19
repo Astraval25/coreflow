@@ -77,12 +77,11 @@ class CustomerOrdersPaymentsSection extends StatelessWidget {
             ),
           )
         else
-          ListView.separated(
+          ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
             itemCount: totalCount,
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               if (index >= filteredEntries.length) {
                 return const Padding(
@@ -95,15 +94,44 @@ class CustomerOrdersPaymentsSection extends StatelessWidget {
                   ),
                 );
               }
-              return _buildEntryCard(
-                context,
-                filteredEntries[index],
-                vm.companyId,
+              final entry = filteredEntries[index];
+              final previous = index > 0 ? filteredEntries[index - 1] : null;
+              final showDateHeader =
+                  previous == null ||
+                  !_isSameCalendarDay(previous.date, entry.date);
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (showDateHeader) ...[
+                    if (index != 0) const SizedBox(height: 14),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Center(
+                        child: Text(
+                          formatDate(entry.date),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: LoginColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  _buildEntryCard(context, entry, vm.companyId),
+                  const SizedBox(height: 10),
+                ],
               );
             },
           ),
       ],
     );
+  }
+
+  bool _isSameCalendarDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   String get _emptyStateText {

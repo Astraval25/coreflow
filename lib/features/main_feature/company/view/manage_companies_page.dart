@@ -4,7 +4,9 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/features/main_feature/company/view_model/company_view_model.dart';
 import 'package:coreflow/features/main_feature/company/view/company_form_page.dart';
 import 'package:coreflow/domain/model/main_model/company/company.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -126,18 +128,6 @@ class _ManageCompaniesBody extends StatelessWidget {
     );
   }
 
-  void _navigateToForm(BuildContext context) {
-    final vm = context.read<CompanyViewModel>();
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ChangeNotifierProvider.value(
-          value: vm,
-          child: const CompanyFormPage(),
-        ),
-      ),
-    );
-  }
 }
 
 class _CompanyCard extends StatelessWidget {
@@ -167,9 +157,13 @@ class _CompanyCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        children: [
-          ListTile(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () =>
+            context.push(CfRoutes.marketplaceCompany(company.companyId)),
+        child: Column(
+          children: [
+            ListTile(
             contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
             leading: _CompanyLogo(company: company),
             title: Text(
@@ -232,10 +226,7 @@ class _CompanyCard extends StatelessWidget {
                     break;
                   case 'logo':
                     await _pickAndUploadLogo(context, vm, company);
-                    break;
-                  case 'toggle':
-                    _confirmToggleStatus(context, vm, company);
-                    break;
+                      break;
                 }
               },
               itemBuilder: (context) => [
@@ -258,26 +249,10 @@ class _CompanyCard extends StatelessWidget {
                       Text(company.fsId == null ? 'Upload Logo' : 'Change Logo'),
                     ],
                   ),
-                ),
-                PopupMenuItem(
-                  value: 'toggle',
-                  child: Row(
-                    children: [
-                      Icon(
-                        company.isActive
-                            ? Icons.block_rounded
-                            : Icons.check_circle_outline_rounded,
-                        size: 18,
-                        color: company.isActive ? LoginColors.error : LoginColors.success,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(company.isActive ? 'Deactivate' : 'Activate'),
-                    ],
                   ),
-                ),
               ],
             ),
-          ),
+            ),
           if (company.shortName != null ||
               company.pan != null ||
               company.gstNo != null ||
@@ -297,7 +272,8 @@ class _CompanyCard extends StatelessWidget {
             )
           else
             const SizedBox(height: 12),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -341,53 +317,6 @@ class _CompanyCard extends StatelessWidget {
     }
   }
 
-  void _confirmToggleStatus(
-    BuildContext context,
-    CompanyViewModel vm,
-    Company company,
-  ) {
-    final action = company.isActive ? 'deactivate' : 'activate';
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('${action[0].toUpperCase()}${action.substring(1)} Company'),
-        content: Text(
-          'Are you sure you want to $action "${company.companyName}"?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  company.isActive ? LoginColors.error : LoginColors.success,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final success = await vm.toggleCompanyStatus(company);
-              if (context.mounted && !success) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    duration: Duration(seconds: 2),
-                    content: Text(vm.errorMessage ?? 'Operation failed'),
-                    backgroundColor: LoginColors.error,
-                  ),
-                );
-              }
-            },
-            child: Text(action[0].toUpperCase() + action.substring(1)),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _CompanyLogo extends StatelessWidget {
@@ -410,7 +339,8 @@ class _CompanyLogo extends StatelessWidget {
           width: 44,
           height: 44,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _fallback(bgColor, fgColor),
+          errorBuilder: (context, error, stackTrace) =>
+              _fallback(bgColor, fgColor),
         ),
       );
     }

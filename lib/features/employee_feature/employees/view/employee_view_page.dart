@@ -68,6 +68,10 @@ class _EmployeeViewScreenState extends State<_EmployeeViewScreen> {
     );
   }
 
+  bool _isSameCalendarDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<EmployeeViewModel>();
@@ -235,11 +239,39 @@ class _EmployeeViewScreenState extends State<_EmployeeViewScreen> {
         if (activityItems.isEmpty)
           _emptyCard('No work/leave logs available')
         else
-          ...activityItems.map((item) {
-            if (item.isWork && item.workLog != null) {
-              return _workCard(vm, item.workLog!);
-            }
-            return _leaveCard(vm, item.leaveLog!);
+          ...List.generate(activityItems.length, (index) {
+            final item = activityItems[index];
+            final previous = index > 0 ? activityItems[index - 1] : null;
+            final showDateHeader =
+                previous == null ||
+                !_isSameCalendarDay(previous.date, item.date);
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (showDateHeader) ...[
+                  if (index != 0) const SizedBox(height: 14),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Center(
+                      child: Text(
+                        _displayDate(item.date),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: LoginColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                if (item.isWork && item.workLog != null)
+                  _workCard(vm, item.workLog!)
+                else
+                  _leaveCard(vm, item.leaveLog!),
+              ],
+            );
           }),
       ],
     );
@@ -924,6 +956,24 @@ class _EmployeeViewScreenState extends State<_EmployeeViewScreen> {
     final month = now.month.toString().padLeft(2, '0');
     final day = now.day.toString().padLeft(2, '0');
     return '${now.year}-$month-$day';
+  }
+
+  String _displayDate(DateTime date) {
+    final monthNames = const [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${date.day.toString().padLeft(2, '0')} ${monthNames[date.month - 1]} ${date.year}';
   }
 
   Future<void> _reviewWorkLog(
