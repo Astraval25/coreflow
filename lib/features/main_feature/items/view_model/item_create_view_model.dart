@@ -42,8 +42,14 @@ class CreateItemViewModel extends ChangeNotifier {
 
       // Try decoding backend JSON safely
       final decoded = _safeDecode(response.body);
+      final isHttpSuccess =
+          response.statusCode >= 200 && response.statusCode < 300;
+      final backendStatus = decoded?['responseStatus'];
+      final isBusinessSuccess = backendStatus is bool
+          ? backendStatus
+          : isHttpSuccess;
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (isHttpSuccess && isBusinessSuccess) {
         _isSuccess = true;
         _successMessage =
             decoded?['responseMessage'] ??
@@ -95,8 +101,14 @@ class CreateItemViewModel extends ChangeNotifier {
 
       // Try decoding backend JSON safely
       final decoded = _safeDecode(response.body);
+      final isHttpSuccess =
+          response.statusCode >= 200 && response.statusCode < 300;
+      final backendStatus = decoded?['responseStatus'];
+      final isBusinessSuccess = backendStatus is bool
+          ? backendStatus
+          : isHttpSuccess;
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (isHttpSuccess && isBusinessSuccess) {
         _isSuccess = true;
         _successMessage =
             decoded?['responseMessage'] ??

@@ -18,7 +18,7 @@ class QuickAccessSection extends StatefulWidget {
 
 class _QuickAccessSectionState extends State<QuickAccessSection> {
   static const int _firstRowCount = 4;
-  bool _expanded = true;
+  bool _expanded = false;
   List<String> _pinnedActionIds = [];
   int? _lastCompanyId;
 
@@ -165,7 +165,12 @@ class _QuickAccessSectionState extends State<QuickAccessSection> {
       ),
     ];
 
-    return items
+    final sortedItems = <_QuickAccessItem>[
+      ...items.where((item) => !_pinnedActionIds.contains(item.id)),
+      ...items.where((item) => _pinnedActionIds.contains(item.id)),
+    ];
+
+    return sortedItems
         .map(
           (item) => DashboardGridItem(
             icon: item.icon,

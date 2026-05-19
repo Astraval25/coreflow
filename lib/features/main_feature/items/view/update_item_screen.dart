@@ -40,25 +40,33 @@ class _UpdateItemScreenState extends State<UpdateItemScreen> {
   String _itemType = 'GOODS';
   String? _selectedUnit;
   File? _selectedImage;
+  bool _isSellable = true;
+  bool _isPurchasable = true;
 
   @override
   void initState() {
     super.initState();
 
     final item = widget.item;
+    _isSellable = item.isSellable;
+    _isPurchasable = item.isPurchasable;
+
+    if (!_isSellable && !_isPurchasable) {
+      _isSellable = true;
+    }
 
     _itemNameController = TextEditingController(text: item.itemName);
     _salesPriceController = TextEditingController(
-      text: item.baseSalesPrice.toString(),
+      text: _isSellable ? item.baseSalesPrice.toString() : '',
     );
     _purchasePriceController = TextEditingController(
-      text: item.basePurchasePrice?.toString() ?? '',
+      text: _isPurchasable ? (item.basePurchasePrice?.toString() ?? '') : '',
     );
     _salesDescriptionController = TextEditingController(
-      text: item.salesDescription ?? '',
+      text: _isSellable ? (item.salesDescription ?? '') : '',
     );
     _purchaseDescriptionController = TextEditingController(
-      text: item.purchaseDescription ?? '',
+      text: _isPurchasable ? (item.purchaseDescription ?? '') : '',
     );
     _hsnController = TextEditingController(text: item.hsnCode ?? '');
     _taxRateController = TextEditingController(
@@ -118,28 +126,54 @@ class _UpdateItemScreenState extends State<UpdateItemScreen> {
   }
 
   Future<void> _submit() async {
+    if (!_isSellable && !_isPurchasable) {
+      _showValidationSnackBar(
+        'Select at least one option: Sellable or Purchasable',
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     final salesPriceText = _salesPriceController.text.trim();
     final purchasePriceText = _purchasePriceController.text.trim();
     final taxText = _taxRateController.text.trim();
+    final salesPrice = salesPriceText.isEmpty
+        ? null
+        : double.tryParse(salesPriceText);
+    final purchasePrice = purchasePriceText.isEmpty
+        ? null
+        : double.tryParse(purchasePriceText);
+
+    if (_isSellable && salesPrice == null) {
+      _showValidationSnackBar('Sales Price is required for sellable items');
+      return;
+    }
+    if (_isPurchasable && purchasePrice == null) {
+      _showValidationSnackBar(
+        'Purchase Price is required for purchasable items',
+      );
+      return;
+    }
 
     final request = UpdateItemRequest(
       itemName: _itemNameController.text.trim(),
       itemType: _itemType,
       unit: _selectedUnit,
-      salesDescription: _salesDescriptionController.text.trim().isEmpty
-          ? null
-          : _salesDescriptionController.text.trim(),
-      baseSalesPrice: salesPriceText.isEmpty
-          ? null
-          : double.tryParse(salesPriceText),
-      purchaseDescription: _purchaseDescriptionController.text.trim().isEmpty
-          ? null
-          : _purchaseDescriptionController.text.trim(),
-      basePurchasePrice: purchasePriceText.isEmpty
-          ? null
-          : double.tryParse(purchasePriceText),
+      isSellable: _isSellable,
+      isPurchasable: _isPurchasable,
+      salesDescription: _isSellable
+          ? (_salesDescriptionController.text.trim().isEmpty
+                ? null
+                : _salesDescriptionController.text.trim())
+          : null,
+      baseSalesPrice: _isSellable ? salesPrice : null,
+      purchaseDescription: _isPurchasable
+          ? (_purchaseDescriptionController.text.trim().isEmpty
+                ? null
+                : _purchaseDescriptionController.text.trim())
+          : null,
+      basePurchasePrice: _isPurchasable ? purchasePrice : null,
       hsnCode: _hsnController.text.trim().isEmpty
           ? null
           : _hsnController.text.trim(),
@@ -174,28 +208,57 @@ class _UpdateItemScreenState extends State<UpdateItemScreen> {
       );
       Navigator.pop(context, true);
     } else if (vm.errorMessage != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          duration: Duration(seconds: 2),
-          content: Row(
-            children: [
-              const Icon(
-                Icons.error_outline_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 10),
-              Expanded(child: Text(vm.errorMessage!)),
-            ],
-          ),
-          backgroundColor: LoginColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      _showValidationSnackBar(vm.errorMessage!);
     }
+  }
+
+  void _toggleSellable(bool value) {
+    if (!value && !_isPurchasable) {
+      _showValidationSnackBar('At least one option must remain selected');
+      return;
+    }
+
+    setState(() {
+      _isSellable = value;
+      if (!_isSellable) {
+        _salesPriceController.clear();
+        _salesDescriptionController.clear();
+      }
+    });
+  }
+
+  void _togglePurchasable(bool value) {
+    if (!value && !_isSellable) {
+      _showValidationSnackBar('At least one option must remain selected');
+      return;
+    }
+
+    setState(() {
+      _isPurchasable = value;
+      if (!_isPurchasable) {
+        _purchasePriceController.clear();
+        _purchaseDescriptionController.clear();
+      }
+    });
+  }
+
+  void _showValidationSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 2),
+        content: Row(
+          children: [
+            const Icon(Icons.info_outline_rounded, color: Colors.white),
+            const SizedBox(width: 10),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: LoginColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 
   @override
@@ -289,25 +352,47 @@ class _UpdateItemScreenState extends State<UpdateItemScreen> {
                     icon: Icons.monetization_on_outlined,
                     iconColor: LoginColors.primary,
                     children: [
-                      UpdateItemStyledTextField(
-                        label: 'Sales Price',
-                        controller: _salesPriceController,
-                        icon: Icons.sell_rounded,
-                        iconColor: LoginColors.textTertiary,
-                        isNumber: true,
-                        validateNonNegative: true,
-                        hintText: '0.00',
+                      CheckboxListTile(
+                        value: _isSellable,
+                        onChanged: (value) => _toggleSellable(value ?? false),
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        title: const Text('Sellable Item'),
                       ),
-                      const SizedBox(height: 16),
-                      UpdateItemStyledTextField(
-                        label: 'Purchase Price',
-                        controller: _purchasePriceController,
-                        icon: Icons.shopping_cart_rounded,
-                        iconColor: LoginColors.textTertiary,
-                        isNumber: true,
-                        validateNonNegative: true,
-                        hintText: '0.00',
+                      CheckboxListTile(
+                        value: _isPurchasable,
+                        onChanged: (value) =>
+                            _togglePurchasable(value ?? false),
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        title: const Text('Purchasable Item'),
                       ),
+                      if (_isSellable) ...[
+                        const SizedBox(height: 8),
+                        UpdateItemStyledTextField(
+                          label: 'Sales Price',
+                          controller: _salesPriceController,
+                          icon: Icons.sell_rounded,
+                          iconColor: LoginColors.textTertiary,
+                          isNumber: true,
+                          validateNonNegative: true,
+                          hintText: '0.00',
+                        ),
+                      ],
+                      if (_isPurchasable) ...[
+                        const SizedBox(height: 16),
+                        UpdateItemStyledTextField(
+                          label: 'Purchase Price',
+                          controller: _purchasePriceController,
+                          icon: Icons.shopping_cart_rounded,
+                          iconColor: LoginColors.textTertiary,
+                          isNumber: true,
+                          validateNonNegative: true,
+                          hintText: '0.00',
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -316,21 +401,24 @@ class _UpdateItemScreenState extends State<UpdateItemScreen> {
                     icon: Icons.description_outlined,
                     iconColor: LoginColors.primary,
                     children: [
-                      UpdateItemStyledTextField(
-                        label: 'Sales Description',
-                        controller: _salesDescriptionController,
-                        icon: Icons.description_rounded,
-                        iconColor: LoginColors.textTertiary,
-                        maxLines: 3,
-                      ),
-                      const SizedBox(height: 16),
-                      UpdateItemStyledTextField(
-                        label: 'Purchase Description',
-                        controller: _purchaseDescriptionController,
-                        icon: Icons.receipt_long_rounded,
-                        iconColor: LoginColors.textTertiary,
-                        maxLines: 3,
-                      ),
+                      if (_isSellable)
+                        UpdateItemStyledTextField(
+                          label: 'Sales Description',
+                          controller: _salesDescriptionController,
+                          icon: Icons.description_rounded,
+                          iconColor: LoginColors.textTertiary,
+                          maxLines: 3,
+                        ),
+                      if (_isSellable && _isPurchasable)
+                        const SizedBox(height: 16),
+                      if (_isPurchasable)
+                        UpdateItemStyledTextField(
+                          label: 'Purchase Description',
+                          controller: _purchaseDescriptionController,
+                          icon: Icons.receipt_long_rounded,
+                          iconColor: LoginColors.textTertiary,
+                          maxLines: 3,
+                        ),
                     ],
                   ),
                   const SizedBox(height: 20),

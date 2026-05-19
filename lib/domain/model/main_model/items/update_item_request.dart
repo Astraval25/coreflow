@@ -2,6 +2,8 @@ class UpdateItemRequest {
   final String? itemName;
   final String? itemType;
   final String? unit;
+  final bool? isSellable;
+  final bool? isPurchasable;
   final String? salesDescription;
   final double? baseSalesPrice;
   final String? purchaseDescription;
@@ -13,6 +15,8 @@ class UpdateItemRequest {
     this.itemName,
     this.itemType,
     this.unit,
+    this.isSellable,
+    this.isPurchasable,
     this.salesDescription,
     this.baseSalesPrice,
     this.purchaseDescription,
@@ -27,6 +31,10 @@ class UpdateItemRequest {
     if (itemName != null) data['itemName'] = itemName!;
     if (itemType != null) data['itemType'] = itemType!;
     if (unit != null) data['unit'] = unit!;
+    if (isSellable != null) data['isSellable'] = isSellable.toString();
+    if (isPurchasable != null) {
+      data['isPurchasable'] = isPurchasable.toString();
+    }
     if (salesDescription != null) {
       data['salesDescription'] = salesDescription!;
     }
@@ -51,6 +59,8 @@ class UpdateItemRequest {
     if (itemName != null) json['itemName'] = itemName;
     if (itemType != null) json['itemType'] = itemType;
     if (unit != null) json['unit'] = unit;
+    if (isSellable != null) json['isSellable'] = isSellable;
+    if (isPurchasable != null) json['isPurchasable'] = isPurchasable;
     if (salesDescription != null) json['salesDescription'] = salesDescription;
     if (baseSalesPrice != null) json['baseSalesPrice'] = baseSalesPrice;
     if (purchaseDescription != null) {

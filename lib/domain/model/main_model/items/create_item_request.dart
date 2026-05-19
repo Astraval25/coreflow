@@ -2,6 +2,8 @@ class CreateItemRequest {
   final String itemName;
   final String itemType;
   final String? unit;
+  final bool isSellable;
+  final bool isPurchasable;
   final String? salesDescription;
   final double? baseSalesPrice;
   final String? purchaseDescription;
@@ -13,6 +15,8 @@ class CreateItemRequest {
     required this.itemName,
     required this.itemType,
     this.unit,
+    required this.isSellable,
+    required this.isPurchasable,
     this.salesDescription,
     this.baseSalesPrice,
     this.purchaseDescription,
@@ -28,6 +32,9 @@ class CreateItemRequest {
     if (itemType.trim().isEmpty) {
       return 'Item type is required';
     }
+    if (!isSellable && !isPurchasable) {
+      return 'Select at least one: sellable or purchasable';
+    }
     return null;
   }
 
@@ -36,6 +43,8 @@ class CreateItemRequest {
 
     data['itemName'] = itemName;
     data['itemType'] = itemType;
+    data['isSellable'] = isSellable.toString();
+    data['isPurchasable'] = isPurchasable.toString();
 
     if (unit != null) data['unit'] = unit!;
     if (salesDescription != null) {
@@ -60,6 +69,8 @@ class CreateItemRequest {
     return {
       "itemName": itemName,
       "itemType": itemType,
+      "isSellable": isSellable,
+      "isPurchasable": isPurchasable,
       if (unit != null) "unit": unit,
       if (salesDescription != null) "salesDescription": salesDescription,
       if (baseSalesPrice != null) "baseSalesPrice": baseSalesPrice,

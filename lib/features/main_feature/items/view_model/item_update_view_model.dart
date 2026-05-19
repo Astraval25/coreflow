@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:coreflow/data/services/api_services.dart';
@@ -44,11 +45,22 @@ class UpdateItemViewModel extends ChangeNotifier {
         imageFile: imageFile,
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      final decoded = _safeDecode(response.body);
+      final isHttpSuccess =
+          response.statusCode >= 200 && response.statusCode < 300;
+      final backendStatus = decoded?['responseStatus'];
+      final isBusinessSuccess = backendStatus is bool
+          ? backendStatus
+          : isHttpSuccess;
+
+      if (isHttpSuccess && isBusinessSuccess) {
         isSuccess = true;
       } else {
         isSuccess = false;
-        errorMessage = 'Failed to update item: ${response.statusCode}';
+        errorMessage =
+            decoded?['responseMessage'] ??
+            decoded?['message'] ??
+            'Failed to update item: ${response.statusCode}';
       }
     } catch (e) {
       isSuccess = false;
@@ -56,6 +68,14 @@ class UpdateItemViewModel extends ChangeNotifier {
     } finally {
       isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Map<String, dynamic>? _safeDecode(String body) {
+    try {
+      return jsonDecode(body);
+    } catch (_) {
+      return null;
     }
   }
 }
