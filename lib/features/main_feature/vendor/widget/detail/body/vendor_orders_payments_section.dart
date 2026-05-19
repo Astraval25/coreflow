@@ -98,14 +98,16 @@ class VendorOrdersPaymentsSection extends StatelessWidget {
         final entry = filteredEntries[index];
         final previous = index > 0 ? filteredEntries[index - 1] : null;
         final showDateHeader =
-            previous == null ||
-            !_isSameCalendarDay(previous.date, entry.date);
+            previous == null || !_isSameCalendarDay(previous.date, entry.date);
 
         Widget child = const SizedBox.shrink();
         if (entry.isOrder && entry.order != null) {
           child = _OrderTile(order: entry.order!, companyId: vm.companyId);
         } else if (entry.payment != null) {
-          child = _PaymentTile(payment: entry.payment!, companyId: vm.companyId);
+          child = _PaymentTile(
+            payment: entry.payment!,
+            companyId: vm.companyId,
+          );
         }
 
         return Column(
@@ -235,10 +237,16 @@ class _OrderTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 19,
-              color: LoginColors.textTertiary,
+            Column(
+              children: [
+                _ViewedTick(isViewed: order.isViewed),
+                const SizedBox(height: 4),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 19,
+                  color: LoginColors.textTertiary,
+                ),
+              ],
             ),
           ],
         ),
@@ -322,10 +330,16 @@ class _PaymentTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 19,
-              color: LoginColors.textTertiary,
+            Column(
+              children: [
+                _ViewedTick(isViewed: payment.isViewed),
+                const SizedBox(height: 4),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 19,
+                  color: LoginColors.textTertiary,
+                ),
+              ],
             ),
           ],
         ),
@@ -383,6 +397,21 @@ class _ValueChip extends StatelessWidget {
           color: color,
         ),
       ),
+    );
+  }
+}
+
+class _ViewedTick extends StatelessWidget {
+  final bool isViewed;
+
+  const _ViewedTick({required this.isViewed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      isViewed ? Icons.done_all_rounded : Icons.done_rounded,
+      size: 15,
+      color: isViewed ? LoginColors.primary : LoginColors.textTertiary,
     );
   }
 }

@@ -2,11 +2,12 @@ import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart'
 import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_mapped_item.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_orders_payments.dart';
+import 'package:coreflow/domain/model/main_model/analytics/party_order_payment_trend.dart';
 import 'package:coreflow/domain/model/main_model/invitation/invitation_response.dart';
 import 'package:coreflow/domain/model/main_model/items/item.dart';
 import 'package:coreflow/domain/model/main_model/items/item_status_response.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; 
+import 'package:go_router/go_router.dart';
 
 enum CustomerViewState { initial, loading, loaded, error, noData }
 
@@ -26,6 +27,8 @@ class CustomerDetailViewModel extends ChangeNotifier {
   bool _hasMoreOrdersPayments = true;
   int _nextOrdersPaymentsPage = 0;
   static const int _ordersPaymentsPageSize = 10;
+  List<PartyOrderPaymentTrendEntry> _monthlyOrderPaymentTrend = [];
+  bool _isMonthlyOrderPaymentTrendLoading = false;
 
   final int _companyId;
   final int _customerId;
@@ -36,10 +39,9 @@ class CustomerDetailViewModel extends ChangeNotifier {
     required int companyId,
     required int customerId,
     Future<void> Function()? refreshUnreadCount,
-  })
-    : _companyId = companyId,
-      _customerId = customerId,
-      _refreshUnreadCount = refreshUnreadCount {
+  }) : _companyId = companyId,
+       _customerId = customerId,
+       _refreshUnreadCount = refreshUnreadCount {
     loadCustomerDetail();
   }
 
@@ -50,10 +52,15 @@ class CustomerDetailViewModel extends ChangeNotifier {
   bool get isMappedItemsLoading => _isMappedItemsLoading;
   bool get isMappedItemStatusUpdating => _isMappedItemStatusUpdating;
   int? get statusUpdatingItemId => _statusUpdatingItemId;
-  List<OrderPaymentEntry> get ordersPayments => List.unmodifiable(_ordersPayments);
+  List<OrderPaymentEntry> get ordersPayments =>
+      List.unmodifiable(_ordersPayments);
   bool get isOrdersPaymentsLoading => _isOrdersPaymentsLoading;
   bool get isOrdersPaymentsLoadingMore => _isOrdersPaymentsLoadingMore;
   bool get hasMoreOrdersPayments => _hasMoreOrdersPayments;
+  List<PartyOrderPaymentTrendEntry> get monthlyOrderPaymentTrend =>
+      List.unmodifiable(_monthlyOrderPaymentTrend);
+  bool get isMonthlyOrderPaymentTrendLoading =>
+      _isMonthlyOrderPaymentTrendLoading;
   List<CustomerOrder> get ordersOnly => _ordersPayments
       .where((e) => e.isOrder && e.order != null)
       .map((e) => e.order!)
@@ -95,6 +102,7 @@ class CustomerDetailViewModel extends ChangeNotifier {
         await _clearUnreadActivityIfNeeded();
         _updateState(CustomerViewState.loaded);
         loadMappedItems();
+        loadMonthlyOrderPaymentTrend();
         loadOrdersPayments(reset: true);
       } else {
         _updateState(CustomerViewState.noData, error: 'No customer data found');
@@ -108,7 +116,6 @@ class CustomerDetailViewModel extends ChangeNotifier {
   }
 
   Future<void> activateCustomer(BuildContext context) async {
-
     _updateState(CustomerViewState.loading);
 
     try {
@@ -120,7 +127,7 @@ class CustomerDetailViewModel extends ChangeNotifier {
       if (response != null && response.responseStatus == true) {
         await loadCustomerDetail();
         if (context.mounted) {
-          context.pop(true); 
+          context.pop(true);
         }
       } else {
         _updateState(
@@ -145,7 +152,7 @@ class CustomerDetailViewModel extends ChangeNotifier {
       if (response != null && response.responseStatus == true) {
         await loadCustomerDetail();
         if (context.mounted) {
-          context.pop(true); 
+          context.pop(true);
         }
       } else {
         _updateState(
@@ -211,7 +218,8 @@ class CustomerDetailViewModel extends ChangeNotifier {
         return true;
       }
 
-      _errorMessage = response?.responseMessage ?? 'Create customer item failed';
+      _errorMessage =
+          response?.responseMessage ?? 'Create customer item failed';
       notifyListeners();
       return false;
     } catch (e) {
@@ -240,7 +248,8 @@ class CustomerDetailViewModel extends ChangeNotifier {
         return true;
       }
 
-      _errorMessage = response?.responseMessage ?? 'Update customer item failed';
+      _errorMessage =
+          response?.responseMessage ?? 'Update customer item failed';
       notifyListeners();
       return false;
     } catch (e) {
@@ -363,6 +372,29 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
   Future<void> refreshOrdersPayments() => loadOrdersPayments(reset: true);
 
+  Future<void> loadMonthlyOrderPaymentTrend() async {
+    _isMonthlyOrderPaymentTrendLoading = true;
+    notifyListeners();
+
+    try {
+      final end = DateTime.now();
+      final start = end.subtract(const Duration(days: 29));
+      final trend = await _authRepository.getCustomerOrderPaymentTrend(
+        _companyId,
+        _customerId,
+        _formatDate(start),
+        _formatDate(end),
+      );
+      _monthlyOrderPaymentTrend = trend;
+    } catch (e) {
+      debugPrint('Failed to load monthly order-payment trend: $e');
+      _monthlyOrderPaymentTrend = [];
+    } finally {
+      _isMonthlyOrderPaymentTrendLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> loadMoreOrdersPaymentsIfNeeded() async {
     if (_isOrdersPaymentsLoading ||
         _isOrdersPaymentsLoadingMore ||
@@ -380,6 +412,12 @@ class CustomerDetailViewModel extends ChangeNotifier {
       return 'p_${entry.payment!.paymentId}';
     }
     return 'x_${entry.date.millisecondsSinceEpoch}';
+  }
+
+  String _formatDate(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 
   // ─── Invitation ───

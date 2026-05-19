@@ -1,4 +1,5 @@
 import 'package:coreflow/data/repositories/employee_repository/employee_repository.dart';
+import 'package:coreflow/domain/model/main_model/analytics/employee_analytics.dart';
 import 'package:coreflow/domain/model/employee_model/employee_detail.dart';
 import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +26,9 @@ class EmployeeViewModel extends ChangeNotifier {
   List<WorkDefinitionData> _workDefinitions = const [];
   List<WorkLogData> _workLogs = const [];
   List<LeaveLogData> _leaveLogs = const [];
+  List<EmployeeDailyAnalyticsEntry> _dailyAnalytics = const [];
+  EmployeeAnalyticsOverviewEntry? _analyticsOverview;
+  bool _isAnalyticsLoading = false;
   bool _hasClearedUnreadActivity = false;
 
   bool get isLoading => _isLoading;
@@ -36,24 +40,49 @@ class EmployeeViewModel extends ChangeNotifier {
       List.unmodifiable(_workDefinitions);
   List<WorkLogData> get workLogs => List.unmodifiable(_workLogs);
   List<LeaveLogData> get leaveLogs => List.unmodifiable(_leaveLogs);
+  List<EmployeeDailyAnalyticsEntry> get dailyAnalytics =>
+      List.unmodifiable(_dailyAnalytics);
+  EmployeeAnalyticsOverviewEntry? get analyticsOverview => _analyticsOverview;
+  bool get isAnalyticsLoading => _isAnalyticsLoading;
 
   Future<void> load() async {
     _isLoading = true;
+    _isAnalyticsLoading = true;
     _error = null;
     _message = null;
     notifyListeners();
 
     try {
+      final end = DateTime.now();
+      final start = end.subtract(const Duration(days: 29));
+      final startDate = _formatDate(start);
+      final endDate = _formatDate(end);
+
       final results = await Future.wait([
         _repository.getEmployeeDetail(companyId, employeeId),
         _repository.getWorkDefinitions(companyId, activeOnly: true),
         _repository.getEmployeeActivityLogs(companyId, employeeId),
+        _repository.getEmployeeDailyAnalytics(
+          companyId,
+          employeeId,
+          startDate: startDate,
+          endDate: endDate,
+        ),
+        _repository.getEmployeeAnalyticsOverview(
+          companyId,
+          startDate: startDate,
+          endDate: endDate,
+        ),
       ]);
       _employee = results[0] as EmployeeDetailData?;
       _workDefinitions = results[1] as List<WorkDefinitionData>;
       final activity = results[2] as EmployeeActivityLogsData?;
       _workLogs = activity?.workLogs ?? const [];
       _leaveLogs = activity?.leaveLogs ?? const [];
+      _dailyAnalytics = results[3] as List<EmployeeDailyAnalyticsEntry>;
+      final overview = results[4] as List<EmployeeAnalyticsOverviewEntry>;
+      final match = overview.where((entry) => entry.employeeId == employeeId);
+      _analyticsOverview = match.isNotEmpty ? match.first : null;
       if (_employee == null) {
         _error = 'Employee details not found';
       } else {
@@ -63,6 +92,7 @@ class EmployeeViewModel extends ChangeNotifier {
       _error = 'Failed to load employee view';
     } finally {
       _isLoading = false;
+      _isAnalyticsLoading = false;
       notifyListeners();
     }
   }
@@ -321,6 +351,29 @@ class EmployeeViewModel extends ChangeNotifier {
     );
     _workLogs = activity?.workLogs ?? const [];
     _leaveLogs = activity?.leaveLogs ?? const [];
+
+    final end = DateTime.now();
+    final start = end.subtract(const Duration(days: 29));
+    final startDate = _formatDate(start);
+    final endDate = _formatDate(end);
+    final analytics = await Future.wait([
+      _repository.getEmployeeDailyAnalytics(
+        companyId,
+        employeeId,
+        startDate: startDate,
+        endDate: endDate,
+      ),
+      _repository.getEmployeeAnalyticsOverview(
+        companyId,
+        startDate: startDate,
+        endDate: endDate,
+      ),
+    ]);
+
+    _dailyAnalytics = analytics[0] as List<EmployeeDailyAnalyticsEntry>;
+    final overview = analytics[1] as List<EmployeeAnalyticsOverviewEntry>;
+    final match = overview.where((entry) => entry.employeeId == employeeId);
+    _analyticsOverview = match.isNotEmpty ? match.first : null;
   }
 
   Future<void> _clearUnreadActivityIfNeeded() async {
@@ -329,5 +382,11 @@ class EmployeeViewModel extends ChangeNotifier {
     await _repository.markEmployeeNotificationsRead(companyId, employeeId);
     _hasClearedUnreadActivity = true;
     await _refreshUnreadCount?.call();
+  }
+
+  String _formatDate(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 }

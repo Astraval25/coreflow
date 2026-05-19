@@ -10,6 +10,7 @@ import 'package:coreflow/domain/model/employee_model/employee_edit_request.dart'
 import 'package:coreflow/domain/model/employee_model/employee_edit_response.dart';
 import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
 import 'package:coreflow/domain/model/employee_model/employee_status_response.dart';
+import 'package:coreflow/domain/model/main_model/analytics/employee_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -26,6 +27,66 @@ class EmployeeRepository {
       return _parseList(response, Employee.fromJson);
     } catch (e) {
       debugPrint('Get employees error: $e');
+      return [];
+    }
+  }
+
+  Future<List<EmployeeAnalyticsOverviewEntry>> getEmployeeAnalyticsOverview(
+    int companyId, {
+    required String startDate,
+    required String endDate,
+  }) async {
+    try {
+      final response = await _apiService.get(
+        Uri.parse(
+          AppConfig.getEmployeeAnalyticsOverviewUrl(
+            companyId,
+            startDate,
+            endDate,
+          ),
+        ),
+      );
+      final body = _decodeBody(response);
+      if (body == null || body['responseStatus'] != true) return [];
+      final data = body['responseData'];
+      if (data is! List) return [];
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map(EmployeeAnalyticsOverviewEntry.fromJson)
+          .toList(growable: false);
+    } catch (e) {
+      debugPrint('Get employee analytics overview error: $e');
+      return [];
+    }
+  }
+
+  Future<List<EmployeeDailyAnalyticsEntry>> getEmployeeDailyAnalytics(
+    int companyId,
+    int employeeId, {
+    required String startDate,
+    required String endDate,
+  }) async {
+    try {
+      final response = await _apiService.get(
+        Uri.parse(
+          AppConfig.getEmployeeDailyAnalyticsUrl(
+            companyId,
+            employeeId,
+            startDate,
+            endDate,
+          ),
+        ),
+      );
+      final body = _decodeBody(response);
+      if (body == null || body['responseStatus'] != true) return [];
+      final data = body['responseData'];
+      if (data is! List) return [];
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map(EmployeeDailyAnalyticsEntry.fromJson)
+          .toList(growable: false);
+    } catch (e) {
+      debugPrint('Get employee daily analytics error: $e');
       return [];
     }
   }
@@ -104,7 +165,8 @@ class EmployeeRepository {
       if (body == null || body['responseStatus'] != true) return 0;
       final responseData = body['responseData'];
       if (responseData is Map<String, dynamic>) {
-        return int.tryParse(responseData['updatedCount']?.toString() ?? '') ?? 0;
+        return int.tryParse(responseData['updatedCount']?.toString() ?? '') ??
+            0;
       }
       return 0;
     } catch (e) {

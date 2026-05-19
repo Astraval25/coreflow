@@ -123,7 +123,7 @@ class CustomerDetailContent extends StatelessWidget {
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha:0.18),
+                    color: Colors.white.withValues(alpha: 0.18),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -319,11 +319,7 @@ class CustomerDetailContent extends StatelessWidget {
       );
     }
 
-    return Column(
-      children: [
-        CustomerDetailBody(customer: vm.customer!),
-      ],
-    );
+    return Column(children: [CustomerDetailBody(customer: vm.customer!)]);
   }
 
   void _openCustomerProfileSheet(
@@ -404,6 +400,7 @@ class _CustomerProfileSheet extends StatelessWidget {
               child: Column(
                 children: [
                   CustomerBasicInfoSection(customer: customer),
+                  const CustomerOrderPaymentTrendSection(),
                   _CustomerCompanyLinkSection(customer: customer),
                   CustomerAddressSection(customer: customer),
                   const CustomerItemSection(),
@@ -437,14 +434,22 @@ class _CustomerCompanyLinkSection extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFB07A00).withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFB07A00).withValues(alpha: 0.55)),
+          border: Border.all(
+            color: const Color(0xFFB07A00).withValues(alpha: 0.55),
+          ),
         ),
         child: InkWell(
-          onTap: hasLink ? () => context.push(CfRoutes.marketplaceCompany(companyId)) : null,
+          onTap: hasLink
+              ? () => context.push(CfRoutes.marketplaceCompany(companyId))
+              : null,
           borderRadius: BorderRadius.circular(12),
           child: Row(
             children: [
-              const Icon(Icons.link_rounded, size: 18, color: Color(0xFFB07A00)),
+              const Icon(
+                Icons.link_rounded,
+                size: 18,
+                color: Color(0xFFB07A00),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(

@@ -534,6 +534,37 @@ class AppConfig {
   static String getPurchaseByVendorUrl(int c, String s, String e) =>
       '$baseUrl/api/companies/$c/analytics/purchase/by-vendor?startDate=$s&endDate=$e';
 
+  static String getCustomerOrderPaymentTrendUrl(
+    int companyId,
+    int customerId,
+    String startDate,
+    String endDate,
+  ) =>
+      '$baseUrl/api/companies/$companyId/analytics/customers/$customerId/order-payment-trend?startDate=$startDate&endDate=$endDate';
+
+  static String getVendorOrderPaymentTrendUrl(
+    int companyId,
+    int vendorId,
+    String startDate,
+    String endDate,
+  ) =>
+      '$baseUrl/api/companies/$companyId/analytics/vendors/$vendorId/order-payment-trend?startDate=$startDate&endDate=$endDate';
+
+  static String getEmployeeAnalyticsOverviewUrl(
+    int companyId,
+    String startDate,
+    String endDate,
+  ) =>
+      '$baseUrl/api/companies/$companyId/analytics/employees/overview?startDate=$startDate&endDate=$endDate';
+
+  static String getEmployeeDailyAnalyticsUrl(
+    int companyId,
+    int employeeId,
+    String startDate,
+    String endDate,
+  ) =>
+      '$baseUrl/api/companies/$companyId/analytics/employees/$employeeId/daily?startDate=$startDate&endDate=$endDate';
+
   static String getSalesByItemUrl(int c, String s, String e) =>
       '$baseUrl/api/companies/$c/analytics/sales/by-item?startDate=$s&endDate=$e';
 

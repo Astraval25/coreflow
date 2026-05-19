@@ -71,6 +71,8 @@ import 'package:coreflow/domain/model/main_model/analytics/order_frequency.dart'
 import 'package:coreflow/domain/model/main_model/analytics/item_frequency.dart';
 import 'package:coreflow/domain/model/main_model/analytics/running_amount.dart';
 import 'package:coreflow/domain/model/main_model/analytics/party_analytics.dart';
+import 'package:coreflow/domain/model/main_model/analytics/party_order_payment_trend.dart';
+import 'package:coreflow/domain/model/main_model/analytics/employee_analytics.dart';
 import 'package:coreflow/domain/model/main_model/analytics/item_analytics.dart';
 import 'package:coreflow/domain/model/main_model/analytics/payment_mode.dart';
 import 'package:coreflow/domain/model/main_model/analytics/monthly_trend.dart';
@@ -1037,7 +1039,8 @@ class AuthRepository {
       if (data['responseStatus'] != true) return 0;
       final responseData = data['responseData'];
       if (responseData is Map<String, dynamic>) {
-        return int.tryParse(responseData['updatedCount']?.toString() ?? '') ?? 0;
+        return int.tryParse(responseData['updatedCount']?.toString() ?? '') ??
+            0;
       }
       return 0;
     } catch (e) {
@@ -1456,6 +1459,91 @@ class AuthRepository {
           .toList();
     } catch (err) {
       debugPrint('getPurchaseByVendor: $err');
+      return [];
+    }
+  }
+
+  Future<List<PartyOrderPaymentTrendEntry>> getCustomerOrderPaymentTrend(
+    int companyId,
+    int customerId,
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final response = await _apiService.get(
+        Uri.parse(
+          AppConfig.getCustomerOrderPaymentTrendUrl(
+            companyId,
+            customerId,
+            startDate,
+            endDate,
+          ),
+        ),
+      );
+      if (response.statusCode != 200) return [];
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return [];
+      return (data['responseData'] as List)
+          .map((x) => PartyOrderPaymentTrendEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getCustomerOrderPaymentTrend: $err');
+      return [];
+    }
+  }
+
+  Future<List<EmployeeAnalyticsOverviewEntry>> getEmployeeAnalyticsOverview(
+    int companyId,
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final response = await _apiService.get(
+        Uri.parse(
+          AppConfig.getEmployeeAnalyticsOverviewUrl(
+            companyId,
+            startDate,
+            endDate,
+          ),
+        ),
+      );
+      if (response.statusCode != 200) return [];
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return [];
+      return (data['responseData'] as List)
+          .map((x) => EmployeeAnalyticsOverviewEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getEmployeeAnalyticsOverview: $err');
+      return [];
+    }
+  }
+
+  Future<List<EmployeeDailyAnalyticsEntry>> getEmployeeDailyAnalytics(
+    int companyId,
+    int employeeId,
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final response = await _apiService.get(
+        Uri.parse(
+          AppConfig.getEmployeeDailyAnalyticsUrl(
+            companyId,
+            employeeId,
+            startDate,
+            endDate,
+          ),
+        ),
+      );
+      if (response.statusCode != 200) return [];
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return [];
+      return (data['responseData'] as List)
+          .map((x) => EmployeeDailyAnalyticsEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getEmployeeDailyAnalytics: $err');
       return [];
     }
   }

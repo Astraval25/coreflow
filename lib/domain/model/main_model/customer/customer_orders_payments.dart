@@ -29,10 +29,7 @@ class CustomerOrdersPaymentsData {
   final List<CustomerOrder> orders;
   final List<CustomerPayment> payments;
 
-  CustomerOrdersPaymentsData({
-    required this.orders,
-    required this.payments,
-  });
+  CustomerOrdersPaymentsData({required this.orders, required this.payments});
 
   factory CustomerOrdersPaymentsData.fromJson(Map<String, dynamic> json) {
     final ordersRaw = json['orders'];
@@ -62,6 +59,7 @@ class CustomerOrder {
   final String orderPlatformRef;
   final double paidAmount;
   final DateTime orderDate;
+  final bool isViewed;
 
   CustomerOrder({
     required this.orderId,
@@ -70,6 +68,7 @@ class CustomerOrder {
     required this.orderPlatformRef,
     required this.paidAmount,
     required this.orderDate,
+    required this.isViewed,
   });
 
   double get dueAmount => totalAmount - paidAmount;
@@ -82,6 +81,7 @@ class CustomerOrder {
       orderPlatformRef: (json['orderPlatformRef'] ?? '').toString(),
       paidAmount: _asDouble(json['paidAmount']),
       orderDate: _asDate(json['orderDate']),
+      isViewed: json['isViewed'] == true || json['viewed'] == true,
     );
   }
 }
@@ -91,12 +91,14 @@ class CustomerPayment {
   final String paymentPlatformRef;
   final DateTime paymentDate;
   final double amount;
+  final bool isViewed;
 
   CustomerPayment({
     required this.paymentId,
     required this.paymentPlatformRef,
     required this.paymentDate,
     required this.amount,
+    required this.isViewed,
   });
 
   factory CustomerPayment.fromJson(Map<String, dynamic> json) {
@@ -105,6 +107,7 @@ class CustomerPayment {
       paymentPlatformRef: (json['paymentPlatformRef'] ?? '').toString(),
       paymentDate: _asDate(json['paymentDate']),
       amount: _asDouble(json['amount']),
+      isViewed: json['isViewed'] == true || json['viewed'] == true,
     );
   }
 }
@@ -117,16 +120,16 @@ class OrderPaymentEntry implements Comparable<OrderPaymentEntry> {
   final CustomerPayment? payment;
 
   OrderPaymentEntry.fromOrder(CustomerOrder o)
-      : isOrder = true,
-        date = o.orderDate,
-        order = o,
-        payment = null;
+    : isOrder = true,
+      date = o.orderDate,
+      order = o,
+      payment = null;
 
   OrderPaymentEntry.fromPayment(CustomerPayment p)
-      : isOrder = false,
-        date = p.paymentDate,
-        order = null,
-        payment = p;
+    : isOrder = false,
+      date = p.paymentDate,
+      order = null,
+      payment = p;
 
   @override
   int compareTo(OrderPaymentEntry other) => other.date.compareTo(date); // desc

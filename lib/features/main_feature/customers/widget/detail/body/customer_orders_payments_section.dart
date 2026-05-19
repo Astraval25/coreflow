@@ -240,10 +240,16 @@ class CustomerOrdersPaymentsSection extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 19,
-              color: LoginColors.textTertiary,
+            Column(
+              children: [
+                _ViewedTick(isViewed: order.isViewed),
+                const SizedBox(height: 4),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 19,
+                  color: LoginColors.textTertiary,
+                ),
+              ],
             ),
           ],
         ),
@@ -324,10 +330,16 @@ class CustomerOrdersPaymentsSection extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 19,
-              color: LoginColors.textTertiary,
+            Column(
+              children: [
+                _ViewedTick(isViewed: payment.isViewed),
+                const SizedBox(height: 4),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 19,
+                  color: LoginColors.textTertiary,
+                ),
+              ],
             ),
           ],
         ),
@@ -384,6 +396,21 @@ class _ValueChip extends StatelessWidget {
           color: color,
         ),
       ),
+    );
+  }
+}
+
+class _ViewedTick extends StatelessWidget {
+  final bool isViewed;
+
+  const _ViewedTick({required this.isViewed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      isViewed ? Icons.done_all_rounded : Icons.done_rounded,
+      size: 15,
+      color: isViewed ? LoginColors.primary : LoginColors.textTertiary,
     );
   }
 }

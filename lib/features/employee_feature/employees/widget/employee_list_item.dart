@@ -98,6 +98,19 @@ class EmployeeListItem extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  if (employee.pendingTotalCount > 0) ...[
+                    _PendingCountBadge(total: employee.pendingTotalCount),
+                    const SizedBox(height: 2),
+                    Text(
+                      'W:${employee.pendingWorkLogCount} L:${employee.pendingLeaveLogCount}',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        color: LoginColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                  ],
                   if (employee.unreadCount > 0) ...[
                     _UnreadCountBadge(count: employee.unreadCount),
                     const SizedBox(height: 6),
@@ -136,6 +149,31 @@ class _UnreadCountBadge extends StatelessWidget {
         style: const TextStyle(
           color: Colors.white,
           fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _PendingCountBadge extends StatelessWidget {
+  final int total;
+
+  const _PendingCountBadge({required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: LoginColors.accent.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        'P:$total',
+        style: TextStyle(
+          color: LoginColors.accent,
+          fontSize: 10.5,
           fontWeight: FontWeight.w700,
         ),
       ),
