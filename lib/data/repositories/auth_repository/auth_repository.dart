@@ -504,7 +504,7 @@ class AuthRepository {
   Future<List<Company>> getMyCompanies() => _companyRepo.getMyCompanies();
   Future<Company?> createCompany(Map<String, dynamic> data) =>
       _companyRepo.createCompany(data);
-  Future<Company?> updateCompany(int companyId, Map<String, dynamic> data) =>
+  Future<bool> updateCompany(int companyId, Map<String, dynamic> data) =>
       _companyRepo.updateCompany(companyId, data);
   Future<bool> activateCompany(int companyId) =>
       _companyRepo.activateCompany(companyId);

@@ -44,16 +44,17 @@ class _ManageCompaniesBody extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _navigateToForm(context),
-        backgroundColor: LoginColors.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_business_rounded),
-        label: const Text(
-          'Add Company',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-      ),
+      // Create Company Option 
+      // floatingActionButton: FloatingActionButton.extended(
+      //   onPressed: () => _navigateToForm(context),
+      //   backgroundColor: LoginColors.primary,
+      //   foregroundColor: Colors.white,
+      //   icon: const Icon(Icons.add_business_rounded),
+      //   label: const Text(
+      //     'Add Company',
+      //     style: TextStyle(fontWeight: FontWeight.w600),
+      //   ),
+      // ),
       body: _buildBody(context, vm),
     );
   }

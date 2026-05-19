@@ -338,6 +338,7 @@ class ManageExpansion extends StatelessWidget {
         CfRoutes.isSectionActive(currentLocation, 'customers') ||
         CfRoutes.isSectionActive(currentLocation, 'vendors') ||
         CfRoutes.isSectionActive(currentLocation, 'employees') ||
+        CfRoutes.isSectionActive(currentLocation, 'work-definitions') ||
         CfRoutes.isSectionActive(currentLocation, 'items');
     final isExpanded = vm.isCustomersExpanded || isManageRoute;
 
@@ -413,6 +414,13 @@ class ManageExpansion extends StatelessWidget {
               menuKeys: 'vendoradd',
             ),
             SubMenuItem(
+              title: 'Items',
+              icon: Icons.inventory_2_rounded,
+              iconColor: Color(0xFF10B981), // Emerald
+              menuKey: 'items',
+              menuKeys: 'itemsadd',
+            ),
+            SubMenuItem(
               title: 'Employees',
               icon: Icons.badge_rounded,
               iconColor: Color(0xFF8B5CF6), // Violet
@@ -420,14 +428,74 @@ class ManageExpansion extends StatelessWidget {
               menuKeys: 'employeesadd',
             ),
             SubMenuItem(
-              title: 'Items',
-              icon: Icons.inventory_2_rounded,
-              iconColor: Color(0xFF10B981), // Emerald
-              menuKey: 'items',
-              menuKeys: 'itemsadd',
+              title: 'Work Items',
+              icon: Icons.workspaces_rounded,
+              iconColor: Color(0xFFEC4899),
+              menuKey: 'work-definitions',
+              menuKeys: '',
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class SalaryRunMenuItem extends StatelessWidget {
+  final DashboardViewModel vm;
+
+  const SalaryRunMenuItem({super.key, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final currentLocation = GoRouterState.of(context).matchedLocation;
+    final isSelected = CfRoutes.isSectionActive(
+      currentLocation,
+      'employee-salary',
+    );
+
+    return _MenuTileContainer(
+      isSelected: isSelected,
+      child: ListTile(
+        minLeadingWidth: 0,
+        horizontalTitleGap: 12,
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? LoginColors.primary.withValues(alpha: 0.12)
+                : LoginColors.fieldFill,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            Icons.account_balance_wallet_rounded,
+            color: isSelected ? LoginColors.primary : LoginColors.textTertiary,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          'Run Salary',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+            color: isSelected ? LoginColors.primary : LoginColors.textPrimary,
+            letterSpacing: -0.1,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onTap: () {
+          vm.setSelectedMenu('employee-salary');
+          if (!isSelected && vm.companyId != null) {
+            _closeDrawerAndNavigate(
+              context,
+              path: CfRoutes.employeeSalary(vm.companyId!),
+              currentLocation: currentLocation,
+            );
+            return;
+          }
+          Navigator.pop(context);
+        },
       ),
     );
   }

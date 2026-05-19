@@ -89,7 +89,7 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
                 setState(() => _searchQuery = '');
               },
               scaffoldKey: _scaffoldKey,
-              title: 'Customers (${viewModel.customers.length})',
+              title: 'Customers',
               searchHint: 'Search customers...',
               onTitleTap: _openCustomerProfilePage,
               leadingActions: [

@@ -147,8 +147,8 @@ class CompanyViewModel extends ChangeNotifier {
         postalCode: postalCode,
         publicDescription: publicDescription,
       );
-      final result = await _companyRepo.updateCompany(companyId, data);
-      if (result != null) {
+      final success = await _companyRepo.updateCompany(companyId, data);
+      if (success) {
         await loadCompanies();
         return true;
       }

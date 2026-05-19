@@ -88,7 +88,7 @@ class _ActiveVendorViewState extends State<ActiveVendorView> {
                 setState(() => _searchQuery = '');
               },
               scaffoldKey: _scaffoldKey,
-              title: 'Vendors (${viewModel.vendor.length})',
+              title: 'Vendors',
               searchHint: 'Search vendors...',
               onTitleTap: _openVendorProfilePage,
               leadingActions: [

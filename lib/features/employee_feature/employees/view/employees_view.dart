@@ -79,7 +79,7 @@ class _EmployeesViewState extends State<EmployeesView> {
             setState(() => _searchQuery = '');
           },
           scaffoldKey: _scaffoldKey,
-          title: 'Employees (${viewModel.employees.length})',
+          title: 'Employees',
           searchHint: 'Search employees...',
           onTitleTap: _openEmployeeProfilePage,
           leadingActions: [
