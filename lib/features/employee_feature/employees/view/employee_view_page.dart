@@ -1,7 +1,6 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/data/repositories/employee_repository/employee_repository.dart';
-import 'package:coreflow/domain/model/main_model/analytics/employee_analytics.dart';
 import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
 import 'package:coreflow/features/employee_feature/employees/view_model/employee_view_model.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
@@ -467,8 +466,6 @@ class _EmployeeViewScreenState extends State<_EmployeeViewScreen> {
       children: [
         _createActions(vm),
         const SizedBox(height: 8),
-        _analyticsOverviewCard(vm),
-        const SizedBox(height: 8),
         if (activityItems.isEmpty)
           _emptyCard('No work/leave logs available')
         else
@@ -560,95 +557,7 @@ class _EmployeeViewScreenState extends State<_EmployeeViewScreen> {
     );
   }
 
-  Widget _analyticsOverviewCard(EmployeeViewModel vm) {
-    final overview = vm.analyticsOverview;
-    final daily = vm.dailyAnalytics;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: LoginColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.analytics_outlined,
-                size: 18,
-                color: LoginColors.primary,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Last 30 Days Analytics',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: LoginColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (vm.isAnalyticsLoading && overview == null && daily.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.1,
-                  color: LoginColors.primary,
-                ),
-              ),
-            )
-          else if (overview == null && daily.isEmpty)
-            Text(
-              'Analytics data not available yet',
-              style: TextStyle(
-                fontSize: 12.5,
-                color: LoginColors.textSecondary,
-              ),
-            )
-          else ...[
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _metricChip(
-                  'Work Qty',
-                  (overview?.approvedWorkQuantity ?? 0).toStringAsFixed(2),
-                ),
-                _metricChip(
-                  'Work Amount',
-                  '₹${(overview?.approvedWorkAmount ?? 0).toStringAsFixed(0)}',
-                ),
-                _metricChip(
-                  'Leave Days',
-                  (overview?.approvedLeaveDays ?? 0).toStringAsFixed(1),
-                ),
-                _metricChip(
-                  'Pending',
-                  '${(overview?.pendingWorkLogCount ?? 0) + (overview?.pendingLeaveLogCount ?? 0)}',
-                ),
-              ],
-            ),
-            if (daily.length > 1) ...[
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 88,
-                child: CustomPaint(
-                  painter: _EmployeeAnalyticsPainter(entries: daily),
-                  child: const SizedBox.expand(),
-                ),
-              ),
-            ],
-          ],
-        ],
-      ),
-    );
-  }
+  
 
   Widget _metricChip(String label, String value) {
     return Container(
@@ -1618,70 +1527,3 @@ class _ActivityEntry {
   }
 }
 
-class _EmployeeAnalyticsPainter extends CustomPainter {
-  final List<EmployeeDailyAnalyticsEntry> entries;
-
-  const _EmployeeAnalyticsPainter({required this.entries});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (entries.length < 2) return;
-
-    final workValues = entries
-        .map((entry) => entry.approvedWorkAmount)
-        .toList(growable: false);
-    final leaveValues = entries
-        .map((entry) => entry.approvedLeaveDays)
-        .toList(growable: false);
-    final allValues = [...workValues, ...leaveValues];
-    final maxValue = allValues.fold<double>(0, (max, value) {
-      return value > max ? value : max;
-    });
-    final safeMax = maxValue <= 0 ? 1.0 : maxValue;
-
-    final chartHeight = size.height - 4;
-    final stepX = size.width / (entries.length - 1);
-
-    final gridPaint = Paint()
-      ..color = LoginColors.borderLight
-      ..strokeWidth = 1;
-    for (var i = 0; i < 3; i++) {
-      final y = chartHeight * (i / 2);
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
-    Path buildPath(List<double> values) {
-      final path = Path();
-      for (var i = 0; i < values.length; i++) {
-        final x = i * stepX;
-        final y = chartHeight - (values[i] / safeMax) * chartHeight;
-        if (i == 0) {
-          path.moveTo(x, y);
-        } else {
-          path.lineTo(x, y);
-        }
-      }
-      return path;
-    }
-
-    final workPath = buildPath(workValues);
-    final leavePath = buildPath(leaveValues);
-
-    final workPaint = Paint()
-      ..color = LoginColors.primary
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    final leavePaint = Paint()
-      ..color = LoginColors.success
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    canvas.drawPath(workPath, workPaint);
-    canvas.drawPath(leavePath, leavePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _EmployeeAnalyticsPainter oldDelegate) {
-    return oldDelegate.entries != entries;
-  }
-}

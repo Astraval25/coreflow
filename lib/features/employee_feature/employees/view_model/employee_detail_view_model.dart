@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:coreflow/data/repositories/employee_repository/employee_repository.dart';
 import 'package:coreflow/domain/model/employee_model/employee_detail.dart';
 import 'package:coreflow/domain/model/employee_model/employee_module_models.dart';
+import 'package:coreflow/domain/model/main_model/analytics/employee_analytics.dart';
 import 'package:flutter/material.dart';
 
 enum EmployeeDetailState { initial, loading, loaded, error, noData }
@@ -21,6 +22,9 @@ class EmployeeDetailViewModel extends ChangeNotifier {
   PortalUserData? _portalUser;
   bool _isLoadingPortal = false;
   bool _isPortalBusy = false;
+  List<EmployeeDailyAnalyticsEntry> _dailyAnalytics = const [];
+  EmployeeAnalyticsOverviewEntry? _analyticsOverview;
+  bool _isAnalyticsLoading = false;
 
   EmployeeDetailViewModel({
     required EmployeeRepository employeeRepository,
@@ -51,6 +55,11 @@ class EmployeeDetailViewModel extends ChangeNotifier {
   bool get isPortalBusy => _isPortalBusy;
   bool get hasPortalUser => _portalUser != null;
 
+  List<EmployeeDailyAnalyticsEntry> get dailyAnalytics =>
+      List.unmodifiable(_dailyAnalytics);
+  EmployeeAnalyticsOverviewEntry? get analyticsOverview => _analyticsOverview;
+  bool get isAnalyticsLoading => _isAnalyticsLoading;
+
   Future<void> loadEmployeeDetail() async {
     _setState(EmployeeDetailState.loading);
 
@@ -67,8 +76,9 @@ class EmployeeDetailViewModel extends ChangeNotifier {
 
       _employee = detail;
       _setState(EmployeeDetailState.loaded);
-      // Best-effort fetch portal user — don't block detail load on it.
+      // Best-effort fetch portal user and analytics — don't block detail load on them.
       unawaited(loadPortalUser());
+      unawaited(loadEmployeeAnalytics());
     } catch (e) {
       _setState(
         EmployeeDetailState.error,
@@ -89,6 +99,43 @@ class EmployeeDetailViewModel extends ChangeNotifier {
       _portalUser = null;
     } finally {
       _isLoadingPortal = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadEmployeeAnalytics() async {
+    _isAnalyticsLoading = true;
+    notifyListeners();
+
+    try {
+      final end = DateTime.now();
+      final start = end.subtract(const Duration(days: 29));
+      final startDate = _formatDate(start);
+      final endDate = _formatDate(end);
+
+      final analytics = await Future.wait([
+        _employeeRepository.getEmployeeDailyAnalytics(
+          _companyId,
+          _employeeId,
+          startDate: startDate,
+          endDate: endDate,
+        ),
+        _employeeRepository.getEmployeeAnalyticsOverview(
+          _companyId,
+          startDate: startDate,
+          endDate: endDate,
+        ),
+      ]);
+
+      _dailyAnalytics = analytics[0] as List<EmployeeDailyAnalyticsEntry>;
+      final overview = analytics[1] as List<EmployeeAnalyticsOverviewEntry>;
+      final match = overview.where((entry) => entry.employeeId == _employeeId);
+      _analyticsOverview = match.isNotEmpty ? match.first : null;
+    } catch (_) {
+      _dailyAnalytics = const [];
+      _analyticsOverview = null;
+    } finally {
+      _isAnalyticsLoading = false;
       notifyListeners();
     }
   }
@@ -235,6 +282,12 @@ class EmployeeDetailViewModel extends ChangeNotifier {
     _errorMessage = null;
     _message = null;
     notifyListeners();
+  }
+
+  String _formatDate(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 
   void _setState(EmployeeDetailState state, {String? error}) {

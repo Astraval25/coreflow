@@ -186,10 +186,10 @@ class CustomerOrdersPaymentsSection extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: LoginColors.borderLight),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            Expanded(
+            Padding(
+              padding: const EdgeInsets.only(right: 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -240,16 +240,19 @@ class CustomerOrdersPaymentsSection extends StatelessWidget {
                 ],
               ),
             ),
-            Column(
-              children: [
-                _ViewedTick(isViewed: order.isViewed),
-                const SizedBox(height: 4),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 19,
-                  color: LoginColors.textTertiary,
-                ),
-              ],
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: 19,
+                color: LoginColors.textTertiary,
+              ),
+            ),
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: _ViewedTick(isViewed: order.isViewed),
             ),
           ],
         ),
@@ -281,10 +284,10 @@ class CustomerOrdersPaymentsSection extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: LoginColors.borderLight),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            Expanded(
+            Padding(
+              padding: const EdgeInsets.only(right: 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -329,17 +332,19 @@ class CustomerOrdersPaymentsSection extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            Column(
-              children: [
-                _ViewedTick(isViewed: payment.isViewed),
-                const SizedBox(height: 4),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 19,
-                  color: LoginColors.textTertiary,
-                ),
-              ],
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: 19,
+                color: LoginColors.textTertiary,
+              ),
+            ),
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: _ViewedTick(isViewed: payment.isViewed),
             ),
           ],
         ),
@@ -409,7 +414,10 @@ class _ViewedTick extends StatelessWidget {
   Widget build(BuildContext context) {
     return Icon(
       isViewed ? Icons.done_all_rounded : Icons.done_rounded,
-      size: 15,
+      size: 20,
+      fill: 1,
+      weight: 700,
+      grade: 200,
       color: isViewed ? LoginColors.primary : LoginColors.textTertiary,
     );
   }
