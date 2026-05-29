@@ -1,4 +1,3 @@
-
 class RegisterResponse {
   final bool responseStatus;
   final int responseCode;
@@ -25,14 +24,21 @@ class RegisterResponse {
 }
 
 class RegisterData {
-  final String email;
+  final String? email;
+  final bool emailVerificationRequired;
   final String landingUrl;
 
-  const RegisterData({required this.email, required this.landingUrl});
+  const RegisterData({
+    this.email,
+    required this.emailVerificationRequired,
+    required this.landingUrl,
+  });
 
   factory RegisterData.fromJson(Map<String, dynamic> json) {
     return RegisterData(
-      email: json['email'] ?? '',
+      email: json['email']?.toString(),
+      emailVerificationRequired:
+          json['emailVerificationRequired'] as bool? ?? false,
       landingUrl: json['landingUrl'] ?? '',
     );
   }

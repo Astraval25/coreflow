@@ -9,13 +9,9 @@ class RegisterViewModel extends ChangeNotifier {
   final AuthRepository _authRepository = AuthRepository();
 
   final TextEditingController companyController = TextEditingController();
-  final TextEditingController industryController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController userNameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneNumberController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   bool _isLoading = false;
@@ -28,47 +24,14 @@ class RegisterViewModel extends ChangeNotifier {
   String? get successMessage => _successMessage;
   bool get obscurePassword => _obscurePassword;
 
-  final List<String> industryOptions = [
-    'IT & Software',
-    'Healthcare',
-    'Finance',
-    'Education',
-    'Manufacturing',
-    'Retail',
-    'Logistics',
-    'Real Estate',
-    'Marketing',
-    'Other',
-  ];
-
-  String? _selectedIndustry;
-  String? get selectedIndustry => _selectedIndustry;
-
-  void setIndustry(String value) {
-    _selectedIndustry = value;
-    industryController.text = value;
-    notifyListeners();
-  }
-
   String? validateCompany(String? value) =>
       value?.trim().isEmpty ?? true ? 'Company name required' : null;
 
-  String? validateIndustry(String? value) =>
-      _selectedIndustry?.isEmpty ?? true ? 'Industry required' : null;
-
-  String? validateFirstName(String? value) =>
-      value?.trim().isEmpty ?? true ? 'First name required' : null;
-
-  String? validateLastName(String? value) =>
-      value?.trim().isEmpty ?? true ? 'Last name required' : null;
-
-  String? validateUserName(String? value) =>
-      value?.trim().isEmpty ?? true ? 'Username required' : null;
-
-  String? validateEmail(String? value) {
-    if (value?.trim().isEmpty ?? true) return 'Email required';
-    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!.trim())) {
-      return 'Enter valid email';
+  String? validatePhoneNumber(String? value) {
+    if (value?.trim().isEmpty ?? true) return 'Phone number required';
+    final digits = value!.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length != 10) {
+      return 'Enter a valid 10-digit mobile number';
     }
     return null;
   }
@@ -83,13 +46,11 @@ class RegisterViewModel extends ChangeNotifier {
 
   String? validatePassword(String? value) {
     if (value?.trim().isEmpty ?? true) return 'Password required';
-    if (value!.trim().length < 8) {
-      return 'Password must be at least 8 characters';
+    if (value!.trim().length < 5) {
+      return 'Password must be at least 5 characters';
     }
-    if (!RegExp(
-      r'(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])',
-    ).hasMatch(value.trim())) {
-      return 'Password needs:\n• Uppercase\n• Lowercase\n• Number\n• Special char';
+    if (!RegExp(r'(?=.*[a-z])(?=.*\d)').hasMatch(value.trim())) {
+      return 'Password needs:\n- Lowercase (a-z)\n- Number';
     }
     return null;
   }
@@ -104,7 +65,7 @@ class RegisterViewModel extends ChangeNotifier {
 
     final isValid = formKey.currentState?.validate() ?? false;
     if (!isValid) {
-      _errorMessage = 'currentState';
+      _errorMessage = 'Please fix the highlighted fields.';
       _isLoading = false;
       notifyListeners();
       return;
@@ -118,11 +79,8 @@ class RegisterViewModel extends ChangeNotifier {
     try {
       final request = RegisterRequest(
         companyName: companyController.text.trim(),
-        industry: industryController.text.trim(),
-        firstName: firstNameController.text.trim(),
-        lastName: lastNameController.text.trim(),
-        userName: userNameController.text.trim(),
-        email: emailController.text.trim(),
+        countryCode: '+91',
+        phoneNumber: phoneNumberController.text.trim(),
         password: passwordController.text.trim(),
       );
 
@@ -135,11 +93,21 @@ class RegisterViewModel extends ChangeNotifier {
 
         await Future.delayed(Duration(seconds: 2));
         if (context.mounted) {
-          final email = emailController.text.trim();
-          context.go('${CfRoutes.verifyBase}?email=${Uri.encodeComponent(email)}');
+          final shouldVerify = response.responseData?.emailVerificationRequired;
+          final email = response.responseData?.email?.trim();
+          if (shouldVerify == true && email != null && email.isNotEmpty) {
+            context.go(
+              '${CfRoutes.verifyBase}?email=${Uri.encodeComponent(email)}',
+            );
+          } else {
+            context.go(CfRoutes.login);
+          }
         }
       } else {
-        _errorMessage = response?.responseMessage ?? '$_errorMessage';
+        _errorMessage = _normalizeErrorMessage(
+          response?.responseMessage,
+          fallback: 'Registration failed. Please try again.',
+        );
         _isLoading = false;
         notifyListeners();
       }
@@ -153,13 +121,20 @@ class RegisterViewModel extends ChangeNotifier {
   @override
   void dispose() {
     companyController.dispose();
-    industryController.dispose();
     confirmPasswordController.dispose();
-    firstNameController.dispose();
-    lastNameController.dispose();
-    userNameController.dispose();
-    emailController.dispose();
+    phoneNumberController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+
+  String _normalizeErrorMessage(String? raw, {required String fallback}) {
+    final message = raw?.trim();
+    if (message == null || message.isEmpty || message == 'null') {
+      return fallback;
+    }
+    if (message.toLowerCase() == 'bad credentials') {
+      return 'Invalid phone number or password.';
+    }
+    return message;
   }
 }

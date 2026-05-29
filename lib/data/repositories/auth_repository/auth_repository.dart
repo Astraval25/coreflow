@@ -119,19 +119,30 @@ class AuthRepository {
 
   // ─── Auth ───
 
+  Map<String, dynamic>? _tryDecodeBody(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<LoginResponse?> login(LoginRequest request) async {
     try {
       final response = await _apiService.post(
         AppConfig.loginUrl,
         request.toJson(),
       );
-
-      if (response.statusCode != 200) {
-        debugPrint('Login failed: ${response.statusCode}');
+      final decodedBody = _tryDecodeBody(response.body);
+      if (decodedBody == null) {
+        debugPrint('Login failed: invalid response body');
         return null;
       }
 
-      final decodedBody = jsonDecode(response.body);
+      if (response.statusCode != 200) {
+        debugPrint('Login failed: ${response.statusCode}');
+      }
       return LoginResponse.fromJson(decodedBody);
     } catch (e) {
       debugPrint('Login error: $e');
@@ -139,9 +150,9 @@ class AuthRepository {
     }
   }
 
-  Future<void> saveAuthData(LoginData? data, String email) async {
-    if (data == null || email.isEmpty) {
-      debugPrint('saveAuthData: null data or empty email');
+  Future<void> saveAuthData(LoginData? data, String identifier) async {
+    if (data == null || identifier.isEmpty) {
+      debugPrint('saveAuthData: null data or empty identifier');
       return;
     }
 
@@ -157,10 +168,10 @@ class AuthRepository {
         refreshToken: data.refreshToken,
         roleCode: data.roleCode.isNotEmpty == true ? data.roleCode : null,
         landingUrl: data.landingUrl.isNotEmpty ? data.landingUrl : '/dashboard',
-        email: email.trim(),
+        email: identifier.trim(),
         userName: data.userName?.isNotEmpty == true
-            ? data.userName
-            : email.split('@').first.trim(),
+            ? data.userName!
+            : identifier.trim(),
       );
 
       final verifyData = await TokenStorage.getFullAuthData();
@@ -251,13 +262,15 @@ class AuthRepository {
         AppConfig.registerUrl,
         request.toJson(),
       );
-
-      if (response.statusCode != 200) {
-        debugPrint('Register failed: ${response.statusCode}');
+      final decodedBody = _tryDecodeBody(response.body);
+      if (decodedBody == null) {
+        debugPrint('Register failed: invalid response body');
         return null;
       }
 
-      final decodedBody = jsonDecode(response.body);
+      if (response.statusCode != 200) {
+        debugPrint('Register failed: ${response.statusCode}');
+      }
       return RegisterResponse.fromJson(decodedBody);
     } catch (e) {
       debugPrint('Register error: $e');

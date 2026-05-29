@@ -27,29 +27,32 @@ class LoginData {
   final int companyId;
   final List<int> companyIds;
   final String companyName;
+  final String? email;
   final String landingUrl;
   final String refreshToken;
   final String roleCode;
   final String token;
   final int userId;
-
-  var userName;
+  final String? userName;
 
   LoginData({
     required this.companyId,
     required this.companyIds,
     required this.companyName,
+    this.email,
     required this.landingUrl,
     required this.refreshToken,
     required this.roleCode,
     required this.token,
     required this.userId,
+    this.userName,
   });
   factory LoginData.fromJson(Map<String, dynamic> json) {
     return LoginData(
       companyId: json['companyId'] ?? 0,
       companyIds: List<int>.from(json['companyIds'] ?? []),
       companyName: json['companyName'] ?? '',
+      email: json['email'],
       landingUrl: json['landingUrl'] ?? '',
       refreshToken: json['refreshToken'] ?? '',
       roleCode: json['roleCode'] ?? '',

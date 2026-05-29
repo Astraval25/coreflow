@@ -15,7 +15,8 @@ class LoginViewModel extends ChangeNotifier {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final AuthRepository _authRepository = AuthRepository();
 
-  final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController identifierController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   bool _isLoading = false;
@@ -47,21 +48,27 @@ class LoginViewModel extends ChangeNotifier {
   }
 
   String? validateIdentifier(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return isEmployeeLogin ? 'Username is required' : 'Email is required';
+    if (isEmployeeLogin && (value == null || value.trim().isEmpty)) {
+      return 'Username is required';
     }
-    if (!isEmployeeLogin && value.contains('@')) {
-      const emailRegex = r'^[^@]+@[^@]+\.[^@]+';
-      if (!RegExp(emailRegex).hasMatch(value.trim())) {
-        return 'Enter a valid email';
-      }
+    return null;
+  }
+
+  String? validatePhoneNumber(String? value) {
+    if (!isEmployeeLogin && (value == null || value.trim().isEmpty)) {
+      return 'Phone number is required';
+    }
+
+    final digitsOnly = (value ?? '').replaceAll(RegExp(r'[^0-9]'), '');
+    if (!isEmployeeLogin && digitsOnly.length != 10) {
+      return 'Enter a valid 10-digit mobile number';
     }
     return null;
   }
 
   String? validatePassword(String? value) {
     if (value == null || value.isEmpty) return 'Password is required';
-    if (value.length < 6) return 'Password must be at least 6 characters';
+    if (value.length < 5) return 'Password must be at least 5 characters';
     return null;
   }
 
@@ -90,7 +97,8 @@ class LoginViewModel extends ChangeNotifier {
   Future<void> _loginAdmin(BuildContext context) async {
     try {
       final request = LoginRequest(
-        email: emailController.text.trim(),
+        countryCode: '+91',
+        phoneNumber: phoneController.text.trim(),
         password: passwordController.text,
       );
 
@@ -101,7 +109,7 @@ class LoginViewModel extends ChangeNotifier {
           response.responseData != null) {
         await _authRepository.saveAuthData(
           response.responseData!,
-          emailController.text.trim(),
+          '+91${phoneController.text.trim()}',
         );
         _landingUrl = response.responseData!.landingUrl;
         _successMessage = response.responseMessage;
@@ -117,11 +125,18 @@ class LoginViewModel extends ChangeNotifier {
 
         final landingUrl = _landingUrl!.toLowerCase();
         if (landingUrl.contains('/verify')) {
-          final email = Uri.encodeComponent(emailController.text.trim());
-          await Future.delayed(const Duration(milliseconds: 500));
-          if (context.mounted) {
-            context.go('${CfRoutes.resendOtp}?email=$email');
+          final emailForVerification = response.responseData?.email?.trim();
+          if (emailForVerification != null && emailForVerification.isNotEmpty) {
+            final email = Uri.encodeComponent(emailForVerification);
+            await Future.delayed(const Duration(milliseconds: 500));
+            if (context.mounted) {
+              context.go('${CfRoutes.resendOtp}?email=$email');
+            }
+            return;
           }
+          _errorMessage = 'Email verification is pending for this account.';
+          _isLoading = false;
+          notifyListeners();
           return;
         }
 
@@ -134,19 +149,25 @@ class LoginViewModel extends ChangeNotifier {
           }
         }
       } else {
-        _errorMessage =
-            response?.responseMessage ?? _errorMessage ?? 'Login failed';
+        _errorMessage = _normalizeErrorMessage(
+          response?.responseMessage,
+          fallback:
+              'Login failed. Please check your phone number and password.',
+        );
 
         final errorMsg = _errorMessage!.toLowerCase();
         if (errorMsg.contains('otp') ||
             errorMsg.contains('verify') ||
             errorMsg.contains('resend')) {
-          final email = Uri.encodeComponent(emailController.text.trim());
-          Future.delayed(const Duration(milliseconds: 1000), () {
-            if (context.mounted) {
-              context.go('${CfRoutes.resendOtp}?email=$email');
-            }
-          });
+          final emailForVerification = response?.responseData?.email?.trim();
+          if (emailForVerification != null && emailForVerification.isNotEmpty) {
+            final email = Uri.encodeComponent(emailForVerification);
+            Future.delayed(const Duration(milliseconds: 1000), () {
+              if (context.mounted) {
+                context.go('${CfRoutes.resendOtp}?email=$email');
+              }
+            });
+          }
         }
 
         _isLoading = false;
@@ -162,7 +183,7 @@ class LoginViewModel extends ChangeNotifier {
   Future<void> _loginEmployee(BuildContext context) async {
     try {
       final request = EmployeeLoginRequest(
-        username: emailController.text.trim(),
+        username: identifierController.text.trim(),
         password: passwordController.text,
       );
 
@@ -173,7 +194,7 @@ class LoginViewModel extends ChangeNotifier {
           response.responseData != null) {
         await _authRepository.saveEmployeeAuthData(
           response.responseData,
-          emailController.text.trim(),
+          identifierController.text.trim(),
         );
         _landingUrl = CfRoutes.employeePortalHome;
         _successMessage = response.responseMessage;
@@ -203,8 +224,20 @@ class LoginViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    emailController.dispose();
+    phoneController.dispose();
+    identifierController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+
+  String _normalizeErrorMessage(String? raw, {required String fallback}) {
+    final message = raw?.trim();
+    if (message == null || message.isEmpty || message == 'null') {
+      return fallback;
+    }
+    if (message.toLowerCase() == 'bad credentials') {
+      return 'Invalid phone number or password.';
+    }
+    return message;
   }
 }
