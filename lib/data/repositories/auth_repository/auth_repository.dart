@@ -25,6 +25,7 @@ import 'package:coreflow/domain/model/main_model/config/company_config.dart';
 import 'package:coreflow/domain/model/main_model/customer/create_customer_request.dart';
 import 'package:coreflow/domain/model/main_model/invitation/invitation_response.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_contact_lookup.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_edit_request.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_edit_response.dart';
@@ -602,6 +603,14 @@ class AuthRepository {
     int companyId,
     CreateCustomerRequest request,
   ) => _customerRepo.createCustomer(companyId, request);
+  Future<List<CustomerContactLookupResult>> lookupCustomerContacts(
+    int companyId,
+    List<String> phones,
+  ) => _customerRepo.lookupCustomerContacts(companyId, phones);
+  Future<CustomerEditResponse?> linkCustomerByPhone(
+    int companyId,
+    int customerId,
+  ) => _customerRepo.linkCustomerByPhone(companyId, customerId);
   Future<CustomerStatusResponse?> activateCustomer(
     int companyId,
     int customerId,
@@ -666,6 +675,14 @@ class AuthRepository {
     page: page,
     size: size,
   );
+
+  // Customer connection request methods
+  Future<bool> acceptCustomerConnection(int companyId, int customerId) =>
+      _customerRepo.acceptCustomerConnection(companyId, customerId);
+  Future<bool> rejectCustomerConnection(int companyId, int customerId) =>
+      _customerRepo.rejectCustomerConnection(companyId, customerId);
+  Future<bool> undoCustomerConnection(int companyId, int customerId, String newStatus) =>
+      _customerRepo.undoCustomerConnection(companyId, customerId, newStatus);
 
   // ─── Vendor (delegates to VendorRepository) ───
 
@@ -743,6 +760,14 @@ class AuthRepository {
     page: page,
     size: size,
   );
+
+  // Vendor connection request methods
+  Future<bool> acceptVendorConnection(int companyId, int vendorId) =>
+      _vendorRepo.acceptVendorConnection(companyId, vendorId);
+  Future<bool> rejectVendorConnection(int companyId, int vendorId) =>
+      _vendorRepo.rejectVendorConnection(companyId, vendorId);
+  Future<bool> undoVendorConnection(int companyId, int vendorId, String newStatus) =>
+      _vendorRepo.undoVendorConnection(companyId, vendorId, newStatus);
 
   // ─── Item (delegates to ItemRepository) ───
 

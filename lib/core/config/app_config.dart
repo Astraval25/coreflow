@@ -33,6 +33,10 @@ class AppConfig {
       '/api/companies/{companyId}/customers/{customerId}';
   static const String createCustomerEndpoint =
       '/api/companies/{companyId}/customers';
+  static const String customerContactLookupEndpoint =
+      '/api/companies/{companyId}/customers/contact-lookup';
+  static const String customerLinkByPhoneEndpoint =
+      '/api/companies/{companyId}/customers/{customerId}/link-by-phone';
   static const String customerActivateEndpoint =
       '/api/companies/{companyId}/customers/{customerId}/activate';
   static const String customerDeactivateEndpoint =
@@ -150,6 +154,20 @@ class AppConfig {
   static const String acceptInvitationEndpoint =
       '/api/companies/{companyId}/invitations/{invitationCode}/accept';
 
+  // Connection request endpoints
+  static const String customerConnectionAcceptEndpoint =
+      '/api/companies/{companyId}/customers/{customerId}/connection/accept';
+  static const String customerConnectionRejectEndpoint =
+      '/api/companies/{companyId}/customers/{customerId}/connection/reject';
+  static const String customerConnectionUndoEndpoint =
+      '/api/companies/{companyId}/customers/{customerId}/connection/undo';
+  static const String vendorConnectionAcceptEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/connection/accept';
+  static const String vendorConnectionRejectEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/connection/reject';
+  static const String vendorConnectionUndoEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/connection/undo';
+
   // getters for constructing full URLs
   static String get loginUrl => '$baseUrl$loginEndpoint';
   static String get registerUrl => '$baseUrl$registerEndpoint';
@@ -175,6 +193,12 @@ class AppConfig {
 
   static String getCreateCustomerUrl(int companyId) =>
       '$baseUrl${createCustomerEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getCustomerContactLookupUrl(int companyId) =>
+      '$baseUrl${customerContactLookupEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getCustomerLinkByPhoneUrl(int companyId, int customerId) =>
+      '$baseUrl${customerLinkByPhoneEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
 
   static String getCustomerActivateUrl(int companyId, int customerId) =>
       '$baseUrl${customerActivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
@@ -431,6 +455,25 @@ class AppConfig {
 
   static String getAcceptInvitationUrl(int companyId, String invitationCode) =>
       '$baseUrl${acceptInvitationEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{invitationCode}', invitationCode)}';
+
+  // Connection request URL builders
+  static String getCustomerConnectionAcceptUrl(int companyId, int customerId) =>
+      '$baseUrl${customerConnectionAcceptEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+
+  static String getCustomerConnectionRejectUrl(int companyId, int customerId) =>
+      '$baseUrl${customerConnectionRejectEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+
+  static String getCustomerConnectionUndoUrl(int companyId, int customerId) =>
+      '$baseUrl${customerConnectionUndoEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+
+  static String getVendorConnectionAcceptUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorConnectionAcceptEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+
+  static String getVendorConnectionRejectUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorConnectionRejectEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+
+  static String getVendorConnectionUndoUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorConnectionUndoEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
 
   // Company CRUD URLs
   static String get createCompanyUrl => '$baseUrl$allCompaniesEndpoint';

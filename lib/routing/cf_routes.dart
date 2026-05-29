@@ -43,6 +43,8 @@ class CfRoutes {
   static String customers(int companyId) => '/cf/company/$companyId/customers';
   static String customerCreate(int companyId) =>
       '/cf/company/$companyId/customers/create';
+  static String customerCreateForm(int companyId) =>
+      '/cf/company/$companyId/customers/create/form';
   static String customerDetail(int companyId, int customerId) =>
       '/cf/company/$companyId/customers/$customerId/detail';
   static String customerUpdate(int companyId, int customerId) =>

@@ -444,6 +444,69 @@ class VendorDetailViewModel extends ChangeNotifier {
     }
   }
 
+  // ─── Connection Request ───
+
+  bool _isConnectionLoading = false;
+  bool get isConnectionLoading => _isConnectionLoading;
+
+  Future<bool> acceptConnection() async {
+    _isConnectionLoading = true;
+    notifyListeners();
+    try {
+      final success = await _authRepository.acceptVendorConnection(
+        _companyId,
+        _vendorId,
+      );
+      if (success) await loadVendorDetail();
+      return success;
+    } catch (e) {
+      debugPrint('Accept vendor connection error: $e');
+      return false;
+    } finally {
+      _isConnectionLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> rejectConnection() async {
+    _isConnectionLoading = true;
+    notifyListeners();
+    try {
+      final success = await _authRepository.rejectVendorConnection(
+        _companyId,
+        _vendorId,
+      );
+      if (success) await loadVendorDetail();
+      return success;
+    } catch (e) {
+      debugPrint('Reject vendor connection error: $e');
+      return false;
+    } finally {
+      _isConnectionLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> undoConnectionDecision(String newStatus) async {
+    _isConnectionLoading = true;
+    notifyListeners();
+    try {
+      final success = await _authRepository.undoVendorConnection(
+        _companyId,
+        _vendorId,
+        newStatus,
+      );
+      if (success) await loadVendorDetail();
+      return success;
+    } catch (e) {
+      debugPrint('Undo vendor connection error: $e');
+      return false;
+    } finally {
+      _isConnectionLoading = false;
+      notifyListeners();
+    }
+  }
+
   void _updateState(VendorViewState state, {String? error}) {
     _state = state;
     _errorMessage = error;

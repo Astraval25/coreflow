@@ -369,4 +369,42 @@ class VendorRepository {
       return null;
     }
   }
+
+  // Connection request methods
+
+  Future<bool> acceptVendorConnection(int companyId, int vendorId) async {
+    try {
+      final url = AppConfig.getVendorConnectionAcceptUrl(companyId, vendorId);
+      final response = await _apiService.post(url, {});
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      return body['responseStatus'] == true;
+    } catch (e) {
+      debugPrint('Accept vendor connection error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> rejectVendorConnection(int companyId, int vendorId) async {
+    try {
+      final url = AppConfig.getVendorConnectionRejectUrl(companyId, vendorId);
+      final response = await _apiService.post(url, {});
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      return body['responseStatus'] == true;
+    } catch (e) {
+      debugPrint('Reject vendor connection error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> undoVendorConnection(int companyId, int vendorId, String newStatus) async {
+    try {
+      final url = AppConfig.getVendorConnectionUndoUrl(companyId, vendorId);
+      final response = await _apiService.post(url, {'newStatus': newStatus});
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      return body['responseStatus'] == true;
+    } catch (e) {
+      debugPrint('Undo vendor connection error: $e');
+      return false;
+    }
+  }
 }

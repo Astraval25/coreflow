@@ -401,7 +401,7 @@ class _CustomerProfileSheet extends StatelessWidget {
                 children: [
                   CustomerBasicInfoSection(customer: customer),
                   const CustomerOrderPaymentTrendSection(),
-                  _CustomerCompanyLinkSection(customer: customer),
+                  const _CustomerCompanyLinkSection(),
                   CustomerAddressSection(customer: customer),
                   const CustomerItemSection(),
                 ],
@@ -415,64 +415,161 @@ class _CustomerProfileSheet extends StatelessWidget {
 }
 
 class _CustomerCompanyLinkSection extends StatelessWidget {
-  final CustomerDetailData customer;
-
-  const _CustomerCompanyLinkSection({required this.customer});
+  const _CustomerCompanyLinkSection();
 
   @override
   Widget build(BuildContext context) {
-    final linkedCompany = customer.customerCompany;
-    final linkedName = linkedCompany?.companyName?.trim() ?? '';
-    final companyId = linkedCompany?.companyId;
-    final hasLink = companyId != null && linkedName.isNotEmpty;
+    return Consumer<CustomerDetailViewModel>(
+      builder: (context, vm, _) {
+        final customer = vm.customer;
+        if (customer == null) return const SizedBox.shrink();
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 6),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFB07A00).withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: const Color(0xFFB07A00).withValues(alpha: 0.55),
-          ),
-        ),
-        child: InkWell(
-          onTap: hasLink
-              ? () => context.push(CfRoutes.marketplaceCompany(companyId))
-              : null,
-          borderRadius: BorderRadius.circular(12),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.link_rounded,
-                size: 18,
-                color: Color(0xFFB07A00),
+        final linkedCompany = customer.customerCompany;
+        final linkedName = linkedCompany?.companyName?.trim() ?? '';
+        final companyId = linkedCompany?.companyId;
+        final hasLink = companyId != null && linkedName.isNotEmpty;
+        final canSuggestLink =
+            !hasLink &&
+            vm.linkSuggestion?.hasAccount == true &&
+            customer.phone?.trim().isNotEmpty == true;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 6),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFB07A00).withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: const Color(0xFFB07A00).withValues(alpha: 0.55),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  hasLink ? linkedName : 'Company not linked',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF8A5A00),
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InkWell(
+                  onTap: hasLink
+                      ? () =>
+                            context.push(CfRoutes.marketplaceCompany(companyId))
+                      : null,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.link_rounded,
+                        size: 18,
+                        color: Color(0xFFB07A00),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          hasLink ? linkedName : 'Company not linked',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF8A5A00),
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      if (hasLink)
+                        const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 13,
+                          color: Color(0xFF8A5A00),
+                        ),
+                    ],
                   ),
                 ),
-              ),
-              if (hasLink)
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 13,
-                  color: Color(0xFF8A5A00),
-                ),
-            ],
+                if (!hasLink && vm.isLinkSuggestionLoading) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: const [
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Checking account by phone...',
+                        style: TextStyle(
+                          color: Color(0xFF8A5A00),
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (canSuggestLink) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    'Account found (${vm.linkSuggestion?.accountCompanyName ?? 'CoreFlow company'}). Link now?',
+                    style: const TextStyle(
+                      color: Color(0xFF8A5A00),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton.tonal(
+                    onPressed: vm.isLinkingByPhone
+                        ? null
+                        : () async {
+                            final shouldLink = await showDialog<bool>(
+                              context: context,
+                              builder: (dialogContext) => AlertDialog(
+                                title: const Text('Confirm link'),
+                                content: const Text(
+                                  'Link this customer to the matched CoreFlow account company?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(dialogContext).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () =>
+                                        Navigator.of(dialogContext).pop(true),
+                                    child: const Text('Link now'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (shouldLink != true) return;
+
+                            final success = await vm.linkCustomerByPhone();
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  success
+                                      ? 'Customer linked successfully'
+                                      : (vm.errorMessage ??
+                                            'Failed to link customer'),
+                                ),
+                              ),
+                            );
+                          },
+                    child: vm.isLinkingByPhone
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Link now'),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

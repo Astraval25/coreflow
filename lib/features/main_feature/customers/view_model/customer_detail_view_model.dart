@@ -1,4 +1,5 @@
 import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_contact_lookup.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_mapped_item.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_orders_payments.dart';
@@ -29,6 +30,9 @@ class CustomerDetailViewModel extends ChangeNotifier {
   static const int _ordersPaymentsPageSize = 10;
   List<PartyOrderPaymentTrendEntry> _monthlyOrderPaymentTrend = [];
   bool _isMonthlyOrderPaymentTrendLoading = false;
+  bool _isLinkSuggestionLoading = false;
+  CustomerContactLookupResult? _linkSuggestion;
+  bool _isLinkingByPhone = false;
 
   final int _companyId;
   final int _customerId;
@@ -61,6 +65,9 @@ class CustomerDetailViewModel extends ChangeNotifier {
       List.unmodifiable(_monthlyOrderPaymentTrend);
   bool get isMonthlyOrderPaymentTrendLoading =>
       _isMonthlyOrderPaymentTrendLoading;
+  bool get isLinkSuggestionLoading => _isLinkSuggestionLoading;
+  CustomerContactLookupResult? get linkSuggestion => _linkSuggestion;
+  bool get isLinkingByPhone => _isLinkingByPhone;
   List<CustomerOrder> get ordersOnly => _ordersPayments
       .where((e) => e.isOrder && e.order != null)
       .map((e) => e.order!)
@@ -99,6 +106,7 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
       if (customerData != null) {
         _customer = customerData;
+        await _loadLinkSuggestion();
         await _clearUnreadActivityIfNeeded();
         _updateState(CustomerViewState.loaded);
         loadMappedItems();
@@ -497,10 +505,128 @@ class CustomerDetailViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> linkCustomerByPhone() async {
+    if (_isLinkingByPhone) return false;
+    _isLinkingByPhone = true;
+    notifyListeners();
+
+    try {
+      final response = await _authRepository.linkCustomerByPhone(
+        _companyId,
+        _customerId,
+      );
+
+      if (response != null && response.responseStatus) {
+        await loadCustomerDetail();
+        return true;
+      }
+
+      _errorMessage = response?.responseMessage ?? 'Failed to link customer';
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'Failed to link customer: $e';
+      notifyListeners();
+      return false;
+    } finally {
+      _isLinkingByPhone = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _loadLinkSuggestion() async {
+    final phone = _customer?.phone?.trim();
+    final alreadyLinked = _customer?.customerCompany != null;
+
+    if (alreadyLinked || phone == null || phone.isEmpty) {
+      _linkSuggestion = null;
+      _isLinkSuggestionLoading = false;
+      return;
+    }
+
+    _isLinkSuggestionLoading = true;
+    notifyListeners();
+
+    try {
+      final results = await _authRepository.lookupCustomerContacts(_companyId, [
+        phone,
+      ]);
+      _linkSuggestion = results.isNotEmpty ? results.first : null;
+    } catch (_) {
+      _linkSuggestion = null;
+    } finally {
+      _isLinkSuggestionLoading = false;
+      notifyListeners();
+    }
+  }
+
   void _updateState(CustomerViewState state, {String? error}) {
     _state = state;
     _errorMessage = error;
     notifyListeners();
+  }
+
+  // ─── Connection Request ───
+
+  bool _isConnectionLoading = false;
+  bool get isConnectionLoading => _isConnectionLoading;
+
+  Future<bool> acceptConnection() async {
+    _isConnectionLoading = true;
+    notifyListeners();
+    try {
+      final success = await _authRepository.acceptCustomerConnection(
+        _companyId,
+        _customerId,
+      );
+      if (success) await loadCustomerDetail();
+      return success;
+    } catch (e) {
+      debugPrint('Accept connection error: $e');
+      return false;
+    } finally {
+      _isConnectionLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> rejectConnection() async {
+    _isConnectionLoading = true;
+    notifyListeners();
+    try {
+      final success = await _authRepository.rejectCustomerConnection(
+        _companyId,
+        _customerId,
+      );
+      if (success) await loadCustomerDetail();
+      return success;
+    } catch (e) {
+      debugPrint('Reject connection error: $e');
+      return false;
+    } finally {
+      _isConnectionLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> undoConnectionDecision(String newStatus) async {
+    _isConnectionLoading = true;
+    notifyListeners();
+    try {
+      final success = await _authRepository.undoCustomerConnection(
+        _companyId,
+        _customerId,
+        newStatus,
+      );
+      if (success) await loadCustomerDetail();
+      return success;
+    } catch (e) {
+      debugPrint('Undo connection error: $e');
+      return false;
+    } finally {
+      _isConnectionLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> _clearUnreadActivityIfNeeded() async {

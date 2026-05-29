@@ -1,4 +1,5 @@
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/core/widgets/connection_request_banner.dart';
 import 'package:coreflow/core/widgets/link_company_section.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
 import 'package:coreflow/features/main_feature/customers/view_model/customer_detail_view_model.dart';
@@ -27,6 +28,7 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
 
     return Column(
       children: [
+        _buildConnectionBanner(context, vm, customer),
         _buildLinkCompanyStrip(context, vm, isLinked),
         Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -109,12 +111,74 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
     }
   }
 
+  Widget _buildConnectionBanner(
+    BuildContext context,
+    CustomerDetailViewModel vm,
+    CustomerDetailData customer,
+  ) {
+    if (!customer.hasConnectionRequest) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        CustomerDetailBody._horizontal,
+        6,
+        CustomerDetailBody._horizontal,
+        6,
+      ),
+      child: ConnectionRequestBanner(
+        connectionStatus: customer.connectionStatus!,
+        requesterName: customer.customerName,
+        requesterPhone: customer.phone,
+        requesterEmail: customer.email,
+        isLoading: vm.isConnectionLoading,
+        onAccept: () async {
+          final success = await vm.acceptConnection();
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(success ? 'Connection accepted' : 'Failed to accept'),
+                backgroundColor: success ? Colors.green : Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+        onReject: () async {
+          final success = await vm.rejectConnection();
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(success ? 'Connection rejected' : 'Failed to reject'),
+                backgroundColor: success ? Colors.orange : Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+        onUndo: (newStatus) async {
+          final success = await vm.undoConnectionDecision(newStatus);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(success ? 'Connection updated' : 'Failed to update'),
+                backgroundColor: success ? Colors.green : Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
   Widget _buildLinkCompanyStrip(
     BuildContext context,
     CustomerDetailViewModel vm,
     bool isLinked,
   ) {
     if (isLinked) return const SizedBox.shrink();
+    // Hide manual linking when connection request flow is active
+    if (widget.customer.hasConnectionRequest) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(

@@ -28,6 +28,7 @@ cf/user/:userId/settings/
 ## customers
 cf/company/:companyId/customers
 cf/company/:companyId/customers/create
+cf/company/:companyId/customers/create/form
 cf/company/:companyId/customers/:customerId/update
 cf/company/:companyId/customers/:customerId/detail
 

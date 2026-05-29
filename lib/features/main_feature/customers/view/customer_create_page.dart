@@ -20,8 +20,19 @@ import 'package:go_router/go_router.dart';
 
 class CustomerCreatePage extends StatelessWidget {
   final int companyId;
+  final String? initialPhone;
+  final String? initialCustomerName;
+  final String? initialDisplayName;
+  final String? linkedAccountCompanyName;
 
-  const CustomerCreatePage({super.key, required this.companyId});
+  const CustomerCreatePage({
+    super.key,
+    required this.companyId,
+    this.initialPhone,
+    this.initialCustomerName,
+    this.initialDisplayName,
+    this.linkedAccountCompanyName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,15 +45,32 @@ class CustomerCreatePage extends StatelessWidget {
           create: (_) => CustomerEditViewModel(AuthRepository()),
         ),
       ],
-      child: CustomerCreateScreen(companyId: companyId),
+      child: CustomerCreateScreen(
+        companyId: companyId,
+        initialPhone: initialPhone,
+        initialCustomerName: initialCustomerName,
+        initialDisplayName: initialDisplayName,
+        linkedAccountCompanyName: linkedAccountCompanyName,
+      ),
     );
   }
 }
 
 class CustomerCreateScreen extends StatefulWidget {
   final int companyId;
+  final String? initialPhone;
+  final String? initialCustomerName;
+  final String? initialDisplayName;
+  final String? linkedAccountCompanyName;
 
-  const CustomerCreateScreen({super.key, required this.companyId});
+  const CustomerCreateScreen({
+    super.key,
+    required this.companyId,
+    this.initialPhone,
+    this.initialCustomerName,
+    this.initialDisplayName,
+    this.linkedAccountCompanyName,
+  });
 
   @override
   State<CustomerCreateScreen> createState() => _CustomerCreateScreenState();
@@ -121,6 +149,17 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
   void initState() {
     super.initState();
 
+    if (widget.initialCustomerName?.trim().isNotEmpty == true) {
+      _customerNameController.text = widget.initialCustomerName!.trim();
+    }
+    if (widget.initialDisplayName?.trim().isNotEmpty == true) {
+      _displayNameController.text = widget.initialDisplayName!.trim();
+      _hasEditedDisplayName = true;
+    }
+    if (widget.initialPhone?.trim().isNotEmpty == true) {
+      _phoneController.text = widget.initialPhone!.trim();
+    }
+
     _customerNameController.addListener(_syncDisplayNameIfNotEdited);
 
     _displayNameController.addListener(() {
@@ -183,7 +222,7 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
 
     if (selectedItem != null) {
       final itemId = selectedItem.itemId;
-      
+
       // Create controllers for this item
       _itemPriceControllers[itemId] = TextEditingController(
         text: selectedItem.baseSalesPrice.toString(),
@@ -217,13 +256,13 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
 
   void _removeCustomerItem(int index) {
     final itemId = _selectedItems[index]['itemId'] as int;
-    
+
     // Dispose controllers
     _itemPriceControllers[itemId]?.dispose();
     _itemDescControllers[itemId]?.dispose();
     _itemPriceControllers.remove(itemId);
     _itemDescControllers.remove(itemId);
-    
+
     setState(() {
       _selectedItems.removeAt(index);
     });
@@ -385,12 +424,12 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
     if (mounted) {
       if (result['success']) {
         await Future.delayed(Duration(milliseconds: 800));
-        
+
         if (mounted) {
           setState(() {
             _isCreating = false;
           });
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               duration: Duration(seconds: 2),
@@ -403,7 +442,7 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
         setState(() {
           _isCreating = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             duration: Duration(seconds: 2),
@@ -504,6 +543,45 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        if (widget.linkedAccountCompanyName
+                                ?.trim()
+                                .isNotEmpty ==
+                            true)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 18),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: LoginColors.success.withValues(
+                                alpha: 0.08,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: LoginColors.success.withValues(
+                                  alpha: 0.35,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.link_rounded,
+                                  color: LoginColors.success,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Account found for this phone (${widget.linkedAccountCompanyName}). It will auto-link after save.',
+                                    style: TextStyle(
+                                      color: LoginColors.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         _buildSectionContainer(
                           child: Padding(
                             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -663,7 +741,8 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
                                       ),
                                       const SizedBox(height: 12),
                                       TextFormField(
-                                        controller: _itemPriceControllers[itemId],
+                                        controller:
+                                            _itemPriceControllers[itemId],
                                         decoration: InputDecoration(
                                           labelText: 'Sales Price',
                                           prefixText: '',
@@ -687,7 +766,8 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
                                       ),
                                       const SizedBox(height: 12),
                                       TextFormField(
-                                        controller: _itemDescControllers[itemId],
+                                        controller:
+                                            _itemDescControllers[itemId],
                                         decoration: InputDecoration(
                                           labelText: 'Sales Description',
                                           border: OutlineInputBorder(
@@ -811,7 +891,7 @@ class _CustomerCreateScreenState extends State<CustomerCreateScreen> {
                               color: LoginColors.error.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: LoginColors.error.withValues(alpha:0.3),
+                                color: LoginColors.error.withValues(alpha: 0.3),
                               ),
                             ),
                             child: Row(

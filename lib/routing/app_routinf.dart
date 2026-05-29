@@ -3,6 +3,7 @@ import 'package:coreflow/core/storage/token_storage.dart';
 import 'package:coreflow/features/main_feature/customers/view/customer_create_page.dart';
 import 'package:coreflow/features/main_feature/customers/view/customer_detail_page.dart';
 import 'package:coreflow/features/main_feature/customers/view/customer_edit_page.dart';
+import 'package:coreflow/features/main_feature/customers/view/customer_onboarding_page.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view/notification_page.dart';
 import 'package:coreflow/features/main_feature/items/view/create_item_screen.dart';
 import 'package:coreflow/features/main_feature/items/view/item_detail_view.dart';
@@ -144,8 +145,31 @@ final GoRouter router = GoRouter(
               path: 'create',
               builder: (context, state) {
                 final companyId = int.parse(state.pathParameters['companyId']!);
-                return CustomerCreatePage(companyId: companyId);
+                return CustomerOnboardingPage(companyId: companyId);
               },
+              routes: [
+                GoRoute(
+                  path: 'form',
+                  builder: (context, state) {
+                    final companyId = int.parse(
+                      state.pathParameters['companyId']!,
+                    );
+                    final extras = state.extra is Map<String, dynamic>
+                        ? state.extra as Map<String, dynamic>
+                        : const <String, dynamic>{};
+                    return CustomerCreatePage(
+                      companyId: companyId,
+                      initialPhone: extras['initialPhone']?.toString(),
+                      initialCustomerName: extras['initialCustomerName']
+                          ?.toString(),
+                      initialDisplayName: extras['initialDisplayName']
+                          ?.toString(),
+                      linkedAccountCompanyName:
+                          extras['linkedAccountCompanyName']?.toString(),
+                    );
+                  },
+                ),
+              ],
             ),
             GoRoute(
               path: ':customerId/detail',
