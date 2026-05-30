@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/domain/model/main_model/items/item.dart';
 import 'package:coreflow/domain/model/main_model/items/update_item_request.dart';
+import 'package:coreflow/features/main_feature/items/utils/item_unit_utils.dart';
 import 'package:coreflow/features/main_feature/items/view_model/item_update_view_model.dart';
 import 'package:coreflow/features/main_feature/items/widget/item_image_uploader.dart';
 import 'package:coreflow/features/main_feature/items/widget/item_section_card.dart';
@@ -27,7 +28,7 @@ class UpdateItemScreen extends StatefulWidget {
 
 class _UpdateItemScreenState extends State<UpdateItemScreen> {
   final _formKey = GlobalKey<FormState>();
-  static const List<String> _unitOptions = ['PCE', 'KG', 'ML'];
+  static const List<String> _unitOptions = kBackendUnitOptions;
 
   late TextEditingController _itemNameController;
   late TextEditingController _salesPriceController;
@@ -73,9 +74,7 @@ class _UpdateItemScreenState extends State<UpdateItemScreen> {
       text: item.taxRate?.toString() ?? '',
     );
     _itemType = item.itemType;
-    _selectedUnit = item.unit.trim().isEmpty
-        ? null
-        : item.unit.trim().toUpperCase();
+    _selectedUnit = normalizeItemUnit(item.unit);
     context.read<UpdateItemViewModel>().resetState(notify: false);
   }
 
@@ -159,7 +158,7 @@ class _UpdateItemScreenState extends State<UpdateItemScreen> {
     final request = UpdateItemRequest(
       itemName: _itemNameController.text.trim(),
       itemType: _itemType,
-      unit: _selectedUnit,
+      unit: normalizeItemUnit(_selectedUnit),
       isSellable: _isSellable,
       isPurchasable: _isPurchasable,
       salesDescription: _isSellable

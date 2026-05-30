@@ -1,4 +1,5 @@
 import 'package:coreflow/domain/model/main_model/vendors/vendors_detail.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendor_contact_lookup.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_mapped_item.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendor_orders_payments.dart';
 import 'package:coreflow/domain/model/main_model/invitation/invitation_response.dart';
@@ -26,6 +27,9 @@ class VendorDetailViewModel extends ChangeNotifier {
   bool _hasMoreOrdersPayments = true;
   int _nextOrdersPaymentsPage = 0;
   static const int _ordersPaymentsPageSize = 10;
+  bool _isLinkSuggestionLoading = false;
+  VendorContactLookupResult? _linkSuggestion;
+  bool _isLinkingByPhone = false;
 
   final int _companyId;
   final int _vendorId;
@@ -36,10 +40,9 @@ class VendorDetailViewModel extends ChangeNotifier {
     required int companyId,
     required int vendorId,
     Future<void> Function()? refreshUnreadCount,
-  })
-    : _companyId = companyId,
-      _vendorId = vendorId,
-      _refreshUnreadCount = refreshUnreadCount {
+  }) : _companyId = companyId,
+       _vendorId = vendorId,
+       _refreshUnreadCount = refreshUnreadCount {
     loadVendorDetail();
   }
 
@@ -56,6 +59,9 @@ class VendorDetailViewModel extends ChangeNotifier {
   bool get isOrdersPaymentsLoading => _isOrdersPaymentsLoading;
   bool get isOrdersPaymentsLoadingMore => _isOrdersPaymentsLoadingMore;
   bool get hasMoreOrdersPayments => _hasMoreOrdersPayments;
+  bool get isLinkSuggestionLoading => _isLinkSuggestionLoading;
+  VendorContactLookupResult? get linkSuggestion => _linkSuggestion;
+  bool get isLinkingByPhone => _isLinkingByPhone;
   List<VendorOrder> get ordersOnly => _ordersPayments
       .where((e) => e.isOrder && e.order != null)
       .map((e) => e.order!)
@@ -86,6 +92,7 @@ class VendorDetailViewModel extends ChangeNotifier {
 
       if (vendorData != null) {
         _vendor = vendorData;
+        await _loadLinkSuggestion();
         await _clearUnreadActivityIfNeeded();
         _updateState(VendorViewState.loaded);
         loadMappedItems();
@@ -445,6 +452,61 @@ class VendorDetailViewModel extends ChangeNotifier {
   }
 
   // ─── Connection Request ───
+
+  Future<bool> linkVendorByPhone() async {
+    if (_isLinkingByPhone) return false;
+    _isLinkingByPhone = true;
+    notifyListeners();
+
+    try {
+      final response = await _authRepository.linkVendorByPhone(
+        _companyId,
+        _vendorId,
+      );
+
+      if (response != null && response.responseStatus) {
+        await loadVendorDetail();
+        return true;
+      }
+
+      _errorMessage = response?.responseMessage ?? 'Failed to link vendor';
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'Failed to link vendor: $e';
+      notifyListeners();
+      return false;
+    } finally {
+      _isLinkingByPhone = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _loadLinkSuggestion() async {
+    final phone = _vendor?.phone?.trim();
+    final alreadyLinked = _vendor?.vendorCompany != null;
+
+    if (alreadyLinked || phone == null || phone.isEmpty) {
+      _linkSuggestion = null;
+      _isLinkSuggestionLoading = false;
+      return;
+    }
+
+    _isLinkSuggestionLoading = true;
+    notifyListeners();
+
+    try {
+      final results = await _authRepository.lookupVendorContacts(_companyId, [
+        phone,
+      ]);
+      _linkSuggestion = results.isNotEmpty ? results.first : null;
+    } catch (_) {
+      _linkSuggestion = null;
+    } finally {
+      _isLinkSuggestionLoading = false;
+      notifyListeners();
+    }
+  }
 
   bool _isConnectionLoading = false;
   bool get isConnectionLoading => _isConnectionLoading;

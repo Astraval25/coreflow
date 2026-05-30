@@ -107,6 +107,9 @@ class VendorsDetailData {
   bool get isPendingConnection => connectionStatus == 'PENDING';
   bool get isAcceptedConnection => connectionStatus == 'ACCEPTED';
   bool get isRejectedConnection => connectionStatus == 'REJECTED';
+  bool get isAwaitingCounterpartyAcceptance =>
+      isPendingConnection && acceptedInvitationId != null;
+  bool get isFullyConnected => isAcceptedConnection && vendorCompany != null;
   bool get hasConnectionRequest => connectionStatus != null;
 
   VendorsDetailData({

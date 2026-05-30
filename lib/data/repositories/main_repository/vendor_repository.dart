@@ -5,6 +5,7 @@ import 'package:coreflow/domain/model/main_model/items/item_status_response.dart
 import 'package:coreflow/domain/model/main_model/items/sellable_item.dart';
 import 'package:coreflow/domain/model/main_model/vendors/create_vendors_request.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendor_contact_lookup.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors_detail.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors_edit_request.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors_edit_response.dart';
@@ -113,6 +114,60 @@ class VendorRepository {
       );
     } catch (e) {
       debugPrint('Create vendor error: $e');
+      return null;
+    }
+  }
+
+  Future<List<VendorContactLookupResult>> lookupVendorContacts(
+    int companyId,
+    List<String> phones,
+  ) async {
+    try {
+      if (phones.isEmpty) return const [];
+
+      final response = await _apiService.post(
+        AppConfig.getVendorContactLookupUrl(companyId),
+        {'phones': phones},
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        debugPrint('Vendor contact lookup failed: ${response.statusCode}');
+        return const [];
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final parsed = VendorContactLookupResponse.fromJson(data);
+      if (!parsed.responseStatus) {
+        debugPrint(
+          'Vendor contact lookup responseStatus false: ${parsed.responseMessage}',
+        );
+        return const [];
+      }
+      return parsed.responseData;
+    } catch (e) {
+      debugPrint('Vendor contact lookup error: $e');
+      return const [];
+    }
+  }
+
+  Future<VendorsEditResponse?> linkVendorByPhone(
+    int companyId,
+    int vendorId,
+  ) async {
+    try {
+      final response = await _apiService.post(
+        AppConfig.getVendorLinkByPhoneUrl(companyId, vendorId),
+        {},
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        debugPrint('Link vendor by phone failed: ${response.statusCode}');
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return VendorsEditResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Link vendor by phone error: $e');
       return null;
     }
   }
@@ -311,8 +366,7 @@ class VendorRepository {
     int vendorId,
   ) async {
     try {
-      final url =
-          AppConfig.getVendorPurchasableItemsUrl(companyId, vendorId);
+      final url = AppConfig.getVendorPurchasableItemsUrl(companyId, vendorId);
       final response = await _apiService.get(Uri.parse(url));
 
       final Map<String, dynamic> decodedBody =
@@ -336,9 +390,10 @@ class VendorRepository {
 
   Future<VendorOrdersPaymentsData?> getVendorOrdersPayments(
     int companyId,
-    int vendorId,
-    {int page = 0, int size = 10}
-  ) async {
+    int vendorId, {
+    int page = 0,
+    int size = 10,
+  }) async {
     try {
       final url = AppConfig.getVendorOrdersPaymentsUrl(
         companyId,
@@ -396,7 +451,11 @@ class VendorRepository {
     }
   }
 
-  Future<bool> undoVendorConnection(int companyId, int vendorId, String newStatus) async {
+  Future<bool> undoVendorConnection(
+    int companyId,
+    int vendorId,
+    String newStatus,
+  ) async {
     try {
       final url = AppConfig.getVendorConnectionUndoUrl(companyId, vendorId);
       final response = await _apiService.post(url, {'newStatus': newStatus});

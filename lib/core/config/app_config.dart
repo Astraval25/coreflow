@@ -2,7 +2,16 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppConfig {
   // Base URL for API
-  static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
+  static String get baseUrl {
+    final raw = (dotenv.env['BASE_URL'] ?? '').trim();
+    if (raw.isEmpty) return raw;
+
+    // Production web host serves HTML on plain HTTP; force HTTPS for API calls.
+    if (raw.startsWith('http://coreflow.astraval.com')) {
+      return raw.replaceFirst('http://', 'https://');
+    }
+    return raw;
+  }
 
   // API Endpoints
   static const String loginEndpoint = '/api/auth/login';
@@ -50,6 +59,10 @@ class AppConfig {
       '/api/companies/{companyId}/vendors/{vendorId}';
   static const String createVendorEndpoint =
       '/api/companies/{companyId}/vendors';
+  static const String vendorContactLookupEndpoint =
+      '/api/companies/{companyId}/vendors/contact-lookup';
+  static const String vendorLinkByPhoneEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/link-by-phone';
   static const String vendorActivateEndpoint =
       '/api/companies/{companyId}/vendors/{vendorId}/activate';
   static const String vendorDeactivateEndpoint =
@@ -219,6 +232,12 @@ class AppConfig {
 
   static String getCreateVendorUrl(int companyId) =>
       '$baseUrl${createVendorEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getVendorContactLookupUrl(int companyId) =>
+      '$baseUrl${vendorContactLookupEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getVendorLinkByPhoneUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorLinkByPhoneEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
 
   static String getVendorActivateUrl(int companyId, int vendorId) =>
       '$baseUrl${vendorActivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';

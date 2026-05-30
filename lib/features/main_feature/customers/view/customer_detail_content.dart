@@ -1,5 +1,4 @@
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/core/utils/common_formatters.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
 import 'package:coreflow/routing/cf_routes.dart';
@@ -104,15 +103,6 @@ class CustomerDetailContent extends StatelessWidget {
           },
         ),
         actions: [
-          Consumer<CustomerDetailViewModel>(
-            builder: (context, vm, _) {
-              if (vm.isLoading || vm.customer == null) {
-                return const SizedBox.shrink();
-              }
-              return _CustomerBalanceChip(amount: vm.customer!.dueAmount ?? 0);
-            },
-          ),
-          const SizedBox(width: 6),
           Consumer<CustomerDetailViewModel>(
             builder: (context, vm, child) {
               if (vm.customer == null || vm.isLoading) {
@@ -570,35 +560,6 @@ class _CustomerCompanyLinkSection extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _CustomerBalanceChip extends StatelessWidget {
-  final double amount;
-
-  const _CustomerBalanceChip({required this.amount});
-
-  @override
-  Widget build(BuildContext context) {
-    final isAdvance = amount >= 0;
-    final color = isAdvance ? LoginColors.success : LoginColors.error;
-    return Container(
-      margin: const EdgeInsets.only(right: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
-      ),
-      child: Text(
-        '${isAdvance ? 'Adv' : 'Due'} ${formatMoney(amount.abs())}',
-        style: TextStyle(
-          color: color.withValues(alpha: 0.92),
-          fontSize: 11.5,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
     );
   }
 }

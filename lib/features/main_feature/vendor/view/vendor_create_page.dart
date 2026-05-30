@@ -20,8 +20,19 @@ import 'package:go_router/go_router.dart';
 
 class VendorCreatePage extends StatelessWidget {
   final int companyId;
+  final String? initialPhone;
+  final String? initialVendorName;
+  final String? initialDisplayName;
+  final String? linkedAccountCompanyName;
 
-  const VendorCreatePage({super.key, required this.companyId});
+  const VendorCreatePage({
+    super.key,
+    required this.companyId,
+    this.initialPhone,
+    this.initialVendorName,
+    this.initialDisplayName,
+    this.linkedAccountCompanyName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,15 +45,32 @@ class VendorCreatePage extends StatelessWidget {
           create: (_) => VendorEditViewModel(AuthRepository()),
         ),
       ],
-      child: VendorCreateScreen(companyId: companyId),
+      child: VendorCreateScreen(
+        companyId: companyId,
+        initialPhone: initialPhone,
+        initialVendorName: initialVendorName,
+        initialDisplayName: initialDisplayName,
+        linkedAccountCompanyName: linkedAccountCompanyName,
+      ),
     );
   }
 }
 
 class VendorCreateScreen extends StatefulWidget {
   final int companyId;
+  final String? initialPhone;
+  final String? initialVendorName;
+  final String? initialDisplayName;
+  final String? linkedAccountCompanyName;
 
-  const VendorCreateScreen({super.key, required this.companyId});
+  const VendorCreateScreen({
+    super.key,
+    required this.companyId,
+    this.initialPhone,
+    this.initialVendorName,
+    this.initialDisplayName,
+    this.linkedAccountCompanyName,
+  });
 
   @override
   State<VendorCreateScreen> createState() => _VendorCreateScreenState();
@@ -121,6 +149,17 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
   void initState() {
     super.initState();
 
+    if (widget.initialVendorName?.trim().isNotEmpty == true) {
+      _vendorNameController.text = widget.initialVendorName!.trim();
+    }
+    if (widget.initialDisplayName?.trim().isNotEmpty == true) {
+      _displayNameController.text = widget.initialDisplayName!.trim();
+      _hasEditedDisplayName = true;
+    }
+    if (widget.initialPhone?.trim().isNotEmpty == true) {
+      _phoneController.text = widget.initialPhone!.trim();
+    }
+
     _vendorNameController.addListener(_syncDisplayNameIfNotEdited);
 
     _displayNameController.addListener(() {
@@ -183,7 +222,7 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
 
     if (selectedItem != null) {
       final itemId = selectedItem.itemId;
-      
+
       // Create controllers for this item
       _itemPriceControllers[itemId] = TextEditingController(
         text: selectedItem.basePurchasePrice?.toString() ?? '0',
@@ -217,13 +256,13 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
 
   void _removeVendorItem(int index) {
     final itemId = _selectedItems[index]['itemId'] as int;
-    
+
     // Dispose controllers
     _itemPriceControllers[itemId]?.dispose();
     _itemDescControllers[itemId]?.dispose();
     _itemPriceControllers.remove(itemId);
     _itemDescControllers.remove(itemId);
-    
+
     setState(() {
       _selectedItems.removeAt(index);
     });
@@ -379,7 +418,10 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
     );
 
     if (_selectedItems.isEmpty) {
-      final success = await viewModel.createNewVendor(widget.companyId, request);
+      final success = await viewModel.createNewVendor(
+        widget.companyId,
+        request,
+      );
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -408,12 +450,12 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
     if (mounted) {
       if (result['success']) {
         await Future.delayed(Duration(milliseconds: 800));
-        
+
         if (mounted) {
           setState(() {
             _isCreating = false;
           });
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               duration: Duration(seconds: 2),
@@ -426,7 +468,7 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
         setState(() {
           _isCreating = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             duration: Duration(seconds: 2),
@@ -525,6 +567,45 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        if (widget.linkedAccountCompanyName
+                                ?.trim()
+                                .isNotEmpty ==
+                            true)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 18),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: LoginColors.success.withValues(
+                                alpha: 0.08,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: LoginColors.success.withValues(
+                                  alpha: 0.35,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.link_rounded,
+                                  color: LoginColors.success,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Account found for this phone (${widget.linkedAccountCompanyName}). It will auto-link after save.',
+                                    style: TextStyle(
+                                      color: LoginColors.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         _buildSectionContainer(
                           child: Padding(
                             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -637,7 +718,8 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
                                     ),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
@@ -657,7 +739,8 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
                                               color: LoginColors.error,
                                               size: 20,
                                             ),
-                                            onPressed: () => _removeVendorItem(index),
+                                            onPressed: () =>
+                                                _removeVendorItem(index),
                                             padding: EdgeInsets.zero,
                                             constraints: BoxConstraints(),
                                           ),
@@ -665,12 +748,15 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
                                       ),
                                       const SizedBox(height: 12),
                                       TextFormField(
-                                        controller: _itemPriceControllers[itemId],
+                                        controller:
+                                            _itemPriceControllers[itemId],
                                         decoration: InputDecoration(
                                           labelText: 'Purchase Price',
                                           prefixText: '',
                                           border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                           ),
                                           contentPadding: EdgeInsets.symmetric(
                                             horizontal: 12,
@@ -687,11 +773,14 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
                                       ),
                                       const SizedBox(height: 12),
                                       TextFormField(
-                                        controller: _itemDescControllers[itemId],
+                                        controller:
+                                            _itemDescControllers[itemId],
                                         decoration: InputDecoration(
                                           labelText: 'Purchase Description',
                                           border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                           ),
                                           contentPadding: EdgeInsets.symmetric(
                                             horizontal: 12,
@@ -702,7 +791,9 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
                                         onChanged: (value) {
                                           _updateItemDescription(
                                             index,
-                                            value.trim().isEmpty ? null : value.trim(),
+                                            value.trim().isEmpty
+                                                ? null
+                                                : value.trim(),
                                           );
                                         },
                                       ),

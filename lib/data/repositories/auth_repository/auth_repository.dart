@@ -58,6 +58,7 @@ import 'package:coreflow/domain/model/main_model/sales/sales_order.dart';
 import 'package:coreflow/domain/model/main_model/sales/sales_order_detail.dart'
     as sales_detail;
 import 'package:coreflow/domain/model/main_model/vendors/create_vendors_request.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendor_contact_lookup.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendor_orders_payments.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors_detail.dart';
@@ -137,8 +138,31 @@ class AuthRepository {
       );
       final decodedBody = _tryDecodeBody(response.body);
       if (decodedBody == null) {
-        debugPrint('Login failed: invalid response body');
-        return null;
+        final contentType = response.headers['content-type'] ?? '';
+        final flattenedBody = response.body
+            .replaceAll('\n', ' ')
+            .replaceAll('\r', ' ')
+            .trim();
+        final bodyPreview = flattenedBody.length > 220
+            ? '${flattenedBody.substring(0, 220)}...'
+            : flattenedBody;
+
+        debugPrint(
+          'Login failed: invalid response body '
+          '(status=${response.statusCode}, contentType=$contentType)',
+        );
+        debugPrint('Login body preview: $bodyPreview');
+
+        final isHtml = contentType.toLowerCase().contains('text/html');
+        final hint = isHtml
+            ? 'Server returned HTML instead of API JSON. Check BASE_URL/protocol.'
+            : 'Server returned an unexpected response format.';
+        return LoginResponse(
+          responseStatus: false,
+          responseCode: response.statusCode,
+          responseMessage: hint,
+          responseData: null,
+        );
       }
 
       if (response.statusCode != 200) {
@@ -681,8 +705,11 @@ class AuthRepository {
       _customerRepo.acceptCustomerConnection(companyId, customerId);
   Future<bool> rejectCustomerConnection(int companyId, int customerId) =>
       _customerRepo.rejectCustomerConnection(companyId, customerId);
-  Future<bool> undoCustomerConnection(int companyId, int customerId, String newStatus) =>
-      _customerRepo.undoCustomerConnection(companyId, customerId, newStatus);
+  Future<bool> undoCustomerConnection(
+    int companyId,
+    int customerId,
+    String newStatus,
+  ) => _customerRepo.undoCustomerConnection(companyId, customerId, newStatus);
 
   // ─── Vendor (delegates to VendorRepository) ───
 
@@ -699,6 +726,12 @@ class AuthRepository {
     int companyId,
     CreateVendorsRequest request,
   ) => _vendorRepo.createVendor(companyId, request);
+  Future<List<VendorContactLookupResult>> lookupVendorContacts(
+    int companyId,
+    List<String> phones,
+  ) => _vendorRepo.lookupVendorContacts(companyId, phones);
+  Future<VendorsEditResponse?> linkVendorByPhone(int companyId, int vendorId) =>
+      _vendorRepo.linkVendorByPhone(companyId, vendorId);
   Future<VendorsStatusResponse?> activateVendor(int companyId, int vendorId) =>
       _vendorRepo.activateVendor(companyId, vendorId);
   Future<VendorsStatusResponse?> deactivateVendor(
@@ -766,8 +799,11 @@ class AuthRepository {
       _vendorRepo.acceptVendorConnection(companyId, vendorId);
   Future<bool> rejectVendorConnection(int companyId, int vendorId) =>
       _vendorRepo.rejectVendorConnection(companyId, vendorId);
-  Future<bool> undoVendorConnection(int companyId, int vendorId, String newStatus) =>
-      _vendorRepo.undoVendorConnection(companyId, vendorId, newStatus);
+  Future<bool> undoVendorConnection(
+    int companyId,
+    int vendorId,
+    String newStatus,
+  ) => _vendorRepo.undoVendorConnection(companyId, vendorId, newStatus);
 
   // ─── Item (delegates to ItemRepository) ───
 

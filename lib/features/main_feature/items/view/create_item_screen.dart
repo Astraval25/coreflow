@@ -4,6 +4,7 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/main_model/items/create_item_request.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/features/main_feature/items/utils/item_unit_utils.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/features/main_feature/items/view_model/item_create_view_model.dart';
 import 'package:coreflow/features/main_feature/items/widget/create_item/create_item_form_widgets.dart';
@@ -46,7 +47,7 @@ class CreateItemView extends StatefulWidget {
 class _CreateItemViewState extends State<CreateItemView> {
   final _formKey = GlobalKey<FormState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  static const List<String> _unitOptions = ['PCE', 'KG', 'ML'];
+  static const List<String> _unitOptions = kBackendUnitOptions;
 
   final _itemNameController = TextEditingController();
   final _salesPriceController = TextEditingController();
@@ -148,7 +149,7 @@ class _CreateItemViewState extends State<CreateItemView> {
     final request = CreateItemRequest(
       itemName: _itemNameController.text.trim(),
       itemType: _itemType,
-      unit: _selectedUnit,
+      unit: normalizeItemUnit(_selectedUnit),
       isSellable: _isSellable,
       isPurchasable: _isPurchasable,
       salesDescription: _isSellable

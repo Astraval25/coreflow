@@ -6,10 +6,12 @@ import 'package:url_launcher/url_launcher.dart';
 ///
 /// Shows different content based on the connection status:
 /// - PENDING: Full requester details with Accept/Reject buttons + WhatsApp/Call
+/// - PENDING + awaitingCounterparty: Accepted by current side, waiting for other side
 /// - ACCEPTED: Connected badge with option to undo (reject)
 /// - REJECTED: Rejected badge with option to undo (accept)
 class ConnectionRequestBanner extends StatelessWidget {
   final String connectionStatus;
+  final bool isAwaitingCounterpartyAcceptance;
   final String? requesterName;
   final String? requesterPhone;
   final String? requesterEmail;
@@ -21,6 +23,7 @@ class ConnectionRequestBanner extends StatelessWidget {
   const ConnectionRequestBanner({
     super.key,
     required this.connectionStatus,
+    this.isAwaitingCounterpartyAcceptance = false,
     this.requesterName,
     this.requesterPhone,
     this.requesterEmail,
@@ -33,6 +36,9 @@ class ConnectionRequestBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (connectionStatus == 'PENDING') {
+      if (isAwaitingCounterpartyAcceptance) {
+        return _buildAwaitingCounterpartyBanner(context);
+      }
       return _buildPendingBanner(context);
     } else if (connectionStatus == 'ACCEPTED') {
       return _buildAcceptedBanner(context);
@@ -215,6 +221,89 @@ class ConnectionRequestBanner extends StatelessWidget {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAwaitingCounterpartyBanner(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF93C5FD)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.hourglass_top_rounded,
+                  color: Color(0xFF1D4ED8),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Accepted by you. Waiting for other company.',
+                  style: TextStyle(
+                    color: LoginColors.textPrimary,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (requesterPhone != null && requesterPhone!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _openWhatsApp(requesterPhone!),
+                    icon: const Icon(Icons.chat_rounded, size: 18),
+                    label: const Text('WhatsApp'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF25D366),
+                      side: const BorderSide(color: Color(0xFF25D366)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _makeCall(requesterPhone!),
+                    icon: const Icon(Icons.call_rounded, size: 18),
+                    label: const Text('Call'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: LoginColors.primary,
+                      side: BorderSide(color: LoginColors.primary),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (onUndo != null) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: isLoading ? null : () => onUndo!('REJECTED'),
+                child: const Text('Cancel acceptance'),
+              ),
+            ),
+          ],
         ],
       ),
     );

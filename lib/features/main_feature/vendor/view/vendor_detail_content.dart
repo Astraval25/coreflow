@@ -1,5 +1,4 @@
 import 'package:coreflow/core/theme/colors.dart';
-import 'package:coreflow/core/utils/common_formatters.dart';
 import 'package:coreflow/core/widgets/app_drawer.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors_detail.dart';
 import 'package:coreflow/features/main_feature/vendor/widget/detail/vendor_detail_body.dart';
@@ -106,15 +105,6 @@ class VendorDetailContent extends StatelessWidget {
         actions: [
           Consumer<VendorDetailViewModel>(
             builder: (context, vm, _) {
-              if (vm.isLoading || vm.vendor == null) {
-                return const SizedBox.shrink();
-              }
-              return _VendorBalanceChip(amount: vm.vendor!.dueAmount ?? 0);
-            },
-          ),
-          const SizedBox(width: 6),
-          Consumer<VendorDetailViewModel>(
-            builder: (context, vm, _) {
               if (vm.vendor == null || vm.isLoading) {
                 return const SizedBox(width: 10);
               }
@@ -123,7 +113,7 @@ class VendorDetailContent extends StatelessWidget {
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha:0.18),
+                    color: Colors.white.withValues(alpha: 0.18),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -317,13 +307,7 @@ class VendorDetailContent extends StatelessWidget {
       );
     }
 
-
-
-    return Column(
-      children: [
-        VendorDetailBody(vendor: vm.vendor!),
-      ],
-    );
+    return Column(children: [VendorDetailBody(vendor: vm.vendor!)]);
   }
 
   void _openVendorProfileSheet(BuildContext context, VendorsDetailData vendor) {
@@ -405,7 +389,7 @@ class _VendorProfileSheet extends StatelessWidget {
               child: Column(
                 children: [
                   _VendorProfileDetailsSection(vendor: vendor),
-                  _VendorCompanyLinkSection(vendor: vendor),
+                  const _VendorCompanyLinkSection(),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     child: Column(
@@ -515,96 +499,192 @@ class _VendorProfileDetailsSection extends StatelessWidget {
             ],
           ),
         ),
-        tile(icon: Icons.email_outlined, label: 'Email', value: valueOrDash(vendor.email)),
-        tile(icon: Icons.phone_outlined, label: 'Phone', value: valueOrDash(vendor.phone)),
-        tile(icon: Icons.badge_outlined, label: 'PAN', value: valueOrDash(vendor.pan)),
-        tile(icon: Icons.receipt_long_outlined, label: 'GST', value: valueOrDash(vendor.gst)),
-        tile(icon: Icons.language_rounded, label: 'Language', value: valueOrDash(vendor.lang)),
+        tile(
+          icon: Icons.email_outlined,
+          label: 'Email',
+          value: valueOrDash(vendor.email),
+        ),
+        tile(
+          icon: Icons.phone_outlined,
+          label: 'Phone',
+          value: valueOrDash(vendor.phone),
+        ),
+        tile(
+          icon: Icons.badge_outlined,
+          label: 'PAN',
+          value: valueOrDash(vendor.pan),
+        ),
+        tile(
+          icon: Icons.receipt_long_outlined,
+          label: 'GST',
+          value: valueOrDash(vendor.gst),
+        ),
+        tile(
+          icon: Icons.language_rounded,
+          label: 'Language',
+          value: valueOrDash(vendor.lang),
+        ),
       ],
     );
   }
 }
 
 class _VendorCompanyLinkSection extends StatelessWidget {
-  final VendorsDetailData vendor;
-
-  const _VendorCompanyLinkSection({required this.vendor});
+  const _VendorCompanyLinkSection();
 
   @override
   Widget build(BuildContext context) {
-    final linkedCompany = vendor.vendorCompany;
-    final linkedName = linkedCompany?.companyName?.trim() ?? '';
-    final companyId = linkedCompany?.companyId;
-    final hasLink = companyId != null && linkedName.isNotEmpty;
+    return Consumer<VendorDetailViewModel>(
+      builder: (context, vm, _) {
+        final vendor = vm.vendor;
+        if (vendor == null) return const SizedBox.shrink();
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 6, 20, 10),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFB07A00).withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFB07A00).withValues(alpha: 0.55)),
-        ),
-        child: InkWell(
-          onTap: hasLink ? () => context.push(CfRoutes.marketplaceCompany(companyId)) : null,
-          borderRadius: BorderRadius.circular(12),
-          child: Row(
-            children: [
-              const Icon(Icons.link_rounded, size: 18, color: Color(0xFFB07A00)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  hasLink ? linkedName : 'Company not linked',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF8A5A00),
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
+        final linkedCompany = vendor.vendorCompany;
+        final linkedName = linkedCompany?.companyName?.trim() ?? '';
+        final companyId = linkedCompany?.companyId;
+        final hasLink = companyId != null && linkedName.isNotEmpty;
+        final canSuggestLink =
+            !hasLink &&
+            vm.linkSuggestion?.hasAccount == true &&
+            vendor.phone?.trim().isNotEmpty == true;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 6, 20, 10),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFB07A00).withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: const Color(0xFFB07A00).withValues(alpha: 0.55),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InkWell(
+                  onTap: hasLink
+                      ? () =>
+                            context.push(CfRoutes.marketplaceCompany(companyId))
+                      : null,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.link_rounded,
+                        size: 18,
+                        color: Color(0xFFB07A00),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          hasLink ? linkedName : 'Company not linked',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF8A5A00),
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      if (hasLink)
+                        const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 13,
+                          color: Color(0xFF8A5A00),
+                        ),
+                    ],
                   ),
                 ),
-              ),
-              if (hasLink)
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 13,
-                  color: Color(0xFF8A5A00),
-                ),
-            ],
+                if (!hasLink && vm.isLinkSuggestionLoading) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: const [
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Checking account by phone...',
+                        style: TextStyle(
+                          color: Color(0xFF8A5A00),
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (canSuggestLink) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    'Account found (${vm.linkSuggestion?.accountCompanyName ?? 'CoreFlow company'}). Link now?',
+                    style: const TextStyle(
+                      color: Color(0xFF8A5A00),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton.tonal(
+                    onPressed: vm.isLinkingByPhone
+                        ? null
+                        : () async {
+                            final shouldLink = await showDialog<bool>(
+                              context: context,
+                              builder: (dialogContext) => AlertDialog(
+                                title: const Text('Confirm link'),
+                                content: const Text(
+                                  'Link this vendor to the matched CoreFlow account company?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(dialogContext).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () =>
+                                        Navigator.of(dialogContext).pop(true),
+                                    child: const Text('Link now'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (shouldLink != true) return;
+
+                            final success = await vm.linkVendorByPhone();
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  success
+                                      ? 'Vendor linked successfully'
+                                      : (vm.errorMessage ??
+                                            'Failed to link vendor'),
+                                ),
+                              ),
+                            );
+                          },
+                    child: vm.isLinkingByPhone
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Link now'),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _VendorBalanceChip extends StatelessWidget {
-  final double amount;
-
-  const _VendorBalanceChip({required this.amount});
-
-  @override
-  Widget build(BuildContext context) {
-    final isAdvance = amount >= 0;
-    final color = isAdvance ? LoginColors.success : LoginColors.error;
-    return Container(
-      margin: const EdgeInsets.only(right: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
-      ),
-      child: Text(
-        '${isAdvance ? 'Adv' : 'Due'} ${formatMoney(amount.abs())}',
-        style: TextStyle(
-          color: color.withValues(alpha: 0.92),
-          fontSize: 11.5,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
+        );
+      },
     );
   }
 }
