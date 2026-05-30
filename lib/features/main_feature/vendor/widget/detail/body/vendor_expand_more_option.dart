@@ -28,55 +28,62 @@ class VendorBottomOptionsPanel extends StatelessWidget {
           border: Border.all(color: LoginColors.borderLight),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-          child: Row(
-            children: [
-              Expanded(
-                child: _ActionButton(
-                  icon: Icons.shopping_cart_rounded,
-                  label: 'Create Purchase',
-                  color: LoginColors.primary,
-                  onTap: () => context.push(
-                    CfRoutes.purchaseCreate(vm.companyId),
-                    extra: {
-                      'preSelectedVendor': {
-                        'vendorId': vendor.vendorId,
-                        'displayName': vendor.vendorName,
-                        'vendorCompanyName': vendor.vendorCompany?.companyName ?? '',
-                        'vendorCompanyId': vendor.vendorCompany?.companyId,
-                        'email': vendor.email,
-                        'isActive': vendor.isActive,
-                        'dueAmount': '',
-                      },
-                    },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _ActionButton(
+                      icon: Icons.shopping_cart_rounded,
+                      label: 'Create Purchase',
+                      color: LoginColors.primary,
+                      onTap: () => context.push(
+                        CfRoutes.purchaseCreate(vm.companyId),
+                        extra: {
+                          'preSelectedVendor': {
+                            'vendorId': vendor.vendorId,
+                            'displayName': vendor.vendorName,
+                            'vendorCompanyName':
+                                vendor.vendorCompany?.companyName ?? '',
+                            'vendorCompanyId': vendor.vendorCompany?.companyId,
+                            'email': vendor.email,
+                            'isActive': vendor.isActive,
+                            'dueAmount': '',
+                          },
+                        },
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ActionButton(
-                  icon: Icons.payment_rounded,
-                  label: 'Make Payment',
-                  color: LoginColors.success,
-                  onTap: () => context.push(
-                    CfRoutes.paymentMadeCreate(vm.companyId),
-                    extra: {
-                      'preSelectedVendor': {
-                        'vendorId': vendor.vendorId,
-                        'displayName': vendor.vendorName,
-                        'vendorCompanyName': vendor.vendorCompany?.companyName ?? '',
-                        'vendorCompanyId': vendor.vendorCompany?.companyId,
-                        'email': vendor.email,
-                        'isActive': vendor.isActive,
-                        'dueAmount': '',
-                      },
-                    },
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ActionButton(
+                      icon: Icons.payment_rounded,
+                      label: 'Make Payment',
+                      color: LoginColors.success,
+                      onTap: () => context.push(
+                        CfRoutes.paymentMadeCreate(vm.companyId),
+                        extra: {
+                          'preSelectedVendor': {
+                            'vendorId': vendor.vendorId,
+                            'displayName': vendor.vendorName,
+                            'vendorCompanyName':
+                                vendor.vendorCompany?.companyName ?? '',
+                            'vendorCompanyId': vendor.vendorCompany?.companyId,
+                            'email': vendor.email,
+                            'isActive': vendor.isActive,
+                            'dueAmount': '',
+                          },
+                        },
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -40,8 +40,6 @@ class ConnectionRequestBanner extends StatelessWidget {
         return _buildAwaitingCounterpartyBanner(context);
       }
       return _buildPendingBanner(context);
-    } else if (connectionStatus == 'ACCEPTED') {
-      return _buildAcceptedBanner(context);
     } else if (connectionStatus == 'REJECTED') {
       return _buildRejectedBanner(context);
     }
@@ -309,41 +307,7 @@ class ConnectionRequestBanner extends StatelessWidget {
     );
   }
 
-  Widget _buildAcceptedBanner(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF86EFAC)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 22),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Connected',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF166534),
-              ),
-            ),
-          ),
-          if (onUndo != null)
-            TextButton(
-              onPressed: isLoading ? null : () => onUndo!('REJECTED'),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFDC2626),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              ),
-              child: const Text('Disconnect', style: TextStyle(fontSize: 12)),
-            ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildRejectedBanner(BuildContext context) {
     return Container(

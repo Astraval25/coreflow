@@ -7,7 +7,6 @@ import 'package:coreflow/domain/model/main_model/items/item.dart';
 import 'package:coreflow/domain/model/main_model/items/item_status_response.dart';
 import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 enum VendorViewState { initial, loading, loaded, error, noData }
 
@@ -105,7 +104,7 @@ class VendorDetailViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> activateVendor(BuildContext context) async {
+  Future<bool> activateVendor() async {
     _updateState(VendorViewState.loading);
 
     try {
@@ -116,21 +115,21 @@ class VendorDetailViewModel extends ChangeNotifier {
 
       if (response != null && response.responseStatus == true) {
         await loadVendorDetail();
-        if (context.mounted) {
-          context.pop(true);
-        }
+        return true;
       } else {
         _updateState(
           VendorViewState.error,
           error: response?.responseMessage ?? 'Activate failed',
         );
+        return false;
       }
     } catch (e) {
       _updateState(VendorViewState.error, error: 'Activate error: $e');
+      return false;
     }
   }
 
-  Future<void> deactivateVendor(BuildContext context) async {
+  Future<bool> deactivateVendor() async {
     _updateState(VendorViewState.loading);
 
     try {
@@ -141,17 +140,17 @@ class VendorDetailViewModel extends ChangeNotifier {
 
       if (response != null && response.responseStatus == true) {
         await loadVendorDetail();
-        if (context.mounted) {
-          context.pop(true);
-        }
+        return true;
       } else {
         _updateState(
           VendorViewState.error,
           error: response?.responseMessage ?? 'Deactivate failed',
         );
+        return false;
       }
     } catch (e) {
       _updateState(VendorViewState.error, error: 'Deactivate error: $e');
+      return false;
     }
   }
 

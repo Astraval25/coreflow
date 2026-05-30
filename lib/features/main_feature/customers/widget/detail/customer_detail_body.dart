@@ -7,7 +7,6 @@ import 'package:coreflow/features/main_feature/customers/view_model/customer_det
 import 'package:coreflow/features/main_feature/customers/widget/detail/body/customer_orders_payments_section.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class CustomerDetailBody extends StatefulWidget {
   final CustomerDetailData customer;
@@ -31,7 +30,6 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
     return Column(
       children: [
         _buildConnectionBanner(context, vm, customer),
-        _buildTopActionsBlock(context, customer),
         _buildLinkCompanyStrip(context, vm, isLinked),
         Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -44,12 +42,12 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
             children: [
               Expanded(
                 child: Text(
-                'Orders & Payments',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: LoginColors.textPrimary,
-                ),
+                  'Orders & Payments',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
                 ),
               ),
               _buildFilterDropdown(),
@@ -70,7 +68,10 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       itemBuilder: (context) => const [
         PopupMenuItem(value: TransactionFilter.all, child: Text('All')),
-        PopupMenuItem(value: TransactionFilter.payments, child: Text('Payment')),
+        PopupMenuItem(
+          value: TransactionFilter.payments,
+          child: Text('Payment'),
+        ),
         PopupMenuItem(value: TransactionFilter.orders, child: Text('Order')),
       ],
       child: Container(
@@ -159,7 +160,9 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(success ? 'Connection rejected' : 'Failed to reject'),
+                content: Text(
+                  success ? 'Connection rejected' : 'Failed to reject',
+                ),
                 backgroundColor: success ? Colors.orange : Colors.red,
                 behavior: SnackBarBehavior.floating,
               ),
@@ -171,7 +174,9 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(success ? 'Connection updated' : 'Failed to update'),
+                content: Text(
+                  success ? 'Connection updated' : 'Failed to update',
+                ),
                 backgroundColor: success ? Colors.green : Colors.red,
                 behavior: SnackBarBehavior.floating,
               ),
@@ -182,127 +187,62 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
     );
   }
 
-  Widget _buildTopActionsBlock(
-    BuildContext context,
-    CustomerDetailData customer,
-  ) {
-    if (!customer.isFullyConnected) return const SizedBox.shrink();
-
-    final amount = customer.dueAmount ?? 0.0;
-    final isAdvance = amount >= 0;
-    final amountColor = isAdvance ? LoginColors.success : LoginColors.error;
-    final phone = customer.phone?.trim() ?? '';
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        CustomerDetailBody._horizontal,
-        6,
-        CustomerDetailBody._horizontal,
-        6,
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: LoginColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: LoginColors.borderLight),
-          boxShadow: [
-            BoxShadow(
-              color: LoginColors.shadowLight.withValues(alpha: 0.07),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Quick Actions',
-              style: TextStyle(
-                color: LoginColors.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            if (phone.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _openWhatsApp(context, phone),
-                      icon: const Icon(Icons.chat_rounded, size: 18),
-                      label: const Text('WhatsApp'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF25D366),
-                        side: const BorderSide(color: Color(0xFF25D366)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _makeCall(context, phone),
-                      icon: const Icon(Icons.call_rounded, size: 18),
-                      label: const Text('Call'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: amountColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: amountColor.withValues(alpha: 0.24)),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    isAdvance
-                        ? Icons.trending_up_rounded
-                        : Icons.trending_down_rounded,
-                    color: amountColor,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      isAdvance ? 'Advance Amount' : 'Due Amount',
-                      style: TextStyle(
-                        color: LoginColors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12.5,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    formatMoney(amount.abs()),
-                    style: TextStyle(
-                      color: amountColor,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildLinkCompanyStrip(
     BuildContext context,
     CustomerDetailViewModel vm,
     bool isLinked,
   ) {
-    if (isLinked) return const SizedBox.shrink();
+    if (isLinked) {
+      final linkedName =
+          widget.customer.customerCompany?.companyName?.trim().isNotEmpty ==
+              true
+          ? widget.customer.customerCompany!.companyName!
+          : 'Linked Company';
+      final amount = widget.customer.dueAmount ?? 0.0;
+      final amountColor = amount >= 0 ? LoginColors.success : LoginColors.error;
+
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(
+          CustomerDetailBody._horizontal,
+          6,
+          CustomerDetailBody._horizontal,
+          6,
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: LoginColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: LoginColors.borderLight),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  linkedName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                formatMoney(amount),
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  color: amountColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     // Hide manual linking when connection request flow is active
     if (widget.customer.hasConnectionRequest) return const SizedBox.shrink();
 
@@ -379,33 +319,5 @@ class _CustomerDetailBodyState extends State<CustomerDetailBody> {
         ),
       ),
     );
-  }
-
-  Future<void> _openWhatsApp(BuildContext context, String phone) async {
-    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
-    final whatsappPhone = cleanPhone.startsWith('+')
-        ? cleanPhone.substring(1)
-        : cleanPhone;
-    final launched = await launchUrl(
-      Uri.parse('https://wa.me/$whatsappPhone'),
-      mode: LaunchMode.externalApplication,
-    );
-    if (!launched && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open WhatsApp')),
-      );
-    }
-  }
-
-  Future<void> _makeCall(BuildContext context, String phone) async {
-    final launched = await launchUrl(
-      Uri.parse('tel:$phone'),
-      mode: LaunchMode.externalApplication,
-    );
-    if (!launched && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not start call')),
-      );
-    }
   }
 }

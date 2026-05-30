@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../view_model/vendor_detail_view_model.dart';
-import 'vendor_detail_content.dart';
+import 'vendor_view_page.dart';
 
 class VendorDetailView extends StatelessWidget {
   final int companyId;

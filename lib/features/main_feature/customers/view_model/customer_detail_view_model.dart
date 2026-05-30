@@ -8,7 +8,6 @@ import 'package:coreflow/domain/model/main_model/invitation/invitation_response.
 import 'package:coreflow/domain/model/main_model/items/item.dart';
 import 'package:coreflow/domain/model/main_model/items/item_status_response.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 enum CustomerViewState { initial, loading, loaded, error, noData }
 
@@ -123,7 +122,7 @@ class CustomerDetailViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> activateCustomer(BuildContext context) async {
+  Future<bool> activateCustomer() async {
     _updateState(CustomerViewState.loading);
 
     try {
@@ -134,21 +133,21 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
       if (response != null && response.responseStatus == true) {
         await loadCustomerDetail();
-        if (context.mounted) {
-          context.pop(true);
-        }
+        return true;
       } else {
         _updateState(
           CustomerViewState.error,
           error: response?.responseMessage ?? 'Activate failed',
         );
+        return false;
       }
     } catch (e) {
       _updateState(CustomerViewState.error, error: 'Activate error: $e');
+      return false;
     }
   }
 
-  Future<void> deactivateCustomer(BuildContext context) async {
+  Future<bool> deactivateCustomer() async {
     _updateState(CustomerViewState.loading);
 
     try {
@@ -159,17 +158,17 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
       if (response != null && response.responseStatus == true) {
         await loadCustomerDetail();
-        if (context.mounted) {
-          context.pop(true);
-        }
+        return true;
       } else {
         _updateState(
           CustomerViewState.error,
           error: response?.responseMessage ?? 'Deactivate failed',
         );
+        return false;
       }
     } catch (e) {
       _updateState(CustomerViewState.error, error: 'Deactivate error: $e');
+      return false;
     }
   }
 

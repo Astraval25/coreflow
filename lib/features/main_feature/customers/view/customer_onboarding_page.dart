@@ -348,7 +348,7 @@ class _CustomerOnboardingViewState extends State<_CustomerOnboardingView> {
               _buildStatusCard(
                 icon: Icons.contact_phone_outlined,
                 text:
-                    'Contacts permission denied. You can still use manual number lookup above.',
+                    'Contact access required to show the contacts list. You can still use manual number lookup above.',
               )
             else if (filteredRows.isEmpty)
               _buildStatusCard(

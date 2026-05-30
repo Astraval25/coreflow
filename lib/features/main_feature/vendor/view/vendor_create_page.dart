@@ -117,6 +117,28 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
 
   bool _hasEditedDisplayName = false;
 
+  String? _normalizePhoneForCompare(String? value) {
+    if (value == null) return null;
+    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) return null;
+    if (digits.length >= 10) return digits.substring(digits.length - 10);
+    return digits;
+  }
+
+  bool _isSameAsLoggedInCompanyPhone() {
+    final dashboardVm = context.read<DashboardViewModel>();
+    final companyIndex = dashboardVm.availableCompanies.indexWhere(
+      (c) => c.companyId == widget.companyId,
+    );
+    if (companyIndex < 0) return false;
+    final company = dashboardVm.availableCompanies[companyIndex];
+
+    final vendorPhone = _normalizePhoneForCompare(_phoneController.text);
+    final companyPhone = _normalizePhoneForCompare(company.contactPhone);
+    if (vendorPhone == null || companyPhone == null) return false;
+    return vendorPhone == companyPhone;
+  }
+
   bool _isShippingEqualToBilling() {
     return _shippingAttentionController.text.trim() ==
             _billingAttentionController.text.trim() &&
@@ -330,6 +352,17 @@ class _VendorCreateScreenState extends State<VendorCreateScreen> {
     viewModel.clearError();
 
     if (!_formKey.currentState!.validate()) return;
+    if (_isSameAsLoggedInCompanyPhone()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          duration: Duration(seconds: 2),
+          content: Text(
+            'Vendor phone number cannot be the same as logged-in company phone number',
+          ),
+        ),
+      );
+      return;
+    }
 
     final request = CreateVendorsRequest(
       vendorName: _vendorNameController.text.trim(),
