@@ -27,6 +27,7 @@ class AppConfig {
   static const String marketplaceCompanyItemsEndpoint =
       '/api/marketplace/companies/{companyId}/items';
   static const String refreshTokenEndpoint = '/api/auth/refresh-token';
+  static const String userProfileEndpoint = '/api/users/me';
 
   // Company CRUD endpoints
   static const String companyDetailEndpoint = '/api/companies/{companyId}';
@@ -191,6 +192,7 @@ class AppConfig {
   static String get marketplaceCompaniesUrl =>
       '$baseUrl$marketplaceCompaniesEndpoint';
   static String get refreshTokenUrl => '$baseUrl$refreshTokenEndpoint';
+  static String get userProfileUrl => '$baseUrl$userProfileEndpoint';
   static String getMarketplaceCompanyDetailUrl(int companyId) =>
       '$baseUrl${marketplaceCompanyDetailEndpoint.replaceAll('{companyId}', companyId.toString())}';
   static String getMarketplaceCompanyItemsUrl(int companyId) =>

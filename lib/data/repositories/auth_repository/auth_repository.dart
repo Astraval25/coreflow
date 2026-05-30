@@ -539,6 +539,38 @@ class AuthRepository {
   Future<EmployeeAuthResponse?> employeeRefresh(String refreshToken) =>
       _employeeRepo.employeeRefreshToken(refreshToken);
 
+  Future<Map<String, dynamic>?> getMyUserProfile() async {
+    try {
+      final response = await _apiService.get(
+        Uri.parse(AppConfig.userProfileUrl),
+      );
+      final body = _tryDecodeBody(response.body);
+      if (body == null || body['responseStatus'] != true) return null;
+      final data = body['responseData'];
+      if (data is Map<String, dynamic>) return data;
+      return null;
+    } catch (e) {
+      debugPrint('Get user profile error: $e');
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> updateMyUserProfile(
+    Map<String, dynamic> payload,
+  ) async {
+    try {
+      final response = await _apiService.put(AppConfig.userProfileUrl, payload);
+      final body = _tryDecodeBody(response.body);
+      if (body == null || body['responseStatus'] != true) return null;
+      final data = body['responseData'];
+      if (data is Map<String, dynamic>) return data;
+      return null;
+    } catch (e) {
+      debugPrint('Update user profile error: $e');
+      return null;
+    }
+  }
+
   // ─── Company (delegates to CompanyRepository) ───
 
   Future<List<Company>> getMyCompanies() => _companyRepo.getMyCompanies();
@@ -550,6 +582,8 @@ class AuthRepository {
       _companyRepo.activateCompany(companyId);
   Future<bool> deactivateCompany(int companyId) =>
       _companyRepo.deactivateCompany(companyId);
+  Future<Company?> getCompanyById(int companyId) =>
+      _companyRepo.getCompanyById(companyId);
 
   Future<List<MarketplaceCompany>> getAllCompanies() =>
       _companyRepo.getMarketplaceCompanies();

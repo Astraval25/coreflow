@@ -21,7 +21,6 @@ import 'package:coreflow/features/main_feature/vendor/view/vendor_create_page.da
 import 'package:coreflow/features/main_feature/vendor/view/vendor_detail_page.dart';
 import 'package:coreflow/features/main_feature/vendor/view/vendor_edit_page.dart';
 import 'package:coreflow/features/main_feature/vendor/view/vendor_onboarding_page.dart';
-import 'package:coreflow/features/main_feature/company/view/manage_companies_page.dart';
 import 'package:coreflow/features/main_feature/marketplace/view/marketplace_page.dart';
 import 'package:coreflow/features/main_feature/marketplace/view/company_profile_page.dart';
 import 'package:coreflow/features/main_feature/vendor/view/vendor_page.dart';
@@ -104,12 +103,6 @@ final GoRouter router = GoRouter(
         return MainLayout(child: child);
       },
       routes: [
-        // ── Company Management ──────────────────────────────────────────
-        GoRoute(
-          path: CfRoutes.companyList,
-          builder: (context, state) => const ManageCompaniesPage(),
-        ),
-
         // ── Dashboard ───────────────────────────────────────────────────
         GoRoute(
           path: '/cf/company/:companyId/dashboard',

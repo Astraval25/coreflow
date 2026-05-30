@@ -23,7 +23,6 @@ class CfRoutes {
   static const termsOfService = '/cf/legal/terms-of-service';
 
   // ── Company Management ────────────────────────────────────────────────
-  static const companyList = '/cf/company/list';
   static const companyCreate = '/cf/company/create';
   static String companyDetail(int companyId) => '/cf/company/$companyId/detail';
   static String companyUpdate(int companyId) => '/cf/company/$companyId/update';
