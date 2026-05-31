@@ -572,16 +572,25 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
   Future<bool> acceptConnection() async {
     _isConnectionLoading = true;
+    _errorMessage = null;
     notifyListeners();
     try {
       final success = await _authRepository.acceptCustomerConnection(
         _companyId,
         _customerId,
       );
-      if (success) await loadCustomerDetail();
-      return success;
+      if (success) {
+        _errorMessage = null;
+        await loadCustomerDetail();
+        return true;
+      }
+      _errorMessage = 'Failed to accept connection';
+      notifyListeners();
+      return false;
     } catch (e) {
-      debugPrint('Accept connection error: $e');
+      _errorMessage = _extractErrorMessage(e);
+      debugPrint('Accept connection error: $_errorMessage');
+      notifyListeners();
       return false;
     } finally {
       _isConnectionLoading = false;
@@ -591,16 +600,25 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
   Future<bool> rejectConnection() async {
     _isConnectionLoading = true;
+    _errorMessage = null;
     notifyListeners();
     try {
       final success = await _authRepository.rejectCustomerConnection(
         _companyId,
         _customerId,
       );
-      if (success) await loadCustomerDetail();
-      return success;
+      if (success) {
+        _errorMessage = null;
+        await loadCustomerDetail();
+        return true;
+      }
+      _errorMessage = 'Failed to reject connection';
+      notifyListeners();
+      return false;
     } catch (e) {
-      debugPrint('Reject connection error: $e');
+      _errorMessage = _extractErrorMessage(e);
+      debugPrint('Reject connection error: $_errorMessage');
+      notifyListeners();
       return false;
     } finally {
       _isConnectionLoading = false;
@@ -610,6 +628,7 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
   Future<bool> undoConnectionDecision(String newStatus) async {
     _isConnectionLoading = true;
+    _errorMessage = null;
     notifyListeners();
     try {
       final success = await _authRepository.undoCustomerConnection(
@@ -617,15 +636,32 @@ class CustomerDetailViewModel extends ChangeNotifier {
         _customerId,
         newStatus,
       );
-      if (success) await loadCustomerDetail();
-      return success;
+      if (success) {
+        _errorMessage = null;
+        await loadCustomerDetail();
+        return true;
+      }
+      _errorMessage = 'Failed to update connection';
+      notifyListeners();
+      return false;
     } catch (e) {
-      debugPrint('Undo connection error: $e');
+      _errorMessage = _extractErrorMessage(e);
+      debugPrint('Undo connection error: $_errorMessage');
+      notifyListeners();
       return false;
     } finally {
       _isConnectionLoading = false;
       notifyListeners();
     }
+  }
+
+  String _extractErrorMessage(Object error) {
+    final raw = error.toString().trim();
+    if (raw.startsWith('Exception:')) {
+      final trimmed = raw.replaceFirst('Exception:', '').trim();
+      if (trimmed.isNotEmpty) return trimmed;
+    }
+    return raw.isNotEmpty ? raw : 'Unexpected error';
   }
 
   Future<void> _clearUnreadActivityIfNeeded() async {

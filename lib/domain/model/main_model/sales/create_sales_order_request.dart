@@ -1,6 +1,7 @@
 class CreateSalesOrderRequest {
   final int customerId;
   final DateTime orderDate;
+  final DateTime paymentDueDate;
   final double? taxAmount;
   final double? discountAmount;
   final double? deliveryCharge;
@@ -10,6 +11,7 @@ class CreateSalesOrderRequest {
   CreateSalesOrderRequest({
     required this.customerId,
     required this.orderDate,
+    required this.paymentDueDate,
     this.taxAmount,
     this.discountAmount,
     this.deliveryCharge,
@@ -21,6 +23,7 @@ class CreateSalesOrderRequest {
     return {
       'customerId': customerId,
       'orderDate': orderDate.toIso8601String(),
+      'paymentDueDate': paymentDueDate.toIso8601String(),
       'taxAmount': taxAmount ?? 0.0,
       'discountAmount': discountAmount ?? 0,
       'deliveryCharge': deliveryCharge ?? 0.0,

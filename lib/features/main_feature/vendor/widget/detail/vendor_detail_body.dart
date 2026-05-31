@@ -148,7 +148,9 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
               ? (latest?.isFullyConnected == true
                     ? 'Connection completed'
                     : 'Accepted. Waiting for other company')
-              : 'Failed to accept';
+              : (vm.errorMessage?.trim().isNotEmpty == true
+                    ? vm.errorMessage!
+                    : 'Failed to accept');
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -165,7 +167,11 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  success ? 'Connection rejected' : 'Failed to reject',
+                  success
+                      ? 'Connection rejected'
+                      : (vm.errorMessage?.trim().isNotEmpty == true
+                            ? vm.errorMessage!
+                            : 'Failed to reject'),
                 ),
                 backgroundColor: success ? Colors.orange : Colors.red,
                 behavior: SnackBarBehavior.floating,
@@ -179,7 +185,11 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  success ? 'Connection updated' : 'Failed to update',
+                  success
+                      ? 'Connection updated'
+                      : (vm.errorMessage?.trim().isNotEmpty == true
+                            ? vm.errorMessage!
+                            : 'Failed to update'),
                 ),
                 backgroundColor: success ? Colors.green : Colors.red,
                 behavior: SnackBarBehavior.floating,

@@ -42,6 +42,7 @@ class UpdatePurchaseOrderViewModel extends ChangeNotifier {
   Vendor? _selectedVendor;
   final List<UpdateOrderItemEntry> _orderItems = [];
   DateTime _orderDate = DateTime.now();
+  DateTime _paymentDueDate = DateTime.now().add(const Duration(days: 3));
   double _taxAmount = 0;
   double _discountAmount = 0;
   double _deliveryCharge = 0;
@@ -58,6 +59,7 @@ class UpdatePurchaseOrderViewModel extends ChangeNotifier {
   Vendor? get selectedVendor => _selectedVendor;
   List<UpdateOrderItemEntry> get orderItems => List.unmodifiable(_orderItems);
   DateTime get orderDate => _orderDate;
+  DateTime get paymentDueDate => _paymentDueDate;
   double get taxAmount => _taxAmount;
   double get discountAmount => _discountAmount;
   double get deliveryCharge => _deliveryCharge;
@@ -69,8 +71,7 @@ class UpdatePurchaseOrderViewModel extends ChangeNotifier {
   List<SellableItem> get availableItems => List.unmodifiable(_availableItems);
 
   bool get vendorHasCompany =>
-      _selectedVendor != null &&
-      _selectedVendor!.vendorCompanyName.isNotEmpty;
+      _selectedVendor != null && _selectedVendor!.vendorCompanyName.isNotEmpty;
 
   double get subtotal =>
       _orderItems.fold(0, (sum, entry) => sum + entry.lineTotal);
@@ -91,17 +92,20 @@ class UpdatePurchaseOrderViewModel extends ChangeNotifier {
     );
 
     for (final item in order.orderItems) {
-      _orderItems.add(UpdateOrderItemEntry(
-        itemId: item.itemId,
-        itemName: item.itemName,
-        quantity: item.quantity,
-        updatedPrice: item.unitPrice,
-        itemDescription: item.itemDescription,
-        canEditPriceAndDesc: order.sellerCompanyName.isEmpty,
-      ));
+      _orderItems.add(
+        UpdateOrderItemEntry(
+          itemId: item.itemId,
+          itemName: item.itemName,
+          quantity: item.quantity,
+          updatedPrice: item.unitPrice,
+          itemDescription: item.itemDescription,
+          canEditPriceAndDesc: order.sellerCompanyName.isEmpty,
+        ),
+      );
     }
 
     _orderDate = order.orderDate;
+    _paymentDueDate = order.paymentDueDate;
     _taxAmount = order.taxAmount;
     _discountAmount = order.discountAmount;
     _deliveryCharge = order.deliveryCharge;
@@ -152,14 +156,16 @@ class UpdatePurchaseOrderViewModel extends ChangeNotifier {
     final existing = _orderItems.indexWhere((e) => e.itemId == item.itemId);
     if (existing != -1) return;
 
-    _orderItems.add(UpdateOrderItemEntry(
-      itemId: item.itemId,
-      itemName: item.itemName,
-      quantity: 1,
-      updatedPrice: item.price,
-      itemDescription: item.description.isNotEmpty ? item.description : null,
-      canEditPriceAndDesc: !vendorHasCompany,
-    ));
+    _orderItems.add(
+      UpdateOrderItemEntry(
+        itemId: item.itemId,
+        itemName: item.itemName,
+        quantity: 1,
+        updatedPrice: item.price,
+        itemDescription: item.description.isNotEmpty ? item.description : null,
+        canEditPriceAndDesc: !vendorHasCompany,
+      ),
+    );
     notifyListeners();
   }
 
@@ -215,6 +221,11 @@ class UpdatePurchaseOrderViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setPaymentDueDate(DateTime value) {
+    _paymentDueDate = value;
+    notifyListeners();
+  }
+
   Future<void> submitUpdate() async {
     if (!canSubmit) return;
 
@@ -227,19 +238,22 @@ class UpdatePurchaseOrderViewModel extends ChangeNotifier {
       final body = {
         'vendorId': _selectedVendor!.vendorId,
         'orderDate': _orderDate.toIso8601String(),
+        'paymentDueDate': _paymentDueDate.toIso8601String(),
         'taxAmount': _taxAmount,
         'discountAmount': _discountAmount,
         'deliveryCharge': _deliveryCharge,
         'hasBill': _hasBill,
         'orderItems': _orderItems
-            .map((e) => {
-                  'itemId': e.itemId,
-                  if (e.itemDescription != null &&
-                      e.itemDescription!.trim().isNotEmpty)
-                    'itemDescription': e.itemDescription!.trim(),
-                  'quantity': e.quantity,
-                  'updatedPrice': e.updatedPrice,
-                })
+            .map(
+              (e) => {
+                'itemId': e.itemId,
+                if (e.itemDescription != null &&
+                    e.itemDescription!.trim().isNotEmpty)
+                  'itemDescription': e.itemDescription!.trim(),
+                'quantity': e.quantity,
+                'updatedPrice': e.updatedPrice,
+              },
+            )
             .toList(),
       };
 

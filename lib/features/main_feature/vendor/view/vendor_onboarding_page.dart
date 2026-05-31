@@ -310,15 +310,6 @@ class _VendorOnboardingViewState extends State<_VendorOnboardingView> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(
-              'Search contacts by number and decide quickly: Open, Create, or Invite.',
-              style: TextStyle(
-                color: LoginColors.textSecondary,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 12),
             TextField(
               controller: _searchController,
               onChanged: (_) => setState(() {}),
@@ -330,8 +321,6 @@ class _VendorOnboardingViewState extends State<_VendorOnboardingView> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            _buildManualCard(),
             const SizedBox(height: 12),
             if (_isLoading)
               const Padding(
@@ -358,77 +347,6 @@ class _VendorOnboardingViewState extends State<_VendorOnboardingView> {
               ...filteredRows.map(_buildLookupRow),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildManualCard() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: LoginColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Manual number fallback',
-            style: TextStyle(
-              color: LoginColors.textPrimary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _manualNameController,
-            decoration: const InputDecoration(
-              labelText: 'Vendor name (optional)',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _manualPhoneController,
-            keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: 'Phone number',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton(
-                  onPressed: _isManualLookupLoading
-                      ? null
-                      : _manualLookupAndAct,
-                  child: _isManualLookupLoading
-                      ? const SizedBox(
-                          height: 16,
-                          width: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Lookup'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    _openCreateForm(
-                      phone: _manualPhoneController.text.trim(),
-                      name: _manualNameController.text.trim(),
-                    );
-                  },
-                  child: const Text('Create local'),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

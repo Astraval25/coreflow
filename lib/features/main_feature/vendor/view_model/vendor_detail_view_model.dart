@@ -512,16 +512,25 @@ class VendorDetailViewModel extends ChangeNotifier {
 
   Future<bool> acceptConnection() async {
     _isConnectionLoading = true;
+    _errorMessage = null;
     notifyListeners();
     try {
       final success = await _authRepository.acceptVendorConnection(
         _companyId,
         _vendorId,
       );
-      if (success) await loadVendorDetail();
-      return success;
+      if (success) {
+        _errorMessage = null;
+        await loadVendorDetail();
+        return true;
+      }
+      _errorMessage = 'Failed to accept connection';
+      notifyListeners();
+      return false;
     } catch (e) {
-      debugPrint('Accept vendor connection error: $e');
+      _errorMessage = _extractErrorMessage(e);
+      debugPrint('Accept vendor connection error: $_errorMessage');
+      notifyListeners();
       return false;
     } finally {
       _isConnectionLoading = false;
@@ -531,16 +540,25 @@ class VendorDetailViewModel extends ChangeNotifier {
 
   Future<bool> rejectConnection() async {
     _isConnectionLoading = true;
+    _errorMessage = null;
     notifyListeners();
     try {
       final success = await _authRepository.rejectVendorConnection(
         _companyId,
         _vendorId,
       );
-      if (success) await loadVendorDetail();
-      return success;
+      if (success) {
+        _errorMessage = null;
+        await loadVendorDetail();
+        return true;
+      }
+      _errorMessage = 'Failed to reject connection';
+      notifyListeners();
+      return false;
     } catch (e) {
-      debugPrint('Reject vendor connection error: $e');
+      _errorMessage = _extractErrorMessage(e);
+      debugPrint('Reject vendor connection error: $_errorMessage');
+      notifyListeners();
       return false;
     } finally {
       _isConnectionLoading = false;
@@ -550,6 +568,7 @@ class VendorDetailViewModel extends ChangeNotifier {
 
   Future<bool> undoConnectionDecision(String newStatus) async {
     _isConnectionLoading = true;
+    _errorMessage = null;
     notifyListeners();
     try {
       final success = await _authRepository.undoVendorConnection(
@@ -557,15 +576,32 @@ class VendorDetailViewModel extends ChangeNotifier {
         _vendorId,
         newStatus,
       );
-      if (success) await loadVendorDetail();
-      return success;
+      if (success) {
+        _errorMessage = null;
+        await loadVendorDetail();
+        return true;
+      }
+      _errorMessage = 'Failed to update connection';
+      notifyListeners();
+      return false;
     } catch (e) {
-      debugPrint('Undo vendor connection error: $e');
+      _errorMessage = _extractErrorMessage(e);
+      debugPrint('Undo vendor connection error: $_errorMessage');
+      notifyListeners();
       return false;
     } finally {
       _isConnectionLoading = false;
       notifyListeners();
     }
+  }
+
+  String _extractErrorMessage(Object error) {
+    final raw = error.toString().trim();
+    if (raw.startsWith('Exception:')) {
+      final trimmed = raw.replaceFirst('Exception:', '').trim();
+      if (trimmed.isNotEmpty) return trimmed;
+    }
+    return raw.isNotEmpty ? raw : 'Unexpected error';
   }
 
   void _updateState(VendorViewState state, {String? error}) {

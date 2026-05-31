@@ -432,10 +432,17 @@ class VendorRepository {
       final url = AppConfig.getVendorConnectionAcceptUrl(companyId, vendorId);
       final response = await _apiService.post(url, {});
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      return body['responseStatus'] == true;
+      final success = body['responseStatus'] == true;
+      if (success) return true;
+
+      final message =
+          (body['responseMessage']?.toString().trim().isNotEmpty == true)
+          ? body['responseMessage'].toString()
+          : 'Failed to accept connection';
+      throw Exception(message);
     } catch (e) {
       debugPrint('Accept vendor connection error: $e');
-      return false;
+      rethrow;
     }
   }
 
@@ -444,10 +451,17 @@ class VendorRepository {
       final url = AppConfig.getVendorConnectionRejectUrl(companyId, vendorId);
       final response = await _apiService.post(url, {});
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      return body['responseStatus'] == true;
+      final success = body['responseStatus'] == true;
+      if (success) return true;
+
+      final message =
+          (body['responseMessage']?.toString().trim().isNotEmpty == true)
+          ? body['responseMessage'].toString()
+          : 'Failed to reject connection';
+      throw Exception(message);
     } catch (e) {
       debugPrint('Reject vendor connection error: $e');
-      return false;
+      rethrow;
     }
   }
 
@@ -460,10 +474,17 @@ class VendorRepository {
       final url = AppConfig.getVendorConnectionUndoUrl(companyId, vendorId);
       final response = await _apiService.post(url, {'newStatus': newStatus});
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      return body['responseStatus'] == true;
+      final success = body['responseStatus'] == true;
+      if (success) return true;
+
+      final message =
+          (body['responseMessage']?.toString().trim().isNotEmpty == true)
+          ? body['responseMessage'].toString()
+          : 'Failed to update connection';
+      throw Exception(message);
     } catch (e) {
       debugPrint('Undo vendor connection error: $e');
-      return false;
+      rethrow;
     }
   }
 }

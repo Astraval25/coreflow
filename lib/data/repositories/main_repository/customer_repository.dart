@@ -449,37 +449,68 @@ class CustomerRepository {
 
   Future<bool> acceptCustomerConnection(int companyId, int customerId) async {
     try {
-      final url = AppConfig.getCustomerConnectionAcceptUrl(companyId, customerId);
+      final url = AppConfig.getCustomerConnectionAcceptUrl(
+        companyId,
+        customerId,
+      );
       final response = await _apiService.post(url, {});
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      return body['responseStatus'] == true;
+      final success = body['responseStatus'] == true;
+      if (success) return true;
+
+      final message =
+          (body['responseMessage']?.toString().trim().isNotEmpty == true)
+          ? body['responseMessage'].toString()
+          : 'Failed to accept connection';
+      throw Exception(message);
     } catch (e) {
       debugPrint('Accept customer connection error: $e');
-      return false;
+      rethrow;
     }
   }
 
   Future<bool> rejectCustomerConnection(int companyId, int customerId) async {
     try {
-      final url = AppConfig.getCustomerConnectionRejectUrl(companyId, customerId);
+      final url = AppConfig.getCustomerConnectionRejectUrl(
+        companyId,
+        customerId,
+      );
       final response = await _apiService.post(url, {});
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      return body['responseStatus'] == true;
+      final success = body['responseStatus'] == true;
+      if (success) return true;
+
+      final message =
+          (body['responseMessage']?.toString().trim().isNotEmpty == true)
+          ? body['responseMessage'].toString()
+          : 'Failed to reject connection';
+      throw Exception(message);
     } catch (e) {
       debugPrint('Reject customer connection error: $e');
-      return false;
+      rethrow;
     }
   }
 
-  Future<bool> undoCustomerConnection(int companyId, int customerId, String newStatus) async {
+  Future<bool> undoCustomerConnection(
+    int companyId,
+    int customerId,
+    String newStatus,
+  ) async {
     try {
       final url = AppConfig.getCustomerConnectionUndoUrl(companyId, customerId);
       final response = await _apiService.post(url, {'newStatus': newStatus});
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      return body['responseStatus'] == true;
+      final success = body['responseStatus'] == true;
+      if (success) return true;
+
+      final message =
+          (body['responseMessage']?.toString().trim().isNotEmpty == true)
+          ? body['responseMessage'].toString()
+          : 'Failed to update connection';
+      throw Exception(message);
     } catch (e) {
       debugPrint('Undo customer connection error: $e');
-      return false;
+      rethrow;
     }
   }
 }

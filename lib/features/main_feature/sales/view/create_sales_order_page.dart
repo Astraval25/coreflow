@@ -190,6 +190,24 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     );
   }
 
+  Future<void> _selectPaymentDueDate() async {
+    final vm = context.read<CreateSalesOrderViewModel>();
+    final minDate = DateTime(2000);
+    final maxDate = DateTime.now().add(const Duration(days: 3650));
+    final initialDate = vm.paymentDueDate.isBefore(minDate)
+        ? minDate
+        : (vm.paymentDueDate.isAfter(maxDate) ? maxDate : vm.paymentDueDate);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: minDate,
+      lastDate: maxDate,
+    );
+    if (picked != null && mounted) {
+      vm.setPaymentDueDate(picked);
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -659,7 +677,9 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
             child: TextFormField(
               key: ValueKey('sales-price-${entry.item.itemId}-$priceStr'),
               initialValue: priceStr,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               onFieldSubmitted: (v) {
                 final value = double.tryParse(v.trim());
                 if (value != null && value >= 0) {
@@ -678,7 +698,9 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
             child: TextFormField(
               key: ValueKey('sales-qty-${entry.item.itemId}-$qtyStr'),
               initialValue: qtyStr,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               onFieldSubmitted: (v) {
                 final value = double.tryParse(v.trim());
                 if (value != null && value > 0) {
@@ -702,6 +724,11 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     final delivery = double.tryParse(_deliveryController.text.trim()) ?? 0;
     final subtotal = vm.subtotal;
     final total = subtotal + tax - discount + delivery;
+    final dueInDays = vm.paymentDueDate
+        .difference(
+          DateTime(vm.orderDate.year, vm.orderDate.month, vm.orderDate.day),
+        )
+        .inDays;
 
     return Container(
       width: double.infinity,
@@ -794,6 +821,65 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
                         fontSize: 15,
                         color: LoginColors.textPrimary,
                       ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                InkWell(
+                  onTap: _selectPaymentDueDate,
+                  borderRadius: BorderRadius.circular(10),
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Payment Due Date',
+                      labelStyle: TextStyle(
+                        fontSize: 13,
+                        color: LoginColors.textSecondary,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.event_available_rounded,
+                        size: 18,
+                        color: LoginColors.textTertiary,
+                      ),
+                      filled: true,
+                      fillColor: LoginColors.fieldFill,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: LoginColors.borderLight),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: LoginColors.borderLight),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            DateFormat('dd MMM yyyy').format(vm.paymentDueDate),
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: LoginColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          dueInDays >= 0
+                              ? 'Due in $dueInDays day${dueInDays == 1 ? '' : 's'}'
+                              : 'Overdue by ${-dueInDays} day${dueInDays == -1 ? '' : 's'}',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: dueInDays >= 0
+                                ? LoginColors.primary
+                                : LoginColors.error,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -959,7 +1045,7 @@ class _ItemPickerSheet extends StatefulWidget {
   final Set<int> existingItemIds;
   final Map<int, _ItemDetailResult> existingItemValues;
   final void Function(SellableItem item, _ItemDetailResult detail)
-      onItemSelected;
+  onItemSelected;
   final ValueChanged<SellableItem> onItemRemoved;
   final int companyId;
   final int customerId;
@@ -1347,7 +1433,9 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
             child: TextField(
               controller: priceController,
               enabled: fieldEnabled,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               style: TextStyle(
                 fontSize: 12.5,
                 color: fieldEnabled
@@ -1378,7 +1466,9 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
             child: TextField(
               controller: qtyController,
               enabled: fieldEnabled,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               style: TextStyle(
                 fontSize: 12.5,
                 color: fieldEnabled
@@ -1409,5 +1499,3 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
     );
   }
 }
-
-
