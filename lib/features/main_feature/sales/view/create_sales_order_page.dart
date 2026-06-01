@@ -146,46 +146,44 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
       return;
     }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: LoginColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _ItemPickerSheet(
-        items: items,
-        existingItemIds: vm.orderItems.map((e) => e.item.itemId).toSet(),
-        existingItemValues: {
-          for (final entry in vm.orderItems)
-            entry.item.itemId: _ItemDetailResult(
-              qty: entry.quantity,
-              price: entry.updatedPrice,
-              description: entry.itemDescription,
-            ),
-        },
-        companyId: widget.companyId,
-        customerId: vm.selectedCustomer!.customerId,
-        hostContext: context,
-        onItemsUpdated: vm.reloadSellableItems,
-        onItemSelected: (item, detail) {
-          vm.addOrderItem(item);
-          final idx = vm.orderItems.indexWhere(
-            (entry) => entry.item.itemId == item.itemId,
-          );
-          if (idx == -1) return;
-          vm.updateItemQuantity(idx, detail.qty);
-          vm.updateItemPrice(idx, detail.price);
-          vm.updateItemDescription(idx, detail.description);
-        },
-        onItemRemoved: (item) {
-          final idx = vm.orderItems.indexWhere(
-            (entry) => entry.item.itemId == item.itemId,
-          );
-          if (idx != -1) {
-            vm.removeOrderItem(idx);
-          }
-        },
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _OrderItemSelectionPage(
+          child: _ItemPickerSheet(
+            items: items,
+            existingItemIds: vm.orderItems.map((e) => e.item.itemId).toSet(),
+            existingItemValues: {
+              for (final entry in vm.orderItems)
+                entry.item.itemId: _ItemDetailResult(
+                  qty: entry.quantity,
+                  price: entry.updatedPrice,
+                  description: entry.itemDescription,
+                ),
+            },
+            companyId: widget.companyId,
+            customerId: vm.selectedCustomer!.customerId,
+            hostContext: context,
+            onItemsUpdated: vm.reloadSellableItems,
+            onItemSelected: (item, detail) {
+              vm.addOrderItem(item);
+              final idx = vm.orderItems.indexWhere(
+                (entry) => entry.item.itemId == item.itemId,
+              );
+              if (idx == -1) return;
+              vm.updateItemQuantity(idx, detail.qty);
+              vm.updateItemPrice(idx, detail.price);
+              vm.updateItemDescription(idx, detail.description);
+            },
+            onItemRemoved: (item) {
+              final idx = vm.orderItems.indexWhere(
+                (entry) => entry.item.itemId == item.itemId,
+              );
+              if (idx != -1) {
+                vm.removeOrderItem(idx);
+              }
+            },
+          ),
+        ),
       ),
     );
   }
@@ -614,7 +612,9 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.add_rounded, size: 20),
-              label: Text(vm.isLoadingItems ? 'Loading Items...' : 'Add Item'),
+              label: Text(
+                vm.isLoadingItems ? 'Loading Items...' : 'Manage Items',
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: LoginColors.primary,
                 side: BorderSide(
@@ -672,44 +672,36 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
             ),
           ),
           const SizedBox(width: 8),
-          SizedBox(
-            width: 84,
-            child: TextFormField(
-              key: ValueKey('sales-price-${entry.item.itemId}-$priceStr'),
-              initialValue: priceStr,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                entry.lineTotal.toStringAsFixed(2),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: LoginColors.textPrimary,
+                ),
               ),
-              onFieldSubmitted: (v) {
-                final value = double.tryParse(v.trim());
-                if (value != null && value >= 0) {
-                  vm.updateItemPrice(index, value);
-                }
-              },
-              decoration: const InputDecoration(
-                labelText: 'Price',
-                isDense: true,
+              Text(
+                '$qtyStr x $priceStr',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: LoginColors.textSecondary,
+                ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 70,
-            child: TextFormField(
-              key: ValueKey('sales-qty-${entry.item.itemId}-$qtyStr'),
-              initialValue: qtyStr,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              onFieldSubmitted: (v) {
-                final value = double.tryParse(v.trim());
-                if (value != null && value > 0) {
-                  vm.updateItemQuantity(index, value);
-                }
-              },
-              decoration: const InputDecoration(
-                labelText: 'Qty',
-                isDense: true,
+          const SizedBox(width: 6),
+          InkWell(
+            onTap: _showAddItemSheet,
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.all(2),
+              child: Icon(
+                Icons.edit_rounded,
+                size: 16,
+                color: LoginColors.primary,
               ),
             ),
           ),
@@ -925,6 +917,26 @@ class _ItemDetailResult {
   _ItemDetailResult({required this.qty, required this.price, this.description});
 }
 
+class _OrderItemSelectionPage extends StatelessWidget {
+  final Widget child;
+  const _OrderItemSelectionPage({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: LoginColors.background,
+      appBar: AppBar(
+        title: const Text('Order Items'),
+        backgroundColor: LoginColors.background,
+        foregroundColor: LoginColors.textPrimary,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+      ),
+      body: child,
+    );
+  }
+}
+
 // Item selection result
 
 class _EditableSummaryRow extends StatelessWidget {
@@ -1129,7 +1141,6 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
   }
 
   void _applySelections() {
-    var addedCount = 0;
     for (final item in widget.items) {
       final qtyText = _qtyControllerFor(item.itemId).text.trim();
       final qty = double.tryParse(qtyText);
@@ -1155,21 +1166,10 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
         ),
       );
       _localAddedItemIds.add(item.itemId);
-      addedCount++;
     }
 
     if (!mounted) return;
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(widget.hostContext).showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 2),
-        content: Text(
-          addedCount > 0
-              ? '$addedCount item(s) added'
-              : 'No valid quantity entered',
-        ),
-      ),
-    );
+    Navigator.of(context).pop(true);
   }
 
   Future<void> _openCreateCustomerItemFlow() async {
@@ -1189,12 +1189,6 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
     if (!widget.hostContext.mounted || created != true) return;
     await widget.onItemsUpdated?.call();
     if (!widget.hostContext.mounted) return;
-    ScaffoldMessenger.of(widget.hostContext).showSnackBar(
-      const SnackBar(
-        duration: Duration(seconds: 2),
-        content: Text('Customer item created successfully'),
-      ),
-    );
   }
 
   @override

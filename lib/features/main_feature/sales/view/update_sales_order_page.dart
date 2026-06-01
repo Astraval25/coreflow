@@ -158,78 +158,49 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
       return;
     }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: LoginColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _ItemPickerSheet(
-        items: items,
-        existingItemIds: vm.orderItems.map((e) => e.itemId).toSet(),
-        companyId: widget.companyId,
-        customerId: vm.selectedCustomer!.customerId,
-        hostContext: context,
-        onItemsUpdated: vm.reloadSellableItems,
-        onItemSelected: (item) async {
-          Navigator.pop(context);
-          final result = await _showItemDetailDialog(
-            itemName: item.itemName,
-            initialQty: 1,
-            initialPrice: item.price,
-            initialDesc: item.description.isNotEmpty ? item.description : null,
-          );
-          if (result != null && mounted) {
-            vm.addItemFromCatalog(item);
-            final idx = vm.orderItems.length - 1;
-            vm.updateItemQuantity(idx, result.qty);
-            vm.updateItemPrice(idx, result.price);
-            vm.updateItemDescription(idx, result.description);
-          }
-        },
-      ),
-    );
-  }
-
-  Future<_ItemDetailResult?> _showItemDetailDialog({
-    required String itemName,
-    required double initialQty,
-    required double initialPrice,
-    String? initialDesc,
-    bool isEdit = false,
-  }) {
-    return showModalBottomSheet<_ItemDetailResult>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: LoginColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _ItemDetailSheet(
-        itemName: itemName,
-        initialQty: initialQty,
-        initialPrice: initialPrice,
-        initialDesc: initialDesc,
-        isEdit: isEdit,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _OrderItemSelectionPage(
+          child: _ItemPickerSheet(
+            items: items,
+            existingItemIds: vm.orderItems.map((e) => e.itemId).toSet(),
+            existingItemValues: {
+              for (final entry in vm.orderItems)
+                entry.itemId: _ItemDetailResult(
+                  qty: entry.quantity,
+                  price: entry.updatedPrice,
+                  description: entry.itemDescription,
+                ),
+            },
+            companyId: widget.companyId,
+            customerId: vm.selectedCustomer!.customerId,
+            hostContext: context,
+            onItemsUpdated: vm.reloadSellableItems,
+            onItemSelected: (item, detail) {
+              final existingIdx = vm.orderItems.indexWhere(
+                (e) => e.itemId == item.itemId,
+              );
+              if (existingIdx == -1) {
+                vm.addItemFromCatalog(item);
+              }
+              final idx = vm.orderItems.indexWhere(
+                (e) => e.itemId == item.itemId,
+              );
+              if (idx == -1) return;
+              vm.updateItemQuantity(idx, detail.qty);
+              vm.updateItemPrice(idx, detail.price);
+              vm.updateItemDescription(idx, detail.description);
+            },
+            onItemRemoved: (item) {
+              final idx = vm.orderItems.indexWhere(
+                (e) => e.itemId == item.itemId,
+              );
+              if (idx != -1) vm.removeOrderItem(idx);
+            },
+          ),
+        ),
       ),
     );
-  }
-
-  void _showEditItemDialog(UpdateSalesOrderViewModel vm, int index) async {
-    final entry = vm.orderItems[index];
-    final result = await _showItemDetailDialog(
-      itemName: entry.itemName,
-      initialQty: entry.quantity,
-      initialPrice: entry.updatedPrice,
-      initialDesc: entry.itemDescription,
-      isEdit: true,
-    );
-    if (result != null && mounted) {
-      vm.updateItemQuantity(index, result.qty);
-      vm.updateItemPrice(index, result.price);
-      vm.updateItemDescription(index, result.description);
-    }
   }
 
   Future<void> _submit() async {
@@ -646,7 +617,9 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.add_rounded, size: 20),
-              label: Text(vm.isLoadingItems ? 'Loading Items...' : 'Add Item'),
+              label: Text(
+                vm.isLoadingItems ? 'Loading Items...' : 'Manage Items',
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: LoginColors.primary,
                 side: BorderSide(
@@ -675,60 +648,75 @@ class _UpdateSalesOrderViewState extends State<_UpdateSalesOrderView> {
         ? entry.updatedPrice.toInt().toString()
         : entry.updatedPrice.toStringAsFixed(2);
 
-    return InkWell(
-      onTap: () => _showEditItemDialog(vm, index),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            InkWell(
-              onTap: () => vm.removeOrderItem(index),
-              borderRadius: BorderRadius.circular(4),
-              child: Padding(
-                padding: const EdgeInsets.only(right: 8, top: 1),
-                child: Icon(
-                  Icons.close_rounded,
-                  size: 16,
-                  color: LoginColors.error,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: () => vm.removeOrderItem(index),
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8, top: 1),
+              child: Icon(
+                Icons.close_rounded,
+                size: 16,
+                color: LoginColors.error,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.itemName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$qtyStr x $priceStr',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: LoginColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                entry.lineTotal.toStringAsFixed(2),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: LoginColors.textPrimary,
                 ),
               ),
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    entry.itemName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: LoginColors.textPrimary,
-                    ),
+              const SizedBox(height: 2),
+              InkWell(
+                onTap: _showAddItemSheet,
+                borderRadius: BorderRadius.circular(4),
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: Icon(
+                    Icons.edit_rounded,
+                    size: 16,
+                    color: LoginColors.primary,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$qtyStr x $priceStr',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      color: LoginColors.textSecondary,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-            Text(
-              entry.lineTotal.toStringAsFixed(2),
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: LoginColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -939,232 +927,27 @@ class _ItemDetailResult {
   _ItemDetailResult({required this.qty, required this.price, this.description});
 }
 
-// ── Item Detail Sheet ──────────────────────────────────────────
-
-class _ItemDetailSheet extends StatefulWidget {
-  final String itemName;
-  final double initialQty;
-  final double initialPrice;
-  final String? initialDesc;
-  final bool isEdit;
-
-  const _ItemDetailSheet({
-    required this.itemName,
-    required this.initialQty,
-    required this.initialPrice,
-    this.initialDesc,
-    this.isEdit = false,
-  });
-
-  @override
-  State<_ItemDetailSheet> createState() => _ItemDetailSheetState();
-}
-
-class _ItemDetailSheetState extends State<_ItemDetailSheet> {
-  final _formKey = GlobalKey<FormState>();
-  late TextEditingController _qtyController;
-  late TextEditingController _priceController;
-  late TextEditingController _descController;
-
-  @override
-  void initState() {
-    super.initState();
-    _qtyController = TextEditingController(
-      text: widget.initialQty % 1 == 0
-          ? widget.initialQty.toInt().toString()
-          : widget.initialQty.toString(),
-    );
-    _priceController = TextEditingController(
-      text: widget.initialPrice % 1 == 0
-          ? widget.initialPrice.toInt().toString()
-          : widget.initialPrice.toString(),
-    );
-    _descController = TextEditingController(text: widget.initialDesc ?? '');
-  }
-
-  @override
-  void dispose() {
-    _qtyController.dispose();
-    _priceController.dispose();
-    _descController.dispose();
-    super.dispose();
-  }
-
-  void _confirm() {
-    if (!_formKey.currentState!.validate()) return;
-    final qty = double.tryParse(_qtyController.text.trim()) ?? 1;
-    final price = double.tryParse(_priceController.text.trim()) ?? 0;
-    final desc = _descController.text.trim();
-    Navigator.pop(
-      context,
-      _ItemDetailResult(
-        qty: qty,
-        price: price,
-        description: desc.isEmpty ? null : desc,
-      ),
-    );
-  }
+class _OrderItemSelectionPage extends StatelessWidget {
+  final Widget child;
+  const _OrderItemSelectionPage({required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        16,
-        20,
-        MediaQuery.of(context).viewInsets.bottom + 20,
+    return Scaffold(
+      backgroundColor: LoginColors.background,
+      appBar: AppBar(
+        title: const Text('Order Items'),
+        backgroundColor: LoginColors.background,
+        foregroundColor: LoginColors.textPrimary,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
       ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: LoginColors.borderLight,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              widget.itemName,
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: LoginColors.textPrimary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: _sheetField(
-                    label: 'Quantity',
-                    controller: _qtyController,
-                    icon: Icons.numbers_rounded,
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Required';
-                      final n = double.tryParse(v);
-                      if (n == null || n <= 0) return 'Must be > 0';
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _sheetField(
-                    label: 'Price',
-                    controller: _priceController,
-                    icon: Icons.currency_rupee_rounded,
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Required';
-                      final n = double.tryParse(v);
-                      if (n == null || n < 0) return 'Invalid';
-                      return null;
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            _sheetField(
-              label: 'Description (optional)',
-              controller: _descController,
-              icon: Icons.notes_rounded,
-              isNumber: false,
-              maxLines: 2,
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: FilledButton(
-                onPressed: _confirm,
-                style: FilledButton.styleFrom(
-                  backgroundColor: LoginColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  widget.isEdit ? 'Update Item' : 'Add Item',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _sheetField({
-    required String label,
-    required TextEditingController controller,
-    required IconData icon,
-    bool isNumber = true,
-    int maxLines = 1,
-    bool enabled = true,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      enabled: enabled,
-      keyboardType: isNumber
-          ? const TextInputType.numberWithOptions(decimal: true)
-          : TextInputType.text,
-      style: TextStyle(
-        fontSize: 15,
-        color: enabled ? LoginColors.textPrimary : LoginColors.textTertiary,
-      ),
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(fontSize: 13, color: LoginColors.textSecondary),
-        prefixIcon: Icon(icon, size: 18, color: LoginColors.textTertiary),
-        filled: true,
-        fillColor: enabled
-            ? LoginColors.fieldFill
-            : LoginColors.fieldFill.withValues(alpha: 0.5),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 12,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: LoginColors.borderLight),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: LoginColors.borderLight),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(
-            color: LoginColors.borderLight.withValues(alpha: 0.5),
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: LoginColors.primary, width: 1.2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: LoginColors.error),
-        ),
-      ),
+      body: child,
     );
   }
 }
+
+// ── Item Detail Sheet ──────────────────────────────────────────
 
 // ── Editable Summary Row ──────────────────────────────────────
 
@@ -1284,7 +1067,10 @@ class _SummaryRow extends StatelessWidget {
 class _ItemPickerSheet extends StatefulWidget {
   final List<SellableItem> items;
   final Set<int> existingItemIds;
-  final ValueChanged<SellableItem> onItemSelected;
+  final Map<int, _ItemDetailResult> existingItemValues;
+  final void Function(SellableItem item, _ItemDetailResult detail)
+  onItemSelected;
+  final ValueChanged<SellableItem> onItemRemoved;
   final int companyId;
   final int customerId;
   final BuildContext hostContext;
@@ -1293,7 +1079,9 @@ class _ItemPickerSheet extends StatefulWidget {
   const _ItemPickerSheet({
     required this.items,
     required this.existingItemIds,
+    required this.existingItemValues,
     required this.onItemSelected,
+    required this.onItemRemoved,
     required this.companyId,
     required this.customerId,
     required this.hostContext,
@@ -1306,12 +1094,94 @@ class _ItemPickerSheet extends StatefulWidget {
 
 class _ItemPickerSheetState extends State<_ItemPickerSheet> {
   final _searchController = TextEditingController();
-  String _query = '';
+  final Map<int, TextEditingController> _qtyControllers = {};
+  final Map<int, TextEditingController> _priceControllers = {};
+  late final Set<int> _localAddedItemIds;
+  bool _showAll = true;
+
+  List<SellableItem> _applySearch(List<SellableItem> items) {
+    final q = _searchController.text.trim().toLowerCase();
+    if (q.isEmpty) return items;
+    return items.where((i) => i.itemName.toLowerCase().contains(q)).toList();
+  }
+
+  bool get _hasBaseItems => widget.items.any((i) => i.source == 'ITEM_BASE');
+  bool get _hasCustomerItems =>
+      widget.items.any((i) => i.source != 'ITEM_BASE');
+
+  TextEditingController _qtyControllerFor(int itemId) {
+    final existing = widget.existingItemValues[itemId];
+    return _qtyControllers.putIfAbsent(
+      itemId,
+      () => TextEditingController(
+        text: existing == null ? '' : _numberText(existing.qty),
+      ),
+    );
+  }
+
+  String _numberText(double value) {
+    if (value % 1 == 0) return value.toInt().toString();
+    return value.toString();
+  }
+
+  TextEditingController _priceControllerFor(SellableItem item) {
+    final existing = widget.existingItemValues[item.itemId];
+    return _priceControllers.putIfAbsent(
+      item.itemId,
+      () => TextEditingController(
+        text: _numberText(existing?.price ?? item.price),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _localAddedItemIds = Set<int>.from(widget.existingItemIds);
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    for (final controller in _qtyControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _priceControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
+  }
+
+  void _applySelections() {
+    for (final item in widget.items) {
+      final qtyText = _qtyControllerFor(item.itemId).text.trim();
+      final qty = double.tryParse(qtyText);
+      if (qty == null || qty <= 0) {
+        if (_localAddedItemIds.remove(item.itemId)) {
+          widget.onItemRemoved(item);
+        }
+        continue;
+      }
+
+      final priceText = _priceControllerFor(item).text.trim();
+      final parsedPrice = double.tryParse(priceText);
+      final price = parsedPrice != null && parsedPrice >= 0
+          ? parsedPrice
+          : item.price;
+
+      widget.onItemSelected(
+        item,
+        _ItemDetailResult(
+          qty: qty,
+          price: price,
+          description: item.description.isEmpty ? null : item.description,
+        ),
+      );
+      _localAddedItemIds.add(item.itemId);
+    }
+
+    if (!mounted) return;
+    Navigator.of(context).pop(true);
   }
 
   Future<void> _openCreateCustomerItemFlow() async {
@@ -1331,55 +1201,49 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
     if (!widget.hostContext.mounted || created != true) return;
     await widget.onItemsUpdated?.call();
     if (!widget.hostContext.mounted) return;
-    ScaffoldMessenger.of(widget.hostContext).showSnackBar(
-      const SnackBar(
-        duration: Duration(seconds: 2),
-        content: Text('Customer item created successfully'),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = widget.items
-        .where(
-          (i) =>
-              !widget.existingItemIds.contains(i.itemId) &&
-              i.itemName.toLowerCase().contains(_query.toLowerCase()),
-        )
-        .toList();
+    final maxHeight = MediaQuery.of(context).size.height * 0.75;
+    final customerItems = _applySearch(
+      widget.items.where((i) => i.source != 'ITEM_BASE').toList(),
+    );
+    final baseItems = _showAll
+        ? _applySearch(
+            widget.items.where((i) => i.source == 'ITEM_BASE').toList(),
+          )
+        : <SellableItem>[];
+    final allEmpty = customerItems.isEmpty && baseItems.isEmpty;
 
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.6,
-      maxChildSize: 0.92,
-      builder: (_, scrollController) => Column(
-        children: [
-          const SizedBox(height: 12),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: LoginColors.borderLight,
-              borderRadius: BorderRadius.circular(2),
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: LoginColors.borderLight,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-            child: Text(
-              'Select Item',
+            const SizedBox(height: 16),
+            Text(
+              'Manage Items',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 17,
                 fontWeight: FontWeight.w700,
                 color: LoginColors.textPrimary,
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
+            const SizedBox(height: 12),
+            TextField(
               controller: _searchController,
-              onChanged: (v) => setState(() => _query = v),
+              onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 hintText: 'Search items...',
                 hintStyle: TextStyle(
@@ -1415,79 +1279,202 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: filtered.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'No items found',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: LoginColors.textTertiary,
+            const SizedBox(height: 10),
+            Flexible(
+              child: allEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _hasCustomerItems
+                                  ? 'No items found'
+                                  : 'No customer-specific items found',
+                              style: TextStyle(color: LoginColors.textTertiary),
+                              textAlign: TextAlign.center,
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton.icon(
-                              onPressed: _openCreateCustomerItemFlow,
-                              icon: const Icon(Icons.add_circle_outline),
-                              label: const Text('Create Customer Item'),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: LoginColors.primary,
-                                foregroundColor: Colors.white,
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.icon(
+                                onPressed: _openCreateCustomerItemFlow,
+                                icon: const Icon(Icons.add_circle_outline),
+                                label: const Text('Create Customer Item'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: LoginColors.primary,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ),
+                            if (!_showAll && _hasBaseItems) ...[
+                              const SizedBox(height: 8),
+                              TextButton(
+                                onPressed: () =>
+                                    setState(() => _showAll = true),
+                                child: const Text('Show All Items'),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    )
+                  : ListView(
+                      shrinkWrap: true,
+                      children: [
+                        ...customerItems.map(_buildItemTile),
+                        if (!_showAll && _hasBaseItems) ...[
+                          const SizedBox(height: 4),
+                          Divider(color: LoginColors.borderLight, height: 1),
+                          InkWell(
+                            onTap: () => setState(() => _showAll = true),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.expand_more_rounded,
+                                    size: 20,
+                                    color: LoginColors.primary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Show All Items',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: LoginColors.primary,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
+                          Divider(color: LoginColors.borderLight, height: 1),
                         ],
-                      ),
+                        if (_showAll && baseItems.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
+                            child: Text(
+                              'All Items',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: LoginColors.textTertiary,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                          ...baseItems.map(_buildItemTile),
+                        ],
+                      ],
                     ),
-                  )
-                : ListView.separated(
-                    controller: scrollController,
-                    itemCount: filtered.length,
-                    separatorBuilder: (_, _) =>
-                        Divider(height: 1, color: LoginColors.borderLight),
-                    itemBuilder: (_, i) {
-                      final item = filtered[i];
-                      return ListTile(
-                        onTap: () => widget.onItemSelected(item),
-                        title: Text(
-                          item.itemName,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: LoginColors.textPrimary,
-                          ),
-                        ),
-                        subtitle: item.description.isNotEmpty
-                            ? Text(
-                                item.description,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: LoginColors.textSecondary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              )
-                            : null,
-                        trailing: Text(
-                          '${item.price.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: LoginColors.primary,
-                          ),
-                        ),
-                      );
-                    },
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: FilledButton(
+                onPressed: _applySelections,
+                style: FilledButton.styleFrom(
+                  backgroundColor: LoginColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                ),
+                child: const Text(
+                  'Apply',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItemTile(SellableItem item) {
+    final alreadyAdded = _localAddedItemIds.contains(item.itemId);
+    final qtyController = _qtyControllerFor(item.itemId);
+    final priceController = _priceControllerFor(item);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: alreadyAdded ? LoginColors.success : LoginColors.borderLight,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              item.itemName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: LoginColors.textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 90,
+            child: TextField(
+              controller: priceController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              style: TextStyle(fontSize: 12.5, color: LoginColors.textPrimary),
+              decoration: InputDecoration(
+                labelText: 'Price',
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 9,
+                ),
+                filled: true,
+                fillColor: LoginColors.fieldFill,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: LoginColors.borderLight),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 70,
+            child: TextField(
+              controller: qtyController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              style: TextStyle(fontSize: 12.5, color: LoginColors.textPrimary),
+              decoration: InputDecoration(
+                labelText: 'Qty',
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 9,
+                ),
+                filled: true,
+                fillColor: LoginColors.fieldFill,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: LoginColors.borderLight),
+                ),
+              ),
+            ),
           ),
         ],
       ),

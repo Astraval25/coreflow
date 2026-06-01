@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 class ActiveVendorViewModel extends ChangeNotifier {
   final AuthRepository _authRepository;
+  bool _isDisposed = false;
 
   ActiveVendorViewModel(this._authRepository);
 
@@ -39,13 +40,16 @@ class ActiveVendorViewModel extends ChangeNotifier {
   bool isVendorPinned(int vendorId) => _pinnedVendorIds.contains(vendorId);
 
   Future<void> loadVendor(int companyId) async {
+    if (_isDisposed) return;
     _companyId = companyId;
     _setLoading(true);
     _clearError();
 
     try {
       _pinnedVendorIds = await VendorPinStorage.loadPinnedVendorIds(companyId);
+      if (_isDisposed) return;
       final allVendor = await _authRepository.getActiveVendors(companyId);
+      if (_isDisposed) return;
 
       _activeVendor
         ..clear()
@@ -63,6 +67,7 @@ class ActiveVendorViewModel extends ChangeNotifier {
           _companyId,
           _pinnedVendorIds,
         );
+        if (_isDisposed) return;
       }
     } catch (e) {
       _setError('Failed to load Vendor');
@@ -72,7 +77,7 @@ class ActiveVendorViewModel extends ChangeNotifier {
   }
 
   Future<bool> toggleVendorStatus(int vendorId) async {
-    if (_companyId == 0) return false;
+    if (_companyId == 0 || _isDisposed) return false;
 
     _setLoading(true);
     _clearError();
@@ -83,9 +88,11 @@ class ActiveVendorViewModel extends ChangeNotifier {
       final response = isActive
           ? await _authRepository.deactivateVendor(_companyId, vendorId)
           : await _authRepository.activateVendor(_companyId, vendorId);
+      if (_isDisposed) return false;
 
       if (response?.responseStatus == true) {
         await loadVendor(_companyId);
+        if (_isDisposed) return false;
         return true;
       }
 
@@ -100,6 +107,7 @@ class ActiveVendorViewModel extends ChangeNotifier {
   }
 
   void toggleActiveFilter() {
+    if (_isDisposed) return;
     _showActiveOnly = !_showActiveOnly;
     notifyListeners();
   }
@@ -111,7 +119,7 @@ class ActiveVendorViewModel extends ChangeNotifier {
   }
 
   Future<void> togglePinVendor(int vendorId) async {
-    if (_companyId == 0) return;
+    if (_companyId == 0 || _isDisposed) return;
 
     if (_pinnedVendorIds.contains(vendorId)) {
       _pinnedVendorIds.remove(vendorId);
@@ -120,6 +128,7 @@ class ActiveVendorViewModel extends ChangeNotifier {
     }
 
     await VendorPinStorage.savePinnedVendorIds(_companyId, _pinnedVendorIds);
+    if (_isDisposed) return;
     notifyListeners();
   }
 
@@ -138,17 +147,26 @@ class ActiveVendorViewModel extends ChangeNotifier {
   }
 
   void _setLoading(bool value) {
+    if (_isDisposed) return;
     _isLoading = value;
     notifyListeners();
   }
 
   void _setError(String message) {
+    if (_isDisposed) return;
     _error = message;
     notifyListeners();
   }
 
   void _clearError() {
+    if (_isDisposed) return;
     _error = null;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 }

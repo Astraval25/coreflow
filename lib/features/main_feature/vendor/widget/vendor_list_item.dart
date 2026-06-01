@@ -47,10 +47,12 @@ class VendorListItem extends StatelessWidget {
         splashColor: LoginColors.primaryLight.withValues(alpha: 0.12),
         highlightColor: LoginColors.primaryLight.withValues(alpha: 0.06),
         onTap: () async {
+          final vendorVm = context.read<ActiveVendorViewModel>();
+          final dashboardVm = context.read<DashboardViewModel>();
           await context.push(CfRoutes.vendorDetail(companyId, vendor.vendorId));
           if (context.mounted) {
-            await context.read<ActiveVendorViewModel>().refresh();
-            await context.read<DashboardViewModel>().refreshUnreadCount();
+            await vendorVm.refresh();
+            await dashboardVm.refreshUnreadCount();
           }
         },
         child: Padding(

@@ -48,8 +48,6 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Divider(height: 1, thickness: 1, color: LoginColors.border),
-          const SizedBox(height: 16),
-          _buildCompactHeader(),
           if (_expanded) ...[
             const SizedBox(height: 10),
             _buildExpandedContent(),
@@ -71,116 +69,6 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
     );
   }
 
-  Widget _buildCompactHeader() {
-    const gold = Color(0xFFD4AF37);
-    final goldSoft = gold.withValues(alpha: 0.12);
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _headerPressed = true),
-      onTapUp: (_) => setState(() => _headerPressed = false),
-      onTapCancel: () => setState(() => _headerPressed = false),
-      onTap: () => setState(() => _expanded = !_expanded),
-      child: AnimatedScale(
-        duration: Duration(milliseconds: 120),
-        scale: _headerPressed ? 0.98 : 1,
-        child: AnimatedContainer(
-          duration: Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [goldSoft, goldSoft.withValues(alpha: 0.04)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: gold.withValues(alpha: 0.4)),
-            boxShadow: _headerPressed
-                ? []
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: gold,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.link_rounded,
-                  color: Colors.white,
-                  size: 16,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Link Companies',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: LoginColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Share your code or enter a code to link companies.',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: LoginColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              AnimatedContainer(
-                duration: Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: gold.withValues(alpha: _expanded ? 0.18 : 0.1),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: gold.withValues(alpha: 0.5)),
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      _expanded ? 'Hide' : 'View',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: LoginColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    AnimatedRotation(
-                      turns: _expanded ? 0.5 : 0,
-                      duration: Duration(milliseconds: 180),
-                      child: Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 16,
-                        color: gold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildExpandedContent() {
     const gold = Color(0xFFD4AF37);
@@ -195,7 +83,7 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (widget.invitationCode != null) ...[
-            _buildCodeDisplayFlat(),
+            // _buildCodeDisplayFlat(),
           ] else ...[
             _buildInviteActionsFlat(gold),
           ],
@@ -300,85 +188,85 @@ class _LinkCompanySectionState extends State<LinkCompanySection> {
     );
   }
 
-  Widget _buildCodeDisplayFlat() {
-    final code = widget.invitationCode!;
-    const gold = Color(0xFFD4AF37);
+  // Widget _buildCodeDisplayFlat() {
+  //   final code = widget.invitationCode!;
+  //   const gold = Color(0xFFD4AF37);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: gold,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: const Text(
-                'INVITE',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  letterSpacing: 0.6,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Your Invitation Code',
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-                color: LoginColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                _obscureCode ? '\u2022' * code.length : code,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: LoginColors.textPrimary,
-                  letterSpacing: 4,
-                ),
-              ),
-            ),
-            IconButton(
-              onPressed: () => _copyCode(code),
-              icon: Icon(Icons.copy_rounded, size: 18, color: gold),
-              tooltip: 'Copy code',
-            ),
-            IconButton(
-              onPressed: () => setState(() => _obscureCode = !_obscureCode),
-              icon: Icon(
-                _obscureCode
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                size: 18,
-                color: gold,
-              ),
-              tooltip: _obscureCode ? 'Show code' : 'Hide code',
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Share this code with the other party to link companies',
-          style: TextStyle(
-            fontSize: 11,
-            color: LoginColors.textTertiary,
-          ),
-        ),
-      ],
-    );
-  }
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Row(
+  //         children: [
+  //           Container(
+  //             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  //             decoration: BoxDecoration(
+  //               color: gold,
+  //               borderRadius: BorderRadius.circular(999),
+  //             ),
+  //             child: const Text(
+  //               'INVITE',
+  //               style: TextStyle(
+  //                 fontSize: 9,
+  //                 fontWeight: FontWeight.w700,
+  //                 color: Colors.white,
+  //                 letterSpacing: 0.6,
+  //               ),
+  //             ),
+  //           ),
+  //           const SizedBox(width: 8),
+  //           Text(
+  //             'Your Invitation Code',
+  //             style: TextStyle(
+  //               fontSize: 11.5,
+  //               fontWeight: FontWeight.w600,
+  //               color: LoginColors.textSecondary,
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //       const SizedBox(height: 6),
+  //       Row(
+  //         children: [
+  //           Expanded(
+  //             child: Text(
+  //               _obscureCode ? '\u2022' * code.length : code,
+  //               style: TextStyle(
+  //                 fontSize: 18,
+  //                 fontWeight: FontWeight.w800,
+  //                 color: LoginColors.textPrimary,
+  //                 letterSpacing: 4,
+  //               ),
+  //             ),
+  //           ),
+  //           IconButton(
+  //             onPressed: () => _copyCode(code),
+  //             icon: Icon(Icons.copy_rounded, size: 18, color: gold),
+  //             tooltip: 'Copy code',
+  //           ),
+  //           IconButton(
+  //             onPressed: () => setState(() => _obscureCode = !_obscureCode),
+  //             icon: Icon(
+  //               _obscureCode
+  //                   ? Icons.visibility_outlined
+  //                   : Icons.visibility_off_outlined,
+  //               size: 18,
+  //               color: gold,
+  //             ),
+  //             tooltip: _obscureCode ? 'Show code' : 'Hide code',
+  //           ),
+  //         ],
+  //       ),
+  //       const SizedBox(height: 4),
+  //       Text(
+  //         'Share this code with the other party to link companies',
+  //         style: TextStyle(
+  //           fontSize: 11,
+  //           color: LoginColors.textTertiary,
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildAcceptSectionFlat(Color gold) {
     if (!_showAcceptInput) {

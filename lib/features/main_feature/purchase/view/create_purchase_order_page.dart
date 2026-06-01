@@ -165,50 +165,48 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
       return;
     }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: LoginColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _ItemPickerSheet(
-        items: items,
-        existingItemIds: vm.orderItems.map((e) => e.item.itemId).toSet(),
-        existingItemValues: {
-          for (final entry in vm.orderItems)
-            entry.item.itemId: _ItemDetailResult(
-              qty: entry.quantity,
-              price: entry.updatedPrice,
-              description: entry.itemDescription,
-            ),
-        },
-        companyId: widget.companyId,
-        vendorId: vm.selectedVendor!.vendorId,
-        hostContext: context,
-        canEditPrice: !vm.vendorHasCompany,
-        onItemsUpdated: vm.reloadPurchasableItems,
-        onItemSelected: (item, detail) {
-          final canEdit = !vm.vendorHasCompany;
-          vm.addOrderItem(item);
-          final idx = vm.orderItems.indexWhere(
-            (entry) => entry.item.itemId == item.itemId,
-          );
-          if (idx == -1) return;
-          vm.updateItemQuantity(idx, detail.qty);
-          if (canEdit) {
-            vm.updateItemPrice(idx, detail.price);
-            vm.updateItemDescription(idx, detail.description);
-          }
-        },
-        onItemRemoved: (item) {
-          final idx = vm.orderItems.indexWhere(
-            (entry) => entry.item.itemId == item.itemId,
-          );
-          if (idx != -1) {
-            vm.removeOrderItem(idx);
-          }
-        },
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _OrderItemSelectionPage(
+          child: _ItemPickerSheet(
+            items: items,
+            existingItemIds: vm.orderItems.map((e) => e.item.itemId).toSet(),
+            existingItemValues: {
+              for (final entry in vm.orderItems)
+                entry.item.itemId: _ItemDetailResult(
+                  qty: entry.quantity,
+                  price: entry.updatedPrice,
+                  description: entry.itemDescription,
+                ),
+            },
+            companyId: widget.companyId,
+            vendorId: vm.selectedVendor!.vendorId,
+            hostContext: context,
+            canEditPrice: !vm.vendorHasCompany,
+            onItemsUpdated: vm.reloadPurchasableItems,
+            onItemSelected: (item, detail) {
+              final canEdit = !vm.vendorHasCompany;
+              vm.addOrderItem(item);
+              final idx = vm.orderItems.indexWhere(
+                (entry) => entry.item.itemId == item.itemId,
+              );
+              if (idx == -1) return;
+              vm.updateItemQuantity(idx, detail.qty);
+              if (canEdit) {
+                vm.updateItemPrice(idx, detail.price);
+                vm.updateItemDescription(idx, detail.description);
+              }
+            },
+            onItemRemoved: (item) {
+              final idx = vm.orderItems.indexWhere(
+                (entry) => entry.item.itemId == item.itemId,
+              );
+              if (idx != -1) {
+                vm.removeOrderItem(idx);
+              }
+            },
+          ),
+        ),
       ),
     );
   }
@@ -619,7 +617,9 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.add_rounded, size: 20),
-              label: Text(vm.isLoadingItems ? 'Loading Items...' : 'Add Item'),
+              label: Text(
+                vm.isLoadingItems ? 'Loading Items...' : 'Manage Items',
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: LoginColors.primary,
                 side: BorderSide(
@@ -641,22 +641,16 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
     PurchaseOrderItemEntry entry,
     int index,
   ) {
-    final qtyStr = entry.quantity % 1 == 0
-        ? entry.quantity.toInt().toString()
-        : entry.quantity.toString();
-    final priceStr = entry.updatedPrice % 1 == 0
-        ? entry.updatedPrice.toInt().toString()
-        : entry.updatedPrice.toStringAsFixed(2);
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InkWell(
             onTap: () => vm.removeOrderItem(index),
             borderRadius: BorderRadius.circular(4),
             child: Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: 8, top: 1),
               child: Icon(
                 Icons.close_rounded,
                 size: 16,
@@ -665,59 +659,36 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
             ),
           ),
           Expanded(
-            child: Text(
-              entry.item.itemName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: LoginColors.textPrimary,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.item.itemName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${entry.quantity} x ${entry.updatedPrice.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: LoginColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
           ),
-          if (entry.canEditPriceAndDesc) ...[
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 84,
-              child: TextFormField(
-                key: ValueKey('purchase-price-${entry.item.itemId}-$priceStr'),
-                initialValue: priceStr,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                onFieldSubmitted: (v) {
-                  final value = double.tryParse(v.trim());
-                  if (value != null && value >= 0) {
-                    vm.updateItemPrice(index, value);
-                  }
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Price',
-                  isDense: true,
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 70,
-            child: TextFormField(
-              key: ValueKey('purchase-qty-${entry.item.itemId}-$qtyStr'),
-              initialValue: qtyStr,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              onFieldSubmitted: (v) {
-                final value = double.tryParse(v.trim());
-                if (value != null && value > 0) {
-                  vm.updateItemQuantity(index, value);
-                }
-              },
-              decoration: const InputDecoration(
-                labelText: 'Qty',
-                isDense: true,
-              ),
+          Text(
+            entry.lineTotal.toStringAsFixed(2),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: LoginColors.textPrimary,
             ),
           ),
         ],
@@ -922,7 +893,7 @@ class _CreatePurchaseOrderViewState extends State<_CreatePurchaseOrderView> {
   }
 }
 
-// ── Item Detail Result ───────────────────────────────────────
+// -- Item Detail Result ---------------------------------------
 
 class _ItemDetailResult {
   final double qty;
@@ -930,6 +901,39 @@ class _ItemDetailResult {
   final String? description;
 
   _ItemDetailResult({required this.qty, required this.price, this.description});
+}
+
+class _OrderItemSelectionPage extends StatelessWidget {
+  final Widget child;
+
+  const _OrderItemSelectionPage({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: LoginColors.background,
+      appBar: AppBar(
+        title: Text(
+          'Manage Items',
+          style: TextStyle(
+            color: LoginColors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        foregroundColor: LoginColors.textPrimary,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: LoginColors.background,
+      ),
+      body: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          child: child,
+        ),
+      ),
+    );
+  }
 }
 
 // Item selection result
@@ -1006,7 +1010,7 @@ class _EditableSummaryRow extends StatelessWidget {
   }
 }
 
-// ── Summary Row ──────────────────────────────────────────────
+// -- Summary Row ----------------------------------------------
 
 class _SummaryRow extends StatelessWidget {
   final String label;
@@ -1045,7 +1049,7 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
-// ── Item Picker Bottom Sheet ─────────────────────────────────
+// -- Item Picker Bottom Sheet ---------------------------------
 
 class _ItemPickerSheet extends StatefulWidget {
   final List<SellableItem> items;
@@ -1137,7 +1141,6 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
   }
 
   void _applySelections() {
-    var addedCount = 0;
     for (final item in widget.items) {
       final qtyText = _qtyControllerFor(item.itemId).text.trim();
       final qty = double.tryParse(qtyText);
@@ -1163,21 +1166,10 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
         ),
       );
       _localAddedItemIds.add(item.itemId);
-      addedCount++;
     }
 
     if (!mounted) return;
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(widget.hostContext).showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 2),
-        content: Text(
-          addedCount > 0
-              ? '$addedCount item(s) added'
-              : 'No valid quantity entered',
-        ),
-      ),
-    );
+    Navigator.of(context).pop(true);
   }
 
   Future<void> _openCreateVendorItemFlow() async {
@@ -1196,13 +1188,6 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
 
     if (!widget.hostContext.mounted || created != true) return;
     await widget.onItemsUpdated?.call();
-    if (!widget.hostContext.mounted) return;
-    ScaffoldMessenger.of(widget.hostContext).showSnackBar(
-      const SnackBar(
-        duration: Duration(seconds: 2),
-        content: Text('Vendor item created successfully'),
-      ),
-    );
   }
 
   @override

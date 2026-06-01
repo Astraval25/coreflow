@@ -399,67 +399,6 @@ class _CustomerCompanyLinkSection extends StatelessWidget {
                     ],
                   ),
                 ],
-                if (canSuggestLink) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    'Account found (${vm.linkSuggestion?.accountCompanyName ?? 'CoreFlow company'}). Link now?',
-                    style: const TextStyle(
-                      color: Color(0xFF8A5A00),
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  FilledButton.tonal(
-                    onPressed: vm.isLinkingByPhone
-                        ? null
-                        : () async {
-                            final shouldLink = await showDialog<bool>(
-                              context: context,
-                              builder: (dialogContext) => AlertDialog(
-                                title: const Text('Confirm link'),
-                                content: const Text(
-                                  'Link this customer to the matched CoreFlow account company?',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(dialogContext).pop(false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  FilledButton(
-                                    onPressed: () =>
-                                        Navigator.of(dialogContext).pop(true),
-                                    child: const Text('Link now'),
-                                  ),
-                                ],
-                              ),
-                            );
-
-                            if (shouldLink != true) return;
-
-                            final success = await vm.linkCustomerByPhone();
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  success
-                                      ? 'Link request sent. Waiting for acceptance.'
-                                      : (vm.errorMessage ??
-                                            'Failed to link customer'),
-                                ),
-                              ),
-                            );
-                          },
-                    child: vm.isLinkingByPhone
-                        ? const SizedBox(
-                            height: 16,
-                            width: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Link now'),
-                  ),
-                ],
               ],
             ),
           ),
