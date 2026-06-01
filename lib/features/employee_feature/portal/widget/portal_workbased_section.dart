@@ -9,7 +9,20 @@ enum WorkSaveState { idle, invalid, pending, saving, saved, error }
 
 class PortalWorkBasedSection extends StatefulWidget {
   final EmployeePortalViewModel vm;
-  const PortalWorkBasedSection({super.key, required this.vm});
+  final bool showSaveButton;
+  final bool showTopSpacing;
+  final bool showPinActions;
+  final bool Function(int workDefId)? isPinned;
+  final Future<void> Function(int workDefId)? onTogglePin;
+  const PortalWorkBasedSection({
+    super.key,
+    required this.vm,
+    this.showSaveButton = true,
+    this.showTopSpacing = true,
+    this.showPinActions = false,
+    this.isPinned,
+    this.onTogglePin,
+  });
 
   @override
   State<PortalWorkBasedSection> createState() => PortalWorkBasedSectionState();
@@ -121,10 +134,30 @@ class PortalWorkBasedSectionState extends State<PortalWorkBasedSection> {
   @override
   Widget build(BuildContext context) {
     final vm = widget.vm;
+    final workDefinitions = List<WorkDefinitionData>.from(vm.workDefinitions);
+    if (widget.showPinActions && widget.isPinned != null) {
+      workDefinitions.sort((a, b) {
+        final aPinned = widget.isPinned!(a.workDefId);
+        final bPinned = widget.isPinned!(b.workDefId);
+        if (aPinned != bPinned) return aPinned ? -1 : 1;
+        return a.workName.toLowerCase().compareTo(b.workName.toLowerCase());
+      });
+    }
+    final pinnedWorks = widget.showPinActions && widget.isPinned != null
+        ? workDefinitions
+              .where((w) => widget.isPinned!(w.workDefId))
+              .toList(growable: false)
+        : workDefinitions;
+    final otherWorks = widget.showPinActions && widget.isPinned != null
+        ? workDefinitions
+              .where((w) => !widget.isPinned!(w.workDefId))
+              .toList(growable: false)
+        : const <WorkDefinitionData>[];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 14),
+        if (widget.showTopSpacing) const SizedBox(height: 14),
         Row(
           children: [
             Expanded(
@@ -137,35 +170,36 @@ class PortalWorkBasedSectionState extends State<PortalWorkBasedSection> {
                 ),
               ),
             ),
-            FilledButton.icon(
-              onPressed: vm.isSubmitting || vm.isTodayLocked
-                  ? null
-                  : () async {
-                      final messenger = ScaffoldMessenger.of(context);
-                      final ok = await saveAllDrafts();
-                      if (!mounted) return;
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            ok
-                                ? 'Work entries saved successfully'
-                                : (vm.error ?? 'Some entries failed to save'),
+            if (widget.showSaveButton)
+              FilledButton.icon(
+                onPressed: vm.isSubmitting || vm.isTodayLocked
+                    ? null
+                    : () async {
+                        final messenger = ScaffoldMessenger.of(context);
+                        final ok = await saveAllDrafts();
+                        if (!mounted) return;
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              ok
+                                  ? 'Work entries saved successfully'
+                                  : (vm.error ?? 'Some entries failed to save'),
+                            ),
+                            backgroundColor: ok
+                                ? LoginColors.success
+                                : LoginColors.error,
                           ),
-                          backgroundColor: ok
-                              ? LoginColors.success
-                              : LoginColors.error,
-                        ),
-                      );
-                    },
-              icon: vm.isSubmitting
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.save_rounded, size: 16),
-              label: Text(vm.isSubmitting ? 'Saving' : 'Save'),
-            ),
+                        );
+                      },
+                icon: vm.isSubmitting
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.save_rounded, size: 16),
+                label: Text(vm.isSubmitting ? 'Saving' : 'Save'),
+              ),
           ],
         ),
         const SizedBox(height: 10),
@@ -175,8 +209,29 @@ class PortalWorkBasedSectionState extends State<PortalWorkBasedSection> {
             title: 'No work types available',
             subtitle: 'Ask your admin to set up work types.',
           )
-        else
-          ...vm.workDefinitions.map((w) => _workDefRow(vm, w)),
+        else ...[
+          ...pinnedWorks.map((w) => _workDefRow(vm, w)),
+          if (widget.showPinActions && otherWorks.isNotEmpty)
+            Theme(
+              data: Theme.of(
+                context,
+              ).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+                childrenPadding: EdgeInsets.zero,
+                title: Text(
+                  'Show more works (${otherWorks.length})',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textSecondary,
+                  ),
+                ),
+                children: otherWorks.map((w) => _workDefRow(vm, w)).toList(),
+              ),
+            ),
+          if (!widget.showPinActions)
+            ...workDefinitions.map((w) => _workDefRow(vm, w)),
+        ],
       ],
     );
   }
@@ -196,15 +251,40 @@ class PortalWorkBasedSectionState extends State<PortalWorkBasedSection> {
         children: [
           Expanded(
             flex: 3,
-            child: Text(
-              work.workName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: LoginColors.textPrimary,
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    work.workName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: LoginColors.textPrimary,
+                    ),
+                  ),
+                ),
+                if (widget.showPinActions &&
+                    widget.isPinned != null &&
+                    widget.onTogglePin != null)
+                  InkWell(
+                    onTap: () => widget.onTogglePin!(work.workDefId),
+                    borderRadius: BorderRadius.circular(999),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        widget.isPinned!(work.workDefId)
+                            ? Icons.push_pin_rounded
+                            : Icons.push_pin_outlined,
+                        size: 18,
+                        color: widget.isPinned!(work.workDefId)
+                            ? LoginColors.accent
+                            : LoginColors.textSecondary,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           const SizedBox(width: 10),
