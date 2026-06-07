@@ -153,23 +153,23 @@ class LoginScreen extends StatelessWidget {
                               ? null
                               : () => viewModel.login(context),
                         ),
-                        const SizedBox(height: 24),
-                        if (!viewModel.isEmployeeLogin)
-                          TextButton(
-                            onPressed: viewModel.isLoading
-                                ? null
-                                : () => context.go(CfRoutes.register),
-                            child: Text(
-                              'Register',
-                              style: TextStyle(
-                                color: viewModel.isLoading
-                                    ? Colors.grey
-                                    : LoginColors.primary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
+                        // const SizedBox(height: 24),
+                        // if (!viewModel.isEmployeeLogin)
+                        //   TextButton(
+                        //     onPressed: viewModel.isLoading
+                        //         ? null
+                        //         : () => context.go(CfRoutes.register),
+                        //     child: Text(
+                        //       'Register',
+                        //       style: TextStyle(
+                        //         color: viewModel.isLoading
+                        //             ? Colors.grey
+                        //             : LoginColors.primary,
+                        //         fontSize: 16,
+                        //         fontWeight: FontWeight.w600,
+                        //       ),
+                        //     ),
+                        //   ),
                         const SizedBox(height: 40),
                       ],
                     ),

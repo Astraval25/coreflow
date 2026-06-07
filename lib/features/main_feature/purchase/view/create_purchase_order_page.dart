@@ -925,13 +925,7 @@ class _OrderItemSelectionPage extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         backgroundColor: LoginColors.background,
       ),
-      body: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-          child: child,
-        ),
-      ),
+      body: child
     );
   }
 }
@@ -1192,7 +1186,6 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final maxHeight = MediaQuery.of(context).size.height * 0.75;
     final vendorItems = _applySearch(
       widget.items.where((i) => i.source != 'ITEM_BASE').toList(),
     );
@@ -1203,188 +1196,179 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
         : <SellableItem>[];
     final allEmpty = vendorItems.isEmpty && baseItems.isEmpty;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: LoginColors.borderLight,
-                borderRadius: BorderRadius.circular(2),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (_) => setState(() {}),
+            style: TextStyle(fontSize: 14, color: LoginColors.textPrimary),
+            decoration: InputDecoration(
+              hintText: 'Search items...',
+              hintStyle: TextStyle(
+                fontSize: 13,
+                color: LoginColors.textTertiary,
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: LoginColors.textTertiary,
+                size: 20,
+              ),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              filled: true,
+              fillColor: LoginColors.fieldFill,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: LoginColors.borderLight),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: LoginColors.borderLight),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: LoginColors.primary, width: 1.2),
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Add Item',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: LoginColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _searchController,
-              onChanged: (_) => setState(() {}),
-              style: TextStyle(fontSize: 14, color: LoginColors.textPrimary),
-              decoration: InputDecoration(
-                hintText: 'Search items...',
-                hintStyle: TextStyle(
-                  fontSize: 13,
-                  color: LoginColors.textTertiary,
-                ),
-                prefixIcon: Icon(
-                  Icons.search_rounded,
-                  color: LoginColors.textTertiary,
-                  size: 20,
-                ),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                filled: true,
-                fillColor: LoginColors.fieldFill,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: LoginColors.borderLight),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: LoginColors.borderLight),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color: LoginColors.primary,
-                    width: 1.2,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Flexible(
-              child: allEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _hasVendorItems
-                                  ? 'No items found'
-                                  : 'No vendor-specific items found',
-                              style: TextStyle(color: LoginColors.textTertiary),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              child: FilledButton.icon(
-                                onPressed: _openCreateVendorItemFlow,
-                                icon: const Icon(Icons.add_circle_outline),
-                                label: const Text('Create Vendor Item'),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: LoginColors.primary,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                            ),
-                            if (!_showAll && _hasBaseItems) ...[
-                              const SizedBox(height: 8),
-                              TextButton(
-                                onPressed: () =>
-                                    setState(() => _showAll = true),
-                                child: const Text('Show All Items'),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    )
-                  : ListView(
-                      shrinkWrap: true,
+          ),
+        ),
+        Expanded(
+          child: allEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Vendor-specific items
-                        ...vendorItems.map(_buildItemTile),
-                        // "Show All Items" button
+                        Text(
+                          _hasVendorItems
+                              ? 'No items found'
+                              : 'No vendor-specific items found',
+                          style: TextStyle(color: LoginColors.textTertiary),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: _openCreateVendorItemFlow,
+                            icon: const Icon(Icons.add_circle_outline),
+                            label: const Text('Create Vendor Item'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: LoginColors.primary,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
                         if (!_showAll && _hasBaseItems) ...[
-                          const SizedBox(height: 4),
-                          Divider(color: LoginColors.borderLight, height: 1),
-                          InkWell(
-                            onTap: () => setState(() => _showAll = true),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.expand_more_rounded,
-                                    size: 20,
-                                    color: LoginColors.primary,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Show All Items',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: LoginColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () => setState(() => _showAll = true),
+                            child: const Text('Show All Items'),
                           ),
-                          Divider(color: LoginColors.borderLight, height: 1),
-                        ],
-                        // Base items section
-                        if (_showAll && baseItems.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
-                            child: Text(
-                              'All Items',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: LoginColors.textTertiary,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ),
-                          ...baseItems.map(_buildItemTile),
                         ],
                       ],
                     ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              height: 46,
-              child: FilledButton(
-                onPressed: _applySelections,
-                style: FilledButton.styleFrom(
-                  backgroundColor: LoginColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  ),
+                )
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  children: [
+                    ...vendorItems.map(_buildItemTile),
+                    if (!_showAll && _hasBaseItems) ...[
+                      const SizedBox(height: 4),
+                      Divider(color: LoginColors.borderLight, height: 1),
+                      InkWell(
+                        onTap: () => setState(() => _showAll = true),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.expand_more_rounded,
+                                size: 20,
+                                color: LoginColors.primary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Show All Items',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: LoginColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Divider(color: LoginColors.borderLight, height: 1),
+                    ],
+                    if (_showAll && baseItems.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(2, 10, 2, 6),
+                        child: Text(
+                          'All Items',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: LoginColors.textTertiary,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                      ...baseItems.map(_buildItemTile),
+                    ],
+                  ],
+                ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: LoginColors.surface,
+            border: Border(top: BorderSide(color: LoginColors.borderLight)),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${_localAddedItemIds.length} selected',
+                  style: TextStyle(
+                    color: LoginColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                child: const Text(
-                  'Add',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              SizedBox(
+                width: 132,
+                height: 46,
+                child: FilledButton.icon(
+                  onPressed: _applySelections,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: LoginColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.check_rounded, size: 18),
+                  label: const Text(
+                    'Done',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -1396,116 +1380,158 @@ class _ItemPickerSheetState extends State<_ItemPickerSheet> {
     final priceFieldEnabled = widget.canEditPrice;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(10),
+        color: alreadyAdded
+            ? LoginColors.success.withValues(alpha: 0.06)
+            : LoginColors.surface,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: alreadyAdded ? LoginColors.success : LoginColors.borderLight,
+          color: alreadyAdded
+              ? LoginColors.success.withValues(alpha: 0.55)
+              : LoginColors.borderLight,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Row(
-              children: [
+          Row(
+            children: [
+              Icon(
+                alreadyAdded
+                    ? Icons.check_circle_rounded
+                    : Icons.inventory_2_outlined,
+                color: alreadyAdded
+                    ? LoginColors.success
+                    : LoginColors.textTertiary,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  item.itemName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: qtyFieldEnabled
+                        ? LoginColors.textPrimary
+                        : LoginColors.textTertiary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '@ ${item.price.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: LoginColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              if (widget.canEditPrice) ...[
                 Expanded(
-                  child: Text(
-                    item.itemName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: TextField(
+                    controller: priceController,
+                    enabled: priceFieldEnabled,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: qtyFieldEnabled
+                      color: priceFieldEnabled
                           ? LoginColors.textPrimary
                           : LoginColors.textTertiary,
                     ),
+                    decoration: _pickerInputDecoration(
+                      'Price',
+                      enabled: priceFieldEnabled,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  '@ ${item.price.toStringAsFixed(2)}',
+                const SizedBox(width: 10),
+              ] else
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 10),
+                    height: 46,
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: LoginColors.fieldFill.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: LoginColors.borderLight),
+                    ),
+                    child: Text(
+                      'Linked vendor price',
+                      style: TextStyle(
+                        color: LoginColors.textSecondary,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              SizedBox(
+                width: 104,
+                child: TextField(
+                  controller: qtyController,
+                  enabled: qtyFieldEnabled,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: LoginColors.textSecondary,
+                    fontSize: 13,
+                    color: qtyFieldEnabled
+                        ? LoginColors.textPrimary
+                        : LoginColors.textTertiary,
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          if (widget.canEditPrice) ...[
-            SizedBox(
-              width: 90,
-              child: TextField(
-                controller: priceController,
-                enabled: priceFieldEnabled,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                style: TextStyle(
-                  fontSize: 12.5,
-                  color: priceFieldEnabled
-                      ? LoginColors.textPrimary
-                      : LoginColors.textTertiary,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Price',
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 9,
-                  ),
-                  filled: true,
-                  fillColor: priceFieldEnabled
-                      ? LoginColors.fieldFill
-                      : LoginColors.fieldFill.withValues(alpha: 0.4),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: LoginColors.borderLight),
-                  ),
+                  decoration: _pickerInputDecoration('Qty', hintText: '0'),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          SizedBox(
-            width: 70,
-            child: TextField(
-              controller: qtyController,
-              enabled: qtyFieldEnabled,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              style: TextStyle(
-                fontSize: 12.5,
-                color: qtyFieldEnabled
-                    ? LoginColors.textPrimary
-                    : LoginColors.textTertiary,
-              ),
-              decoration: InputDecoration(
-                labelText: 'Qty',
-                hintText: '0',
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 9,
-                ),
-                filled: true,
-                fillColor: qtyFieldEnabled
-                    ? LoginColors.fieldFill
-                    : LoginColors.fieldFill.withValues(alpha: 0.4),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: LoginColors.borderLight),
-                ),
-              ),
-            ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  InputDecoration _pickerInputDecoration(
+    String label, {
+    String? hintText,
+    bool enabled = true,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hintText,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      filled: true,
+      fillColor: enabled
+          ? LoginColors.fieldFill
+          : LoginColors.fieldFill.withValues(alpha: 0.4),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: LoginColors.borderLight),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: LoginColors.borderLight),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: LoginColors.primary, width: 1.2),
+      ),
+      disabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: LoginColors.borderLight),
       ),
     );
   }
