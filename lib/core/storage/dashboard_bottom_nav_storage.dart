@@ -4,9 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class DashboardBottomNavStorage {
   static const int maxPinnedActions = 4;
   static const List<String> defaultPinnedActionIds = [
-    'customers',
-    'vendors',
-    'items',
+    'sales_orders',
+    'payment_made',
+    'expenses',
     'employees',
   ];
 

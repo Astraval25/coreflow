@@ -13,6 +13,8 @@ import '../../../../domain/model/main_model/advertisement/advertisement.dart';
 import '../../../../domain/model/main_model/analytics/cash_flow.dart';
 import '../../../../domain/model/main_model/analytics/dashboard_kpi.dart';
 import '../../../../domain/model/main_model/analytics/revenue_expense.dart';
+import '../../../../domain/model/main_model/analytics/order_history.dart';
+import '../../../../domain/model/main_model/analytics/payment_history.dart';
 import '../../../../domain/model/main_model/company/company.dart';
 import '../../../../domain/model/main_model/customer/customer.dart';
 import '../../../../domain/model/main_model/vendors/vendors.dart';
@@ -55,6 +57,8 @@ class DashboardViewModel extends ChangeNotifier {
   DashboardKpi? _kpi;
   List<CashFlowEntry> _cashFlow = [];
   List<RevenueExpenseEntry> _revenueExpense = [];
+  List<OrderHistoryEntry> _orderHistory = [];
+  List<PaymentHistoryEntry> _paymentHistory = [];
   bool _isAnalyticsLoading = false;
 
   bool get isLoading => _isLoading;
@@ -80,6 +84,8 @@ class DashboardViewModel extends ChangeNotifier {
   DashboardKpi? get kpi => _kpi;
   List<CashFlowEntry> get cashFlow => _cashFlow;
   List<RevenueExpenseEntry> get revenueExpense => _revenueExpense;
+  List<OrderHistoryEntry> get orderHistory => _orderHistory;
+  List<PaymentHistoryEntry> get paymentHistory => _paymentHistory;
   bool get isAnalyticsLoading => _isAnalyticsLoading;
 
   DashboardViewModel() {
@@ -238,15 +244,21 @@ class DashboardViewModel extends ChangeNotifier {
         _authRepository.getDashboardKpi(_companyId!, start, end),
         _authRepository.getCashFlow(_companyId!, start, end),
         _authRepository.getRevenueExpense(_companyId!, start, end),
+        _authRepository.getOrderHistory(_companyId!, start, end),
+        _authRepository.getPaymentHistory(_companyId!, start, end),
       ]);
       _kpi = results[0] as DashboardKpi?;
       _cashFlow = results[1] as List<CashFlowEntry>;
       _revenueExpense = results[2] as List<RevenueExpenseEntry>;
+      _orderHistory = results[3] as List<OrderHistoryEntry>;
+      _paymentHistory = results[4] as List<PaymentHistoryEntry>;
     } catch (e) {
       debugPrint('Analytics load error: $e');
       _kpi = null;
       _cashFlow = [];
       _revenueExpense = [];
+      _orderHistory = [];
+      _paymentHistory = [];
     } finally {
       _isAnalyticsLoading = false;
       notifyListeners();
@@ -267,15 +279,21 @@ class DashboardViewModel extends ChangeNotifier {
         _authRepository.getDashboardKpi(_companyId!, startDate, endDate),
         _authRepository.getCashFlow(_companyId!, startDate, endDate),
         _authRepository.getRevenueExpense(_companyId!, startDate, endDate),
+        _authRepository.getOrderHistory(_companyId!, startDate, endDate),
+        _authRepository.getPaymentHistory(_companyId!, startDate, endDate),
       ]);
       _kpi = results[0] as DashboardKpi?;
       _cashFlow = results[1] as List<CashFlowEntry>;
       _revenueExpense = results[2] as List<RevenueExpenseEntry>;
+      _orderHistory = results[3] as List<OrderHistoryEntry>;
+      _paymentHistory = results[4] as List<PaymentHistoryEntry>;
     } catch (e) {
       debugPrint('Analytics period load error: $e');
       _kpi = null;
       _cashFlow = [];
       _revenueExpense = [];
+      _orderHistory = [];
+      _paymentHistory = [];
     } finally {
       _isAnalyticsLoading = false;
       notifyListeners();

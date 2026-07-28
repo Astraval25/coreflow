@@ -122,6 +122,8 @@ class _DashboardViewState extends State<_DashboardView> {
                                 kpi: vm.kpi,
                                 cashFlow: vm.cashFlow,
                                 revenueExpense: vm.revenueExpense,
+                                orderHistory: vm.orderHistory,
+                                paymentHistory: vm.paymentHistory,
                                 isLoading: vm.isAnalyticsLoading,
                                 onPeriodChanged: vm.loadAnalyticsForPeriod,
                                 companyId: vm.companyId ?? 0,

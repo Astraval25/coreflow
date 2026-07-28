@@ -5,6 +5,9 @@ import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/domain/model/main_model/analytics/cash_flow.dart';
 import 'package:coreflow/domain/model/main_model/analytics/dashboard_kpi.dart';
 import 'package:coreflow/domain/model/main_model/analytics/revenue_expense.dart';
+import 'package:coreflow/domain/model/main_model/analytics/order_history.dart';
+import 'package:coreflow/domain/model/main_model/analytics/payment_history.dart';
+import 'package:coreflow/features/main_feature/dashboard/widget/order_payment_activity_graph.dart';
 import 'package:coreflow/features/main_feature/report/view/report_detail_page.dart';
 import 'package:coreflow/features/main_feature/report/analytics_view_model/analytics_view_model.dart';
 
@@ -130,6 +133,8 @@ class DashboardAnalyticsSection extends StatefulWidget {
   final DashboardKpi? kpi;
   final List<CashFlowEntry> cashFlow;
   final List<RevenueExpenseEntry> revenueExpense;
+  final List<OrderHistoryEntry> orderHistory;
+  final List<PaymentHistoryEntry> paymentHistory;
   final bool isLoading;
   final Future<void> Function(String start, String end)? onPeriodChanged;
   final int companyId;
@@ -139,6 +144,8 @@ class DashboardAnalyticsSection extends StatefulWidget {
     required this.kpi,
     required this.cashFlow,
     required this.revenueExpense,
+    required this.orderHistory,
+    required this.paymentHistory,
     required this.isLoading,
     this.onPeriodChanged,
     required this.companyId,
@@ -265,9 +272,37 @@ class _DashboardAnalyticsSectionState extends State<DashboardAnalyticsSection> {
           _CashFlowSection(entries: widget.cashFlow),
         ],
         if (widget.revenueExpense.isNotEmpty ||
+            widget.orderHistory.isNotEmpty ||
+            widget.paymentHistory.isNotEmpty ||
             widget.onPeriodChanged != null) ...[
           const SizedBox(height: 16),
-          _IncomeExpenseSection(entries: widget.revenueExpense),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final range = _periodDates(_selectedPeriod);
+              final incomeExpense = _IncomeExpenseSection(
+                entries: widget.revenueExpense,
+              );
+              final activity = OrderPaymentActivityGraph(
+                orders: widget.orderHistory,
+                payments: widget.paymentHistory,
+                startDate: DateTime.parse(range.$1),
+                endDate: DateTime.parse(range.$2),
+              );
+              if (constraints.maxWidth >= 800) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: incomeExpense),
+                    const SizedBox(width: 16),
+                    Expanded(child: activity),
+                  ],
+                );
+              }
+              return Column(
+                children: [incomeExpense, const SizedBox(height: 16), activity],
+              );
+            },
+          ),
         ],
         const SizedBox(height: 8),
       ],
