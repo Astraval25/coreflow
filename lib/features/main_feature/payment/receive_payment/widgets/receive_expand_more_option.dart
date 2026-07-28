@@ -252,7 +252,7 @@ class _ReceivePaymentBottomPanelState extends State<ReceivePaymentBottomPanel>
                   parent: _animCtrl,
                   curve: Curves.easeInOut,
                 ),
-                axisAlignment: -1.0,
+                alignment: AlignmentDirectional.topStart,
                 child: Column(
                   key: _expandedKey,
                   mainAxisSize: MainAxisSize.min,

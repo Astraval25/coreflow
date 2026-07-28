@@ -77,7 +77,9 @@ class AnalyticsExportService {
       final file = File('${dir.path}/$fileName');
       await file.writeAsBytes(await pdf.save());
 
-      await Share.shareXFiles([XFile(file.path)], subject: '$title — $period');
+      await SharePlus.instance.share(
+        ShareParams(files: [XFile(file.path)], subject: '$title — $period'),
+      );
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -116,7 +118,9 @@ class AnalyticsExportService {
       final file = File('${dir.path}/$fileName');
       await file.writeAsString(buf.toString());
 
-      await Share.shareXFiles([XFile(file.path)], subject: '$title — $period');
+      await SharePlus.instance.share(
+        ShareParams(files: [XFile(file.path)], subject: '$title — $period'),
+      );
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

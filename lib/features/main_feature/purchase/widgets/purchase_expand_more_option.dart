@@ -458,7 +458,7 @@ class _PurchaseBottomOptionsPanelState extends State<PurchaseBottomOptionsPanel>
                   parent: _animCtrl,
                   curve: Curves.easeInOut,
                 ),
-                axisAlignment: -1.0,
+                alignment: AlignmentDirectional.topStart,
                 child: Column(
                   key: _expandedKey,
                   mainAxisSize: MainAxisSize.min,

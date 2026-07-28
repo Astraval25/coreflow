@@ -608,7 +608,7 @@ class _UpdateReceivePaymentViewState extends State<_UpdateReceivePaymentView> {
                 const SizedBox(height: 14),
                 // Mode of Payment
                 DropdownButtonFormField<String>(
-                  value: vm.modeOfPayment,
+                  initialValue: vm.modeOfPayment,
                   onChanged: (v) {
                     if (v != null) vm.setModeOfPayment(v);
                   },

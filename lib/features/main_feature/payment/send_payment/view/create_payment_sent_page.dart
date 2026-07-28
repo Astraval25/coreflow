@@ -879,7 +879,7 @@ class _CreatePaymentSentViewState extends State<_CreatePaymentSentView> {
 
                 // Mode of Payment
                 DropdownButtonFormField<String>(
-                  value: vm.modeOfPayment,
+                  initialValue: vm.modeOfPayment,
                   onChanged: (v) {
                     if (v != null) vm.setModeOfPayment(v);
                   },

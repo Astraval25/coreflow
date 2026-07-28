@@ -15,9 +15,12 @@ class SalaryFileService {
         : '$fileName.pdf';
     final file = File('${directory.path}/$safeFileName');
     await file.writeAsBytes(bytes, flush: true);
-    await Share.shareXFiles([
-      XFile(file.path, mimeType: 'application/pdf'),
-    ], subject: safeFileName);
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path, mimeType: 'application/pdf')],
+        subject: safeFileName,
+      ),
+    );
     return file.path;
   }
 }

@@ -79,8 +79,11 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
         final filteredOrders = vm.filteredOrders;
         final companyId = dashboardVm.companyId;
 
-        return WillPopScope(
-          onWillPop: _handleWillPop,
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop) _handleBack();
+          },
           child: Scaffold(
             key: _scaffoldKey,
             backgroundColor: LoginColors.background,
@@ -127,10 +130,9 @@ class _SalesOrdersContentState extends State<_SalesOrdersContent> {
     );
   }
 
-  Future<bool> _handleWillPop() async {
+  void _handleBack() {
     final vm = context.read<DashboardViewModel>();
     if (vm.companyId != null) context.go(CfRoutes.dashboard(vm.companyId!));
-    return false;
   }
 
   Widget _buildStatusFilterBar() {

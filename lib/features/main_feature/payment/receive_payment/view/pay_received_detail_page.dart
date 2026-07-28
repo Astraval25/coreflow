@@ -80,7 +80,8 @@ class _PayReceivedDetailView extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(8),
                 child: _RoundActionIcon(
-                  icon: (vm.paymentDetail != null &&
+                  icon:
+                      (vm.paymentDetail != null &&
                           DateTime.now()
                                   .difference(vm.paymentDetail!.paymentDate)
                                   .inHours
@@ -98,10 +99,12 @@ class _PayReceivedDetailView extends StatelessWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           duration: Duration(seconds: 2),
-                        content: Text(
-                            'Payments can only be edited within 24 hours of creation'),
-                        behavior: SnackBarBehavior.floating,
-                      ));
+                          content: Text(
+                            'Payments can only be edited within 24 hours of creation',
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
                       return;
                     }
                     final updated = await Navigator.push<bool>(
@@ -122,7 +125,10 @@ class _PayReceivedDetailView extends StatelessWidget {
           body: Stack(
             children: [
               RefreshIndicator(onRefresh: vm.refresh, child: _buildBody(vm)),
-              if (!vm.isLoading && !vm.hasError && !vm.isNoData && vm.paymentDetail != null)
+              if (!vm.isLoading &&
+                  !vm.hasError &&
+                  !vm.isNoData &&
+                  vm.paymentDetail != null)
                 ReceivePaymentBottomPanel(payment: vm.paymentDetail!, vm: vm),
             ],
           ),
@@ -282,8 +288,6 @@ class _PaymentAppBarTitle extends StatelessWidget {
   }
 }
 
-
-
 class _MetaCard extends StatelessWidget {
   final PaymentDetail payment;
 
@@ -291,7 +295,6 @@ class _MetaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return _CardBlock(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,9 +391,15 @@ class _PaymentRefCardState extends State<_PaymentRefCard> {
   @override
   void initState() {
     super.initState();
-    _remarksCtrl = TextEditingController(text: widget.paymentRef?.internalRemarks ?? '');
-    _statusCtrl = TextEditingController(text: widget.paymentRef?.internalStatus ?? '');
-    _customRefCtrl = TextEditingController(text: widget.paymentRef?.customReference ?? '');
+    _remarksCtrl = TextEditingController(
+      text: widget.paymentRef?.internalRemarks ?? '',
+    );
+    _statusCtrl = TextEditingController(
+      text: widget.paymentRef?.internalStatus ?? '',
+    );
+    _customRefCtrl = TextEditingController(
+      text: widget.paymentRef?.customReference ?? '',
+    );
   }
 
   @override
@@ -463,7 +472,11 @@ class _PaymentRefCardState extends State<_PaymentRefCard> {
                   borderRadius: BorderRadius.circular(6),
                   child: Padding(
                     padding: const EdgeInsets.all(4),
-                    child: Icon(Icons.edit_rounded, size: 16, color: LoginColors.primary),
+                    child: Icon(
+                      Icons.edit_rounded,
+                      size: 16,
+                      color: LoginColors.primary,
+                    ),
                   ),
                 ),
             ],
@@ -472,7 +485,11 @@ class _PaymentRefCardState extends State<_PaymentRefCard> {
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.numbers_rounded, size: 12, color: LoginColors.textSecondary),
+                Icon(
+                  Icons.numbers_rounded,
+                  size: 12,
+                  color: LoginColors.textSecondary,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   localNumber,
@@ -491,7 +508,10 @@ class _PaymentRefCardState extends State<_PaymentRefCard> {
             const SizedBox(height: 8),
             _RefTextField(controller: _statusCtrl, label: 'Internal Status'),
             const SizedBox(height: 8),
-            _RefTextField(controller: _customRefCtrl, label: 'Custom Reference'),
+            _RefTextField(
+              controller: _customRefCtrl,
+              label: 'Custom Reference',
+            ),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -499,9 +519,11 @@ class _PaymentRefCardState extends State<_PaymentRefCard> {
                 TextButton(
                   onPressed: () {
                     setState(() => _editing = false);
-                    _remarksCtrl.text = widget.paymentRef?.internalRemarks ?? '';
+                    _remarksCtrl.text =
+                        widget.paymentRef?.internalRemarks ?? '';
                     _statusCtrl.text = widget.paymentRef?.internalStatus ?? '';
-                    _customRefCtrl.text = widget.paymentRef?.customReference ?? '';
+                    _customRefCtrl.text =
+                        widget.paymentRef?.customReference ?? '';
                   },
                   child: const Text('Cancel', style: TextStyle(fontSize: 12)),
                 ),
@@ -510,29 +532,46 @@ class _PaymentRefCardState extends State<_PaymentRefCard> {
                   onPressed: widget.vm.isRefUpdating ? null : _save,
                   style: FilledButton.styleFrom(
                     backgroundColor: LoginColors.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   child: widget.vm.isRefUpdating
                       ? const SizedBox(
-                          width: 14, height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
-                      : const Text('Save', style: TextStyle(fontSize: 12, color: Colors.white)),
+                      : const Text(
+                          'Save',
+                          style: TextStyle(fontSize: 12, color: Colors.white),
+                        ),
                 ),
               ],
             ),
           ] else ...[
             if (_hasRefData(ref)) ...[
               const SizedBox(height: 8),
-              if (ref!.internalRemarks != null && ref.internalRemarks!.isNotEmpty)
+              if (ref!.internalRemarks != null &&
+                  ref.internalRemarks!.isNotEmpty)
                 _RefDisplayRow(label: 'Remarks', value: ref.internalRemarks!),
               if (ref.internalStatus != null && ref.internalStatus!.isNotEmpty)
                 _RefDisplayRow(label: 'Status', value: ref.internalStatus!),
-              if (ref.customReference != null && ref.customReference!.isNotEmpty)
-                _RefDisplayRow(label: 'Custom Ref', value: ref.customReference!),
+              if (ref.customReference != null &&
+                  ref.customReference!.isNotEmpty)
+                _RefDisplayRow(
+                  label: 'Custom Ref',
+                  value: ref.customReference!,
+                ),
             ],
           ],
         ],
@@ -800,7 +839,6 @@ class _AmountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return _CardBlock(
       child: Row(
         children: [
@@ -981,9 +1019,7 @@ class _ProofCardState extends State<_ProofCard> {
 
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => _ProofViewerPage(bytes: bytes),
-      ),
+      MaterialPageRoute(builder: (_) => _ProofViewerPage(bytes: bytes)),
     );
   }
 
@@ -995,8 +1031,11 @@ class _ProofCardState extends State<_ProofCard> {
         children: [
           Row(
             children: [
-              Icon(Icons.receipt_long_rounded,
-                  size: 16, color: LoginColors.textPrimary),
+              Icon(
+                Icons.receipt_long_rounded,
+                size: 16,
+                color: LoginColors.textPrimary,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Payment Proof',
@@ -1088,7 +1127,7 @@ class _ProofViewerPage extends StatelessWidget {
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/payment_proof.pdf');
       await file.writeAsBytes(bytes);
-      await Share.shareXFiles([XFile(file.path)]);
+      await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1111,9 +1150,7 @@ class _ProofViewerPage extends StatelessWidget {
       });
       return const Scaffold(
         backgroundColor: Colors.black,
-        body: Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
+        body: Center(child: CircularProgressIndicator(color: Colors.white)),
       );
     }
 

@@ -41,8 +41,11 @@ class SettingsPage extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: LoginColors.borderLight, width: 1),
           ),
-          child: Icon(Icons.arrow_back_ios_new_rounded,
-              color: LoginColors.textPrimary, size: 18),
+          child: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: LoginColors.textPrimary,
+            size: 18,
+          ),
         ),
         onPressed: () => _handleBack(context),
       ),
@@ -82,7 +85,7 @@ class _SettingsBody extends StatelessWidget {
 
   Widget _buildAppearanceSection(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -104,7 +107,9 @@ class _SettingsBody extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  themeProvider.isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                  themeProvider.isDarkMode
+                      ? Icons.dark_mode_rounded
+                      : Icons.light_mode_rounded,
                   size: 18,
                   color: LoginColors.textSecondary,
                 ),
@@ -136,7 +141,7 @@ class _SettingsBody extends StatelessWidget {
               Switch.adaptive(
                 value: themeProvider.isDarkMode,
                 onChanged: (_) => themeProvider.toggleTheme(),
-                activeColor: LoginColors.primary,
+                activeThumbColor: LoginColors.primary,
               ),
             ],
           ),

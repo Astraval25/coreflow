@@ -76,8 +76,11 @@ class _VendorOnboardingViewState extends State<_VendorOnboardingView> {
     });
 
     try {
-      final granted = await FlutterContacts.requestPermission(readonly: true);
-      if (!granted) {
+      final permission = await FlutterContacts.permissions.request(
+        PermissionType.read,
+      );
+      if (permission != PermissionStatus.granted &&
+          permission != PermissionStatus.limited) {
         setState(() {
           _isPermissionDenied = true;
           _isLoading = false;
@@ -85,12 +88,14 @@ class _VendorOnboardingViewState extends State<_VendorOnboardingView> {
         return;
       }
 
-      final contacts = await FlutterContacts.getContacts(withProperties: true);
+      final contacts = await FlutterContacts.getAll(
+        properties: {ContactProperty.name, ContactProperty.phone},
+      );
       final rows = <_ContactPhoneRow>[];
       for (final contact in contacts) {
-        final name = contact.displayName.trim();
+        final name = (contact.displayName ?? '').trim();
         for (final phone in contact.phones) {
-          final number = phone.number.trim();
+          final number = (phone.number ?? '').trim();
           if (number.isEmpty) continue;
           rows.add(
             _ContactPhoneRow(

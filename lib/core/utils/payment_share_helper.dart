@@ -18,12 +18,10 @@ class PaymentShareHelper {
     final date = _fmtDate(payment.paymentDate);
     final mode = payment.modeOfPayment.trim();
     final name = isSent
-        ? (payment.vendorName.trim().isNotEmpty
-            ? payment.vendorName
-            : 'Vendor')
+        ? (payment.vendorName.trim().isNotEmpty ? payment.vendorName : 'Vendor')
         : (payment.customerName.trim().isNotEmpty
-            ? payment.customerName
-            : 'Customer');
+              ? payment.customerName
+              : 'Customer');
     final amount = 'INR ${payment.amount.toStringAsFixed(2)}';
     final notes = payment.notes.trim();
 
@@ -41,10 +39,12 @@ class PaymentShareHelper {
 
   // ── 1. Share Text ──
 
-  static Future<void> shareText(PaymentDetail payment,
-      {required bool isSent}) async {
+  static Future<void> shareText(
+    PaymentDetail payment, {
+    required bool isSent,
+  }) async {
     final text = buildShareText(payment, isSent: isSent);
-    await Share.share(text);
+    await SharePlus.instance.share(ShareParams(text: text));
   }
 
   // ── 2. Share Proof with Text ──
@@ -59,9 +59,8 @@ class PaymentShareHelper {
     final ext = _isPdf(proofBytes) ? 'pdf' : 'jpg';
     final file = File('${dir.path}/payment_proof.$ext');
     await file.writeAsBytes(proofBytes);
-    await Share.shareXFiles(
-      [XFile(file.path)],
-      text: text,
+    await SharePlus.instance.share(
+      ShareParams(files: [XFile(file.path)], text: text),
     );
   }
 
@@ -75,7 +74,7 @@ class PaymentShareHelper {
     final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/payment_receipt.png');
     await file.writeAsBytes(bytes);
-    await Share.shareXFiles([XFile(file.path)]);
+    await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
   }
 
   // ── 4. Share as PDF ──
@@ -88,22 +87,22 @@ class PaymentShareHelper {
     final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/payment_receipt.pdf');
     await file.writeAsBytes(bytes);
-    await Share.shareXFiles([XFile(file.path)]);
+    await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
   }
 
   // ────────────────────── PDF generation ──────────────────────
 
-  static Future<Uint8List> _generatePdf(PaymentDetail payment,
-      {required bool isSent}) async {
+  static Future<Uint8List> _generatePdf(
+    PaymentDetail payment, {
+    required bool isSent,
+  }) async {
     final pdf = pw.Document();
     final partyLabel = isSent ? 'Vendor' : 'Customer';
     final partyName = isSent
-        ? (payment.vendorName.trim().isNotEmpty
-            ? payment.vendorName
-            : 'Vendor')
+        ? (payment.vendorName.trim().isNotEmpty ? payment.vendorName : 'Vendor')
         : (payment.customerName.trim().isNotEmpty
-            ? payment.customerName
-            : 'Customer');
+              ? payment.customerName
+              : 'Customer');
 
     final paymentLabel = payment.paymentNumber.trim().isNotEmpty
         ? payment.paymentNumber
@@ -159,8 +158,7 @@ class PaymentShareHelper {
               _pdfRow('Time', _fmtTime(payment.paymentDate)),
               _pdfRow(partyLabel, partyName),
               if (mode.isNotEmpty) _pdfRow('Mode of Payment', mode),
-              if (reference.isNotEmpty)
-                _pdfRow('Reference Number', reference),
+              if (reference.isNotEmpty) _pdfRow('Reference Number', reference),
               if (status.isNotEmpty) _pdfRow('Status', status),
               _pdfRow('State', payment.isActive ? 'Active' : 'Inactive'),
 
@@ -214,7 +212,9 @@ class PaymentShareHelper {
                   ),
                   cellStyle: const pw.TextStyle(fontSize: 10),
                   cellPadding: const pw.EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   headers: ['Order', 'Amount', 'Date', 'Remarks'],
                   data: payment.orderAllocations.map((a) {
                     final label = a.orderNumber.trim().isNotEmpty
@@ -286,10 +286,7 @@ class PaymentShareHelper {
           pw.Expanded(
             child: pw.Text(
               value,
-              style: pw.TextStyle(
-                fontSize: 11,
-                fontWeight: pw.FontWeight.bold,
-              ),
+              style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
             ),
           ),
         ],
@@ -305,12 +302,10 @@ class PaymentShareHelper {
   }) async {
     final partyLabel = isSent ? 'Vendor' : 'Customer';
     final partyName = isSent
-        ? (payment.vendorName.trim().isNotEmpty
-            ? payment.vendorName
-            : 'Vendor')
+        ? (payment.vendorName.trim().isNotEmpty ? payment.vendorName : 'Vendor')
         : (payment.customerName.trim().isNotEmpty
-            ? payment.customerName
-            : 'Customer');
+              ? payment.customerName
+              : 'Customer');
     final paymentLabel = payment.paymentNumber.trim().isNotEmpty
         ? payment.paymentNumber
         : '#${payment.paymentId}';
@@ -355,10 +350,23 @@ class PaymentShareHelper {
       Rect.fromLTWH(0, 0, width, 70),
       Paint()..color = const Color(0xFF1a73e8),
     );
-    _drawText(canvas, 'Payment Receipt', 20, 16,
-        fontSize: 20, color: Colors.white, bold: true);
-    _drawText(canvas, paymentLabel, 20, 42,
-        fontSize: 12, color: const Color(0xFFcce0ff));
+    _drawText(
+      canvas,
+      'Payment Receipt',
+      20,
+      16,
+      fontSize: 20,
+      color: Colors.white,
+      bold: true,
+    );
+    _drawText(
+      canvas,
+      paymentLabel,
+      20,
+      42,
+      fontSize: 12,
+      color: const Color(0xFFcce0ff),
+    );
     y = 80;
 
     // Details
@@ -383,19 +391,29 @@ class PaymentShareHelper {
     y += 12;
 
     // Amount
-    _drawText(canvas, 'Total Amount', 20, y,
-        fontSize: 12, color: const Color(0xFF666666));
-    _drawText(canvas, amount, width - 20, y,
-        fontSize: 18,
-        color: const Color(0xFF1a73e8),
-        bold: true,
-        alignRight: true);
+    _drawText(
+      canvas,
+      'Total Amount',
+      20,
+      y,
+      fontSize: 12,
+      color: const Color(0xFF666666),
+    );
+    _drawText(
+      canvas,
+      amount,
+      width - 20,
+      y,
+      fontSize: 18,
+      color: const Color(0xFF1a73e8),
+      bold: true,
+      alignRight: true,
+    );
     y += 36;
 
     // Order allocations
     if (payment.orderAllocations.isNotEmpty) {
-      _drawText(canvas, 'Order Allocations', 20, y,
-          fontSize: 13, bold: true);
+      _drawText(canvas, 'Order Allocations', 20, y, fontSize: 13, bold: true);
       y += 24;
       for (final a in payment.orderAllocations) {
         final label = a.orderNumber.trim().isNotEmpty
@@ -403,12 +421,13 @@ class PaymentShareHelper {
             : '#${a.orderId}';
         _drawText(canvas, label, 20, y, fontSize: 11);
         _drawText(
-            canvas,
-            'INR ${a.amountApplied.toStringAsFixed(2)}',
-            width - 20,
-            y,
-            fontSize: 11,
-            alignRight: true);
+          canvas,
+          'INR ${a.amountApplied.toStringAsFixed(2)}',
+          width - 20,
+          y,
+          fontSize: 11,
+          alignRight: true,
+        );
         y += 24;
       }
     }
@@ -416,15 +435,28 @@ class PaymentShareHelper {
     // Notes
     if (notes.isNotEmpty) {
       y += 8;
-      _drawText(canvas, 'Notes: $notes', 20, y,
-          fontSize: 11, color: const Color(0xFF666666));
+      _drawText(
+        canvas,
+        'Notes: $notes',
+        20,
+        y,
+        fontSize: 11,
+        color: const Color(0xFF666666),
+      );
       y += 24;
     }
 
     // Footer
     y += 8;
-    _drawText(canvas, 'Generated by CoreFlow', width / 2, y,
-        fontSize: 9, color: const Color(0xFF999999), center: true);
+    _drawText(
+      canvas,
+      'Generated by CoreFlow',
+      width / 2,
+      y,
+      fontSize: 9,
+      color: const Color(0xFF999999),
+      center: true,
+    );
 
     final picture = recorder.endRecording();
     final img = await picture.toImage(width.toInt(), height.toInt());
@@ -443,16 +475,18 @@ class PaymentShareHelper {
     bool alignRight = false,
     bool center = false,
   }) {
-    final builder = ui.ParagraphBuilder(
-      ui.ParagraphStyle(
-        textAlign:
-            center ? TextAlign.center : (alignRight ? TextAlign.right : TextAlign.left),
-        fontSize: fontSize,
-        fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-      ),
-    )
-      ..pushStyle(ui.TextStyle(color: color, fontSize: fontSize))
-      ..addText(text);
+    final builder =
+        ui.ParagraphBuilder(
+            ui.ParagraphStyle(
+              textAlign: center
+                  ? TextAlign.center
+                  : (alignRight ? TextAlign.right : TextAlign.left),
+              fontSize: fontSize,
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            ),
+          )
+          ..pushStyle(ui.TextStyle(color: color, fontSize: fontSize))
+          ..addText(text);
 
     final paragraph = builder.build();
     final maxWidth = alignRight || center ? x : 560.0;
@@ -461,15 +495,25 @@ class PaymentShareHelper {
     final dx = alignRight
         ? x - paragraph.maxIntrinsicWidth
         : center
-            ? x - paragraph.maxIntrinsicWidth / 2
-            : x;
+        ? x - paragraph.maxIntrinsicWidth / 2
+        : x;
     canvas.drawParagraph(paragraph, Offset(dx, y));
   }
 
   static double _drawDetailRow(
-      Canvas canvas, String label, String value, double y) {
-    _drawText(canvas, '$label:', 20, y,
-        fontSize: 11, color: const Color(0xFF666666));
+    Canvas canvas,
+    String label,
+    String value,
+    double y,
+  ) {
+    _drawText(
+      canvas,
+      '$label:',
+      20,
+      y,
+      fontSize: 11,
+      color: const Color(0xFF666666),
+    );
     _drawText(canvas, value, 140, y, fontSize: 11, bold: true);
     return y + 26;
   }
@@ -486,8 +530,18 @@ class PaymentShareHelper {
 
   static String _fmtDate(DateTime d) {
     const m = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${m[(d.month - 1).clamp(0, 11)]} ${d.day}, ${d.year}';
   }

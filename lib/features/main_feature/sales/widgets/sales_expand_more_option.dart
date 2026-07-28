@@ -482,7 +482,7 @@ class _SalesBottomOptionsPanelState extends State<SalesBottomOptionsPanel>
                   parent: _animCtrl,
                   curve: Curves.easeInOut,
                 ),
-                axisAlignment: -1.0,
+                alignment: AlignmentDirectional.topStart,
                 child: Column(
                   key: _expandedKey,
                   mainAxisSize: MainAxisSize.min,

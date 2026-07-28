@@ -75,8 +75,11 @@ class _PayReceivedContentState extends State<_PayReceivedContent> {
 
     return Consumer<ReceivePaymentViewModel>(
       builder: (context, vm, child) {
-        return WillPopScope(
-          onWillPop: _handleWillPop,
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop) _handleBack();
+          },
           child: Scaffold(
             key: _scaffoldKey,
             backgroundColor: LoginColors.background,
@@ -121,12 +124,11 @@ class _PayReceivedContentState extends State<_PayReceivedContent> {
     );
   }
 
-  Future<bool> _handleWillPop() async {
+  void _handleBack() {
     final dashVm = context.read<DashboardViewModel>();
     if (dashVm.companyId != null) {
       context.go(CfRoutes.dashboard(dashVm.companyId!));
     }
-    return false;
   }
 
   Widget _buildBody(ReceivePaymentViewModel vm) {

@@ -111,7 +111,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 SizedBox(
                   width: 140,
                   child: DropdownButtonFormField<String>(
-                    value: _orderType,
+                    initialValue: _orderType,
                     items: const [
                       DropdownMenuItem(value: 'ALL', child: Text('All')),
                       DropdownMenuItem(value: 'SALES', child: Text('Sales')),
@@ -133,7 +133,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 SizedBox(
                   width: 140,
                   child: DropdownButtonFormField<String>(
-                    value: _paidState,
+                    initialValue: _paidState,
                     items: const [
                       DropdownMenuItem(value: 'ALL', child: Text('All')),
                       DropdownMenuItem(value: 'PAID', child: Text('Paid')),
@@ -156,7 +156,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 SizedBox(
                   width: 170,
                   child: DropdownButtonFormField<String>(
-                    value: _orderStatus,
+                    initialValue: _orderStatus,
                     items: const [
                       DropdownMenuItem(value: 'ALL', child: Text('All Status')),
                       DropdownMenuItem(value: 'ORDER', child: Text('ORDER')),
@@ -250,7 +250,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 SizedBox(
                   width: 160,
                   child: DropdownButtonFormField<String>(
-                    value: _paymentType,
+                    initialValue: _paymentType,
                     items: const [
                       DropdownMenuItem(value: 'ALL', child: Text('All')),
                       DropdownMenuItem(
@@ -272,7 +272,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 SizedBox(
                   width: 190,
                   child: DropdownButtonFormField<String>(
-                    value: _paymentStatus,
+                    initialValue: _paymentStatus,
                     items: const [
                       DropdownMenuItem(value: 'ALL', child: Text('All Status')),
                       DropdownMenuItem(

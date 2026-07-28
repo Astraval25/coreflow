@@ -102,7 +102,7 @@ class OrderShareHelper {
 
   static Future<void> shareText(OrderShareData data) async {
     final text = buildShareText(data);
-    await Share.share(text);
+    await SharePlus.instance.share(ShareParams(text: text));
   }
 
   // ── 2. Share as PDF ──
@@ -113,7 +113,7 @@ class OrderShareHelper {
     final fileName = data.isBillStatus ? 'invoice' : 'order';
     final file = File('${dir.path}/${fileName}_${data.orderId}.pdf');
     await file.writeAsBytes(bytes);
-    await Share.shareXFiles([XFile(file.path)]);
+    await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
   }
 
   // ────────────────────── PDF generation ──────────────────────

@@ -30,7 +30,9 @@ class VendorInfoSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         DropdownButtonFormField<String>(
-          value: _languages.contains(language.text) ? language.text : null,
+          initialValue: _languages.contains(language.text)
+              ? language.text
+              : null,
           decoration: _inputDecoration(
             labelText: 'Language',
             icon: Icons.language_rounded,
@@ -120,19 +122,9 @@ class VendorInfoSection extends StatelessWidget {
     return InputDecoration(
       labelText: labelText,
       hintText: hintText,
-      labelStyle: TextStyle(
-        fontSize: 14,
-        color: LoginColors.textSecondary,
-      ),
-      hintStyle: TextStyle(
-        fontSize: 14,
-        color: LoginColors.textTertiary,
-      ),
-      prefixIcon: Icon(
-        icon,
-        size: _iconSize,
-        color: LoginColors.textTertiary,
-      ),
+      labelStyle: TextStyle(fontSize: 14, color: LoginColors.textSecondary),
+      hintStyle: TextStyle(fontSize: 14, color: LoginColors.textTertiary),
+      prefixIcon: Icon(icon, size: _iconSize, color: LoginColors.textTertiary),
       filled: true,
       fillColor: LoginColors.fieldFill,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),

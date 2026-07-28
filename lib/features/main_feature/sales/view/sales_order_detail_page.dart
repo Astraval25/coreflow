@@ -68,17 +68,19 @@ class _SalesOrderDetailViewState extends State<_SalesOrderDetailView> {
         );
         return;
       }
-      final orderNumber =
-          vm.orderRef?.localOrderNumber.isNotEmpty == true
-              ? vm.orderRef!.localOrderNumber
-              : vm.orderId.toString();
+      final orderNumber = vm.orderRef?.localOrderNumber.isNotEmpty == true
+          ? vm.orderRef!.localOrderNumber
+          : vm.orderId.toString();
       final fileName = 'order-bill-$orderNumber.pdf';
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/$fileName');
       await file.writeAsBytes(bytes, flush: true);
-      await Share.shareXFiles([
-        XFile(file.path, mimeType: 'application/pdf'),
-      ], subject: fileName);
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path, mimeType: 'application/pdf')],
+          subject: fileName,
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -128,7 +130,10 @@ class _SalesOrderDetailViewState extends State<_SalesOrderDetailView> {
             actions: [
               if (vm.orderDetail?.hasBill == true)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 4,
+                  ),
                   child: _RoundActionIcon(
                     icon: _isDownloadingBill
                         ? Icons.hourglass_top_rounded

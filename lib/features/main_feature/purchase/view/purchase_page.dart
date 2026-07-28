@@ -75,8 +75,11 @@ class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
 
     return Consumer<PurchaseOrderViewModel>(
       builder: (context, vm, child) {
-        return WillPopScope(
-          onWillPop: _handleWillPop,
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop) _handleBack();
+          },
           child: Scaffold(
             key: _scaffoldKey,
             backgroundColor: LoginColors.background,
@@ -123,10 +126,9 @@ class _PurchaseOrdersContentState extends State<_PurchaseOrdersContent> {
     );
   }
 
-  Future<bool> _handleWillPop() async {
+  void _handleBack() {
     final vm = context.read<DashboardViewModel>();
     if (vm.companyId != null) context.go(CfRoutes.dashboard(vm.companyId!));
-    return false;
   }
 
   Widget _buildStatusFilterBar() {
