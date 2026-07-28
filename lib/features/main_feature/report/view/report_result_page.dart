@@ -1294,11 +1294,12 @@ class _PartyView extends StatelessWidget {
               defaultColumnWidth: const IntrinsicColumnWidth(),
               border: TableBorder.all(color: LoginColors.border, width: 0.5),
               children: [
-                _hRow([partyLabel, 'Orders', 'Amount', 'Paid', 'Due']),
+                _hRow([partyLabel, 'Orders', 'Qty', 'Amount', 'Paid', 'Due']),
                 ...entries.map(
                   (e) => _dRow([
                     e.partyName,
                     e.totalOrders.toString(),
+                    e.totalQuantity.toStringAsFixed(2),
                     _fmt(e.totalAmount),
                     _fmt(e.paidAmount),
                     _fmt(e.dueAmount),

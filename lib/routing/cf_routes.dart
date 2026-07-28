@@ -23,7 +23,6 @@ class CfRoutes {
   static const termsOfService = '/cf/legal/terms-of-service';
 
   // ── Company Management ────────────────────────────────────────────────
-  static const companyList = '/cf/company/list';
   static const companyCreate = '/cf/company/create';
   static String companyDetail(int companyId) => '/cf/company/$companyId/detail';
   static String companyUpdate(int companyId) => '/cf/company/$companyId/update';
@@ -43,6 +42,8 @@ class CfRoutes {
   static String customers(int companyId) => '/cf/company/$companyId/customers';
   static String customerCreate(int companyId) =>
       '/cf/company/$companyId/customers/create';
+  static String customerCreateForm(int companyId) =>
+      '/cf/company/$companyId/customers/create/form';
   static String customerDetail(int companyId, int customerId) =>
       '/cf/company/$companyId/customers/$customerId/detail';
   static String customerUpdate(int companyId, int customerId) =>
@@ -52,6 +53,8 @@ class CfRoutes {
   static String vendors(int companyId) => '/cf/company/$companyId/vendors';
   static String vendorCreate(int companyId) =>
       '/cf/company/$companyId/vendors/create';
+  static String vendorCreateForm(int companyId) =>
+      '/cf/company/$companyId/vendors/create/form';
   static String vendorDetail(int companyId, int vendorId) =>
       '/cf/company/$companyId/vendors/$vendorId/detail';
   static String vendorUpdate(int companyId, int vendorId) =>

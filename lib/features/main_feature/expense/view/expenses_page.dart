@@ -152,7 +152,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
           setState(() => _searchQuery = '');
         },
         scaffoldKey: _scaffoldKey,
-        title: 'Expenses (${_expenses.length})',
+        title: 'Expenses',
         searchHint: 'Search expenses...',
       ),
       floatingActionButton: FloatingActionButton.extended(

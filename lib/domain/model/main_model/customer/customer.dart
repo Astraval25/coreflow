@@ -6,6 +6,8 @@ class Customer {
   final String dueAmount;
   final String? email;
   final bool isActive;
+  final String? connectionStatus;
+  final int unreadCount;
 
   Customer({
     required this.customerId,
@@ -15,7 +17,14 @@ class Customer {
     this.dueAmount = '',
     this.email,
     this.isActive = true,
+    this.connectionStatus,
+    this.unreadCount = 0,
   });
+
+  bool get isPendingConnection => connectionStatus == 'PENDING';
+  bool get isAcceptedConnection => connectionStatus == 'ACCEPTED';
+  bool get isRejectedConnection => connectionStatus == 'REJECTED';
+  bool get hasConnectionRequest => connectionStatus != null;
 
   factory Customer.fromJson(Map<String, dynamic> json) {
     return Customer(
@@ -26,6 +35,8 @@ class Customer {
       dueAmount: json['dueAmount']?.toString() ?? '',
       email: json['email'],
       isActive: json['isActive'] ?? true,
+      connectionStatus: json['connectionStatus'],
+      unreadCount: json['unreadCount'] ?? 0,
     );
   }
 
@@ -38,6 +49,8 @@ class Customer {
       'dueAmount': dueAmount,
       'email': email,
       'isActive': isActive,
+      'connectionStatus': connectionStatus,
+      'unreadCount': unreadCount,
     };
   }
 
@@ -49,6 +62,8 @@ class Customer {
     String? dueAmount,
     String? email,
     bool? isActive,
+    String? connectionStatus,
+    int? unreadCount,
   }) {
     return Customer(
       customerId: customerId ?? this.customerId,
@@ -58,6 +73,8 @@ class Customer {
       dueAmount: dueAmount ?? this.dueAmount,
       email: email ?? this.email,
       isActive: isActive ?? this.isActive,
+      connectionStatus: connectionStatus ?? this.connectionStatus,
+      unreadCount: unreadCount ?? this.unreadCount,
     );
   }
 }

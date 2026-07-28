@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:coreflow/data/services/api_services.dart';
 import 'package:coreflow/domain/model/main_model/customer/create_customer_request.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_contact_lookup.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_edit_request.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_edit_response.dart';
@@ -115,6 +116,60 @@ class CustomerRepository {
       );
     } catch (e) {
       debugPrint('Create customer error: $e');
+      return null;
+    }
+  }
+
+  Future<List<CustomerContactLookupResult>> lookupCustomerContacts(
+    int companyId,
+    List<String> phones,
+  ) async {
+    try {
+      if (phones.isEmpty) return const [];
+
+      final response = await _apiService.post(
+        AppConfig.getCustomerContactLookupUrl(companyId),
+        {'phones': phones},
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        debugPrint('Contact lookup failed: ${response.statusCode}');
+        return const [];
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final parsed = CustomerContactLookupResponse.fromJson(data);
+      if (!parsed.responseStatus) {
+        debugPrint(
+          'Contact lookup responseStatus false: ${parsed.responseMessage}',
+        );
+        return const [];
+      }
+      return parsed.responseData;
+    } catch (e) {
+      debugPrint('Contact lookup error: $e');
+      return const [];
+    }
+  }
+
+  Future<CustomerEditResponse?> linkCustomerByPhone(
+    int companyId,
+    int customerId,
+  ) async {
+    try {
+      final response = await _apiService.post(
+        AppConfig.getCustomerLinkByPhoneUrl(companyId, customerId),
+        {},
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        debugPrint('Link customer by phone failed: ${response.statusCode}');
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return CustomerEditResponse.fromJson(data);
+    } catch (e) {
+      debugPrint('Link customer by phone error: $e');
       return null;
     }
   }
@@ -317,9 +372,10 @@ class CustomerRepository {
 
   Future<CustomerOrdersPaymentsData?> getCustomerOrdersPayments(
     int companyId,
-    int customerId,
-    {int page = 0, int size = 10}
-  ) async {
+    int customerId, {
+    int page = 0,
+    int size = 10,
+  }) async {
     try {
       final url = AppConfig.getCustomerOrdersPaymentsUrl(
         companyId,
@@ -330,7 +386,9 @@ class CustomerRepository {
       final response = await _apiService.get(Uri.parse(url));
 
       if (response.statusCode != 200 && response.statusCode != 202) {
-        debugPrint('Get customer orders-payments failed: ${response.statusCode}');
+        debugPrint(
+          'Get customer orders-payments failed: ${response.statusCode}',
+        );
         return null;
       }
 
@@ -356,8 +414,7 @@ class CustomerRepository {
     int customerId,
   ) async {
     try {
-      final url =
-          AppConfig.getCustomerSellableItemsUrl(companyId, customerId);
+      final url = AppConfig.getCustomerSellableItemsUrl(companyId, customerId);
       final response = await _apiService.get(Uri.parse(url));
 
       // debugPrint(
@@ -365,8 +422,7 @@ class CustomerRepository {
       // );
 
       if (response.statusCode != 200 && response.statusCode != 202) {
-        debugPrint(
-            'Get sellable items failed: ${response.statusCode}');
+        debugPrint('Get sellable items failed: ${response.statusCode}');
         return [];
       }
 
@@ -386,6 +442,75 @@ class CustomerRepository {
     } catch (e, stack) {
       debugPrint('Get customer sellable items error: $e\n$stack');
       return [];
+    }
+  }
+
+  // Connection request methods
+
+  Future<bool> acceptCustomerConnection(int companyId, int customerId) async {
+    try {
+      final url = AppConfig.getCustomerConnectionAcceptUrl(
+        companyId,
+        customerId,
+      );
+      final response = await _apiService.post(url, {});
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final success = body['responseStatus'] == true;
+      if (success) return true;
+
+      final message =
+          (body['responseMessage']?.toString().trim().isNotEmpty == true)
+          ? body['responseMessage'].toString()
+          : 'Failed to accept connection';
+      throw Exception(message);
+    } catch (e) {
+      debugPrint('Accept customer connection error: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> rejectCustomerConnection(int companyId, int customerId) async {
+    try {
+      final url = AppConfig.getCustomerConnectionRejectUrl(
+        companyId,
+        customerId,
+      );
+      final response = await _apiService.post(url, {});
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final success = body['responseStatus'] == true;
+      if (success) return true;
+
+      final message =
+          (body['responseMessage']?.toString().trim().isNotEmpty == true)
+          ? body['responseMessage'].toString()
+          : 'Failed to reject connection';
+      throw Exception(message);
+    } catch (e) {
+      debugPrint('Reject customer connection error: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> undoCustomerConnection(
+    int companyId,
+    int customerId,
+    String newStatus,
+  ) async {
+    try {
+      final url = AppConfig.getCustomerConnectionUndoUrl(companyId, customerId);
+      final response = await _apiService.post(url, {'newStatus': newStatus});
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final success = body['responseStatus'] == true;
+      if (success) return true;
+
+      final message =
+          (body['responseMessage']?.toString().trim().isNotEmpty == true)
+          ? body['responseMessage'].toString()
+          : 'Failed to update connection';
+      throw Exception(message);
+    } catch (e) {
+      debugPrint('Undo customer connection error: $e');
+      rethrow;
     }
   }
 }

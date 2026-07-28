@@ -40,7 +40,7 @@ class RegisterScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         viewModel.successMessage ??
-                            'Fill all details to register',
+                            'Register with company, phone and password',
                         style: TextStyle(
                           fontSize: 16,
                           color: viewModel.successMessage != null
@@ -73,79 +73,22 @@ class RegisterScreen extends StatelessWidget {
                       ],
                       const SizedBox(height: 32),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: CustomTextField(
-                              controller: viewModel.companyController,
-                              labelText: 'Company',
-                              validator: viewModel.validateCompany,
-                              enabled: !viewModel.isLoading,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: viewModel.selectedIndustry,
-                              items: viewModel.industryOptions
-                                  .map(
-                                    (industry) => DropdownMenuItem<String>(
-                                      value: industry,
-                                      child: Text(industry),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: viewModel.isLoading
-                                  ? null
-                                  : (value) => viewModel.setIndustry(value!),
-                              validator: viewModel.validateIndustry,
-                              decoration: const InputDecoration(
-                                labelText: 'Industry',
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: CustomTextField(
-                              controller: viewModel.firstNameController,
-                              labelText: 'First Name',
-                              validator: viewModel.validateFirstName,
-                              enabled: !viewModel.isLoading,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: CustomTextField(
-                              controller: viewModel.lastNameController,
-                              labelText: 'Last Name',
-                              validator: viewModel.validateLastName,
-                              enabled: !viewModel.isLoading,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
                       CustomTextField(
-                        controller: viewModel.userNameController,
-                        labelText: 'Username',
-                        validator: viewModel.validateUserName,
+                        controller: viewModel.companyController,
+                        labelText: 'Company Name',
+                        validator: viewModel.validateCompany,
                         enabled: !viewModel.isLoading,
                       ),
                       const SizedBox(height: 16),
 
                       CustomTextField(
-                        controller: viewModel.emailController,
-                        labelText: 'Email',
-                        keyboardType: TextInputType.emailAddress,
-                        validator: viewModel.validateEmail,
-                        autofillHints: const [AutofillHints.email],
+                        controller: viewModel.phoneNumberController,
+                        labelText: 'Phone Number',
+                        keyboardType: TextInputType.phone,
+                        validator: viewModel.validatePhoneNumber,
+                        autofillHints: const [AutofillHints.telephoneNumber],
+                        prefixText: '+91 ',
+                        helperText: 'India mobile numbers only',
                         enabled: !viewModel.isLoading,
                       ),
                       const SizedBox(height: 16),
@@ -198,6 +141,21 @@ class RegisterScreen extends StatelessWidget {
                             color: Colors.red.shade50,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.red.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: Colors.red.shade700,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  viewModel.errorMessage!,
+                                  style: TextStyle(color: Colors.red.shade700),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],

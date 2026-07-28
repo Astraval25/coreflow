@@ -1,6 +1,7 @@
 class CreatePurchaseOrderRequest {
   final int vendorId;
   final DateTime orderDate;
+  final DateTime paymentDueDate;
   final double? taxAmount;
   final double? discountAmount;
   final double? deliveryCharge;
@@ -10,6 +11,7 @@ class CreatePurchaseOrderRequest {
   CreatePurchaseOrderRequest({
     required this.vendorId,
     required this.orderDate,
+    required this.paymentDueDate,
     this.taxAmount,
     this.discountAmount,
     this.deliveryCharge,
@@ -21,6 +23,7 @@ class CreatePurchaseOrderRequest {
     return {
       'vendorId': vendorId,
       'orderDate': orderDate.toIso8601String(),
+      'paymentDueDate': paymentDueDate.toIso8601String(),
       'taxAmount': taxAmount ?? 0.0,
       'discountAmount': discountAmount ?? 0,
       'deliveryCharge': deliveryCharge ?? 0.0,

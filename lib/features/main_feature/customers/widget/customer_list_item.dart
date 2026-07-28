@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/main_feature/customers/view_model/customers_view_model.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer.dart';
 
@@ -11,7 +12,6 @@ class CustomerListItem extends StatelessWidget {
   final int companyId;
   final bool isPinned;
   final VoidCallback onTogglePin;
-  final int serialNumber;
 
   const CustomerListItem({
     super.key,
@@ -19,7 +19,6 @@ class CustomerListItem extends StatelessWidget {
     required this.companyId,
     required this.isPinned,
     required this.onTogglePin,
-    required this.serialNumber,
   });
 
   @override
@@ -54,7 +53,8 @@ class CustomerListItem extends StatelessWidget {
             CfRoutes.customerDetail(companyId, customer.customerId),
           );
           if (context.mounted) {
-            context.read<ActiveCustomersViewModel>().refresh();
+            await context.read<ActiveCustomersViewModel>().refresh();
+            await context.read<DashboardViewModel>().refreshUnreadCount();
           }
         },
         child: Padding(
@@ -92,11 +92,6 @@ class CustomerListItem extends StatelessWidget {
                             fontSize: 20,
                           ),
                         ),
-                      ),
-                      Positioned(
-                        right: -2,
-                        top: -2,
-                        child: _NumberBadge(value: serialNumber),
                       ),
                     ],
                   ),
@@ -158,6 +153,10 @@ class CustomerListItem extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    if (customer.unreadCount > 0) ...[
+                      _UnreadCountBadge(count: customer.unreadCount),
+                      const SizedBox(height: 6),
+                    ],
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -190,24 +189,34 @@ class CustomerListItem extends StatelessWidget {
                 ),
               ] else ...[
                 const SizedBox(width: 10),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(999),
-                    onTap: onTogglePin,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Icon(
-                        isPinned
-                            ? Icons.push_pin_rounded
-                            : Icons.push_pin_outlined,
-                        size: 19,
-                        color: isPinned
-                            ? LoginColors.primary
-                            : LoginColors.textTertiary,
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (customer.unreadCount > 0) ...[
+                      _UnreadCountBadge(count: customer.unreadCount),
+                      const SizedBox(height: 6),
+                    ],
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(999),
+                        onTap: onTogglePin,
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Icon(
+                            isPinned
+                                ? Icons.push_pin_rounded
+                                : Icons.push_pin_outlined,
+                            size: 19,
+                            color: isPinned
+                                ? LoginColors.primary
+                                : LoginColors.textTertiary,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ],
@@ -254,25 +263,26 @@ class CustomerListItem extends StatelessWidget {
   }
 }
 
-class _NumberBadge extends StatelessWidget {
-  final int value;
-  const _NumberBadge({required this.value});
+class _UnreadCountBadge extends StatelessWidget {
+  final int count;
+
+  const _UnreadCountBadge({required this.count});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 18),
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      constraints: const BoxConstraints(minWidth: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
-        color: LoginColors.primary,
-        borderRadius: BorderRadius.circular(10),
+        color: LoginColors.error,
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        '$value',
+        '$count',
         textAlign: TextAlign.center,
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.w700,
         ),
       ),

@@ -1,12 +1,13 @@
 import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_contact_lookup.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_mapped_item.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_orders_payments.dart';
+import 'package:coreflow/domain/model/main_model/analytics/party_order_payment_trend.dart';
 import 'package:coreflow/domain/model/main_model/invitation/invitation_response.dart';
 import 'package:coreflow/domain/model/main_model/items/item.dart';
 import 'package:coreflow/domain/model/main_model/items/item_status_response.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; 
 
 enum CustomerViewState { initial, loading, loaded, error, noData }
 
@@ -26,13 +27,24 @@ class CustomerDetailViewModel extends ChangeNotifier {
   bool _hasMoreOrdersPayments = true;
   int _nextOrdersPaymentsPage = 0;
   static const int _ordersPaymentsPageSize = 10;
+  List<PartyOrderPaymentTrendEntry> _monthlyOrderPaymentTrend = [];
+  bool _isMonthlyOrderPaymentTrendLoading = false;
+  bool _isLinkSuggestionLoading = false;
+  CustomerContactLookupResult? _linkSuggestion;
+  bool _isLinkingByPhone = false;
 
   final int _companyId;
   final int _customerId;
+  final Future<void> Function()? _refreshUnreadCount;
+  bool _hasClearedUnreadActivity = false;
 
-  CustomerDetailViewModel({required int companyId, required int customerId})
-    : _companyId = companyId,
-      _customerId = customerId {
+  CustomerDetailViewModel({
+    required int companyId,
+    required int customerId,
+    Future<void> Function()? refreshUnreadCount,
+  }) : _companyId = companyId,
+       _customerId = customerId,
+       _refreshUnreadCount = refreshUnreadCount {
     loadCustomerDetail();
   }
 
@@ -43,10 +55,18 @@ class CustomerDetailViewModel extends ChangeNotifier {
   bool get isMappedItemsLoading => _isMappedItemsLoading;
   bool get isMappedItemStatusUpdating => _isMappedItemStatusUpdating;
   int? get statusUpdatingItemId => _statusUpdatingItemId;
-  List<OrderPaymentEntry> get ordersPayments => List.unmodifiable(_ordersPayments);
+  List<OrderPaymentEntry> get ordersPayments =>
+      List.unmodifiable(_ordersPayments);
   bool get isOrdersPaymentsLoading => _isOrdersPaymentsLoading;
   bool get isOrdersPaymentsLoadingMore => _isOrdersPaymentsLoadingMore;
   bool get hasMoreOrdersPayments => _hasMoreOrdersPayments;
+  List<PartyOrderPaymentTrendEntry> get monthlyOrderPaymentTrend =>
+      List.unmodifiable(_monthlyOrderPaymentTrend);
+  bool get isMonthlyOrderPaymentTrendLoading =>
+      _isMonthlyOrderPaymentTrendLoading;
+  bool get isLinkSuggestionLoading => _isLinkSuggestionLoading;
+  CustomerContactLookupResult? get linkSuggestion => _linkSuggestion;
+  bool get isLinkingByPhone => _isLinkingByPhone;
   List<CustomerOrder> get ordersOnly => _ordersPayments
       .where((e) => e.isOrder && e.order != null)
       .map((e) => e.order!)
@@ -85,8 +105,11 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
       if (customerData != null) {
         _customer = customerData;
+        await _loadLinkSuggestion();
+        await _clearUnreadActivityIfNeeded();
         _updateState(CustomerViewState.loaded);
         loadMappedItems();
+        loadMonthlyOrderPaymentTrend();
         loadOrdersPayments(reset: true);
       } else {
         _updateState(CustomerViewState.noData, error: 'No customer data found');
@@ -99,8 +122,7 @@ class CustomerDetailViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> activateCustomer(BuildContext context) async {
-
+  Future<bool> activateCustomer() async {
     _updateState(CustomerViewState.loading);
 
     try {
@@ -111,21 +133,21 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
       if (response != null && response.responseStatus == true) {
         await loadCustomerDetail();
-        if (context.mounted) {
-          context.pop(true); 
-        }
+        return true;
       } else {
         _updateState(
           CustomerViewState.error,
           error: response?.responseMessage ?? 'Activate failed',
         );
+        return false;
       }
     } catch (e) {
       _updateState(CustomerViewState.error, error: 'Activate error: $e');
+      return false;
     }
   }
 
-  Future<void> deactivateCustomer(BuildContext context) async {
+  Future<bool> deactivateCustomer() async {
     _updateState(CustomerViewState.loading);
 
     try {
@@ -136,17 +158,17 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
       if (response != null && response.responseStatus == true) {
         await loadCustomerDetail();
-        if (context.mounted) {
-          context.pop(true); 
-        }
+        return true;
       } else {
         _updateState(
           CustomerViewState.error,
           error: response?.responseMessage ?? 'Deactivate failed',
         );
+        return false;
       }
     } catch (e) {
       _updateState(CustomerViewState.error, error: 'Deactivate error: $e');
+      return false;
     }
   }
 
@@ -203,7 +225,8 @@ class CustomerDetailViewModel extends ChangeNotifier {
         return true;
       }
 
-      _errorMessage = response?.responseMessage ?? 'Create customer item failed';
+      _errorMessage =
+          response?.responseMessage ?? 'Create customer item failed';
       notifyListeners();
       return false;
     } catch (e) {
@@ -232,7 +255,8 @@ class CustomerDetailViewModel extends ChangeNotifier {
         return true;
       }
 
-      _errorMessage = response?.responseMessage ?? 'Update customer item failed';
+      _errorMessage =
+          response?.responseMessage ?? 'Update customer item failed';
       notifyListeners();
       return false;
     } catch (e) {
@@ -355,6 +379,29 @@ class CustomerDetailViewModel extends ChangeNotifier {
 
   Future<void> refreshOrdersPayments() => loadOrdersPayments(reset: true);
 
+  Future<void> loadMonthlyOrderPaymentTrend() async {
+    _isMonthlyOrderPaymentTrendLoading = true;
+    notifyListeners();
+
+    try {
+      final end = DateTime.now();
+      final start = end.subtract(const Duration(days: 29));
+      final trend = await _authRepository.getCustomerOrderPaymentTrend(
+        _companyId,
+        _customerId,
+        _formatDate(start),
+        _formatDate(end),
+      );
+      _monthlyOrderPaymentTrend = trend;
+    } catch (e) {
+      debugPrint('Failed to load monthly order-payment trend: $e');
+      _monthlyOrderPaymentTrend = [];
+    } finally {
+      _isMonthlyOrderPaymentTrendLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> loadMoreOrdersPaymentsIfNeeded() async {
     if (_isOrdersPaymentsLoading ||
         _isOrdersPaymentsLoadingMore ||
@@ -372,6 +419,12 @@ class CustomerDetailViewModel extends ChangeNotifier {
       return 'p_${entry.payment!.paymentId}';
     }
     return 'x_${entry.date.millisecondsSinceEpoch}';
+  }
+
+  String _formatDate(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 
   // ─── Invitation ───
@@ -451,9 +504,175 @@ class CustomerDetailViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> linkCustomerByPhone() async {
+    if (_isLinkingByPhone) return false;
+    _isLinkingByPhone = true;
+    notifyListeners();
+
+    try {
+      final response = await _authRepository.linkCustomerByPhone(
+        _companyId,
+        _customerId,
+      );
+
+      if (response != null && response.responseStatus) {
+        await loadCustomerDetail();
+        return true;
+      }
+
+      _errorMessage = response?.responseMessage ?? 'Failed to link customer';
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'Failed to link customer: $e';
+      notifyListeners();
+      return false;
+    } finally {
+      _isLinkingByPhone = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _loadLinkSuggestion() async {
+    final phone = _customer?.phone?.trim();
+    final alreadyLinked = _customer?.customerCompany != null;
+
+    if (alreadyLinked || phone == null || phone.isEmpty) {
+      _linkSuggestion = null;
+      _isLinkSuggestionLoading = false;
+      return;
+    }
+
+    _isLinkSuggestionLoading = true;
+    notifyListeners();
+
+    try {
+      final results = await _authRepository.lookupCustomerContacts(_companyId, [
+        phone,
+      ]);
+      _linkSuggestion = results.isNotEmpty ? results.first : null;
+    } catch (_) {
+      _linkSuggestion = null;
+    } finally {
+      _isLinkSuggestionLoading = false;
+      notifyListeners();
+    }
+  }
+
   void _updateState(CustomerViewState state, {String? error}) {
     _state = state;
     _errorMessage = error;
     notifyListeners();
+  }
+
+  // ─── Connection Request ───
+
+  bool _isConnectionLoading = false;
+  bool get isConnectionLoading => _isConnectionLoading;
+
+  Future<bool> acceptConnection() async {
+    _isConnectionLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final success = await _authRepository.acceptCustomerConnection(
+        _companyId,
+        _customerId,
+      );
+      if (success) {
+        _errorMessage = null;
+        await loadCustomerDetail();
+        return true;
+      }
+      _errorMessage = 'Failed to accept connection';
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = _extractErrorMessage(e);
+      debugPrint('Accept connection error: $_errorMessage');
+      notifyListeners();
+      return false;
+    } finally {
+      _isConnectionLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> rejectConnection() async {
+    _isConnectionLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final success = await _authRepository.rejectCustomerConnection(
+        _companyId,
+        _customerId,
+      );
+      if (success) {
+        _errorMessage = null;
+        await loadCustomerDetail();
+        return true;
+      }
+      _errorMessage = 'Failed to reject connection';
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = _extractErrorMessage(e);
+      debugPrint('Reject connection error: $_errorMessage');
+      notifyListeners();
+      return false;
+    } finally {
+      _isConnectionLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> undoConnectionDecision(String newStatus) async {
+    _isConnectionLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final success = await _authRepository.undoCustomerConnection(
+        _companyId,
+        _customerId,
+        newStatus,
+      );
+      if (success) {
+        _errorMessage = null;
+        await loadCustomerDetail();
+        return true;
+      }
+      _errorMessage = 'Failed to update connection';
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = _extractErrorMessage(e);
+      debugPrint('Undo connection error: $_errorMessage');
+      notifyListeners();
+      return false;
+    } finally {
+      _isConnectionLoading = false;
+      notifyListeners();
+    }
+  }
+
+  String _extractErrorMessage(Object error) {
+    final raw = error.toString().trim();
+    if (raw.startsWith('Exception:')) {
+      final trimmed = raw.replaceFirst('Exception:', '').trim();
+      if (trimmed.isNotEmpty) return trimmed;
+    }
+    return raw.isNotEmpty ? raw : 'Unexpected error';
+  }
+
+  Future<void> _clearUnreadActivityIfNeeded() async {
+    if (_hasClearedUnreadActivity) return;
+
+    await _authRepository.markNotificationSubjectRead(
+      _companyId,
+      'CUSTOMER',
+      _customerId,
+    );
+    _hasClearedUnreadActivity = true;
+    await _refreshUnreadCount?.call();
   }
 }

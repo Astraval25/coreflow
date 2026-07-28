@@ -7,8 +7,12 @@ import 'package:coreflow/features/employee_feature/portal/widget/portal_salary_t
 import 'package:coreflow/features/employee_feature/portal/widget/portal_workbased_section.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+enum _UnsavedAction { cancel, discard, save }
 
 class EmployeePortalPage extends StatelessWidget {
   const EmployeePortalPage({super.key});
@@ -29,24 +33,10 @@ class _EmployeePortalScreen extends StatefulWidget {
   State<_EmployeePortalScreen> createState() => _EmployeePortalScreenState();
 }
 
-class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+class _EmployeePortalScreenState extends State<_EmployeePortalScreen> {
+  final GlobalKey<PortalWorkBasedSectionState> _workSectionKey =
+      GlobalKey<PortalWorkBasedSectionState>();
   int _activeTabIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(_handleTabChange);
-  }
-
-  @override
-  void dispose() {
-    _tabController.removeListener(_handleTabChange);
-    _tabController.dispose();
-    super.dispose();
-  }
 
   void _showMessage(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -59,69 +49,63 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
 
   String _todayPretty() => portalDisplayDate(portalFormatDate(DateTime.now()));
 
-  void _handleTabChange() {
-    if (!mounted || _activeTabIndex == _tabController.index) return;
-    setState(() => _activeTabIndex = _tabController.index);
-  }
-
-  bool get _showRangeChip => _activeTabIndex == 0 || _activeTabIndex == 1;
-
-  Future<void> _pickRange({
-    required String fromDate,
-    required String toDate,
-    required Future<void> Function(String fromDate, String toDate)
-        onRangeSelected,
-  }) async {
-    final fromInitial = DateTime.tryParse(fromDate) ?? DateTime.now();
-    final pickedFrom = await showDatePicker(
-      context: context,
-      initialDate: fromInitial,
-      firstDate: DateTime(fromInitial.year - 2),
-      lastDate: DateTime(fromInitial.year + 2),
-    );
-    if (pickedFrom == null || !mounted) return;
-
-    final toInitial = DateTime.tryParse(toDate) ?? pickedFrom;
-    final pickedTo = await showDatePicker(
-      context: context,
-      initialDate: pickedFrom.isAfter(toInitial) ? pickedFrom : toInitial,
-      firstDate: pickedFrom,
-      lastDate: DateTime(pickedFrom.year + 2),
-    );
-    if (pickedTo == null) return;
-
-    await onRangeSelected(
-      portalFormatDate(pickedFrom),
-      portalFormatDate(pickedTo),
-    );
-  }
-
-  Future<void> _pickAppBarRange(EmployeePortalViewModel vm) async {
-    if (_activeTabIndex == 0) {
-      await _pickRange(
-        fromDate: vm.activityFromDate,
-        toDate: vm.activityToDate,
-        onRangeSelected: (f, t) =>
-            vm.updateActivityRange(fromDate: f, toDate: t),
-      );
-      return;
+  Future<bool> _handleUnsavedWorkEntries(EmployeePortalViewModel vm) async {
+    final workState = _workSectionKey.currentState;
+    if (!(vm.isWorkBased && workState != null && workState.hasUnsavedChanges)) {
+      return true;
     }
-    if (_activeTabIndex == 1) {
-      await _pickRange(
-        fromDate: vm.salaryReportFromDate,
-        toDate: vm.salaryReportToDate,
-        onRangeSelected: (f, t) =>
-            vm.updateSalaryReportRange(fromDate: f, toDate: t),
-      );
+
+    final action = await showDialog<_UnsavedAction>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Unsaved work entries'),
+        content: const Text(
+          'You have unsaved work entries. Save before leaving?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, _UnsavedAction.cancel),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, _UnsavedAction.discard),
+            child: const Text('Discard'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, _UnsavedAction.save),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || action == null || action == _UnsavedAction.cancel) {
+      return false;
     }
+
+    if (action == _UnsavedAction.save) {
+      final ok = await workState.saveAllDrafts();
+      if (!mounted) return false;
+      if (!ok) {
+        _showMessage(
+          vm.error ?? 'Please fix errors before leaving',
+          isError: true,
+        );
+        return false;
+      }
+    }
+
+    return true;
   }
 
-  String _currentRangeLabel(EmployeePortalViewModel vm) {
-    final fromDate =
-        _activeTabIndex == 1 ? vm.salaryReportFromDate : vm.activityFromDate;
-    final toDate =
-        _activeTabIndex == 1 ? vm.salaryReportToDate : vm.activityToDate;
-    return '${portalDisplayDate(fromDate)} - ${portalDisplayDate(toDate)}';
+  Future<void> _handleBackNavigation(EmployeePortalViewModel vm) async {
+    final canContinue = await _handleUnsavedWorkEntries(vm);
+    if (!canContinue || !mounted) return;
+
+    final didPop = await Navigator.of(context).maybePop();
+    if (!didPop) {
+      await SystemNavigator.pop();
+    }
   }
 
   @override
@@ -129,8 +113,12 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
     final vm = context.watch<EmployeePortalViewModel>();
     final name = vm.profile?.employeeName ?? 'Employee';
 
-    return DefaultTabController(
-      length: 3,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _handleBackNavigation(vm);
+      },
       child: Scaffold(
         backgroundColor: LoginColors.background,
         appBar: AppBar(
@@ -160,47 +148,6 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
                       color: Colors.white70,
                     ),
                   ),
-                  if (_showRangeChip)
-                    InkWell(
-                      onTap: (vm.isActivityLoading || vm.isSalaryLoading)
-                          ? null
-                          : () => _pickAppBarRange(vm),
-                      borderRadius: BorderRadius.circular(999),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.22),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.calendar_today_rounded,
-                              size: 12,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _currentRangeLabel(vm),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ],
@@ -210,63 +157,77 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
               tooltip: 'Logout',
               icon: const Icon(Icons.logout_rounded),
               onPressed: () async {
+                final canContinue = await _handleUnsavedWorkEntries(vm);
+                if (!canContinue || !mounted) return;
                 await vm.logout();
                 if (context.mounted) context.go(CfRoutes.login);
               },
             ),
           ],
-          bottom: TabBar(
-            controller: _tabController,
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            labelStyle: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-            ),
-            tabs: const [
-              Tab(icon: Icon(Icons.work_history_rounded), text: 'Today'),
-              Tab(icon: Icon(Icons.payments_rounded), text: 'Salary'),
-              Tab(icon: Icon(Icons.person_rounded), text: 'Profile'),
-            ],
-          ),
         ),
         body: vm.isLoading
             ? const Center(child: CircularProgressIndicator())
             : vm.profile == null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        vm.error ?? 'Failed to load. Please pull to refresh.',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  )
-                : TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildTodayTab(vm),
-                      PortalSalaryTab(vm: vm),
-                      PortalProfileTab(vm: vm),
-                    ],
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    vm.error ?? 'Failed to load. Please pull to refresh.',
+                    textAlign: TextAlign.center,
                   ),
+                ),
+              )
+            : IndexedStack(
+                index: _activeTabIndex,
+                children: [
+                  _buildHomeTab(vm),
+                  PortalSalaryTab(vm: vm),
+                  PortalProfileTab(vm: vm),
+                ],
+              ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _activeTabIndex,
+          onTap: (index) => setState(() => _activeTabIndex = index),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_rounded),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.payments_rounded),
+              label: 'Salary',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_rounded),
+              label: 'Profile',
+            ),
+          ],
+        ),
+        floatingActionButton: _activeTabIndex == 0 && vm.isWorkBased
+            ? FloatingActionButton.extended(
+                onPressed: vm.isTodayLocked
+                    ? null
+                    : () => _openTodayWorkEntries(vm),
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Add Work'),
+              )
+            : null,
       ),
     );
   }
 
-  // ----------------------------- TODAY TAB ---------------------------------
+  // ------------------------------ HOME TAB ---------------------------------
 
-  Widget _buildTodayTab(EmployeePortalViewModel vm) {
+  Widget _buildHomeTab(EmployeePortalViewModel vm) {
     return RefreshIndicator(
       onRefresh: vm.loadPortal,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           if (vm.isTodayLocked) _lockedBanner(vm),
-          if (vm.isWorkBased) PortalWorkBasedSection(vm: vm),
+          if (vm.isWorkBased) _addTodayWorkCard(vm),
           if (vm.isMonthly) ..._monthlySection(vm),
-          const SizedBox(height: 24),
+          const SizedBox(height: 4),
           _activitySection(vm),
         ],
       ),
@@ -303,8 +264,7 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
                 Text(
                   vm.lockedMessage ??
                       'Salary is already calculated for today. You cannot add work or leave for today. Please contact the admin.',
-                  style:
-                      TextStyle(color: LoginColors.textPrimary, height: 1.4),
+                  style: TextStyle(color: LoginColors.textPrimary, height: 1.4),
                 ),
               ],
             ),
@@ -312,6 +272,48 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
         ],
       ),
     );
+  }
+
+  Widget _addTodayWorkCard(EmployeePortalViewModel vm) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: LoginColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          Wrap(
+            children: [
+              OutlinedButton.icon(
+                onPressed: vm.isTodayLocked ? null : () => _openLeaveDialog(vm),
+                icon: const Icon(Icons.event_note_rounded),
+                label: const Text('Leave Request'),
+              ),
+              const SizedBox(width: 14),
+
+              FilledButton.icon(
+                onPressed: vm.isTodayLocked
+                    ? null
+                    : () => _openTodayWorkEntries(vm),
+                icon: const Icon(Icons.add_task_rounded),
+                label: const Text('Today Work'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openTodayWorkEntries(EmployeePortalViewModel vm) async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => _TodayWorkEntriesPage(vm: vm)),
+    );
+    if (!mounted || saved != true) return;
+    _showMessage('Work entries submitted');
   }
 
   // ----------------------------- LEAVE / MONTHLY ---------------------------
@@ -380,7 +382,7 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
                   ),
                 ),
                 Text(
-                  '${log.leaveType} · ${log.leaveCategory} · ${log.status}',
+                  '${log.leaveType} - ${log.leaveCategory} - ${log.status}',
                   style: TextStyle(color: LoginColors.textSecondary),
                 ),
               ],
@@ -492,8 +494,7 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
     );
   }
 
-  Future<void> _quickLeave(
-      EmployeePortalViewModel vm, String leaveType) async {
+  Future<void> _quickLeave(EmployeePortalViewModel vm, String leaveType) async {
     final reason = await _askReason();
     if (reason == null) return;
     final ok = await vm.createLeaveLog(
@@ -567,8 +568,7 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
                       context: ctx,
                       initialDate: picked ?? DateTime.now(),
                       firstDate: DateTime.now(),
-                      lastDate:
-                          DateTime.now().add(const Duration(days: 365)),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
                     );
                     if (p != null) setLocal(() => picked = p);
                   },
@@ -577,9 +577,13 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
                   initialValue: type,
                   items: const [
                     DropdownMenuItem(
-                        value: 'FULL_DAY', child: Text('Full Day')),
+                      value: 'FULL_DAY',
+                      child: Text('Full Day'),
+                    ),
                     DropdownMenuItem(
-                        value: 'HALF_DAY', child: Text('Half Day')),
+                      value: 'HALF_DAY',
+                      child: Text('Half Day'),
+                    ),
                   ],
                   onChanged: (v) => setLocal(() => type = v ?? type),
                   decoration: const InputDecoration(labelText: 'Type'),
@@ -600,8 +604,9 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
                 TextField(
                   controller: reasonCtrl,
                   maxLines: 2,
-                  decoration:
-                      const InputDecoration(labelText: 'Reason (optional)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Reason (optional)',
+                  ),
                 ),
               ],
             ),
@@ -641,12 +646,10 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
   // ----------------------------- ACTIVITY SECTION --------------------------
 
   Widget _activitySection(EmployeePortalViewModel vm) {
-    final logs = vm.isWorkBased
-        ? List<WorkLogData>.from(vm.workLogs)
-        : <WorkLogData>[];
-    final leaves = List<LeaveLogData>.from(vm.leaveLogs);
-    logs.sort((a, b) => b.logDate.compareTo(a.logDate));
-    leaves.sort((a, b) => b.leaveDate.compareTo(a.leaveDate));
+    final entries = <_PortalActivityEntry>[
+      if (vm.isWorkBased) ...vm.workLogs.map(_PortalActivityEntry.work),
+      ...vm.leaveLogs.map(_PortalActivityEntry.leave),
+    ]..sort((a, b) => b.date.compareTo(a.date));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -671,19 +674,68 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
             padding: EdgeInsets.symmetric(vertical: 32),
             child: Center(child: CircularProgressIndicator()),
           )
-        else if (logs.isEmpty && leaves.isEmpty)
+        else if (entries.isEmpty)
           const PortalEmptyCard(
             icon: Icons.inbox_rounded,
             title: 'No activity for this range',
-            subtitle: 'Change the date range to see another month.',
-          ),
-        ...logs.map(_recentWorkTile),
-        ...leaves.map(_recentLeaveTile),
+            subtitle: 'Activity from the last 30 days will appear here.',
+          )
+        else
+          ...List.generate(entries.length, (index) {
+            final item = entries[index];
+            final previous = index > 0 ? entries[index - 1] : null;
+            final showDateHeader =
+                previous == null ||
+                !_isSameCalendarDay(previous.date, item.date);
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (showDateHeader) ...[
+                  if (index != 0) const SizedBox(height: 14),
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        portalDisplayDate(item.dateKey),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: LoginColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                _activityEntryCard(item),
+              ],
+            );
+          }),
       ],
     );
   }
 
-  Widget _recentWorkTile(WorkLogData log) {
+  bool _isSameCalendarDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  Widget _activityEntryCard(_PortalActivityEntry entry) {
+    final actionLabel = entry.isWork ? 'Work Log' : 'Leave';
+    final actionColor = entry.isWork ? LoginColors.primary : LoginColors.accent;
+    final actionIcon = entry.isWork
+        ? Icons.handyman_rounded
+        : Icons.event_busy_rounded;
+    final status = entry.status;
+    final title = entry.isWork
+        ? entry.workLog!.workName
+        : '${entry.leaveLog!.leaveCategory} - ${entry.leaveLog!.leaveType}';
+    final subtitle = entry.isWork
+        ? '${entry.workLog!.quantity ?? '-'} ${entry.workLog!.unit}'
+        : (entry.leaveLog!.reason?.trim().isNotEmpty ?? false)
+        ? entry.leaveLog!.reason!.trim()
+        : 'No reason provided';
+    final earnedAmount = entry.isWork ? entry.workLog!.amountEarned : null;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -692,73 +744,214 @@ class _EmployeePortalScreenState extends State<_EmployeePortalScreen>
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: LoginColors.borderLight),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.handyman_rounded, color: LoginColors.primary, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  log.workName,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: LoginColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  '${portalDisplayDate(log.logDate)} · ${log.quantity ?? '-'} ${log.unit}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: LoginColors.textSecondary,
-                  ),
-                ),
-              ],
+          Row(
+            children: [
+              _actionChip(
+                label: actionLabel,
+                icon: actionIcon,
+                color: actionColor,
+              ),
+              const Spacer(),
+              PortalStatusBadge(status),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: LoginColors.textPrimary,
             ),
           ),
-          PortalStatusBadge(log.status),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: TextStyle(fontSize: 12, color: LoginColors.textSecondary),
+          ),
+          if (earnedAmount != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              'Earned: \u20B9${earnedAmount.toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: LoginColors.success,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _recentLeaveTile(LeaveLogData log) {
+  Widget _actionChip({
+    required String label,
+    required IconData icon,
+    required Color color,
+  }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: LoginColors.borderLight),
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.event_busy_rounded, color: LoginColors.accent, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${log.leaveCategory} · ${log.leaveType}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: LoginColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  portalDisplayDate(log.leaveDate),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: LoginColors.textSecondary,
-                  ),
-                ),
-              ],
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: color,
             ),
           ),
-          PortalStatusBadge(log.status),
         ],
+      ),
+    );
+  }
+}
+
+class _PortalActivityEntry {
+  final String dateKey;
+  final DateTime date;
+  final WorkLogData? workLog;
+  final LeaveLogData? leaveLog;
+
+  const _PortalActivityEntry._({
+    required this.dateKey,
+    required this.date,
+    this.workLog,
+    this.leaveLog,
+  });
+
+  bool get isWork => workLog != null;
+  String get status => isWork ? workLog!.status : leaveLog!.status;
+
+  factory _PortalActivityEntry.work(WorkLogData log) {
+    return _PortalActivityEntry._(
+      dateKey: log.logDate,
+      date:
+          DateTime.tryParse(log.logDate) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      workLog: log,
+    );
+  }
+
+  factory _PortalActivityEntry.leave(LeaveLogData log) {
+    return _PortalActivityEntry._(
+      dateKey: log.leaveDate,
+      date:
+          DateTime.tryParse(log.leaveDate) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      leaveLog: log,
+    );
+  }
+}
+
+class _TodayWorkEntriesPage extends StatefulWidget {
+  final EmployeePortalViewModel vm;
+  const _TodayWorkEntriesPage({required this.vm});
+
+  @override
+  State<_TodayWorkEntriesPage> createState() => _TodayWorkEntriesPageState();
+}
+
+class _TodayWorkEntriesPageState extends State<_TodayWorkEntriesPage> {
+  final GlobalKey<PortalWorkBasedSectionState> _workKey =
+      GlobalKey<PortalWorkBasedSectionState>();
+  Set<String> _pinnedWorkKeys = <String>{};
+  static const _pinnedWorkPrefKey = 'employee_portal_pinned_work_keys_v1';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPinnedWorkKeys();
+  }
+
+  void _showMessage(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? LoginColors.error : LoginColors.success,
+      ),
+    );
+  }
+
+  String _workPinKey(int workDefId) => 'W:$workDefId';
+
+  bool _isWorkPinned(int workDefId) =>
+      _pinnedWorkKeys.contains(_workPinKey(workDefId));
+
+  Future<void> _loadPinnedWorkKeys() async {
+    final prefs = await SharedPreferences.getInstance();
+    final values = prefs.getStringList(_pinnedWorkPrefKey) ?? const <String>[];
+    if (!mounted) return;
+    setState(() => _pinnedWorkKeys = values.toSet());
+  }
+
+  Future<void> _toggleWorkPin(int workDefId) async {
+    final key = _workPinKey(workDefId);
+    setState(() {
+      if (_pinnedWorkKeys.contains(key)) {
+        _pinnedWorkKeys.remove(key);
+      } else {
+        _pinnedWorkKeys.add(key);
+      }
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_pinnedWorkPrefKey, _pinnedWorkKeys.toList());
+  }
+
+  Future<void> _submit() async {
+    final vm = widget.vm;
+    final ok = await _workKey.currentState?.saveAllDrafts() ?? false;
+    if (!mounted) return;
+    if (!ok) {
+      _showMessage(vm.error ?? 'Failed to submit work entries', isError: true);
+      return;
+    }
+    Navigator.of(context).pop(true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = widget.vm;
+    return Scaffold(
+      backgroundColor: LoginColors.background,
+      appBar: AppBar(
+        title: const Text('Today Work Entries'),
+        backgroundColor: LoginColors.primary,
+        foregroundColor: Colors.white,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          PortalWorkBasedSection(
+            key: _workKey,
+            vm: vm,
+            showSaveButton: false,
+            showTopSpacing: false,
+            showPinActions: true,
+            isPinned: _isWorkPinned,
+            onTogglePin: _toggleWorkPin,
+          ),
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: vm.isSubmitting || vm.isTodayLocked ? null : _submit,
+            child: Text(vm.isSubmitting ? 'Submitting...' : 'Submit'),
+          ),
+        ),
       ),
     );
   }

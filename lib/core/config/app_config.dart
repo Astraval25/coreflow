@@ -2,7 +2,16 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppConfig {
   // Base URL for API
-  static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
+  static String get baseUrl {
+    final raw = (dotenv.env['BASE_URL'] ?? '').trim();
+    if (raw.isEmpty) return raw;
+
+    // Production web host serves HTML on plain HTTP; force HTTPS for API calls.
+    if (raw.startsWith('http://coreflow.astraval.com')) {
+      return raw.replaceFirst('http://', 'https://');
+    }
+    return raw;
+  }
 
   // API Endpoints
   static const String loginEndpoint = '/api/auth/login';
@@ -18,6 +27,7 @@ class AppConfig {
   static const String marketplaceCompanyItemsEndpoint =
       '/api/marketplace/companies/{companyId}/items';
   static const String refreshTokenEndpoint = '/api/auth/refresh-token';
+  static const String userProfileEndpoint = '/api/users/me';
 
   // Company CRUD endpoints
   static const String companyDetailEndpoint = '/api/companies/{companyId}';
@@ -33,6 +43,10 @@ class AppConfig {
       '/api/companies/{companyId}/customers/{customerId}';
   static const String createCustomerEndpoint =
       '/api/companies/{companyId}/customers';
+  static const String customerContactLookupEndpoint =
+      '/api/companies/{companyId}/customers/contact-lookup';
+  static const String customerLinkByPhoneEndpoint =
+      '/api/companies/{companyId}/customers/{customerId}/link-by-phone';
   static const String customerActivateEndpoint =
       '/api/companies/{companyId}/customers/{customerId}/activate';
   static const String customerDeactivateEndpoint =
@@ -46,6 +60,10 @@ class AppConfig {
       '/api/companies/{companyId}/vendors/{vendorId}';
   static const String createVendorEndpoint =
       '/api/companies/{companyId}/vendors';
+  static const String vendorContactLookupEndpoint =
+      '/api/companies/{companyId}/vendors/contact-lookup';
+  static const String vendorLinkByPhoneEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/link-by-phone';
   static const String vendorActivateEndpoint =
       '/api/companies/{companyId}/vendors/{vendorId}/activate';
   static const String vendorDeactivateEndpoint =
@@ -150,6 +168,20 @@ class AppConfig {
   static const String acceptInvitationEndpoint =
       '/api/companies/{companyId}/invitations/{invitationCode}/accept';
 
+  // Connection request endpoints
+  static const String customerConnectionAcceptEndpoint =
+      '/api/companies/{companyId}/customers/{customerId}/connection/accept';
+  static const String customerConnectionRejectEndpoint =
+      '/api/companies/{companyId}/customers/{customerId}/connection/reject';
+  static const String customerConnectionUndoEndpoint =
+      '/api/companies/{companyId}/customers/{customerId}/connection/undo';
+  static const String vendorConnectionAcceptEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/connection/accept';
+  static const String vendorConnectionRejectEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/connection/reject';
+  static const String vendorConnectionUndoEndpoint =
+      '/api/companies/{companyId}/vendors/{vendorId}/connection/undo';
+
   // getters for constructing full URLs
   static String get loginUrl => '$baseUrl$loginEndpoint';
   static String get registerUrl => '$baseUrl$registerEndpoint';
@@ -160,6 +192,7 @@ class AppConfig {
   static String get marketplaceCompaniesUrl =>
       '$baseUrl$marketplaceCompaniesEndpoint';
   static String get refreshTokenUrl => '$baseUrl$refreshTokenEndpoint';
+  static String get userProfileUrl => '$baseUrl$userProfileEndpoint';
   static String getMarketplaceCompanyDetailUrl(int companyId) =>
       '$baseUrl${marketplaceCompanyDetailEndpoint.replaceAll('{companyId}', companyId.toString())}';
   static String getMarketplaceCompanyItemsUrl(int companyId) =>
@@ -175,6 +208,12 @@ class AppConfig {
 
   static String getCreateCustomerUrl(int companyId) =>
       '$baseUrl${createCustomerEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getCustomerContactLookupUrl(int companyId) =>
+      '$baseUrl${customerContactLookupEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getCustomerLinkByPhoneUrl(int companyId, int customerId) =>
+      '$baseUrl${customerLinkByPhoneEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
 
   static String getCustomerActivateUrl(int companyId, int customerId) =>
       '$baseUrl${customerActivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
@@ -195,6 +234,12 @@ class AppConfig {
 
   static String getCreateVendorUrl(int companyId) =>
       '$baseUrl${createVendorEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getVendorContactLookupUrl(int companyId) =>
+      '$baseUrl${vendorContactLookupEndpoint.replaceAll('{companyId}', companyId.toString())}';
+
+  static String getVendorLinkByPhoneUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorLinkByPhoneEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
 
   static String getVendorActivateUrl(int companyId, int vendorId) =>
       '$baseUrl${vendorActivateEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
@@ -432,6 +477,25 @@ class AppConfig {
   static String getAcceptInvitationUrl(int companyId, String invitationCode) =>
       '$baseUrl${acceptInvitationEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{invitationCode}', invitationCode)}';
 
+  // Connection request URL builders
+  static String getCustomerConnectionAcceptUrl(int companyId, int customerId) =>
+      '$baseUrl${customerConnectionAcceptEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+
+  static String getCustomerConnectionRejectUrl(int companyId, int customerId) =>
+      '$baseUrl${customerConnectionRejectEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+
+  static String getCustomerConnectionUndoUrl(int companyId, int customerId) =>
+      '$baseUrl${customerConnectionUndoEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{customerId}', customerId.toString())}';
+
+  static String getVendorConnectionAcceptUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorConnectionAcceptEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+
+  static String getVendorConnectionRejectUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorConnectionRejectEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+
+  static String getVendorConnectionUndoUrl(int companyId, int vendorId) =>
+      '$baseUrl${vendorConnectionUndoEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{vendorId}', vendorId.toString())}';
+
   // Company CRUD URLs
   static String get createCompanyUrl => '$baseUrl$allCompaniesEndpoint';
   static String getCompanyDetailUrl(int companyId) =>
@@ -452,6 +516,13 @@ class AppConfig {
 
   static String getMarkReadUrl(int companyId, int notificationId) =>
       '$baseUrl/api/companies/$companyId/notifications/$notificationId/read';
+
+  static String getMarkSubjectReadUrl(
+    int companyId,
+    String subjectType,
+    int subjectId,
+  ) =>
+      '$baseUrl/api/companies/$companyId/notifications/subjects/$subjectType/$subjectId/read';
 
   static String getMarkAllReadUrl(int companyId) =>
       '$baseUrl/api/companies/$companyId/notifications/read-all';
@@ -526,6 +597,37 @@ class AppConfig {
 
   static String getPurchaseByVendorUrl(int c, String s, String e) =>
       '$baseUrl/api/companies/$c/analytics/purchase/by-vendor?startDate=$s&endDate=$e';
+
+  static String getCustomerOrderPaymentTrendUrl(
+    int companyId,
+    int customerId,
+    String startDate,
+    String endDate,
+  ) =>
+      '$baseUrl/api/companies/$companyId/analytics/customers/$customerId/order-payment-trend?startDate=$startDate&endDate=$endDate';
+
+  static String getVendorOrderPaymentTrendUrl(
+    int companyId,
+    int vendorId,
+    String startDate,
+    String endDate,
+  ) =>
+      '$baseUrl/api/companies/$companyId/analytics/vendors/$vendorId/order-payment-trend?startDate=$startDate&endDate=$endDate';
+
+  static String getEmployeeAnalyticsOverviewUrl(
+    int companyId,
+    String startDate,
+    String endDate,
+  ) =>
+      '$baseUrl/api/companies/$companyId/analytics/employees/overview?startDate=$startDate&endDate=$endDate';
+
+  static String getEmployeeDailyAnalyticsUrl(
+    int companyId,
+    int employeeId,
+    String startDate,
+    String endDate,
+  ) =>
+      '$baseUrl/api/companies/$companyId/analytics/employees/$employeeId/daily?startDate=$startDate&endDate=$endDate';
 
   static String getSalesByItemUrl(int c, String s, String e) =>
       '$baseUrl/api/companies/$c/analytics/sales/by-item?startDate=$s&endDate=$e';

@@ -72,7 +72,7 @@ class DetailItem {
       itemId: itemId,
       itemName: itemName,
       itemType: itemType,
-      unit: unit ?? 'Unit',
+      unit: unit ?? '',
       baseSalesPrice: baseSalesPrice ?? 0.0,
       basePurchasePrice: basePurchasePrice,
       salesDescription: salesDescription,

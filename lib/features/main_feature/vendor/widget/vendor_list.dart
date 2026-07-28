@@ -34,7 +34,6 @@ class VendorsList extends StatelessWidget {
             companyId: companyId,
             isPinned: pinnedVendorIds.contains(vendor.vendorId),
             onTogglePin: () => onTogglePin(vendor.vendorId),
-            serialNumber: index + 1,
           ),
         );
       },

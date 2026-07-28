@@ -22,7 +22,6 @@ class CustomerBottomOptionsPanel extends StatefulWidget {
 
 class _CustomerBottomOptionsPanelState
     extends State<CustomerBottomOptionsPanel> {
-
   @override
   Widget build(BuildContext context) {
     final vm = widget.vm;

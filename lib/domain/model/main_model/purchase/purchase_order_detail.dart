@@ -5,6 +5,7 @@ class PurchaseOrderDetail {
   final String orderNumber;
   final String? platformRef;
   final DateTime orderDate;
+  final DateTime paymentDueDate;
 
   final int sellerCompanyId;
   final String sellerCompanyName;
@@ -38,6 +39,7 @@ class PurchaseOrderDetail {
     required this.orderNumber,
     this.platformRef,
     required this.orderDate,
+    required this.paymentDueDate,
     required this.sellerCompanyId,
     required this.sellerCompanyName,
     required this.buyerCompanyId,
@@ -76,6 +78,9 @@ class PurchaseOrderDetail {
       orderNumber: json['orderNumber']?.toString() ?? '',
       platformRef: json['platformRef']?.toString(),
       orderDate: _asDate(json['orderDate']),
+      paymentDueDate: json['paymentDueDate'] != null
+          ? _asDate(json['paymentDueDate'])
+          : _asDate(json['orderDate']).add(const Duration(days: 3)),
       sellerCompanyId: _asInt(json['sellerCompanyId']),
       sellerCompanyName: json['sellerCompanyName']?.toString() ?? '',
       buyerCompanyId: _asInt(json['buyerCompanyId']),

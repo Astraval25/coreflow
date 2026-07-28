@@ -98,10 +98,19 @@ class CustomerDetailData {
   final Address? billingAddress;
   final Address? shippingAddress;
   final bool isActive;
+  final String? connectionStatus;
   final int createdBy;
   final String createdDt;
   final int lastModifiedBy;
   final String lastModifiedDt;
+
+  bool get isPendingConnection => connectionStatus == 'PENDING';
+  bool get isAcceptedConnection => connectionStatus == 'ACCEPTED';
+  bool get isRejectedConnection => connectionStatus == 'REJECTED';
+  bool get isAwaitingCounterpartyAcceptance =>
+      isPendingConnection && acceptedInvitationId != null;
+  bool get isFullyConnected => isAcceptedConnection && customerCompany != null;
+  bool get hasConnectionRequest => connectionStatus != null;
 
   CustomerDetailData({
     required this.customerId,
@@ -120,6 +129,7 @@ class CustomerDetailData {
     this.billingAddress,
     this.shippingAddress,
     required this.isActive,
+    this.connectionStatus,
     required this.createdBy,
     required this.createdDt,
     required this.lastModifiedBy,
@@ -153,6 +163,7 @@ class CustomerDetailData {
           ? Address.fromJson(json['shippingAddrId'])
           : null,
       isActive: json['isActive'] ?? false,
+      connectionStatus: json['connectionStatus'],
       createdBy: json['createdBy'] ?? 0,
       createdDt: json['createdDt'] ?? '',
       lastModifiedBy: json['lastModifiedBy'] ?? 0,

@@ -1,6 +1,7 @@
 import 'package:coreflow/core/theme/colors.dart';
 import 'package:coreflow/data/repositories/main_repository/item_repository.dart';
 import 'package:coreflow/domain/model/main_model/items/item.dart';
+import 'package:coreflow/features/main_feature/items/view/create_item_screen.dart';
 import 'package:flutter/material.dart';
 
 class ItemSelectorPage extends StatefulWidget {
@@ -78,6 +79,28 @@ class _ItemSelectorPageState extends State<ItemSelectorPage> {
         }).toList();
       }
     });
+  }
+
+  Future<void> _openCreateItem() async {
+    final created = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateItemScreen(companyId: widget.companyId),
+      ),
+    );
+
+    if (!mounted) return;
+    if (created == true) {
+      await _loadItems();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Item added. You can select it now.'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override
@@ -159,6 +182,13 @@ class _ItemSelectorPageState extends State<ItemSelectorPage> {
           ),
           Expanded(child: _buildBody()),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openCreateItem,
+        backgroundColor: LoginColors.primary,
+        foregroundColor: Colors.white,
+        tooltip: 'Add Item',
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }

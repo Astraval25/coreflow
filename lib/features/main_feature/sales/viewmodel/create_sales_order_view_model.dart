@@ -33,6 +33,7 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
   Customer? _selectedCustomer;
   final List<OrderItemEntry> _orderItems = [];
   DateTime _orderDate = DateTime.now();
+  DateTime _paymentDueDate = DateTime.now().add(const Duration(days: 3));
   double _taxAmount = 0;
   double _discountAmount = 0;
   double _deliveryCharge = 0;
@@ -50,6 +51,7 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
   Customer? get selectedCustomer => _selectedCustomer;
   List<OrderItemEntry> get orderItems => List.unmodifiable(_orderItems);
   DateTime get orderDate => _orderDate;
+  DateTime get paymentDueDate => _paymentDueDate;
   double get taxAmount => _taxAmount;
   double get discountAmount => _discountAmount;
   double get deliveryCharge => _deliveryCharge;
@@ -111,14 +113,17 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
   }
 
   void addOrderItem(SellableItem item) {
-    final existing =
-        _orderItems.indexWhere((e) => e.item.itemId == item.itemId);
+    final existing = _orderItems.indexWhere(
+      (e) => e.item.itemId == item.itemId,
+    );
     if (existing != -1) return;
 
-    _orderItems.add(OrderItemEntry(
-      item: item,
-      itemDescription: item.description.isNotEmpty ? item.description : null,
-    ));
+    _orderItems.add(
+      OrderItemEntry(
+        item: item,
+        itemDescription: item.description.isNotEmpty ? item.description : null,
+      ),
+    );
     notifyListeners();
   }
 
@@ -171,6 +176,12 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
 
   void setOrderDate(DateTime value) {
     _orderDate = value;
+    _paymentDueDate = value.add(const Duration(days: 3));
+    notifyListeners();
+  }
+
+  void setPaymentDueDate(DateTime value) {
+    _paymentDueDate = value;
     notifyListeners();
   }
 
@@ -186,17 +197,20 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
       final request = CreateSalesOrderRequest(
         customerId: _selectedCustomer!.customerId,
         orderDate: _orderDate,
+        paymentDueDate: _paymentDueDate,
         taxAmount: _taxAmount > 0 ? _taxAmount : null,
         discountAmount: _discountAmount > 0 ? _discountAmount : null,
         deliveryCharge: _deliveryCharge > 0 ? _deliveryCharge : null,
         hasBill: _hasBill,
         orderItems: _orderItems
-            .map((e) => OrderItemRequest(
-                  itemId: e.item.itemId,
-                  itemDescription: e.itemDescription,
-                  quantity: e.quantity,
-                  updatedPrice: e.updatedPrice,
-                ))
+            .map(
+              (e) => OrderItemRequest(
+                itemId: e.item.itemId,
+                itemDescription: e.itemDescription,
+                quantity: e.quantity,
+                updatedPrice: e.updatedPrice,
+              ),
+            )
             .toList(),
       );
 
@@ -224,6 +238,7 @@ class CreateSalesOrderViewModel extends ChangeNotifier {
     _orderItems.clear();
     _availableItems = [];
     _orderDate = DateTime.now();
+    _paymentDueDate = _orderDate.add(const Duration(days: 3));
     _taxAmount = 0;
     _discountAmount = 0;
     _deliveryCharge = 0;

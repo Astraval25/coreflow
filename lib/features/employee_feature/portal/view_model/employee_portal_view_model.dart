@@ -431,13 +431,12 @@ class EmployeePortalViewModel extends ChangeNotifier {
       return;
     }
 
-    final now = DateTime.now();
-    final monthStart = DateTime(now.year, now.month, 1);
-    final monthEnd = DateTime(now.year, now.month + 1, 0);
-    _activityFromDate = _formatDate(monthStart);
-    _activityToDate = _formatDate(monthEnd);
-    _salaryReportFromDate = _formatDate(monthStart);
-    _salaryReportToDate = _formatDate(monthEnd);
+    final todayDate = _dateOnly(DateTime.now());
+    final fromDate = todayDate.subtract(const Duration(days: 29));
+    _activityFromDate = _formatDate(fromDate);
+    _activityToDate = _formatDate(todayDate);
+    _salaryReportFromDate = _formatDate(fromDate);
+    _salaryReportToDate = _formatDate(todayDate);
   }
 
   Future<void> _reloadTodayActivity() async {

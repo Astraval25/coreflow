@@ -101,7 +101,8 @@ class _DashboardPromoBannerState extends State<DashboardPromoBanner> {
         final bool isActive = currentPage == index;
         return GestureDetector(
           onTap: () {
-            final targetPage = _currentPage - (_currentPage % itemCount) + index;
+            final targetPage =
+                _currentPage - (_currentPage % itemCount) + index;
             _controller.animateToPage(
               targetPage,
               duration: Duration(milliseconds: 600),
@@ -311,38 +312,82 @@ class DashboardGridItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color? color;
+  final int badgeCount;
+  final bool isPinned;
+  final bool showPinnedIndicator;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   const DashboardGridItem({
     super.key,
     required this.icon,
     required this.label,
     this.color,
+    this.badgeCount = 0,
+    this.isPinned = false,
+    this.showPinnedIndicator = true,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: LoginColors.cardBackground,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: LoginColors.shadowLight.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: LoginColors.cardBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: LoginColors.shadowLight.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: LoginColors.border.withValues(alpha: 0.1),
+                  ),
                 ),
-              ],
-              border: Border.all(color: LoginColors.border.withValues(alpha:0.1)),
-            ),
-            child: Icon(icon, color: color ?? LoginColors.primary, size: 26),
+                child: Icon(
+                  icon,
+                  color: color ?? LoginColors.primary,
+                  size: 26,
+                ),
+              ),
+              if (badgeCount > 0)
+                Positioned(
+                  right: -6,
+                  top: -6,
+                  child: _DashboardCountBadge(count: badgeCount),
+                ),
+              if (isPinned && showPinnedIndicator)
+                Positioned(
+                  left: -4,
+                  top: -4,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: LoginColors.primary.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: LoginColors.surface, width: 1),
+                    ),
+                    child: const Icon(
+                      Icons.push_pin_rounded,
+                      color: Colors.white,
+                      size: 10,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 2),
           Expanded(
@@ -366,6 +411,35 @@ class DashboardGridItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DashboardCountBadge extends StatelessWidget {
+  final int count;
+
+  const _DashboardCountBadge({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: LoginColors.error,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: LoginColors.surface, width: 1.5),
+      ),
+      child: Text(
+        count > 99 ? '99+' : '$count',
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          height: 1,
+        ),
       ),
     );
   }

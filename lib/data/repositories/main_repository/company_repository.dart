@@ -51,7 +51,7 @@ class CompanyRepository {
     }
   }
 
-  Future<Company?> updateCompany(
+  Future<bool> updateCompany(
     int companyId,
     Map<String, dynamic> data,
   ) async {
@@ -62,17 +62,13 @@ class CompanyRepository {
       );
       if (response.statusCode != 200 && response.statusCode != 203) {
         debugPrint('Update company failed: ${response.statusCode}');
-        return null;
+        return false;
       }
       final decoded = jsonDecode(response.body);
-      if (decoded['responseStatus'] == true &&
-          decoded['responseData'] != null) {
-        return Company.fromJson(decoded['responseData']);
-      }
-      return null;
+      return decoded['responseStatus'] == true;
     } catch (e) {
       debugPrint('Update company error: $e');
-      return null;
+      return false;
     }
   }
 

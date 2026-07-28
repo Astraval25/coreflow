@@ -19,9 +19,17 @@ class ItemCard extends StatelessWidget {
       decimalDigits: 2,
     );
 
-    final priceColor = item.isActive
+    final salesPriceColor = item.isActive
         ? LoginColors.primary
         : LoginColors.textTertiary;
+    final purchasePriceColor = item.isActive
+        ? const Color(0xFF0D9488)
+        : LoginColors.textTertiary;
+    const priceTextStyle = TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.2,
+    );
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
@@ -97,23 +105,14 @@ class ItemCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    currencyFormat.format(item.baseSalesPrice),
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: priceColor,
-                      letterSpacing: -0.3,
-                    ),
+                    'Sell: ${currencyFormat.format(item.baseSalesPrice)}',
+                    style: priceTextStyle.copyWith(color: salesPriceColor),
                   ),
                   if (item.isPurchasable && item.basePurchasePrice != null) ...[
                     const SizedBox(height: 4),
                     Text(
                       'Buy: ${currencyFormat.format(item.basePurchasePrice)}',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: LoginColors.textTertiary,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: priceTextStyle.copyWith(color: purchasePriceColor),
                     ),
                   ],
                 ],

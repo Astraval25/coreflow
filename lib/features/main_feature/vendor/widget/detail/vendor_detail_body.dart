@@ -1,4 +1,6 @@
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/core/utils/common_formatters.dart';
+import 'package:coreflow/core/widgets/connection_request_banner.dart';
 import 'package:coreflow/core/widgets/link_company_section.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors_detail.dart';
 import 'package:coreflow/features/main_feature/vendor/view_model/vendor_detail_view_model.dart';
@@ -28,6 +30,7 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildConnectionBanner(context, vm, vendor),
         _buildLinkCompanyStrip(context, vm, isLinked),
         Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -40,12 +43,12 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
             children: [
               Expanded(
                 child: Text(
-                'Orders & Payments',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: LoginColors.textPrimary,
-                ),
+                  'Orders & Payments',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
                 ),
               ),
               _buildFilterDropdown(),
@@ -70,7 +73,10 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
           value: VendorTransactionFilter.payments,
           child: Text('Payment'),
         ),
-        PopupMenuItem(value: VendorTransactionFilter.orders, child: Text('Order')),
+        PopupMenuItem(
+          value: VendorTransactionFilter.orders,
+          child: Text('Order'),
+        ),
       ],
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -113,12 +119,145 @@ class _VendorDetailBodyState extends State<VendorDetailBody> {
     }
   }
 
+  Widget _buildConnectionBanner(
+    BuildContext context,
+    VendorDetailViewModel vm,
+    VendorsDetailData vendor,
+  ) {
+    if (!vendor.hasConnectionRequest) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        VendorDetailBody._horizontal,
+        6,
+        VendorDetailBody._horizontal,
+        6,
+      ),
+      child: ConnectionRequestBanner(
+        connectionStatus: vendor.connectionStatus!,
+        isAwaitingCounterpartyAcceptance:
+            vendor.isAwaitingCounterpartyAcceptance,
+        requesterName: vendor.vendorName,
+        requesterPhone: vendor.phone,
+        requesterEmail: vendor.email,
+        isLoading: vm.isConnectionLoading,
+        onAccept: () async {
+          final success = await vm.acceptConnection();
+          final latest = vm.vendor;
+          final message = success
+              ? (latest?.isFullyConnected == true
+                    ? 'Connection completed'
+                    : 'Accepted. Waiting for other company')
+              : (vm.errorMessage?.trim().isNotEmpty == true
+                    ? vm.errorMessage!
+                    : 'Failed to accept');
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(message),
+                backgroundColor: success ? Colors.green : Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+        onReject: () async {
+          final success = await vm.rejectConnection();
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  success
+                      ? 'Connection rejected'
+                      : (vm.errorMessage?.trim().isNotEmpty == true
+                            ? vm.errorMessage!
+                            : 'Failed to reject'),
+                ),
+                backgroundColor: success ? Colors.orange : Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+        onUndo: (newStatus) async {
+          final success = await vm.undoConnectionDecision(newStatus);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  success
+                      ? 'Connection updated'
+                      : (vm.errorMessage?.trim().isNotEmpty == true
+                            ? vm.errorMessage!
+                            : 'Failed to update'),
+                ),
+                backgroundColor: success ? Colors.green : Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
   Widget _buildLinkCompanyStrip(
     BuildContext context,
     VendorDetailViewModel vm,
     bool isLinked,
   ) {
-    if (isLinked) return const SizedBox.shrink();
+    if (isLinked) {
+      final linkedName =
+          widget.vendor.vendorCompany?.companyName?.trim().isNotEmpty == true
+          ? widget.vendor.vendorCompany!.companyName!
+          : 'Linked Company';
+      final amount = widget.vendor.dueAmount ?? 0.0;
+      final amountColor = amount >= 0 ? LoginColors.success : LoginColors.error;
+
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(
+          VendorDetailBody._horizontal,
+          6,
+          VendorDetailBody._horizontal,
+          6,
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: LoginColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: LoginColors.borderLight),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  linkedName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                formatMoney(amount),
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  color: amountColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    // Hide manual linking when connection request flow is active
+    if (widget.vendor.hasConnectionRequest) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(

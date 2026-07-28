@@ -28,10 +28,13 @@ class EmployeeViewPage extends StatelessWidget {
           create: (_) => DashboardViewModel()..loadUserData(),
         ),
         ChangeNotifierProvider(
-          create: (_) => EmployeeViewModel(
+          create: (context) => EmployeeViewModel(
             repository: EmployeeRepository(),
             companyId: companyId,
             employeeId: employeeId,
+            refreshUnreadCount: context
+                .read<DashboardViewModel>()
+                .refreshUnreadCount,
           ),
         ),
       ],
@@ -48,6 +51,10 @@ class _EmployeeViewScreen extends StatefulWidget {
 }
 
 class _EmployeeViewScreenState extends State<_EmployeeViewScreen> {
+  final Set<String> _selectedKeys = <String>{};
+
+  bool get _isSelectionMode => _selectedKeys.isNotEmpty;
+
   @override
   void initState() {
     super.initState();
@@ -66,9 +73,190 @@ class _EmployeeViewScreenState extends State<_EmployeeViewScreen> {
     );
   }
 
+  bool _isSameCalendarDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  String _entryKey(_ActivityEntry entry) {
+    return '${entry.isWork ? 'W' : 'L'}:${entry.id}';
+  }
+
+  List<_ActivityEntry> _allEntries(EmployeeViewModel vm) {
+    return <_ActivityEntry>[
+      ...vm.workLogs.map(_ActivityEntry.work),
+      ...vm.leaveLogs.map(_ActivityEntry.leave),
+    ];
+  }
+
+  List<_ActivityEntry> _selectedEntries(EmployeeViewModel vm) {
+    return _allEntries(vm)
+        .where((entry) => _selectedKeys.contains(_entryKey(entry)))
+        .toList(growable: false);
+  }
+
+  bool _hasApprovedSelection(EmployeeViewModel vm) {
+    return _selectedEntries(vm).any((entry) {
+      final status = entry.isWork
+          ? (entry.workLog?.status ?? '')
+          : (entry.leaveLog?.status ?? '');
+      return status.toUpperCase() == 'APPROVED';
+    });
+  }
+
+  void _toggleEntrySelection(_ActivityEntry entry) {
+    final key = _entryKey(entry);
+    setState(() {
+      if (_selectedKeys.contains(key)) {
+        _selectedKeys.remove(key);
+      } else {
+        _selectedKeys.add(key);
+      }
+    });
+  }
+
+  void _clearSelection() {
+    if (_selectedKeys.isEmpty) return;
+    setState(_selectedKeys.clear);
+  }
+
+  Future<void> _handleSelectedAction(
+    EmployeeViewModel vm,
+    String action,
+  ) async {
+    final selected = _selectedEntries(vm);
+    if (selected.isEmpty) {
+      _clearSelection();
+      return;
+    }
+
+    switch (action) {
+      case 'edit':
+        final entry = selected.first;
+        if (entry.isWork && entry.workLog != null) {
+          await _editWorkLog(vm, entry.workLog!);
+        } else if (!entry.isWork && entry.leaveLog != null) {
+          await _editLeaveLog(vm, entry.leaveLog!);
+        }
+        break;
+      case 'delete':
+        for (final entry in selected) {
+          if (entry.isWork && entry.workLog != null) {
+            await _deleteWorkLog(vm, entry.workLog!);
+          } else if (!entry.isWork && entry.leaveLog != null) {
+            await _deleteLeaveLog(vm, entry.leaveLog!);
+          }
+          if (!mounted) return;
+        }
+        break;
+      case 'reject':
+        final workEntries = selected
+            .where((entry) => entry.isWork && entry.workLog != null)
+            .toList(growable: false);
+        String? sharedRemarks;
+        if (workEntries.isNotEmpty) {
+          final rawRemarks = await _askCommonReviewRemarks('REJECTED');
+          if (!mounted) return;
+          if (rawRemarks == null) return;
+          sharedRemarks = rawRemarks.trim().isEmpty ? null : rawRemarks.trim();
+        }
+
+        var successCount = 0;
+        var failureCount = 0;
+        for (final entry in selected) {
+          if (entry.isWork && entry.workLog != null) {
+            final ok = await vm.reviewWorkLog(
+              logId: entry.workLog!.logId,
+              status: 'REJECTED',
+              adminRemarks: sharedRemarks,
+            );
+            if (ok) {
+              successCount++;
+            } else {
+              failureCount++;
+            }
+          } else if (!entry.isWork && entry.leaveLog != null) {
+            final ok = await vm.reviewLeaveLog(
+              leaveId: entry.leaveLog!.leaveId,
+              status: 'REJECTED',
+            );
+            if (ok) {
+              successCount++;
+            } else {
+              failureCount++;
+            }
+          }
+          if (!mounted) return;
+        }
+        if (failureCount == 0) {
+          _showMessage(vm.message ?? '$successCount logs updated');
+        } else {
+          _showMessage(
+            '$successCount updated, $failureCount failed',
+            isError: successCount == 0,
+          );
+        }
+        break;
+      case 'accept':
+        final approvedWorkEntries = selected
+            .where((entry) => entry.isWork && entry.workLog != null)
+            .toList(growable: false);
+        String? approvedSharedRemarks;
+        if (approvedWorkEntries.isNotEmpty) {
+          final rawRemarks = await _askCommonReviewRemarks('APPROVED');
+          if (!mounted) return;
+          if (rawRemarks == null) return;
+          approvedSharedRemarks = rawRemarks.trim().isEmpty
+              ? null
+              : rawRemarks.trim();
+        }
+
+        var approvedSuccessCount = 0;
+        var approvedFailureCount = 0;
+        for (final entry in selected) {
+          if (entry.isWork && entry.workLog != null) {
+            final ok = await vm.reviewWorkLog(
+              logId: entry.workLog!.logId,
+              status: 'APPROVED',
+              adminRemarks: approvedSharedRemarks,
+            );
+            if (ok) {
+              approvedSuccessCount++;
+            } else {
+              approvedFailureCount++;
+            }
+          } else if (!entry.isWork && entry.leaveLog != null) {
+            final ok = await vm.reviewLeaveLog(
+              leaveId: entry.leaveLog!.leaveId,
+              status: 'APPROVED',
+            );
+            if (ok) {
+              approvedSuccessCount++;
+            } else {
+              approvedFailureCount++;
+            }
+          }
+          if (!mounted) return;
+        }
+        if (approvedFailureCount == 0) {
+          _showMessage(vm.message ?? '$approvedSuccessCount logs updated');
+        } else {
+          _showMessage(
+            '$approvedSuccessCount updated, $approvedFailureCount failed',
+            isError: approvedSuccessCount == 0,
+          );
+        }
+        break;
+    }
+
+    if (!mounted) return;
+    _clearSelection();
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<EmployeeViewModel>();
+    final selectedEntries = _selectedEntries(vm);
+    final hasApprovedSelection = _hasApprovedSelection(vm);
     final dashboardVm = context.watch<DashboardViewModel>();
     final employee = vm.employee;
     final employeeName = (employee?.employeeName ?? '').trim();
@@ -85,61 +273,109 @@ class _EmployeeViewScreenState extends State<_EmployeeViewScreen> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         titleSpacing: 0,
-        title: GestureDetector(
-          onTap: employee == null
-              ? null
-              : () {
-                  context.push(
-                    CfRoutes.employeeProfile(vm.companyId, vm.employeeId),
-                  );
-                },
-          behavior: HitTestBehavior.opaque,
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: LoginColors.primary.withValues(alpha: 0.14),
-                child: Text(
-                  avatarText,
-                  style: TextStyle(
-                    color: LoginColors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
+        leading: _isSelectionMode
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: _clearSelection,
+              )
+            : null,
+        title: _isSelectionMode
+            ? Text(
+                '${selectedEntries.length} selected',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: LoginColors.textPrimary,
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              )
+            : GestureDetector(
+                onTap: employee == null
+                    ? null
+                    : () {
+                        context.push(
+                          CfRoutes.employeeProfile(vm.companyId, vm.employeeId),
+                        );
+                      },
+                behavior: HitTestBehavior.opaque,
+                child: Row(
                   children: [
-                    Text(
-                      employee?.employeeName ?? 'Employee',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: LoginColors.textPrimary,
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: LoginColors.primary.withValues(
+                        alpha: 0.14,
+                      ),
+                      child: Text(
+                        avatarText,
+                        style: TextStyle(
+                          color: LoginColors.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                    Text(
-                      employee?.employeeCode ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: LoginColors.textSecondary,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            employee?.employeeName ?? 'Employee',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: LoginColors.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            employee?.employeeCode ?? '',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: LoginColors.textSecondary,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
         actions: [
-          if (employee != null)
+          if (_isSelectionMode) ...[
+            IconButton(
+              tooltip: 'Edit',
+              onPressed: vm.isSaving || selectedEntries.length != 1
+                  ? null
+                  : () => _handleSelectedAction(vm, 'edit'),
+              icon: const Icon(Icons.edit_outlined),
+            ),
+            IconButton(
+              tooltip: 'Delete',
+              onPressed: vm.isSaving
+                  ? null
+                  : () => _handleSelectedAction(vm, 'delete'),
+              icon: const Icon(Icons.delete_outline_rounded),
+            ),
+            if (!hasApprovedSelection)
+              IconButton(
+                tooltip: 'Reject',
+                onPressed: vm.isSaving
+                    ? null
+                    : () => _handleSelectedAction(vm, 'reject'),
+                icon: const Icon(Icons.close_rounded),
+              ),
+            if (!hasApprovedSelection)
+              IconButton(
+                tooltip: 'Accept',
+                onPressed: vm.isSaving
+                    ? null
+                    : () => _handleSelectedAction(vm, 'accept'),
+                icon: const Icon(Icons.check_rounded),
+              ),
+          ] else if (employee != null)
             PopupMenuButton<String>(
               onSelected: (value) async {
                 switch (value) {
@@ -233,11 +469,55 @@ class _EmployeeViewScreenState extends State<_EmployeeViewScreen> {
         if (activityItems.isEmpty)
           _emptyCard('No work/leave logs available')
         else
-          ...activityItems.map((item) {
-            if (item.isWork && item.workLog != null) {
-              return _workCard(vm, item.workLog!);
-            }
-            return _leaveCard(vm, item.leaveLog!);
+          ...List.generate(activityItems.length, (index) {
+            final item = activityItems[index];
+            final previous = index > 0 ? activityItems[index - 1] : null;
+            final showDateHeader =
+                previous == null ||
+                !_isSameCalendarDay(previous.date, item.date);
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (showDateHeader) ...[
+                  if (index != 0) const SizedBox(height: 14),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Center(
+                      child: Text(
+                        _displayDate(item.date),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: LoginColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                if (item.isWork && item.workLog != null)
+                  _workCard(
+                    vm,
+                    item.workLog!,
+                    isSelected: _selectedKeys.contains(_entryKey(item)),
+                    onLongPress: () => _toggleEntrySelection(item),
+                    onTap: _isSelectionMode
+                        ? () => _toggleEntrySelection(item)
+                        : null,
+                  )
+                else
+                  _leaveCard(
+                    vm,
+                    item.leaveLog!,
+                    isSelected: _selectedKeys.contains(_entryKey(item)),
+                    onLongPress: () => _toggleEntrySelection(item),
+                    onTap: _isSelectionMode
+                        ? () => _toggleEntrySelection(item)
+                        : null,
+                  ),
+              ],
+            );
           }),
       ],
     );
@@ -277,6 +557,41 @@ class _EmployeeViewScreenState extends State<_EmployeeViewScreen> {
     );
   }
 
+  
+
+  Widget _metricChip(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: LoginColors.surfaceSecondary,
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: LoginColors.borderLight),
+      ),
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: '$label: ',
+              style: TextStyle(
+                fontSize: 11.5,
+                color: LoginColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            TextSpan(
+              text: value,
+              style: TextStyle(
+                fontSize: 12,
+                color: LoginColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _emptyCard(String text) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -289,231 +604,155 @@ class _EmployeeViewScreenState extends State<_EmployeeViewScreen> {
     );
   }
 
-  Widget _workCard(EmployeeViewModel vm, WorkLogData log) {
-    final status = log.status.toUpperCase();
-    final canReview = status == 'PENDING';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: LoginColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      log.workName,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: LoginColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${log.logDate} · ${log.quantity ?? '-'} ${log.unit}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: LoginColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '₹${(log.amountEarned ?? 0).toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: LoginColors.success,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              _statusChip(status),
-            ],
-          ),
-          if ((log.employeeRemarks ?? '').trim().isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              log.employeeRemarks!.trim(),
-              style: TextStyle(
-                fontSize: 11.5,
-                color: LoginColors.textSecondary,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              _actionBtn(
-                icon: Icons.edit_rounded,
-                color: LoginColors.primary,
-                label: 'Edit',
-                onTap: vm.isSaving ? null : () => _editWorkLog(vm, log),
-              ),
-              _actionBtn(
-                icon: Icons.delete_outline_rounded,
-                color: LoginColors.error,
-                label: 'Delete',
-                onTap: vm.isSaving ? null : () => _deleteWorkLog(vm, log),
-              ),
-              _actionBtn(
-                icon: Icons.close_rounded,
-                color: LoginColors.error,
-                label: 'Reject',
-                onTap: vm.isSaving || !canReview
-                    ? null
-                    : () => _reviewWorkLog(vm, log, 'REJECTED'),
-              ),
-              _actionBtn(
-                icon: Icons.check_rounded,
-                color: LoginColors.success,
-                label: 'Accept',
-                onTap: vm.isSaving || !canReview
-                    ? null
-                    : () => _reviewWorkLog(vm, log, 'APPROVED'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _leaveCard(EmployeeViewModel vm, LeaveLogData leave) {
-    final status = leave.status.toUpperCase();
-    final canReview = status == 'PENDING';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: LoginColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${leave.leaveDate} · ${leave.leaveCategory}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: LoginColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      leave.leaveType,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: LoginColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              _statusChip(status),
-            ],
-          ),
-          if ((leave.reason ?? '').trim().isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              leave.reason!.trim(),
-              style: TextStyle(
-                fontSize: 11.5,
-                color: LoginColors.textSecondary,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              _actionBtn(
-                icon: Icons.edit_rounded,
-                color: LoginColors.primary,
-                label: 'Edit',
-                onTap: vm.isSaving ? null : () => _editLeaveLog(vm, leave),
-              ),
-              _actionBtn(
-                icon: Icons.delete_outline_rounded,
-                color: LoginColors.error,
-                label: 'Delete',
-                onTap: vm.isSaving ? null : () => _deleteLeaveLog(vm, leave),
-              ),
-              _actionBtn(
-                icon: Icons.close_rounded,
-                color: LoginColors.error,
-                label: 'Reject',
-                onTap: vm.isSaving || !canReview
-                    ? null
-                    : () => _reviewLeaveLog(vm, leave, 'REJECTED'),
-              ),
-              _actionBtn(
-                icon: Icons.check_rounded,
-                color: LoginColors.success,
-                label: 'Accept',
-                onTap: vm.isSaving || !canReview
-                    ? null
-                    : () => _reviewLeaveLog(vm, leave, 'APPROVED'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _actionBtn({
-    required IconData icon,
-    required Color color,
-    required String label,
-    required VoidCallback? onTap,
+  Widget _workCard(
+    EmployeeViewModel vm,
+    WorkLogData log, {
+    required bool isSelected,
+    required VoidCallback onLongPress,
+    VoidCallback? onTap,
   }) {
+    final status = log.status.toUpperCase();
     return InkWell(
+      onLongPress: onLongPress,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: onTap == null
-              ? LoginColors.surfaceSecondary
-              : color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
+          color: isSelected
+              ? LoginColors.primary.withValues(alpha: 0.08)
+              : LoginColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? LoginColors.primary : LoginColors.borderLight,
+            width: isSelected ? 1.2 : 1,
+          ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 16, color: onTap == null ? Colors.grey : color),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: onTap == null ? Colors.grey : color,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        log.workName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: LoginColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${log.quantity ?? '-'} ${log.unit}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: LoginColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '₹${(log.amountEarned ?? 0).toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: LoginColors.success,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _statusChip(status),
+              ],
             ),
+            if ((log.employeeRemarks ?? '').trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                log.employeeRemarks!.trim(),
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: LoginColors.textSecondary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _leaveCard(
+    EmployeeViewModel vm,
+    LeaveLogData leave, {
+    required bool isSelected,
+    required VoidCallback onLongPress,
+    VoidCallback? onTap,
+  }) {
+    final status = leave.status.toUpperCase();
+    return InkWell(
+      onLongPress: onLongPress,
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? LoginColors.primary.withValues(alpha: 0.08)
+              : LoginColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? LoginColors.primary : LoginColors.borderLight,
+            width: isSelected ? 1.2 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        leave.leaveCategory,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: LoginColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        leave.leaveType,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: LoginColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _statusChip(status),
+              ],
+            ),
+            if ((leave.reason ?? '').trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                leave.reason!.trim(),
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: LoginColors.textSecondary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -924,60 +1163,57 @@ class _EmployeeViewScreenState extends State<_EmployeeViewScreen> {
     return '${now.year}-$month-$day';
   }
 
-  Future<void> _reviewWorkLog(
-    EmployeeViewModel vm,
-    WorkLogData log,
-    String status,
-  ) async {
-    final remarksController = TextEditingController(
-      text: log.adminRemarks ?? '',
-    );
+  String _displayDate(DateTime date) {
+    final monthNames = const [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${date.day.toString().padLeft(2, '0')} ${monthNames[date.month - 1]} ${date.year}';
+  }
+
+  Future<String?> _askCommonReviewRemarks(String status) async {
+    final remarksController = TextEditingController();
     final remarks = await showDialog<String?>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text(
-          status == 'APPROVED' ? 'Accept Work Log' : 'Reject Work Log',
+          status == 'APPROVED'
+              ? 'Accept Selected Work Logs'
+              : 'Reject Selected Work Logs',
         ),
         content: TextField(
           controller: remarksController,
           minLines: 2,
           maxLines: 3,
           decoration: const InputDecoration(
-            labelText: 'Admin Remarks',
+            labelText: 'Admin Remarks (same for selected logs)',
             border: OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(
-              context,
-              remarksController.text.trim().isEmpty
-                  ? null
-                  : remarksController.text.trim(),
-            ),
-            child: const Text('Confirm'),
+            onPressed: () =>
+                Navigator.pop(dialogContext, remarksController.text),
+            child: const Text('Apply'),
           ),
         ],
       ),
     );
-    if (!mounted) return;
-
-    final ok = await vm.reviewWorkLog(
-      logId: log.logId,
-      status: status,
-      adminRemarks: remarks,
-    );
-    if (!mounted) return;
-    _showMessage(
-      ok
-          ? (vm.message ?? 'Work log updated')
-          : (vm.error ?? 'Failed to update'),
-      isError: !ok,
-    );
+    return remarks;
   }
 
   Future<void> _editWorkLog(EmployeeViewModel vm, WorkLogData log) async {
@@ -1088,21 +1324,6 @@ class _EmployeeViewScreenState extends State<_EmployeeViewScreen> {
     if (!mounted) return;
     _showMessage(
       ok ? (vm.message ?? 'Work log deleted') : (vm.error ?? 'Delete failed'),
-      isError: !ok,
-    );
-  }
-
-  Future<void> _reviewLeaveLog(
-    EmployeeViewModel vm,
-    LeaveLogData leave,
-    String status,
-  ) async {
-    final ok = await vm.reviewLeaveLog(leaveId: leave.leaveId, status: status);
-    if (!mounted) return;
-    _showMessage(
-      ok
-          ? (vm.message ?? 'Leave updated')
-          : (vm.error ?? 'Leave update failed'),
       isError: !ok,
     );
   }
@@ -1271,12 +1492,14 @@ class _EmployeeViewScreenState extends State<_EmployeeViewScreen> {
 class _ActivityEntry {
   final bool isWork;
   final DateTime date;
+  final int id;
   final WorkLogData? workLog;
   final LeaveLogData? leaveLog;
 
   const _ActivityEntry._({
     required this.isWork,
     required this.date,
+    required this.id,
     this.workLog,
     this.leaveLog,
   });
@@ -1287,6 +1510,7 @@ class _ActivityEntry {
       date:
           DateTime.tryParse(log.logDate) ??
           DateTime.fromMillisecondsSinceEpoch(0),
+      id: log.logId,
       workLog: log,
     );
   }
@@ -1297,7 +1521,9 @@ class _ActivityEntry {
       date:
           DateTime.tryParse(log.leaveDate) ??
           DateTime.fromMillisecondsSinceEpoch(0),
+      id: log.leaveId,
       leaveLog: log,
     );
   }
 }
+

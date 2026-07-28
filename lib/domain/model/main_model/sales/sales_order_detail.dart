@@ -5,6 +5,7 @@ class SalesOrderDetail {
   final String orderNumber;
   final String? platformRef;
   final DateTime orderDate;
+  final DateTime paymentDueDate;
 
   final int sellerCompanyId;
   final String sellerCompanyName;
@@ -38,6 +39,7 @@ class SalesOrderDetail {
     required this.orderNumber,
     this.platformRef,
     required this.orderDate,
+    required this.paymentDueDate,
     required this.sellerCompanyId,
     required this.sellerCompanyName,
     required this.buyerCompanyId,
@@ -66,6 +68,11 @@ class SalesOrderDetail {
       orderNumber: json['orderNumber'] ?? '',
       platformRef: json['platformRef']?.toString(),
       orderDate: DateTime.tryParse(json['orderDate'] ?? '') ?? DateTime.now(),
+      paymentDueDate:
+          DateTime.tryParse(json['paymentDueDate'] ?? '') ??
+          (DateTime.tryParse(json['orderDate'] ?? '') ?? DateTime.now()).add(
+            const Duration(days: 3),
+          ),
 
       sellerCompanyId: json['sellerCompanyId'] ?? 0,
       sellerCompanyName: json['sellerCompanyName'] ?? '',
@@ -92,7 +99,8 @@ class SalesOrderDetail {
       hasBill: json['hasBill'] ?? false,
       isActive: json['isActive'] ?? false,
 
-      orderItems: (json['orderItems'] as List<dynamic>?)
+      orderItems:
+          (json['orderItems'] as List<dynamic>?)
               ?.map((e) => SalesOrderItem.fromJson(e))
               .toList() ??
           [],

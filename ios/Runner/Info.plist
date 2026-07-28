@@ -50,5 +50,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSContactsUsageDescription</key>
+	<string>CoreFlow needs contacts access to find phone numbers and speed up customer creation.</string>
 </dict>
 </plist>

@@ -40,6 +40,7 @@ class UpdateSalesOrderViewModel extends ChangeNotifier {
   Customer? _selectedCustomer;
   final List<UpdateSalesOrderItemEntry> _orderItems = [];
   DateTime _orderDate = DateTime.now();
+  DateTime _paymentDueDate = DateTime.now().add(const Duration(days: 3));
   double _taxAmount = 0;
   double _discountAmount = 0;
   double _deliveryCharge = 0;
@@ -57,6 +58,7 @@ class UpdateSalesOrderViewModel extends ChangeNotifier {
   List<UpdateSalesOrderItemEntry> get orderItems =>
       List.unmodifiable(_orderItems);
   DateTime get orderDate => _orderDate;
+  DateTime get paymentDueDate => _paymentDueDate;
   double get taxAmount => _taxAmount;
   double get discountAmount => _discountAmount;
   double get deliveryCharge => _deliveryCharge;
@@ -86,16 +88,19 @@ class UpdateSalesOrderViewModel extends ChangeNotifier {
     );
 
     for (final item in order.orderItems) {
-      _orderItems.add(UpdateSalesOrderItemEntry(
-        itemId: item.itemId,
-        itemName: item.itemName,
-        quantity: item.quantity,
-        updatedPrice: item.unitPrice,
-        itemDescription: item.itemDescription,
-      ));
+      _orderItems.add(
+        UpdateSalesOrderItemEntry(
+          itemId: item.itemId,
+          itemName: item.itemName,
+          quantity: item.quantity,
+          updatedPrice: item.unitPrice,
+          itemDescription: item.itemDescription,
+        ),
+      );
     }
 
     _orderDate = order.orderDate;
+    _paymentDueDate = order.paymentDueDate;
     _taxAmount = order.taxAmount;
     _discountAmount = order.discountAmount;
     _deliveryCharge = order.deliveryCharge;
@@ -146,13 +151,15 @@ class UpdateSalesOrderViewModel extends ChangeNotifier {
     final existing = _orderItems.indexWhere((e) => e.itemId == item.itemId);
     if (existing != -1) return;
 
-    _orderItems.add(UpdateSalesOrderItemEntry(
-      itemId: item.itemId,
-      itemName: item.itemName,
-      quantity: 1,
-      updatedPrice: item.price,
-      itemDescription: item.description.isNotEmpty ? item.description : null,
-    ));
+    _orderItems.add(
+      UpdateSalesOrderItemEntry(
+        itemId: item.itemId,
+        itemName: item.itemName,
+        quantity: 1,
+        updatedPrice: item.price,
+        itemDescription: item.description.isNotEmpty ? item.description : null,
+      ),
+    );
     notifyListeners();
   }
 
@@ -208,6 +215,11 @@ class UpdateSalesOrderViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setPaymentDueDate(DateTime value) {
+    _paymentDueDate = value;
+    notifyListeners();
+  }
+
   Future<void> submitUpdate() async {
     if (!canSubmit) return;
 
@@ -220,19 +232,22 @@ class UpdateSalesOrderViewModel extends ChangeNotifier {
       final body = {
         'customerId': _selectedCustomer!.customerId,
         'orderDate': _orderDate.toIso8601String(),
+        'paymentDueDate': _paymentDueDate.toIso8601String(),
         'taxAmount': _taxAmount,
         'discountAmount': _discountAmount,
         'deliveryCharge': _deliveryCharge,
         'hasBill': _hasBill,
         'orderItems': _orderItems
-            .map((e) => {
-                  'itemId': e.itemId,
-                  if (e.itemDescription != null &&
-                      e.itemDescription!.trim().isNotEmpty)
-                    'itemDescription': e.itemDescription!.trim(),
-                  'quantity': e.quantity,
-                  'updatedPrice': e.updatedPrice,
-                })
+            .map(
+              (e) => {
+                'itemId': e.itemId,
+                if (e.itemDescription != null &&
+                    e.itemDescription!.trim().isNotEmpty)
+                  'itemDescription': e.itemDescription!.trim(),
+                'quantity': e.quantity,
+                'updatedPrice': e.updatedPrice,
+              },
+            )
             .toList(),
       };
 

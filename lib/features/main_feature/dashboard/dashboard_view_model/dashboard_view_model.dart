@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:coreflow/data/services/push_notification_service.dart';
+import 'package:coreflow/data/repositories/employee_repository/employee_repository.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -13,10 +14,14 @@ import '../../../../domain/model/main_model/analytics/cash_flow.dart';
 import '../../../../domain/model/main_model/analytics/dashboard_kpi.dart';
 import '../../../../domain/model/main_model/analytics/revenue_expense.dart';
 import '../../../../domain/model/main_model/company/company.dart';
+import '../../../../domain/model/main_model/customer/customer.dart';
+import '../../../../domain/model/main_model/vendors/vendors.dart';
+import '../../../../domain/model/employee_model/employee.dart';
 import '../../../../data/repositories/auth_repository/auth_repository.dart';
 
 class DashboardViewModel extends ChangeNotifier {
   final AuthRepository _authRepository = AuthRepository();
+  final EmployeeRepository _employeeRepository = EmployeeRepository();
 
   bool _isLoading = true;
   String? _userName;
@@ -39,6 +44,9 @@ class DashboardViewModel extends ChangeNotifier {
   Future<void>? _companiesRequest;
 
   int _unreadNotificationCount = 0;
+  int _customerUnreadCount = 0;
+  int _vendorUnreadCount = 0;
+  int _employeeUnreadCount = 0;
   List<Advertisement> _advertisements = [];
   final Map<String, Uint8List> _adImageCache = {};
   bool _hasLoadedAppOpenData = false;
@@ -63,6 +71,9 @@ class DashboardViewModel extends ChangeNotifier {
   String get selectedMenu => _selectedMenu;
 
   int get unreadNotificationCount => _unreadNotificationCount;
+  int get customerUnreadCount => _customerUnreadCount;
+  int get vendorUnreadCount => _vendorUnreadCount;
+  int get employeeUnreadCount => _employeeUnreadCount;
   List<Advertisement> get advertisements => _advertisements;
   Map<String, Uint8List> get adImageCache => _adImageCache;
 
@@ -116,6 +127,7 @@ class DashboardViewModel extends ChangeNotifier {
     if (_companyId != null) {
       await Future.wait([
         _loadUnreadCount(),
+        _loadEntityUnreadCounts(),
         _loadAdvertisements(),
         _loadAnalytics(),
       ]);
@@ -126,12 +138,14 @@ class DashboardViewModel extends ChangeNotifier {
     if (company.companyId == _companyId) return;
     _companyName = company.companyName;
     _companyId = company.companyId;
+    _hasLoadedAppOpenData = false;
     _isSwitchingCompany = true;
     notifyListeners();
     TokenStorage.saveSelectedCompany(company.companyId, company.companyName);
     await Future.delayed(Duration(seconds: 5));
     _isSwitchingCompany = false;
     notifyListeners();
+    await _loadAppOpenData();
   }
 
   void toggleCustomersExpanded(bool expanded) {
@@ -198,6 +212,7 @@ class DashboardViewModel extends ChangeNotifier {
 
     await Future.wait([
       _loadUnreadCount(),
+      _loadEntityUnreadCounts(),
       _loadAdvertisements(),
       _loadAnalytics(),
     ]);
@@ -279,6 +294,42 @@ class DashboardViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _loadEntityUnreadCounts() async {
+    if (_companyId == null) return;
+    try {
+      final results = await Future.wait<dynamic>([
+        _authRepository.getCustomers(_companyId!),
+        _authRepository.getActiveVendors(_companyId!),
+        _employeeRepository.getEmployees(_companyId!),
+      ]);
+
+      final customers = results[0] as List<Customer>;
+      final vendors = results[1] as List<Vendor>;
+      final employees = results[2] as List<Employee>;
+
+      final customerUnread = customers.fold<int>(
+        0,
+        (sum, customer) => sum + customer.unreadCount,
+      );
+      final vendorUnread = vendors.fold<int>(
+        0,
+        (sum, vendor) => sum + vendor.unreadCount,
+      );
+      final employeeUnread = employees.fold<int>(
+        0,
+        (sum, employee) => sum + employee.unreadCount,
+      );
+
+      updateEntityUnreadCounts(
+        customerUnreadCount: customerUnread,
+        vendorUnreadCount: vendorUnread,
+        employeeUnreadCount: employeeUnread,
+      );
+    } catch (e) {
+      debugPrint('Load entity unread counts error: $e');
+    }
+  }
+
   Future<void> _loadAdvertisements() async {
     try {
       _advertisements = await _authRepository.getAdvertisements();
@@ -325,7 +376,34 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   Future<void> refreshUnreadCount() async {
-    await _loadUnreadCount();
+    await Future.wait([_loadUnreadCount(), _loadEntityUnreadCounts()]);
+  }
+
+  void updateEntityUnreadCounts({
+    int? customerUnreadCount,
+    int? vendorUnreadCount,
+    int? employeeUnreadCount,
+  }) {
+    var changed = false;
+
+    if (customerUnreadCount != null &&
+        customerUnreadCount != _customerUnreadCount) {
+      _customerUnreadCount = customerUnreadCount;
+      changed = true;
+    }
+    if (vendorUnreadCount != null && vendorUnreadCount != _vendorUnreadCount) {
+      _vendorUnreadCount = vendorUnreadCount;
+      changed = true;
+    }
+    if (employeeUnreadCount != null &&
+        employeeUnreadCount != _employeeUnreadCount) {
+      _employeeUnreadCount = employeeUnreadCount;
+      changed = true;
+    }
+
+    if (changed) {
+      notifyListeners();
+    }
   }
 
   Future<void> _loadCompaniesInternal() async {

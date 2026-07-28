@@ -16,6 +16,7 @@ class SearchableEntityAppBar extends StatelessWidget
   final int selectedTabIndex;
   final ValueChanged<int>? onTabSelected;
   final bool showSearchAction;
+  final List<Widget>? leadingActions;
   final Color? backgroundColor;
   final Color? foregroundColor;
   final VoidCallback? onTitleTap;
@@ -35,6 +36,7 @@ class SearchableEntityAppBar extends StatelessWidget
     this.selectedTabIndex = 0,
     this.onTabSelected,
     this.showSearchAction = true,
+    this.leadingActions,
     this.backgroundColor,
     this.foregroundColor,
     this.onTitleTap,
@@ -106,6 +108,7 @@ class SearchableEntityAppBar extends StatelessWidget
               ),
             ),
       actions: [
+        if (leadingActions != null) ...leadingActions!,
         if (showSearchAction) ...[
           IconButton(
             icon: Container(

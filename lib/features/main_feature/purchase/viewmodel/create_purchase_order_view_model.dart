@@ -35,6 +35,7 @@ class CreatePurchaseOrderViewModel extends ChangeNotifier {
   Vendor? _selectedVendor;
   final List<PurchaseOrderItemEntry> _orderItems = [];
   DateTime _orderDate = DateTime.now();
+  DateTime _paymentDueDate = DateTime.now().add(const Duration(days: 3));
   double _taxAmount = 0;
   double _discountAmount = 0;
   double _deliveryCharge = 0;
@@ -50,9 +51,9 @@ class CreatePurchaseOrderViewModel extends ChangeNotifier {
 
   // Getters
   Vendor? get selectedVendor => _selectedVendor;
-  List<PurchaseOrderItemEntry> get orderItems =>
-      List.unmodifiable(_orderItems);
+  List<PurchaseOrderItemEntry> get orderItems => List.unmodifiable(_orderItems);
   DateTime get orderDate => _orderDate;
+  DateTime get paymentDueDate => _paymentDueDate;
   double get taxAmount => _taxAmount;
   double get discountAmount => _discountAmount;
   double get deliveryCharge => _deliveryCharge;
@@ -67,8 +68,7 @@ class CreatePurchaseOrderViewModel extends ChangeNotifier {
   /// Whether the selected vendor has a company name.
   /// If null (no company), user can edit price & description on items.
   bool get vendorHasCompany =>
-      _selectedVendor != null &&
-      _selectedVendor!.vendorCompanyName.isNotEmpty;
+      _selectedVendor != null && _selectedVendor!.vendorCompanyName.isNotEmpty;
 
   double get subtotal =>
       _orderItems.fold(0, (sum, entry) => sum + entry.lineTotal);
@@ -120,15 +120,18 @@ class CreatePurchaseOrderViewModel extends ChangeNotifier {
   }
 
   void addOrderItem(SellableItem item) {
-    final existing =
-        _orderItems.indexWhere((e) => e.item.itemId == item.itemId);
+    final existing = _orderItems.indexWhere(
+      (e) => e.item.itemId == item.itemId,
+    );
     if (existing != -1) return;
 
-    _orderItems.add(PurchaseOrderItemEntry(
-      item: item,
-      itemDescription: item.description.isNotEmpty ? item.description : null,
-      canEditPriceAndDesc: !vendorHasCompany,
-    ));
+    _orderItems.add(
+      PurchaseOrderItemEntry(
+        item: item,
+        itemDescription: item.description.isNotEmpty ? item.description : null,
+        canEditPriceAndDesc: !vendorHasCompany,
+      ),
+    );
     notifyListeners();
   }
 
@@ -181,6 +184,12 @@ class CreatePurchaseOrderViewModel extends ChangeNotifier {
 
   void setOrderDate(DateTime value) {
     _orderDate = value;
+    _paymentDueDate = value.add(const Duration(days: 3));
+    notifyListeners();
+  }
+
+  void setPaymentDueDate(DateTime value) {
+    _paymentDueDate = value;
     notifyListeners();
   }
 
@@ -196,22 +205,24 @@ class CreatePurchaseOrderViewModel extends ChangeNotifier {
       final request = CreatePurchaseOrderRequest(
         vendorId: _selectedVendor!.vendorId,
         orderDate: _orderDate,
+        paymentDueDate: _paymentDueDate,
         taxAmount: _taxAmount > 0 ? _taxAmount : null,
         discountAmount: _discountAmount > 0 ? _discountAmount : null,
         deliveryCharge: _deliveryCharge > 0 ? _deliveryCharge : null,
         hasBill: _hasBill,
         orderItems: _orderItems
-            .map((e) => PurchaseOrderItemRequest(
-                  itemId: e.item.itemId,
-                  itemDescription: e.itemDescription,
-                  quantity: e.quantity,
-                  updatedPrice: e.updatedPrice,
-                ))
+            .map(
+              (e) => PurchaseOrderItemRequest(
+                itemId: e.item.itemId,
+                itemDescription: e.itemDescription,
+                quantity: e.quantity,
+                updatedPrice: e.updatedPrice,
+              ),
+            )
             .toList(),
       );
 
-      final result =
-          await _repository.createPurchaseOrder(companyId, request);
+      final result = await _repository.createPurchaseOrder(companyId, request);
 
       if (result['success'] == true) {
         _isSuccess = true;
@@ -235,6 +246,7 @@ class CreatePurchaseOrderViewModel extends ChangeNotifier {
     _orderItems.clear();
     _availableItems = [];
     _orderDate = DateTime.now();
+    _paymentDueDate = _orderDate.add(const Duration(days: 3));
     _taxAmount = 0;
     _discountAmount = 0;
     _deliveryCharge = 0;

@@ -25,6 +25,7 @@ import 'package:coreflow/domain/model/main_model/config/company_config.dart';
 import 'package:coreflow/domain/model/main_model/customer/create_customer_request.dart';
 import 'package:coreflow/domain/model/main_model/invitation/invitation_response.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer.dart';
+import 'package:coreflow/domain/model/main_model/customer/customer_contact_lookup.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_detail.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_edit_request.dart';
 import 'package:coreflow/domain/model/main_model/customer/customer_edit_response.dart';
@@ -57,6 +58,7 @@ import 'package:coreflow/domain/model/main_model/sales/sales_order.dart';
 import 'package:coreflow/domain/model/main_model/sales/sales_order_detail.dart'
     as sales_detail;
 import 'package:coreflow/domain/model/main_model/vendors/create_vendors_request.dart';
+import 'package:coreflow/domain/model/main_model/vendors/vendor_contact_lookup.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendor_orders_payments.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors_detail.dart';
@@ -71,6 +73,8 @@ import 'package:coreflow/domain/model/main_model/analytics/order_frequency.dart'
 import 'package:coreflow/domain/model/main_model/analytics/item_frequency.dart';
 import 'package:coreflow/domain/model/main_model/analytics/running_amount.dart';
 import 'package:coreflow/domain/model/main_model/analytics/party_analytics.dart';
+import 'package:coreflow/domain/model/main_model/analytics/party_order_payment_trend.dart';
+import 'package:coreflow/domain/model/main_model/analytics/employee_analytics.dart';
 import 'package:coreflow/domain/model/main_model/analytics/item_analytics.dart';
 import 'package:coreflow/domain/model/main_model/analytics/payment_mode.dart';
 import 'package:coreflow/domain/model/main_model/analytics/monthly_trend.dart';
@@ -117,19 +121,53 @@ class AuthRepository {
 
   // ─── Auth ───
 
+  Map<String, dynamic>? _tryDecodeBody(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<LoginResponse?> login(LoginRequest request) async {
     try {
       final response = await _apiService.post(
         AppConfig.loginUrl,
         request.toJson(),
       );
+      final decodedBody = _tryDecodeBody(response.body);
+      if (decodedBody == null) {
+        final contentType = response.headers['content-type'] ?? '';
+        final flattenedBody = response.body
+            .replaceAll('\n', ' ')
+            .replaceAll('\r', ' ')
+            .trim();
+        final bodyPreview = flattenedBody.length > 220
+            ? '${flattenedBody.substring(0, 220)}...'
+            : flattenedBody;
+
+        debugPrint(
+          'Login failed: invalid response body '
+          '(status=${response.statusCode}, contentType=$contentType)',
+        );
+        debugPrint('Login body preview: $bodyPreview');
+
+        final isHtml = contentType.toLowerCase().contains('text/html');
+        final hint = isHtml
+            ? 'Server returned HTML instead of API JSON. Check BASE_URL/protocol.'
+            : 'Server returned an unexpected response format.';
+        return LoginResponse(
+          responseStatus: false,
+          responseCode: response.statusCode,
+          responseMessage: hint,
+          responseData: null,
+        );
+      }
 
       if (response.statusCode != 200) {
         debugPrint('Login failed: ${response.statusCode}');
-        return null;
       }
-
-      final decodedBody = jsonDecode(response.body);
       return LoginResponse.fromJson(decodedBody);
     } catch (e) {
       debugPrint('Login error: $e');
@@ -137,9 +175,9 @@ class AuthRepository {
     }
   }
 
-  Future<void> saveAuthData(LoginData? data, String email) async {
-    if (data == null || email.isEmpty) {
-      debugPrint('saveAuthData: null data or empty email');
+  Future<void> saveAuthData(LoginData? data, String identifier) async {
+    if (data == null || identifier.isEmpty) {
+      debugPrint('saveAuthData: null data or empty identifier');
       return;
     }
 
@@ -155,10 +193,10 @@ class AuthRepository {
         refreshToken: data.refreshToken,
         roleCode: data.roleCode.isNotEmpty == true ? data.roleCode : null,
         landingUrl: data.landingUrl.isNotEmpty ? data.landingUrl : '/dashboard',
-        email: email.trim(),
+        email: identifier.trim(),
         userName: data.userName?.isNotEmpty == true
-            ? data.userName
-            : email.split('@').first.trim(),
+            ? data.userName!
+            : identifier.trim(),
       );
 
       final verifyData = await TokenStorage.getFullAuthData();
@@ -249,13 +287,15 @@ class AuthRepository {
         AppConfig.registerUrl,
         request.toJson(),
       );
-
-      if (response.statusCode != 200) {
-        debugPrint('Register failed: ${response.statusCode}');
+      final decodedBody = _tryDecodeBody(response.body);
+      if (decodedBody == null) {
+        debugPrint('Register failed: invalid response body');
         return null;
       }
 
-      final decodedBody = jsonDecode(response.body);
+      if (response.statusCode != 200) {
+        debugPrint('Register failed: ${response.statusCode}');
+      }
       return RegisterResponse.fromJson(decodedBody);
     } catch (e) {
       debugPrint('Register error: $e');
@@ -499,17 +539,51 @@ class AuthRepository {
   Future<EmployeeAuthResponse?> employeeRefresh(String refreshToken) =>
       _employeeRepo.employeeRefreshToken(refreshToken);
 
+  Future<Map<String, dynamic>?> getMyUserProfile() async {
+    try {
+      final response = await _apiService.get(
+        Uri.parse(AppConfig.userProfileUrl),
+      );
+      final body = _tryDecodeBody(response.body);
+      if (body == null || body['responseStatus'] != true) return null;
+      final data = body['responseData'];
+      if (data is Map<String, dynamic>) return data;
+      return null;
+    } catch (e) {
+      debugPrint('Get user profile error: $e');
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> updateMyUserProfile(
+    Map<String, dynamic> payload,
+  ) async {
+    try {
+      final response = await _apiService.put(AppConfig.userProfileUrl, payload);
+      final body = _tryDecodeBody(response.body);
+      if (body == null || body['responseStatus'] != true) return null;
+      final data = body['responseData'];
+      if (data is Map<String, dynamic>) return data;
+      return null;
+    } catch (e) {
+      debugPrint('Update user profile error: $e');
+      return null;
+    }
+  }
+
   // ─── Company (delegates to CompanyRepository) ───
 
   Future<List<Company>> getMyCompanies() => _companyRepo.getMyCompanies();
   Future<Company?> createCompany(Map<String, dynamic> data) =>
       _companyRepo.createCompany(data);
-  Future<Company?> updateCompany(int companyId, Map<String, dynamic> data) =>
+  Future<bool> updateCompany(int companyId, Map<String, dynamic> data) =>
       _companyRepo.updateCompany(companyId, data);
   Future<bool> activateCompany(int companyId) =>
       _companyRepo.activateCompany(companyId);
   Future<bool> deactivateCompany(int companyId) =>
       _companyRepo.deactivateCompany(companyId);
+  Future<Company?> getCompanyById(int companyId) =>
+      _companyRepo.getCompanyById(companyId);
 
   Future<List<MarketplaceCompany>> getAllCompanies() =>
       _companyRepo.getMarketplaceCompanies();
@@ -587,6 +661,14 @@ class AuthRepository {
     int companyId,
     CreateCustomerRequest request,
   ) => _customerRepo.createCustomer(companyId, request);
+  Future<List<CustomerContactLookupResult>> lookupCustomerContacts(
+    int companyId,
+    List<String> phones,
+  ) => _customerRepo.lookupCustomerContacts(companyId, phones);
+  Future<CustomerEditResponse?> linkCustomerByPhone(
+    int companyId,
+    int customerId,
+  ) => _customerRepo.linkCustomerByPhone(companyId, customerId);
   Future<CustomerStatusResponse?> activateCustomer(
     int companyId,
     int customerId,
@@ -652,6 +734,17 @@ class AuthRepository {
     size: size,
   );
 
+  // Customer connection request methods
+  Future<bool> acceptCustomerConnection(int companyId, int customerId) =>
+      _customerRepo.acceptCustomerConnection(companyId, customerId);
+  Future<bool> rejectCustomerConnection(int companyId, int customerId) =>
+      _customerRepo.rejectCustomerConnection(companyId, customerId);
+  Future<bool> undoCustomerConnection(
+    int companyId,
+    int customerId,
+    String newStatus,
+  ) => _customerRepo.undoCustomerConnection(companyId, customerId, newStatus);
+
   // ─── Vendor (delegates to VendorRepository) ───
 
   Future<List<Vendor>> getActiveVendors(int companyId) =>
@@ -667,6 +760,12 @@ class AuthRepository {
     int companyId,
     CreateVendorsRequest request,
   ) => _vendorRepo.createVendor(companyId, request);
+  Future<List<VendorContactLookupResult>> lookupVendorContacts(
+    int companyId,
+    List<String> phones,
+  ) => _vendorRepo.lookupVendorContacts(companyId, phones);
+  Future<VendorsEditResponse?> linkVendorByPhone(int companyId, int vendorId) =>
+      _vendorRepo.linkVendorByPhone(companyId, vendorId);
   Future<VendorsStatusResponse?> activateVendor(int companyId, int vendorId) =>
       _vendorRepo.activateVendor(companyId, vendorId);
   Future<VendorsStatusResponse?> deactivateVendor(
@@ -728,6 +827,17 @@ class AuthRepository {
     page: page,
     size: size,
   );
+
+  // Vendor connection request methods
+  Future<bool> acceptVendorConnection(int companyId, int vendorId) =>
+      _vendorRepo.acceptVendorConnection(companyId, vendorId);
+  Future<bool> rejectVendorConnection(int companyId, int vendorId) =>
+      _vendorRepo.rejectVendorConnection(companyId, vendorId);
+  Future<bool> undoVendorConnection(
+    int companyId,
+    int vendorId,
+    String newStatus,
+  ) => _vendorRepo.undoVendorConnection(companyId, vendorId, newStatus);
 
   // ─── Item (delegates to ItemRepository) ───
 
@@ -1018,6 +1128,32 @@ class AuthRepository {
     } catch (e) {
       debugPrint('Mark notification read error: $e');
       return false;
+    }
+  }
+
+  Future<int> markNotificationSubjectRead(
+    int companyId,
+    String subjectType,
+    int subjectId,
+  ) async {
+    try {
+      final url = AppConfig.getMarkSubjectReadUrl(
+        companyId,
+        subjectType,
+        subjectId,
+      );
+      final response = await _apiService.patch(url, {});
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return 0;
+      final responseData = data['responseData'];
+      if (responseData is Map<String, dynamic>) {
+        return int.tryParse(responseData['updatedCount']?.toString() ?? '') ??
+            0;
+      }
+      return 0;
+    } catch (e) {
+      debugPrint('Mark notification subject read error: $e');
+      return 0;
     }
   }
 
@@ -1431,6 +1567,91 @@ class AuthRepository {
           .toList();
     } catch (err) {
       debugPrint('getPurchaseByVendor: $err');
+      return [];
+    }
+  }
+
+  Future<List<PartyOrderPaymentTrendEntry>> getCustomerOrderPaymentTrend(
+    int companyId,
+    int customerId,
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final response = await _apiService.get(
+        Uri.parse(
+          AppConfig.getCustomerOrderPaymentTrendUrl(
+            companyId,
+            customerId,
+            startDate,
+            endDate,
+          ),
+        ),
+      );
+      if (response.statusCode != 200) return [];
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return [];
+      return (data['responseData'] as List)
+          .map((x) => PartyOrderPaymentTrendEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getCustomerOrderPaymentTrend: $err');
+      return [];
+    }
+  }
+
+  Future<List<EmployeeAnalyticsOverviewEntry>> getEmployeeAnalyticsOverview(
+    int companyId,
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final response = await _apiService.get(
+        Uri.parse(
+          AppConfig.getEmployeeAnalyticsOverviewUrl(
+            companyId,
+            startDate,
+            endDate,
+          ),
+        ),
+      );
+      if (response.statusCode != 200) return [];
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return [];
+      return (data['responseData'] as List)
+          .map((x) => EmployeeAnalyticsOverviewEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getEmployeeAnalyticsOverview: $err');
+      return [];
+    }
+  }
+
+  Future<List<EmployeeDailyAnalyticsEntry>> getEmployeeDailyAnalytics(
+    int companyId,
+    int employeeId,
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final response = await _apiService.get(
+        Uri.parse(
+          AppConfig.getEmployeeDailyAnalyticsUrl(
+            companyId,
+            employeeId,
+            startDate,
+            endDate,
+          ),
+        ),
+      );
+      if (response.statusCode != 200) return [];
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true) return [];
+      return (data['responseData'] as List)
+          .map((x) => EmployeeDailyAnalyticsEntry.fromJson(x))
+          .toList();
+    } catch (err) {
+      debugPrint('getEmployeeDailyAnalytics: $err');
       return [];
     }
   }

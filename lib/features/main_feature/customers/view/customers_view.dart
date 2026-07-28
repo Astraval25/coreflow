@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/data/repositories/auth_repository/auth_repository.dart';
-import 'package:coreflow/core/widgets/status_toggle_tabs.dart';
 import '../widget/customers_list.dart';
 import '../widget/empty_customers_view.dart';
 import '../widget/error_view.dart';
@@ -61,14 +60,12 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
         ChangeNotifierProvider(
           create: (_) => ActiveCustomersViewModel(_authRepository),
         ),
-        ChangeNotifierProvider(
-          create: (_) => DashboardViewModel()..loadUserData(),
-        ),
       ],
       child: Builder(
         builder: (context) {
           final viewModel = context.watch<ActiveCustomersViewModel>();
           final dashboardVm = context.watch<DashboardViewModel>();
+          _syncBottomNavUnreadBadges(viewModel);
 
           if (!_hasLoaded && !viewModel.hasData && !viewModel.isLoading) {
             _hasLoaded = true;
@@ -92,13 +89,43 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
                 setState(() => _searchQuery = '');
               },
               scaffoldKey: _scaffoldKey,
-              title: 'Customers (${viewModel.customers.length})',
+              title: 'Customers',
               searchHint: 'Search customers...',
               onTitleTap: _openCustomerProfilePage,
+              leadingActions: [
+                PopupMenuButton<bool>(
+                  tooltip: 'Filter status',
+                  initialValue: viewModel.showActiveOnly,
+                  onSelected: (showActiveOnly) {
+                    if (viewModel.showActiveOnly != showActiveOnly) {
+                      viewModel.toggleActiveFilter();
+                    }
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem<bool>(value: true, child: Text('Active')),
+                    PopupMenuItem<bool>(value: false, child: Text('Inactive')),
+                  ],
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: LoginColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: LoginColors.borderLight,
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.filter_list_rounded,
+                      color: LoginColors.textPrimary,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
             ),
             body: Column(
               children: [
-                _buildTopToggleTabs(context, viewModel),
                 Expanded(
                   child: RefreshIndicator(
                     backgroundColor: LoginColors.surface,
@@ -176,6 +203,9 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
       await context.push(
         CfRoutes.customerDetail(widget.companyId, customers.first.customerId),
       );
+      if (!mounted) return;
+      await context.read<ActiveCustomersViewModel>().refresh();
+      await context.read<DashboardViewModel>().refreshUnreadCount();
       return;
     }
 
@@ -235,6 +265,9 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
     await context.push(
       CfRoutes.customerDetail(widget.companyId, selectedCustomer.customerId),
     );
+    if (!mounted) return;
+    await context.read<ActiveCustomersViewModel>().refresh();
+    await context.read<DashboardViewModel>().refreshUnreadCount();
   }
 
   Widget _buildBody(ActiveCustomersViewModel viewModel, String searchQuery) {
@@ -292,20 +325,21 @@ class _ActiveCustomersViewState extends State<ActiveCustomersView> {
     );
   }
 
-  Widget _buildTopToggleTabs(
-    BuildContext context,
-    ActiveCustomersViewModel viewModel,
-  ) {
-    return StatusToggleTabs(
-      isActiveSelected: viewModel.showActiveOnly,
-      activeLabel: 'Active',
-      inactiveLabel: 'Inactive',
-      onActiveTap: () {
-        if (!viewModel.showActiveOnly) viewModel.toggleActiveFilter();
-      },
-      onInactiveTap: () {
-        if (viewModel.showActiveOnly) viewModel.toggleActiveFilter();
-      },
-    );
+  void _syncBottomNavUnreadBadges(ActiveCustomersViewModel viewModel) {
+    final totalUnread =
+        viewModel.activeCustomers.fold<int>(
+          0,
+          (sum, customer) => sum + customer.unreadCount,
+        ) +
+        viewModel.inactiveCustomers.fold<int>(
+          0,
+          (sum, customer) => sum + customer.unreadCount,
+        );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<DashboardViewModel>().updateEntityUnreadCounts(
+        customerUnreadCount: totalUnread,
+      );
+    });
   }
 }

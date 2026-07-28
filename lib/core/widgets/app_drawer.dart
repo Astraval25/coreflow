@@ -21,13 +21,13 @@ class AppDrawer extends StatelessWidget {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                DashboardMenuItem(vm: vm),
+                // DashboardMenuItem(vm: vm),
                 ManageExpansion(vm: vm),
-                WorkforceExpansion(vm: vm),
                 SalesMenuItem(vm: vm),
                 PurchaseMenuItem(vm: vm),
                 PaymentMenuItem(vm: vm),
                 PayReceivedMenuItem(vm: vm),
+                SalaryRunMenuItem(vm: vm),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: Divider(height: 1),

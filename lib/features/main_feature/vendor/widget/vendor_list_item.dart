@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/core/theme/colors.dart';
+import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import 'package:coreflow/features/main_feature/vendor/view_model/vendor_view_model.dart';
 import 'package:coreflow/domain/model/main_model/vendors/vendors.dart';
 
@@ -11,7 +12,6 @@ class VendorListItem extends StatelessWidget {
   final int companyId;
   final bool isPinned;
   final VoidCallback onTogglePin;
-  final int serialNumber;
 
   const VendorListItem({
     super.key,
@@ -19,7 +19,6 @@ class VendorListItem extends StatelessWidget {
     required this.companyId,
     required this.isPinned,
     required this.onTogglePin,
-    required this.serialNumber,
   });
 
   @override
@@ -48,9 +47,12 @@ class VendorListItem extends StatelessWidget {
         splashColor: LoginColors.primaryLight.withValues(alpha: 0.12),
         highlightColor: LoginColors.primaryLight.withValues(alpha: 0.06),
         onTap: () async {
+          final vendorVm = context.read<ActiveVendorViewModel>();
+          final dashboardVm = context.read<DashboardViewModel>();
           await context.push(CfRoutes.vendorDetail(companyId, vendor.vendorId));
           if (context.mounted) {
-            context.read<ActiveVendorViewModel>().refresh();
+            await vendorVm.refresh();
+            await dashboardVm.refreshUnreadCount();
           }
         },
         child: Padding(
@@ -86,11 +88,6 @@ class VendorListItem extends StatelessWidget {
                             fontSize: 20,
                           ),
                         ),
-                      ),
-                      Positioned(
-                        right: -2,
-                        top: -2,
-                        child: _NumberBadge(value: serialNumber),
                       ),
                     ],
                   ),
@@ -151,6 +148,10 @@ class VendorListItem extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    if (vendor.unreadCount > 0) ...[
+                      _UnreadCountBadge(count: vendor.unreadCount),
+                      const SizedBox(height: 6),
+                    ],
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -183,24 +184,34 @@ class VendorListItem extends StatelessWidget {
                 ),
               ] else ...[
                 const SizedBox(width: 10),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(999),
-                    onTap: onTogglePin,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Icon(
-                        isPinned
-                            ? Icons.push_pin_rounded
-                            : Icons.push_pin_outlined,
-                        size: 19,
-                        color: isPinned
-                            ? LoginColors.primary
-                            : LoginColors.textTertiary,
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (vendor.unreadCount > 0) ...[
+                      _UnreadCountBadge(count: vendor.unreadCount),
+                      const SizedBox(height: 6),
+                    ],
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(999),
+                        onTap: onTogglePin,
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Icon(
+                            isPinned
+                                ? Icons.push_pin_rounded
+                                : Icons.push_pin_outlined,
+                            size: 19,
+                            color: isPinned
+                                ? LoginColors.primary
+                                : LoginColors.textTertiary,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ],
@@ -247,25 +258,26 @@ class VendorListItem extends StatelessWidget {
   }
 }
 
-class _NumberBadge extends StatelessWidget {
-  final int value;
-  const _NumberBadge({required this.value});
+class _UnreadCountBadge extends StatelessWidget {
+  final int count;
+
+  const _UnreadCountBadge({required this.count});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 18),
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      constraints: const BoxConstraints(minWidth: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
-        color: LoginColors.primary,
-        borderRadius: BorderRadius.circular(10),
+        color: LoginColors.error,
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        '$value',
+        '$count',
         textAlign: TextAlign.center,
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.w700,
         ),
       ),

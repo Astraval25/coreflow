@@ -34,7 +34,6 @@ class CustomersList extends StatelessWidget {
             companyId: companyId,
             isPinned: pinnedCustomerIds.contains(customer.customerId),
             onTogglePin: () => onTogglePin(customer.customerId),
-            serialNumber: index + 1,
           ),
         );
       },

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
 import '../view_model/customer_detail_view_model.dart';
-import 'customer_detail_content.dart';
+import 'customer_view_page.dart';
 
 class CustomerDetailView extends StatelessWidget {
   final int companyId;
@@ -22,10 +22,12 @@ class CustomerDetailView extends StatelessWidget {
           create: (_) => DashboardViewModel()..loadUserData(),
         ),
         ChangeNotifierProvider(
-          create: (_) => CustomerDetailViewModel(
+          create: (context) => CustomerDetailViewModel(
             companyId: companyId,
             customerId: customerId,
-          )..loadCustomerDetail(), // ensure initial load
+            refreshUnreadCount:
+                context.read<DashboardViewModel>().refreshUnreadCount,
+          ),
         ),
       ],
       child: const CustomerDetailContent(),
