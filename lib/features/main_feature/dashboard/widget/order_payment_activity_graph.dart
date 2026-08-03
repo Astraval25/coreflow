@@ -172,7 +172,7 @@ class _OrderPaymentActivityGraphState extends State<OrderPaymentActivityGraph> {
     );
 
     return Container(
-      height: 326,
+      height: 218,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: LoginColors.cardBackground,
@@ -225,13 +225,42 @@ class _OrderPaymentActivityGraphState extends State<OrderPaymentActivityGraph> {
   Widget _heatmap(List<_ActivityCell> cells, double maximum) {
     const cellSize = 14.0;
     const gap = 3.0;
+    const monthGap = 5.0;
     const columnWidth = cellSize + gap;
     final weekCount = (cells.length / 7).ceil();
+    final monthLabels = <int, _ActivityCell>{};
+    final monthStarts = <int>{};
+    final seenMonths = <String>{};
+
+    for (var weekIndex = 0; weekIndex < weekCount; weekIndex++) {
+      final week = cells.skip(weekIndex * 7).take(7).toList();
+      final inRangeCells = week.where((cell) => cell.inRange).toList();
+      if (inRangeCells.isEmpty) continue;
+
+      _ActivityCell? labelCell;
+      for (final cell in inRangeCells) {
+        if (cell.date.day == 1) {
+          labelCell = cell;
+          break;
+        }
+      }
+      labelCell ??= inRangeCells.first;
+
+      final monthKey = '${labelCell.date.year}-${labelCell.date.month}';
+      if (seenMonths.add(monthKey)) {
+        monthLabels[weekIndex] = labelCell;
+      }
+      if (weekIndex > 0 && inRangeCells.any((cell) => cell.date.day == 1)) {
+        monthStarts.add(weekIndex);
+      }
+    }
+
+    final totalMonthGap = monthStarts.length * monthGap;
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SizedBox(
-        width: 30 + weekCount * columnWidth,
+        width: 30 + weekCount * columnWidth + totalMonthGap,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -239,24 +268,21 @@ class _OrderPaymentActivityGraphState extends State<OrderPaymentActivityGraph> {
               padding: const EdgeInsets.only(left: 30),
               child: Row(
                 children: List.generate(weekCount, (weekIndex) {
-                  final week = cells.skip(weekIndex * 7).take(7);
-                  _ActivityCell? firstWeekCell;
-                  for (final cell in week) {
-                    if (cell.inRange && cell.date.day <= 7) {
-                      firstWeekCell = cell;
-                      break;
-                    }
-                  }
-                  return SizedBox(
-                    width: columnWidth,
+                  final labelCell = monthLabels[weekIndex];
+                  final leftGap = monthStarts.contains(weekIndex)
+                      ? monthGap
+                      : 0.0;
+                  return Container(
+                    width: columnWidth + leftGap,
                     height: 20,
-                    child: firstWeekCell == null
+                    padding: EdgeInsets.only(left: leftGap),
+                    child: labelCell == null
                         ? null
                         : OverflowBox(
                             alignment: Alignment.centerLeft,
                             maxWidth: 34,
                             child: Text(
-                              _monthLabel(firstWeekCell.date),
+                              _monthLabel(labelCell.date),
                               style: TextStyle(
                                 fontSize: 9,
                                 color: LoginColors.textSecondary,
@@ -288,8 +314,11 @@ class _OrderPaymentActivityGraphState extends State<OrderPaymentActivityGraph> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: List.generate(weekCount, (weekIndex) {
                     final week = cells.skip(weekIndex * 7).take(7).toList();
+                    final leftGap = monthStarts.contains(weekIndex)
+                        ? monthGap
+                        : 0.0;
                     return Padding(
-                      padding: const EdgeInsets.only(right: gap),
+                      padding: EdgeInsets.only(left: leftGap, right: gap),
                       child: Column(
                         children: week.map((cell) {
                           final isSelected = _selectedCell?.date == cell.date;
@@ -345,7 +374,6 @@ class _SelectedActivity extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 64,
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
@@ -364,19 +392,12 @@ class _SelectedActivity extends StatelessWidget {
               color: LoginColors.textPrimary,
             ),
           ),
-          const Spacer(),
-          Row(
-            children: [
-              _InlineValue(label: 'Order', value: moneyFormatter(cell.orders)),
-              _InlineValue(
-                label: 'Payment',
-                value: moneyFormatter(cell.payments),
-              ),
-              _InlineValue(
-                label: 'Quantity',
-                value: cell.quantity.toStringAsFixed(2),
-              ),
-            ],
+          const SizedBox(height: 5),
+          _InlineValue(label: 'Order', value: moneyFormatter(cell.orders)),
+          _InlineValue(label: 'Payment', value: moneyFormatter(cell.payments)),
+          _InlineValue(
+            label: 'Quantity',
+            value: cell.quantity.toStringAsFixed(2),
           ),
         ],
       ),
@@ -391,7 +412,8 @@ class _InlineValue extends StatelessWidget {
   const _InlineValue({required this.label, required this.value});
 
   @override
-  Widget build(BuildContext context) => Expanded(
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 2),
     child: Text(
       '$label: $value',
       maxLines: 1,
