@@ -68,10 +68,7 @@ class AdminSalaryViewModel extends ChangeNotifier {
     try {
       final results = await Future.wait([
         _employeeRepository.getEmployees(_companyId, activeOnly: true),
-        _employeeRepository.getSalaryPeriods(
-          _companyId,
-          period: _selectedPeriod,
-        ),
+        _employeeRepository.getSalaryPeriods(_companyId),
         _employeeRepository.getSalaryReport(
           _companyId,
           from: _fromDate,

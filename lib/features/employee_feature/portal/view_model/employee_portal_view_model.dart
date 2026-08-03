@@ -141,10 +141,7 @@ class EmployeePortalViewModel extends ChangeNotifier {
         ),
         _employeeRepository.getMyWorkLogs(from: today, to: today),
         _employeeRepository.getMyLeaveLogs(from: today, to: today),
-        _employeeRepository.getMySalaryPeriods(
-          from: _salaryReportFromDate,
-          to: _salaryReportToDate,
-        ),
+        _employeeRepository.getMySalaryPeriods(),
         _employeeRepository.getMySalaryReport(
           from: _salaryReportFromDate,
           to: _salaryReportToDate,
@@ -470,10 +467,7 @@ class EmployeePortalViewModel extends ChangeNotifier {
 
   Future<void> _reloadSalaryData() async {
     final results = await Future.wait([
-      _employeeRepository.getMySalaryPeriods(
-        from: _salaryReportFromDate,
-        to: _salaryReportToDate,
-      ),
+      _employeeRepository.getMySalaryPeriods(),
       _employeeRepository.getMySalaryReport(
         from: _salaryReportFromDate,
         to: _salaryReportToDate,

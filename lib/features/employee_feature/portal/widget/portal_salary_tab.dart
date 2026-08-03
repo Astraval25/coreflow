@@ -66,8 +66,8 @@ class _PortalSalaryTabState extends State<PortalSalaryTab> {
             if (vm.salaryPeriods.isEmpty)
               const PortalEmptyCard(
                 icon: Icons.payments_rounded,
-                title: 'No salary for this range',
-                subtitle: 'Change the date range to view another month.',
+                title: 'No salary periods yet',
+                subtitle: 'Calculated salaries will appear here.',
               )
             else
               ...vm.salaryPeriods.map(_periodCard),
