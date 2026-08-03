@@ -17,12 +17,22 @@ class CreateExpensePage extends StatefulWidget {
   final int companyId;
   final int? expenseId;
   final ExpenseAccount? selectedAccount;
+  final int? salaryPeriodId;
+  final double? initialAmount;
+  final String? initialRemark;
+  final String? salaryEmployeeName;
+  final String? salaryPeriodLabel;
 
   const CreateExpensePage({
     super.key,
     required this.companyId,
     this.expenseId,
     this.selectedAccount,
+    this.salaryPeriodId,
+    this.initialAmount,
+    this.initialRemark,
+    this.salaryEmployeeName,
+    this.salaryPeriodLabel,
   });
 
   @override
@@ -46,6 +56,7 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
   int? _selectedAccountId;
   int? _selectedCustomerId;
   int? _selectedVendorId;
+  int? _salaryPeriodId;
 
   static const List<String> _paymentModes = [
     'BANK_TRANSFER',
@@ -63,6 +74,11 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
   void initState() {
     super.initState();
     _selectedAccountId = widget.selectedAccount?.expenseAccountId;
+    _salaryPeriodId = widget.salaryPeriodId;
+    if (widget.initialAmount != null) {
+      _amountCtrl.text = widget.initialAmount!.toStringAsFixed(2);
+    }
+    _remarkCtrl.text = widget.initialRemark ?? '';
     _load();
   }
 
@@ -102,7 +118,7 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
           _applyExpenseDetail(detail);
         }
       } else if (_selectedAccountId == null && _accounts.isNotEmpty) {
-        _selectedAccountId = _accounts.first.expenseAccountId;
+        _selectedAccountId = _defaultExpenseAccountId();
       }
     } catch (_) {
       if (!mounted) return;
@@ -118,6 +134,7 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
     _selectedAccountId = e.expenseAccountId;
     _selectedCustomerId = e.customerId;
     _selectedVendorId = e.vendorId;
+    _salaryPeriodId = e.salaryPeriodId;
     _paymentMode = e.paymentMode.isEmpty ? _paymentMode : e.paymentMode;
     _amountCtrl.text = e.amount.toStringAsFixed(2);
     _invoiceCtrl.text = e.invoiceNo ?? '';
@@ -126,6 +143,17 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
       _expenseDate = DateTime.parse(e.expenseDate);
     } catch (_) {}
     setState(() {});
+  }
+
+  int _defaultExpenseAccountId() {
+    if (_salaryPeriodId != null) {
+      for (final account in _accounts) {
+        if (account.accountName.toLowerCase().contains('salary')) {
+          return account.expenseAccountId;
+        }
+      }
+    }
+    return _accounts.first.expenseAccountId;
   }
 
   Future<void> _pickDate() async {
@@ -166,6 +194,7 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
       vendorId: _selectedVendorId,
       customerId: _selectedCustomerId,
       remark: _remarkCtrl.text.trim(),
+      salaryPeriodId: _salaryPeriodId,
     );
 
     final result = _isEditMode
@@ -243,6 +272,52 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
                       ),
                     ),
                   ],
+                  if (_salaryPeriodId != null) ...[
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: LoginColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: LoginColors.primary.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.payments_outlined,
+                            color: LoginColors.primary,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Salary Payment',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: LoginColors.textPrimary,
+                                  ),
+                                ),
+                                if ((widget.salaryEmployeeName ?? '')
+                                    .isNotEmpty)
+                                  Text(
+                                    '${widget.salaryEmployeeName} • ${widget.salaryPeriodLabel ?? ''}',
+                                    style: TextStyle(
+                                      color: LoginColors.textSecondary,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   _buildSection(
                     title: 'Expense Details',
                     icon: Icons.receipt_long_rounded,
@@ -268,6 +343,7 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String>(
                           initialValue: _paymentMode,
+                          isExpanded: true,
                           onChanged: (value) {
                             if (value != null) {
                               setState(() => _paymentMode = value);
@@ -310,6 +386,7 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
                         const SizedBox(height: 12),
                         DropdownButtonFormField<int>(
                           initialValue: _selectedAccountId,
+                          isExpanded: true,
                           onChanged: (value) =>
                               setState(() => _selectedAccountId = value),
                           items: _accounts
@@ -338,6 +415,7 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
                         const SizedBox(height: 12),
                         DropdownButtonFormField<int?>(
                           initialValue: _selectedVendorId,
+                          isExpanded: true,
                           onChanged: (value) =>
                               setState(() => _selectedVendorId = value),
                           items: [
@@ -348,7 +426,11 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
                             ..._vendors.map(
                               (vendor) => DropdownMenuItem<int?>(
                                 value: vendor.vendorId,
-                                child: Text(vendor.displayName),
+                                child: Text(
+                                  vendor.displayName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
                           ],
@@ -360,6 +442,7 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
                         const SizedBox(height: 12),
                         DropdownButtonFormField<int?>(
                           initialValue: _selectedCustomerId,
+                          isExpanded: true,
                           onChanged: (value) =>
                               setState(() => _selectedCustomerId = value),
                           items: [
@@ -370,7 +453,11 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
                             ..._customers.map(
                               (customer) => DropdownMenuItem<int?>(
                                 value: customer.customerId,
-                                child: Text(customer.displayName),
+                                child: Text(
+                                  customer.displayName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
                           ],

@@ -134,6 +134,8 @@ class CfRoutes {
       '/cf/company/$companyId/employee-leave-requests';
   static String employeeSalary(int companyId) =>
       '/cf/company/$companyId/employee-salary';
+  static String employeeSalaryDetail(int companyId, int salaryPeriodId) =>
+      '/cf/company/$companyId/employee-salary/$salaryPeriodId';
 
   // ── Report ────────────────────────────────────────────────────────────
   static String reportCustomers(int companyId) =>

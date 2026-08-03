@@ -588,6 +588,21 @@ class EmployeeRepository {
     }
   }
 
+  Future<EmployeeStatusResponse?> deleteSalaryPeriod(
+    int companyId,
+    int salaryPeriodId,
+  ) async {
+    try {
+      final response = await _apiService.delete(
+        AppConfig.getDeleteSalaryPeriodUrl(companyId, salaryPeriodId),
+      );
+      return _parseStatusResponse(response);
+    } catch (e) {
+      debugPrint('Delete salary period error: $e');
+      return null;
+    }
+  }
+
   Future<EmployeeStatusResponse?> approveSalaryPeriod(
     int companyId,
     int salaryPeriodId,

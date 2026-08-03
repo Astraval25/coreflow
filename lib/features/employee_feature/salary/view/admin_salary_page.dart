@@ -43,15 +43,6 @@ class _AdminSalaryView extends StatefulWidget {
 class _AdminSalaryViewState extends State<_AdminSalaryView> {
   final TextEditingController _searchController = TextEditingController();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  static const List<String> _paymentModes = [
-    'BANK_TRANSFER',
-    'CASH',
-    'CHEQUE',
-    'UPI',
-    'CREDIT_CARD',
-    'DEBIT_CARD',
-    'OTHER',
-  ];
 
   bool _isSearchOpen = false;
   String _searchQuery = '';
@@ -260,142 +251,12 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
     AdminSalaryViewModel vm,
     SalaryPeriodSummary period,
   ) async {
-    await showDialog<void>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('${period.employeeName} - Salary Detail'),
-          content: SizedBox(
-            width: 520,
-            child: FutureBuilder<SalaryPeriodDetailData?>(
-              future: vm.getSalaryPeriodDetail(period.salaryPeriodId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const SizedBox(
-                    height: 140,
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return const Text('Failed to load salary detail');
-                }
-
-                final detail = snapshot.data;
-                if (detail == null) {
-                  return const Text('Failed to load salary detail');
-                }
-
-                return SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _detailRow('Employee', detail.employeeName),
-                      _detailRow('Code', detail.employeeCode),
-                      _detailRow('Period', detail.period),
-                      _detailRow('From', detail.fromDate),
-                      _detailRow('To', detail.toDate),
-                      _detailRow('Type', detail.salaryType),
-                      _detailRow('Gross', _currency(detail.grossAmount)),
-                      _detailRow('Net', _currency(detail.netAmount)),
-                      if (detail.paidAmount != null)
-                        _detailRow('Paid', _currency(detail.paidAmount)),
-                      if (detail.balanceAmount != null)
-                        _detailRow('Balance', _currency(detail.balanceAmount)),
-                      if (detail.paymentCount != null)
-                        _detailRow('Payments', detail.paymentCount.toString()),
-                      _detailRow('Status', detail.status),
-                      _detailRow('Present', _decimal(detail.daysPresent)),
-                      _detailRow('Absent', _decimal(detail.daysAbsent)),
-                      _detailRow('LOP', _decimal(detail.lopDays)),
-                      if ((detail.paymentRef ?? '').trim().isNotEmpty)
-                        _detailRow('Payment Ref', detail.paymentRef!),
-                      if (detail.payments.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        Text(
-                          'Payments',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: LoginColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ...detail.payments.map((payment) {
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: LoginColors.background,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: LoginColors.borderLight,
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _detailRow('Date', payment.expenseDate),
-                                _detailRow('Mode', payment.paymentMode),
-                                _detailRow('Amount', _currency(payment.amount)),
-                                if ((payment.invoiceNo ?? '').trim().isNotEmpty)
-                                  _detailRow('Invoice', payment.invoiceNo!),
-                                if ((payment.remark ?? '').trim().isNotEmpty)
-                                  _detailRow('Remark', payment.remark!),
-                              ],
-                            ),
-                          );
-                        }),
-                      ],
-                      const SizedBox(height: 12),
-                      Text(
-                        'Lines',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: LoginColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ...detail.lines.map((line) {
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: LoginColors.background,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: LoginColors.borderLight),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                line.description,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: LoginColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text('Type: ${line.lineType}'),
-                              Text('Amount: ${_currency(line.amount)}'),
-                            ],
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
+    final changed = await context.push<bool>(
+      CfRoutes.employeeSalaryDetail(widget.companyId, period.salaryPeriodId),
     );
+    if (changed == true && mounted) {
+      await vm.refresh();
+    }
   }
 
   Future<void> _downloadSalarySlip(
@@ -445,200 +306,62 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
     );
   }
 
+  Future<void> _deleteSalary(
+    AdminSalaryViewModel vm,
+    SalaryPeriodSummary period,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Draft Salary?'),
+        content: Text(
+          'Delete the draft salary calculation for ${period.employeeName}, '
+          '${period.fromDate} to ${period.toDate}? This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: LoginColors.error),
+            icon: const Icon(Icons.delete_outline_rounded),
+            label: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+
+    final ok = await vm.deleteSalaryPeriod(period.salaryPeriodId);
+    if (!mounted) return;
+    _showMessage(
+      ok
+          ? (vm.message ?? 'Draft salary period deleted successfully')
+          : (vm.error ?? 'Failed to delete salary period'),
+      isError: !ok,
+    );
+  }
+
   Future<void> _recordSalaryPayment(
     AdminSalaryViewModel vm,
     SalaryPeriodSummary period,
   ) async {
-    if (vm.activeExpenseAccounts.isEmpty) {
-      _showMessage(
-        'No active expense accounts found. Please add one before recording payment.',
-        isError: true,
-      );
-      return;
-    }
-
-    final amountController = TextEditingController(
-      text: _defaultPaymentAmount(period),
-    );
-    final paymentRefController = TextEditingController();
-    final invoiceNoController = TextEditingController();
-    final remarkController = TextEditingController();
-    final defaultAccountId = vm.findDefaultSalaryExpenseAccountId();
-    String selectedPaymentMode = _paymentModes.first;
-    int? selectedAccountId = defaultAccountId;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            final amount = double.tryParse(amountController.text.trim());
-            final canSubmit =
-                selectedAccountId != null && amount != null && amount > 0;
-
-            return AlertDialog(
-              title: const Text('Record Salary Payment'),
-              content: SizedBox(
-                width: 460,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${period.employeeName} (${period.employeeCode})',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: LoginColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Period: ${period.period}',
-                        style: TextStyle(color: LoginColors.textSecondary),
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<int>(
-                        initialValue: selectedAccountId,
-                        decoration: const InputDecoration(
-                          labelText: 'Expense Account',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: vm.activeExpenseAccounts
-                            .map((account) {
-                              return DropdownMenuItem<int>(
-                                value: account.expenseAccountId,
-                                child: Text(
-                                  '${account.accountName} (${account.accountType})',
-                                ),
-                              );
-                            })
-                            .toList(growable: false),
-                        onChanged: (value) {
-                          setStateDialog(() {
-                            selectedAccountId = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        initialValue: selectedPaymentMode,
-                        decoration: const InputDecoration(
-                          labelText: 'Payment Mode',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: _paymentModes
-                            .map((mode) {
-                              return DropdownMenuItem<String>(
-                                value: mode,
-                                child: Text(mode),
-                              );
-                            })
-                            .toList(growable: false),
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setStateDialog(() {
-                            selectedPaymentMode = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: amountController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        decoration: InputDecoration(
-                          labelText: 'Amount',
-                          border: const OutlineInputBorder(),
-                          errorText: amountController.text.trim().isEmpty
-                              ? null
-                              : (amount == null || amount <= 0)
-                              ? 'Enter a valid amount'
-                              : null,
-                        ),
-                        onChanged: (_) => setStateDialog(() {}),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: paymentRefController,
-                        decoration: const InputDecoration(
-                          labelText: 'Payment Ref (Optional)',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: invoiceNoController,
-                        decoration: const InputDecoration(
-                          labelText: 'Invoice No (Optional)',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: remarkController,
-                        minLines: 2,
-                        maxLines: 3,
-                        decoration: const InputDecoration(
-                          labelText: 'Remark (Optional)',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: canSubmit
-                      ? () => Navigator.of(dialogContext).pop(true)
-                      : null,
-                  child: const Text('Record Payment'),
-                ),
-              ],
-            );
-          },
-        );
+    final created = await context.push<bool>(
+      CfRoutes.expenseCreate(widget.companyId),
+      extra: <String, dynamic>{
+        'salaryPeriodId': period.salaryPeriodId,
+        'initialAmount': period.balanceAmount ?? period.netAmount,
+        'initialRemark':
+            'Salary payment for ${period.employeeName} (${period.employeeCode}), period ${period.period}',
+        'salaryEmployeeName': '${period.employeeName} (${period.employeeCode})',
+        'salaryPeriodLabel': period.period,
       },
     );
-    final amount = double.tryParse(amountController.text.trim());
-    final paymentRef = paymentRefController.text.trim();
-    final invoiceNo = invoiceNoController.text.trim();
-    final remark = remarkController.text.trim();
-
-    amountController.dispose();
-    paymentRefController.dispose();
-    invoiceNoController.dispose();
-    remarkController.dispose();
-
-    if (!mounted ||
-        confirmed != true ||
-        selectedAccountId == null ||
-        amount == null) {
-      return;
+    if (created == true && mounted) {
+      await vm.refresh();
     }
-
-    final ok = await vm.recordSalaryPayment(
-      period: period,
-      expenseAccountId: selectedAccountId!,
-      paymentMode: selectedPaymentMode,
-      amount: amount,
-      paymentRef: paymentRef.isEmpty ? null : paymentRef,
-      invoiceNo: invoiceNo.isEmpty ? null : invoiceNo,
-      remark: remark.isEmpty ? null : remark,
-    );
-    if (!mounted) return;
-    _showMessage(
-      ok
-          ? (vm.message ?? 'Salary payment recorded successfully')
-          : (vm.error ?? 'Failed to record salary payment'),
-      isError: !ok,
-    );
   }
 
   void _goToDashboard() {
@@ -982,7 +705,7 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionTitle(
-            'Saved Salary Periods',
+            'All Salary Periods',
             '${filtered.length} records available',
           ),
           const SizedBox(height: 12),
@@ -1073,6 +796,17 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
                       : () => _approveSalary(vm, period),
                   icon: const Icon(Icons.check_circle_outline_rounded),
                   label: const Text('Approve'),
+                ),
+              if (status == 'DRAFT')
+                OutlinedButton.icon(
+                  onPressed: vm.isSaving
+                      ? null
+                      : () => _deleteSalary(vm, period),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: LoginColors.error,
+                  ),
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  label: const Text('Delete Draft'),
                 ),
               if (status == 'APPROVED' || status == 'PARTIALLY_PAID')
                 FilledButton.icon(
@@ -1278,27 +1012,6 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
   String _currency(double? value) {
     if (value == null) return '-';
     return value.toStringAsFixed(2);
-  }
-
-  String _defaultPaymentAmount(SalaryPeriodSummary period) {
-    final balance = period.balanceAmount;
-    if (balance != null && balance > 0) {
-      return balance % 1 == 0
-          ? balance.toInt().toString()
-          : balance.toStringAsFixed(2);
-    }
-
-    final net = period.netAmount;
-    if (net != null && net > 0) {
-      return net % 1 == 0 ? net.toInt().toString() : net.toStringAsFixed(2);
-    }
-
-    return '';
-  }
-
-  String _decimal(double? value) {
-    if (value == null) return '-';
-    return value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(2);
   }
 
   String _formatDate(DateTime date) {

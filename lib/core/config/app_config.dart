@@ -924,6 +924,9 @@ class AppConfig {
   static String getSalaryPeriodDetailUrl(int companyId, int salaryPeriodId) =>
       '$baseUrl${salaryPeriodDetailEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{salaryPeriodId}', salaryPeriodId.toString())}';
 
+  static String getDeleteSalaryPeriodUrl(int companyId, int salaryPeriodId) =>
+      getSalaryPeriodDetailUrl(companyId, salaryPeriodId);
+
   static String getApproveSalaryPeriodUrl(int companyId, int salaryPeriodId) =>
       '$baseUrl${salaryApproveEndpoint.replaceAll('{companyId}', companyId.toString()).replaceAll('{salaryPeriodId}', salaryPeriodId.toString())}';
 

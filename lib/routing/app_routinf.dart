@@ -46,12 +46,25 @@ import 'package:coreflow/features/employee_feature/employees/view/employee_edit_
 import 'package:coreflow/features/employee_feature/leave_logs/view/admin_leave_logs_page.dart';
 import 'package:coreflow/features/employee_feature/portal/view/employee_portal_page.dart';
 import 'package:coreflow/features/employee_feature/salary/view/admin_salary_page.dart';
+import 'package:coreflow/features/employee_feature/salary/view/admin_salary_detail_page.dart';
 import 'package:coreflow/features/employee_feature/work_definitions/view/work_definitions_page.dart';
 import 'package:coreflow/features/employee_feature/work_logs/view/admin_work_logs_page.dart';
 import 'package:coreflow/routing/cf_routes.dart';
 import 'package:go_router/go_router.dart';
 
 final _authRepo = AuthRepository();
+
+int? _asInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '');
+}
+
+double? _asDouble(dynamic value) {
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '');
+}
+
 final GoRouter router = GoRouter(
   initialLocation: '/',
   refreshListenable: TokenStorage.authStateNotifier,
@@ -339,6 +352,21 @@ final GoRouter router = GoRouter(
             final companyId = int.parse(state.pathParameters['companyId']!);
             return AdminSalaryPage(companyId: companyId);
           },
+          routes: [
+            GoRoute(
+              path: ':salaryPeriodId',
+              builder: (context, state) {
+                final companyId = int.parse(state.pathParameters['companyId']!);
+                final salaryPeriodId = int.parse(
+                  state.pathParameters['salaryPeriodId']!,
+                );
+                return AdminSalaryDetailPage(
+                  companyId: companyId,
+                  salaryPeriodId: salaryPeriodId,
+                );
+              },
+            ),
+          ],
         ),
         GoRoute(
           path: '/cf/company/:companyId/items',
@@ -451,7 +479,17 @@ final GoRouter router = GoRouter(
           path: '/cf/company/:companyId/expenses/create',
           builder: (context, state) {
             final companyId = int.parse(state.pathParameters['companyId']!);
-            return CreateExpensePage(companyId: companyId);
+            final extra = state.extra is Map<String, dynamic>
+                ? state.extra as Map<String, dynamic>
+                : const <String, dynamic>{};
+            return CreateExpensePage(
+              companyId: companyId,
+              salaryPeriodId: _asInt(extra['salaryPeriodId']),
+              initialAmount: _asDouble(extra['initialAmount']),
+              initialRemark: extra['initialRemark']?.toString(),
+              salaryEmployeeName: extra['salaryEmployeeName']?.toString(),
+              salaryPeriodLabel: extra['salaryPeriodLabel']?.toString(),
+            );
           },
         ),
 
