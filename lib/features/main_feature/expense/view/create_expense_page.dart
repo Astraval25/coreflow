@@ -385,6 +385,9 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
                         ),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<int>(
+                          key: ValueKey(
+                            'expense-account-${_selectedAccountId ?? 'none'}-${_accounts.length}',
+                          ),
                           initialValue: _selectedAccountId,
                           isExpanded: true,
                           onChanged: (value) =>
@@ -414,6 +417,9 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
                         ),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<int?>(
+                          key: ValueKey(
+                            'expense-vendor-${_selectedVendorId ?? 'none'}-${_vendors.length}',
+                          ),
                           initialValue: _selectedVendorId,
                           isExpanded: true,
                           onChanged: (value) =>
@@ -441,6 +447,9 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
                         ),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<int?>(
+                          key: ValueKey(
+                            'expense-customer-${_selectedCustomerId ?? 'none'}-${_customers.length}',
+                          ),
                           initialValue: _selectedCustomerId,
                           isExpanded: true,
                           onChanged: (value) =>
