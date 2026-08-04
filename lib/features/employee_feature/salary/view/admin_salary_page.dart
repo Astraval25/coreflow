@@ -47,7 +47,6 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
   bool _isSearchOpen = false;
   String _searchQuery = '';
   int? _selectedEmployeeId;
-  int? _selectedEmployeeFilterId;
   int? _downloadingSalaryPeriodId;
 
   @override
@@ -405,53 +404,10 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
               const SizedBox(height: 16),
               _calculateCard(vm),
               const SizedBox(height: 16),
-              _employeeFilterCard(vm),
-              const SizedBox(height: 16),
-              if (vm.salaryReport != null) ...[
-                _reportCard(vm.salaryReport!),
-                const SizedBox(height: 16),
-              ],
               _salaryList(vm),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _employeeFilterCard(AdminSalaryViewModel vm) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: LoginColors.borderLight),
-      ),
-      child: DropdownButtonFormField<int?>(
-        initialValue: _selectedEmployeeFilterId,
-        decoration: const InputDecoration(
-          labelText: 'View Specific Employee',
-          border: OutlineInputBorder(),
-        ),
-        items: [
-          const DropdownMenuItem<int?>(
-            value: null,
-            child: Text('All Employees'),
-          ),
-          ...vm.employees.map((employee) {
-            return DropdownMenuItem<int?>(
-              value: employee.employeeId,
-              child: Text(
-                '${employee.employeeName} (${employee.employeeCode})',
-              ),
-            );
-          }),
-        ],
-        onChanged: (value) {
-          setState(() {
-            _selectedEmployeeFilterId = value;
-          });
-        },
       ),
     );
   }
@@ -630,42 +586,6 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
                 vm.isSaving ? 'Calculating...' : 'Review and Calculate',
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _reportCard(SalaryReportData report) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: LoginColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Summary',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: LoginColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              _metricTile('Range', '${report.fromDate} to ${report.toDate}'),
-              _metricTile('Employees', report.totalEmployees.toString()),
-              _metricTile('Gross', _currency(report.totalGrossAmount)),
-              _metricTile('Deductions', _currency(report.totalDeductions)),
-              _metricTile('Net', _currency(report.totalNetAmount)),
-            ],
           ),
         ],
       ),
@@ -1037,39 +957,6 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
     );
   }
 
-  Widget _metricTile(String label, String value) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 150),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: LoginColors.background,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: LoginColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: LoginColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _confirmInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -1107,10 +994,6 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
   List<SalaryPeriodSummary> _filteredSalaryPeriods(AdminSalaryViewModel vm) {
     return vm.salaryPeriods.where((period) {
       final query = _searchQuery.toLowerCase();
-      if (_selectedEmployeeFilterId != null &&
-          period.employeeId != _selectedEmployeeFilterId) {
-        return false;
-      }
       if (query.isEmpty) return true;
       return period.employeeName.toLowerCase().contains(query) ||
           period.employeeCode.toLowerCase().contains(query) ||

@@ -34,6 +34,13 @@ class _ActivityCell {
   }
 }
 
+class _ActivityMonth {
+  final DateTime month;
+  final List<List<_ActivityCell>> weeks;
+
+  const _ActivityMonth({required this.month, required this.weeks});
+}
+
 class OrderPaymentActivityGraph extends StatefulWidget {
   final List<OrderHistoryEntry> orders;
   final List<PaymentHistoryEntry> payments;
@@ -225,137 +232,143 @@ class _OrderPaymentActivityGraphState extends State<OrderPaymentActivityGraph> {
   Widget _heatmap(List<_ActivityCell> cells, double maximum) {
     const cellSize = 14.0;
     const gap = 3.0;
-    const monthGap = 5.0;
-    const columnWidth = cellSize + gap;
-    final weekCount = (cells.length / 7).ceil();
-    final monthLabels = <int, _ActivityCell>{};
-    final monthStarts = <int>{};
-    final seenMonths = <String>{};
-
-    for (var weekIndex = 0; weekIndex < weekCount; weekIndex++) {
-      final week = cells.skip(weekIndex * 7).take(7).toList();
-      final inRangeCells = week.where((cell) => cell.inRange).toList();
-      if (inRangeCells.isEmpty) continue;
-
-      _ActivityCell? labelCell;
-      for (final cell in inRangeCells) {
-        if (cell.date.day == 1) {
-          labelCell = cell;
-          break;
-        }
-      }
-      labelCell ??= inRangeCells.first;
-
-      final monthKey = '${labelCell.date.year}-${labelCell.date.month}';
-      if (seenMonths.add(monthKey)) {
-        monthLabels[weekIndex] = labelCell;
-      }
-      if (weekIndex > 0 && inRangeCells.any((cell) => cell.date.day == 1)) {
-        monthStarts.add(weekIndex);
-      }
-    }
-
-    final totalMonthGap = monthStarts.length * monthGap;
+    final months = _groupCellsByMonth(cells);
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: SizedBox(
-        width: 30 + weekCount * columnWidth + totalMonthGap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 30),
-              child: Row(
-                children: List.generate(weekCount, (weekIndex) {
-                  final labelCell = monthLabels[weekIndex];
-                  final leftGap = monthStarts.contains(weekIndex)
-                      ? monthGap
-                      : 0.0;
-                  return Container(
-                    width: columnWidth + leftGap,
-                    height: 20,
-                    padding: EdgeInsets.only(left: leftGap),
-                    child: labelCell == null
-                        ? null
-                        : OverflowBox(
-                            alignment: Alignment.centerLeft,
-                            maxWidth: 34,
-                            child: Text(
-                              _monthLabel(labelCell.date),
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: LoginColors.textSecondary,
-                              ),
-                            ),
-                          ),
-                  );
-                }),
-              ),
-            ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(
+            width: 30,
+            child: Column(
               children: [
-                const SizedBox(
-                  width: 30,
-                  child: Column(
-                    children: [
-                      _DayLabel(''),
-                      _DayLabel('Mon'),
-                      _DayLabel(''),
-                      _DayLabel('Wed'),
-                      _DayLabel(''),
-                      _DayLabel('Fri'),
-                      _DayLabel(''),
-                    ],
-                  ),
-                ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: List.generate(weekCount, (weekIndex) {
-                    final week = cells.skip(weekIndex * 7).take(7).toList();
-                    final leftGap = monthStarts.contains(weekIndex)
-                        ? monthGap
-                        : 0.0;
-                    return Padding(
-                      padding: EdgeInsets.only(left: leftGap, right: gap),
-                      child: Column(
-                        children: week.map((cell) {
-                          final isSelected = _selectedCell?.date == cell.date;
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: gap),
-                            child: GestureDetector(
-                              onTap: () => _selectCell(cell),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 120),
-                                width: cellSize,
-                                height: cellSize,
-                                decoration: BoxDecoration(
-                                  color: _color(cell, maximum),
-                                  borderRadius: BorderRadius.circular(3),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? LoginColors.textPrimary
-                                        : cell.inRange
-                                        ? LoginColors.border
-                                        : Colors.transparent,
-                                    width: isSelected ? 1.5 : .6,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    );
-                  }),
-                ),
+                SizedBox(height: 20),
+                _DayLabel(''),
+                _DayLabel('Mon'),
+                _DayLabel(''),
+                _DayLabel('Wed'),
+                _DayLabel(''),
+                _DayLabel('Fri'),
+                _DayLabel(''),
               ],
             ),
-          ],
-        ),
+          ),
+          for (var monthIndex = 0; monthIndex < months.length; monthIndex++)
+            Padding(
+              padding: EdgeInsets.only(
+                right: monthIndex == months.length - 1 ? 0 : 12,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    height: 20,
+                    child: Text(
+                      '${_monthLabel(months[monthIndex].month)} ${months[monthIndex].month.year}',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: LoginColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final week in months[monthIndex].weeks)
+                        Padding(
+                          padding: const EdgeInsets.only(right: gap),
+                          child: Column(
+                            children: [
+                              for (final cell in week)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: gap),
+                                  child: GestureDetector(
+                                    onTap: () => _selectCell(cell),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 120,
+                                      ),
+                                      width: cellSize,
+                                      height: cellSize,
+                                      decoration: BoxDecoration(
+                                        color: _color(cell, maximum),
+                                        borderRadius: BorderRadius.circular(3),
+                                        border: Border.all(
+                                          color:
+                                              _selectedCell?.date == cell.date
+                                              ? LoginColors.textPrimary
+                                              : cell.inRange
+                                              ? LoginColors.border
+                                              : Colors.transparent,
+                                          width:
+                                              _selectedCell?.date == cell.date
+                                              ? 1.5
+                                              : .6,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
+  }
+
+  List<_ActivityMonth> _groupCellsByMonth(List<_ActivityCell> cells) {
+    final byDate = <DateTime, _ActivityCell>{
+      for (final cell in cells) _day(cell.date): cell,
+    };
+    final firstMonth = DateTime(widget.startDate.year, widget.startDate.month);
+    final lastMonth = DateTime(widget.endDate.year, widget.endDate.month);
+    final groups = <_ActivityMonth>[];
+
+    for (
+      var month = firstMonth;
+      !month.isAfter(lastMonth);
+      month = DateTime(month.year, month.month + 1)
+    ) {
+      final monthEnd = DateTime(month.year, month.month + 1, 0);
+      final gridStart = month.subtract(Duration(days: month.weekday % 7));
+      final gridEnd = monthEnd.add(Duration(days: 6 - monthEnd.weekday % 7));
+      final monthCells = <_ActivityCell>[];
+
+      for (
+        var date = gridStart;
+        !date.isAfter(gridEnd);
+        date = date.add(const Duration(days: 1))
+      ) {
+        final source = byDate[_day(date)];
+        final belongsToMonth =
+            date.year == month.year && date.month == month.month;
+        monthCells.add(
+          belongsToMonth && source != null
+              ? source
+              : _ActivityCell(date: date, inRange: false),
+        );
+      }
+
+      groups.add(
+        _ActivityMonth(
+          month: month,
+          weeks: [
+            for (var index = 0; index < monthCells.length; index += 7)
+              monthCells.sublist(index, index + 7),
+          ],
+        ),
+      );
+    }
+
+    return groups;
   }
 }
 

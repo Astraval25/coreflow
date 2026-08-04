@@ -24,6 +24,10 @@ void main() {
       expect(request.toJson()['salaryPeriodId'], 42);
     });
 
+    test('expense detail route contains company and expense IDs', () {
+      expect(CfRoutes.expenseDetail(7, 99), '/cf/company/7/expenses/99/detail');
+    });
+
     test('salary detail parses lines and payments from backend response', () {
       final detail = SalaryPeriodDetailData.fromJson({
         'salaryPeriodId': 42,

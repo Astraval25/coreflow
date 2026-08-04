@@ -113,6 +113,8 @@ class CfRoutes {
       '/cf/company/$companyId/expenses/list';
   static String expenseCreate(int companyId) =>
       '/cf/company/$companyId/expenses/create';
+  static String expenseDetail(int companyId, int expenseId) =>
+      '/cf/company/$companyId/expenses/$expenseId/detail';
 
   // ── Employees ─────────────────────────────────────────────────────
   static String employees(int companyId) => '/cf/company/$companyId/employees';

@@ -6,7 +6,9 @@ import 'package:coreflow/data/repositories/main_repository/expense_repository.da
 import 'package:coreflow/domain/model/main_model/expense/expense.dart';
 import 'package:coreflow/domain/model/main_model/expense/expense_account.dart';
 import 'package:coreflow/features/main_feature/dashboard/dashboard_view_model/dashboard_view_model.dart';
+import 'package:coreflow/routing/cf_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -118,18 +120,10 @@ class _ExpensesPageState extends State<ExpensesPage> {
   }
 
   Future<void> _openExpenseDetail(Expense expense) async {
-    final updated = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CreateExpensePage(
-          companyId: widget.companyId,
-          expenseId: expense.expenseId,
-        ),
-      ),
+    await context.push<bool>(
+      CfRoutes.expenseDetail(widget.companyId, expense.expenseId),
     );
-    if (updated == true && mounted) {
-      _loadExpenses();
-    }
+    if (mounted) _loadExpenses();
   }
 
   @override

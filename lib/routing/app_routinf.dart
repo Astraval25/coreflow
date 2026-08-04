@@ -36,6 +36,7 @@ import 'package:coreflow/features/main_feature/payment/receive_payment/view/pay_
 import 'package:coreflow/features/main_feature/payment/receive_payment/view/create_receive_payment_page.dart';
 import 'package:coreflow/features/main_feature/expense/view/create_expense_page.dart';
 import 'package:coreflow/features/main_feature/expense/view/expenses_page.dart';
+import 'package:coreflow/features/main_feature/expense/view/expense_detail_page.dart';
 import 'package:coreflow/features/main_feature/report/view/report_list_page.dart';
 import 'package:coreflow/core/utils/splash/view/splash_page.dart';
 import 'package:coreflow/features/employee_feature/employees/view/employees_page.dart';
@@ -489,6 +490,17 @@ final GoRouter router = GoRouter(
               initialRemark: extra['initialRemark']?.toString(),
               salaryEmployeeName: extra['salaryEmployeeName']?.toString(),
               salaryPeriodLabel: extra['salaryPeriodLabel']?.toString(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/cf/company/:companyId/expenses/:expenseId/detail',
+          builder: (context, state) {
+            final companyId = int.parse(state.pathParameters['companyId']!);
+            final expenseId = int.parse(state.pathParameters['expenseId']!);
+            return ExpenseDetailPage(
+              companyId: companyId,
+              expenseId: expenseId,
             );
           },
         ),

@@ -17,7 +17,6 @@ class AdminSalaryViewModel extends ChangeNotifier {
   String? _message;
   List<Employee> _employees = [];
   List<SalaryPeriodSummary> _salaryPeriods = [];
-  SalaryReportData? _salaryReport;
   String _selectedPeriod = '';
   String _fromDate = '';
   String _toDate = '';
@@ -29,7 +28,6 @@ class AdminSalaryViewModel extends ChangeNotifier {
   List<Employee> get employees => List.unmodifiable(_employees);
   List<SalaryPeriodSummary> get salaryPeriods =>
       List.unmodifiable(_salaryPeriods);
-  SalaryReportData? get salaryReport => _salaryReport;
   String get selectedPeriod => _selectedPeriod;
   String get fromDate => _fromDate;
   String get toDate => _toDate;
@@ -56,16 +54,10 @@ class AdminSalaryViewModel extends ChangeNotifier {
       final results = await Future.wait([
         _employeeRepository.getEmployees(_companyId, activeOnly: true),
         _employeeRepository.getSalaryPeriods(_companyId),
-        _employeeRepository.getSalaryReport(
-          _companyId,
-          from: _fromDate,
-          to: _toDate,
-        ),
       ]);
 
       _employees = results[0] as List<Employee>;
       _salaryPeriods = results[1] as List<SalaryPeriodSummary>;
-      _salaryReport = results[2] as SalaryReportData?;
     } catch (e) {
       _error = 'Failed to load salary details';
     } finally {
