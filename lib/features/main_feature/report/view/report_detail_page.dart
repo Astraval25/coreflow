@@ -78,7 +78,8 @@ class _ReportDetailView extends StatelessWidget {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 elevation: 0,
               ),
               child: vm.isLoading
@@ -86,11 +87,17 @@ class _ReportDetailView extends StatelessWidget {
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2),
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
                     )
-                  : const Text('Run Report',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  : const Text(
+                      'Run Report',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -125,16 +132,28 @@ class _ReportDetailView extends StatelessWidget {
   }
 
   Future<void> _run(BuildContext context, AnalyticsViewModel vm) async {
+    if (vm.startDate.isAfter(vm.endDate)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: const Text('From date must be before or equal to To date'),
+          backgroundColor: LoginColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     await vm.runReport(reportType);
     if (!context.mounted) return;
     if (vm.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: Duration(seconds: 2),
-        content: Text(vm.error!),
-        backgroundColor: LoginColors.error,
-        behavior: SnackBarBehavior.floating,
-      ));
+          content: Text(vm.error!),
+          backgroundColor: LoginColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       return;
     }
     Navigator.push(
@@ -155,13 +174,16 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 13,
-                color: LoginColors.textSecondary,
-                fontWeight: FontWeight.w500)),
-      );
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      label,
+      style: TextStyle(
+        fontSize: 13,
+        color: LoginColors.textSecondary,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
 }
 
 class _DateRangeDropdown extends StatelessWidget {
@@ -171,15 +193,18 @@ class _DateRangeDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration:
-          BoxDecoration(border: Border(bottom: BorderSide(color: LoginColors.border))),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: LoginColors.border)),
+      ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<AnalyticsDateRange>(
           value: vm.selectedRange,
           isExpanded: true,
           dropdownColor: LoginColors.surface,
           style: TextStyle(fontSize: 16, color: LoginColors.textPrimary),
-          onChanged: (v) { if (v != null) vm.setDateRange(v); },
+          onChanged: (v) {
+            if (v != null) vm.setDateRange(v);
+          },
           items: AnalyticsDateRange.values
               .map((r) => DropdownMenuItem(value: r, child: Text(r.label)))
               .toList(),
@@ -203,10 +228,13 @@ class _DatePickerTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration:
-            BoxDecoration(border: Border(bottom: BorderSide(color: LoginColors.border))),
-        child: Text(_format(date),
-            style: TextStyle(fontSize: 16, color: LoginColors.textPrimary)),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: LoginColors.border)),
+        ),
+        child: Text(
+          _format(date),
+          style: TextStyle(fontSize: 16, color: LoginColors.textPrimary),
+        ),
       ),
     );
   }

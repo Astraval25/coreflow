@@ -158,10 +158,13 @@ class _ExpenseDetailPageState extends State<ExpenseDetailPage> {
   }
 
   Widget _amountHeader(Expense expense) {
+    final isSavings =
+        expense.amount < 0 ||
+        expense.expenseAccountType?.toLowerCase() == 'savings';
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: LoginColors.primary,
+        color: isSavings ? LoginColors.success : LoginColors.primary,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -197,7 +200,7 @@ class _ExpenseDetailPageState extends State<ExpenseDetailPage> {
           ),
           const SizedBox(height: 18),
           Text(
-            'Amount',
+            isSavings ? 'Savings' : 'Expense',
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.75),
               fontSize: 12,

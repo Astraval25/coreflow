@@ -262,6 +262,14 @@ List<String> _headers(ReportType type) {
       ];
     case ReportType.paymentHistory:
       return ['Date', 'Payment No', 'Status', 'Mode', 'Amount'];
+    case ReportType.customerItemSales:
+    case ReportType.vendorItemPurchases:
+    case ReportType.salaryReport:
+    case ReportType.leaveReport:
+    case ReportType.workItemReport:
+    case ReportType.workLogReport:
+    case ReportType.expenseSavingsReport:
+      return type.operationalHeaders;
   }
 }
 
@@ -504,5 +512,13 @@ List<List<String>> _buildRows(AnalyticsViewModel vm, ReportType type) {
             ],
           )
           .toList();
+    case ReportType.customerItemSales:
+    case ReportType.vendorItemPurchases:
+    case ReportType.salaryReport:
+    case ReportType.leaveReport:
+    case ReportType.workItemReport:
+    case ReportType.workLogReport:
+    case ReportType.expenseSavingsReport:
+      return vm.operationalRows.map(type.operationalValues).toList();
   }
 }

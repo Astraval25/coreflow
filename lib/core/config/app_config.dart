@@ -656,6 +656,14 @@ class AppConfig {
   static String getPaymentHistoryUrl(int c, String s, String e) =>
       '$baseUrl/api/companies/$c/analytics/history/payments?startDate=$s&endDate=$e';
 
+  static String getOperationalReportUrl(
+    int companyId,
+    String reportPath,
+    String startDate,
+    String endDate,
+  ) =>
+      '$baseUrl/api/companies/$companyId/analytics/reports/$reportPath?startDate=$startDate&endDate=$endDate';
+
   // ─── Employee Module (modemp) ───
   static const String employeesEndpoint =
       '/api/companies/{companyId}/modemp/employees';

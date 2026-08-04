@@ -242,10 +242,11 @@ class _TableView extends StatelessWidget {
           colorBuilder: (col, val) {
             if (col == 2) return LoginColors.success;
             if (col == 3) return LoginColors.error;
-            if (col == 4)
+            if (col == 4) {
               return val.startsWith('-')
                   ? LoginColors.error
                   : LoginColors.success;
+            }
             return null;
           },
         );
@@ -263,10 +264,11 @@ class _TableView extends StatelessWidget {
           colorBuilder: (col, val) {
             if (col == 1) return LoginColors.success;
             if (col == 2) return LoginColors.error;
-            if (col == 3)
+            if (col == 3) {
               return val.startsWith('-')
                   ? LoginColors.error
                   : LoginColors.success;
+            }
             return null;
           },
           footer: vm.revenueExpense.isNotEmpty
@@ -382,6 +384,18 @@ class _TableView extends StatelessWidget {
         return _OrderHistoryReportView(entries: vm.orderHistory, vm: vm);
       case ReportType.paymentHistory:
         return _PaymentHistoryReportView(entries: vm.paymentHistory, vm: vm);
+      case ReportType.customerItemSales:
+      case ReportType.vendorItemPurchases:
+      case ReportType.salaryReport:
+      case ReportType.leaveReport:
+      case ReportType.workItemReport:
+      case ReportType.workLogReport:
+      case ReportType.expenseSavingsReport:
+        return _OperationalReportView(
+          reportType: reportType,
+          rows: vm.operationalRows,
+          vm: vm,
+        );
     }
   }
 }
@@ -1559,6 +1573,184 @@ class _PaymentHistoryReportView extends StatelessWidget {
 
 // ─── Profit by item ───────────────────────────────────────────────────────────
 
+class _OperationalReportView extends StatelessWidget {
+  final ReportType reportType;
+  final List<Map<String, dynamic>> rows;
+  final AnalyticsViewModel vm;
+
+  const _OperationalReportView({
+    required this.reportType,
+    required this.rows,
+    required this.vm,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (rows.isEmpty) return _empty();
+    final headers = reportType.operationalHeaders;
+    final summary = _summaryValues();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _header(vm, reportType.label),
+          if (summary.isNotEmpty) ...[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: summary
+                  .map(
+                    (entry) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: LoginColors.surface,
+                        border: Border.all(color: LoginColors.border),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${entry.$1}: ${entry.$2}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: LoginColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 12),
+          ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Table(
+              defaultColumnWidth: const IntrinsicColumnWidth(),
+              border: TableBorder.all(color: LoginColors.border, width: 0.5),
+              children: [
+                TableRow(
+                  decoration: BoxDecoration(
+                    color: LoginColors.surfaceSecondary,
+                  ),
+                  children: headers
+                      .map((header) => _cell(header, bold: true))
+                      .toList(),
+                ),
+                ...rows.map((row) {
+                  final values = reportType.operationalValues(row);
+                  return TableRow(
+                    decoration: BoxDecoration(color: LoginColors.surface),
+                    children: values
+                        .asMap()
+                        .entries
+                        .map(
+                          (entry) => _cell(
+                            entry.value,
+                            color: _cellColor(
+                              entry.key,
+                              values.length,
+                              entry.value,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  );
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _cell(String value, {bool bold = false, Color? color}) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    child: Text(
+      value,
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+        color: color ?? LoginColors.textPrimary,
+      ),
+    ),
+  );
+
+  Color? _cellColor(int index, int length, String value) {
+    if (reportType == ReportType.expenseSavingsReport) {
+      if (index == 5) return LoginColors.error;
+      if (index == 6) return LoginColors.success;
+      if (index == 7) {
+        return value.startsWith('-') ? LoginColors.success : LoginColors.error;
+      }
+    }
+    if (reportType == ReportType.salaryReport && index == 6) {
+      return (double.tryParse(value) ?? 0) > 0
+          ? LoginColors.error
+          : LoginColors.success;
+    }
+    if (index == length - 1 &&
+        (reportType == ReportType.customerItemSales ||
+            reportType == ReportType.vendorItemPurchases ||
+            reportType == ReportType.workItemReport ||
+            reportType == ReportType.workLogReport)) {
+      return LoginColors.primary;
+    }
+    return null;
+  }
+
+  List<(String, String)> _summaryValues() {
+    double sum(String key) => rows.fold<double>(
+      0,
+      (total, row) => total + (row[key] as num? ?? 0).toDouble(),
+    );
+
+    switch (reportType) {
+      case ReportType.customerItemSales:
+      case ReportType.vendorItemPurchases:
+        return [
+          ('Quantity', _fmt(sum('totalQuantity'))),
+          ('Amount', _fmt(sum('totalAmount'))),
+        ];
+      case ReportType.salaryReport:
+        return [
+          ('Gross', _fmt(sum('grossAmount'))),
+          ('Net', _fmt(sum('netAmount'))),
+          ('Paid', _fmt(sum('paidAmount'))),
+          ('Balance', _fmt(sum('balanceAmount'))),
+        ];
+      case ReportType.leaveReport:
+        return [
+          ('Requests', sum('leaveCount').toStringAsFixed(0)),
+          ('Days', _fmt(sum('leaveDays'))),
+        ];
+      case ReportType.workItemReport:
+        return [
+          ('Quantity', _fmt(sum('totalQuantity'))),
+          ('Amount', _fmt(sum('totalAmount'))),
+        ];
+      case ReportType.workLogReport:
+        return [
+          ('Quantity', _fmt(sum('quantity'))),
+          ('Amount', _fmt(sum('amount'))),
+        ];
+      case ReportType.expenseSavingsReport:
+        return [
+          ('Expense', _fmt(sum('expenseAmount'))),
+          ('Savings', _fmt(sum('savingsAmount'))),
+          ('Net', _fmt(sum('signedAmount'))),
+        ];
+      default:
+        return const [];
+    }
+  }
+}
+
 class _ProfitByItemView extends StatelessWidget {
   final List<ProfitByItemEntry> entries;
   final AnalyticsViewModel vm;
@@ -1612,8 +1804,9 @@ class _ProfitByItemView extends StatelessWidget {
     decoration: BoxDecoration(color: LoginColors.surface),
     children: cells.asMap().entries.map((e) {
       Color color = LoginColors.textPrimary;
-      if ((e.key == 3 || e.key == 4) && profitColor != null)
+      if ((e.key == 3 || e.key == 4) && profitColor != null) {
         color = profitColor;
+      }
       return _c(e.value, color: color);
     }).toList(),
   );

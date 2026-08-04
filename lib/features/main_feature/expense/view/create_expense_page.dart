@@ -136,7 +136,9 @@ class _CreateExpensePageState extends State<CreateExpensePage> {
     _selectedVendorId = e.vendorId;
     _salaryPeriodId = e.salaryPeriodId;
     _paymentMode = e.paymentMode.isEmpty ? _paymentMode : e.paymentMode;
-    _amountCtrl.text = e.amount.toStringAsFixed(2);
+    // The API stores Savings as a negative value; the form always edits the
+    // user-facing magnitude and lets the server apply the account sign.
+    _amountCtrl.text = e.amount.abs().toStringAsFixed(2);
     _invoiceCtrl.text = e.invoiceNo ?? '';
     _remarkCtrl.text = e.remark ?? '';
     try {

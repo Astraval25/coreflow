@@ -1855,4 +1855,35 @@ class AuthRepository {
       return [];
     }
   }
+
+  Future<List<Map<String, dynamic>>> getOperationalReport(
+    int companyId,
+    String reportPath,
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final response = await _apiService.get(
+        Uri.parse(
+          AppConfig.getOperationalReportUrl(
+            companyId,
+            reportPath,
+            startDate,
+            endDate,
+          ),
+        ),
+      );
+      if (response.statusCode != 200) return [];
+      final data = jsonDecode(response.body);
+      if (data['responseStatus'] != true || data['responseData'] is! List) {
+        return [];
+      }
+      return (data['responseData'] as List)
+          .whereType<Map<String, dynamic>>()
+          .toList();
+    } catch (err) {
+      debugPrint('getOperationalReport($reportPath): $err');
+      return [];
+    }
+  }
 }

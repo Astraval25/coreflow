@@ -212,6 +212,9 @@ class _ExpensesPageState extends State<ExpensesPage> {
       separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final expense = _filteredExpenses[index];
+        final isSavings =
+            expense.amount < 0 ||
+            expense.expenseAccountType?.toLowerCase() == 'savings';
         final party = (expense.vendorName ?? '').isNotEmpty
             ? expense.vendorName!
             : (expense.customerName ?? '').isNotEmpty
@@ -247,7 +250,9 @@ class _ExpensesPageState extends State<ExpensesPage> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: LoginColors.error,
+                        color: isSavings
+                            ? LoginColors.success
+                            : LoginColors.error,
                       ),
                     ),
                   ],
