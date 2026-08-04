@@ -694,131 +694,300 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: LoginColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionTitle(
-            'All Salary Periods',
-            '${filtered.length} records available',
-          ),
-          const SizedBox(height: 12),
-          ...filtered.map((period) => _salaryCard(vm, period)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle(
+          'All Salary Periods',
+          '${filtered.length} records available',
+        ),
+        const SizedBox(height: 12),
+        for (var index = 0; index < filtered.length; index++) ...[
+          _salaryRecord(vm, filtered[index]),
+          if (index != filtered.length - 1) const SizedBox(height: 8),
         ],
+      ],
+    );
+  }
+
+  Widget _salaryRecord(AdminSalaryViewModel vm, SalaryPeriodSummary period) {
+    final status = period.status.toUpperCase();
+    final isDownloading = _downloadingSalaryPeriodId == period.salaryPeriodId;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => _showSalaryDetail(vm, period),
+      child: Container(
+        decoration: BoxDecoration(
+          color: LoginColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: LoginColors.border),
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 14, 12, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 120),
+                    child: Text(
+                      period.employeeName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: LoginColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 6,
+                    children: [
+                      _recordInfo(
+                        Icons.badge_outlined,
+                        period.employeeCode,
+                        emphasized: true,
+                      ),
+                      _recordInfo(
+                        Icons.work_outline_rounded,
+                        period.salaryType,
+                      ),
+                      _recordInfo(
+                        Icons.calendar_today_rounded,
+                        '${period.fromDate} - ${period.toDate}',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 11),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _recordMetric(
+                          'Gross',
+                          _currency(period.grossAmount),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _recordMetric(
+                          'Net',
+                          _currency(period.netAmount),
+                          valueColor: LoginColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _recordMetric(
+                          'Paid',
+                          _currency(period.paidAmount),
+                          valueColor: LoginColors.success,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _recordMetric(
+                          'Balance',
+                          _currency(period.balanceAmount),
+                          valueColor: LoginColors.accent,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 9),
+                  Divider(height: 1, color: LoginColors.borderLight),
+                  const SizedBox(height: 7),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.receipt_long_outlined,
+                        size: 14,
+                        color: LoginColors.textSecondary,
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          period.paymentCount == null
+                              ? 'Period ${period.period}'
+                              : 'Period ${period.period}  |  ${period.paymentCount} payment${period.paymentCount == 1 ? '' : 's'}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: LoginColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                      if (isDownloading)
+                        const Padding(
+                          padding: EdgeInsets.all(9),
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      else
+                        PopupMenuButton<_SalaryRecordAction>(
+                          tooltip: 'Salary actions',
+                          padding: EdgeInsets.zero,
+                          icon: Icon(
+                            Icons.more_horiz_rounded,
+                            color: LoginColors.textPrimary,
+                          ),
+                          onSelected: (action) =>
+                              _handleSalaryRecordAction(vm, period, action),
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: _SalaryRecordAction.view,
+                              child: _SalaryActionLabel(
+                                icon: Icons.visibility_outlined,
+                                label: 'View Detail',
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: _SalaryRecordAction.download,
+                              child: _SalaryActionLabel(
+                                icon: Icons.download_rounded,
+                                label: 'Download Slip',
+                              ),
+                            ),
+                            if (status == 'DRAFT') ...[
+                              PopupMenuItem(
+                                value: _SalaryRecordAction.approve,
+                                enabled: !vm.isSaving,
+                                child: const _SalaryActionLabel(
+                                  icon: Icons.check_circle_outline_rounded,
+                                  label: 'Approve',
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: _SalaryRecordAction.delete,
+                                enabled: !vm.isSaving,
+                                child: const _SalaryActionLabel(
+                                  icon: Icons.delete_outline_rounded,
+                                  label: 'Delete Draft',
+                                  color: LoginColors.error,
+                                ),
+                              ),
+                            ],
+                            if (status == 'APPROVED' ||
+                                status == 'PARTIALLY_PAID')
+                              PopupMenuItem(
+                                value: _SalaryRecordAction.recordPayment,
+                                enabled: !vm.isSaving,
+                                child: const _SalaryActionLabel(
+                                  icon: Icons.payments_outlined,
+                                  label: 'Record Payment',
+                                ),
+                              ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Positioned(top: 0, right: 0, child: _recordStatusBadge(status)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _salaryCard(AdminSalaryViewModel vm, SalaryPeriodSummary period) {
-    final status = period.status.toUpperCase();
+  Future<void> _handleSalaryRecordAction(
+    AdminSalaryViewModel vm,
+    SalaryPeriodSummary period,
+    _SalaryRecordAction action,
+  ) async {
+    switch (action) {
+      case _SalaryRecordAction.view:
+        return _showSalaryDetail(vm, period);
+      case _SalaryRecordAction.download:
+        return _downloadSalarySlip(vm, period);
+      case _SalaryRecordAction.approve:
+        return _approveSalary(vm, period);
+      case _SalaryRecordAction.delete:
+        return _deleteSalary(vm, period);
+      case _SalaryRecordAction.recordPayment:
+        return _recordSalaryPayment(vm, period);
+    }
+  }
+
+  Widget _recordInfo(IconData icon, String value, {bool emphasized = false}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: LoginColors.textSecondary),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: LoginColors.textSecondary,
+            fontSize: emphasized ? 13 : 12,
+            fontWeight: emphasized ? FontWeight.w800 : FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _recordMetric(String label, String value, {Color? valueColor}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: LoginColors.textSecondary,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            value,
+            maxLines: 1,
+            style: TextStyle(
+              color: valueColor ?? LoginColors.textPrimary,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _recordStatusBadge(String status) {
+    final color = switch (status) {
+      'PAID' => LoginColors.success,
+      'PARTIALLY_PAID' => const Color(0xFFF59E0B),
+      'APPROVED' => const Color(0xFF2563EB),
+      _ => LoginColors.primary,
+    };
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: LoginColors.background,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: LoginColors.borderLight),
+        color: color,
+        borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(10)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${period.employeeName} (${period.employeeCode})',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: LoginColors.textPrimary,
-                  ),
-                ),
-              ),
-              _statusChip(status),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              _miniInfoChip('Period', period.period),
-              _miniInfoChip('Type', period.salaryType),
-              _miniInfoChip('From', period.fromDate),
-              _miniInfoChip('To', period.toDate),
-              _miniInfoChip('Gross', _currency(period.grossAmount)),
-              _miniInfoChip('Net', _currency(period.netAmount)),
-              if (period.paidAmount != null)
-                _miniInfoChip('Paid', _currency(period.paidAmount)),
-              if (period.balanceAmount != null)
-                _miniInfoChip('Balance', _currency(period.balanceAmount)),
-              if (period.paymentCount != null)
-                _miniInfoChip('Payments', period.paymentCount.toString()),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              OutlinedButton.icon(
-                onPressed: () => _showSalaryDetail(vm, period),
-                icon: const Icon(Icons.visibility_outlined),
-                label: const Text('View Detail'),
-              ),
-              OutlinedButton.icon(
-                onPressed: _downloadingSalaryPeriodId == period.salaryPeriodId
-                    ? null
-                    : () => _downloadSalarySlip(vm, period),
-                icon: _downloadingSalaryPeriodId == period.salaryPeriodId
-                    ? const SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.download_rounded),
-                label: Text(
-                  _downloadingSalaryPeriodId == period.salaryPeriodId
-                      ? 'Preparing...'
-                      : 'Download Slip',
-                ),
-              ),
-              if (status == 'DRAFT')
-                FilledButton.icon(
-                  onPressed: vm.isSaving
-                      ? null
-                      : () => _approveSalary(vm, period),
-                  icon: const Icon(Icons.check_circle_outline_rounded),
-                  label: const Text('Approve'),
-                ),
-              if (status == 'DRAFT')
-                OutlinedButton.icon(
-                  onPressed: vm.isSaving
-                      ? null
-                      : () => _deleteSalary(vm, period),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: LoginColors.error,
-                  ),
-                  icon: const Icon(Icons.delete_outline_rounded),
-                  label: const Text('Delete Draft'),
-                ),
-              if (status == 'APPROVED' || status == 'PARTIALLY_PAID')
-                FilledButton.icon(
-                  onPressed: vm.isSaving
-                      ? null
-                      : () => _recordSalaryPayment(vm, period),
-                  icon: const Icon(Icons.payments_outlined),
-                  label: const Text('Record Payment'),
-                ),
-            ],
-          ),
-        ],
+      child: Text(
+        status.replaceAll('_', ' '),
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+          fontSize: 10,
+        ),
       ),
     );
   }
@@ -901,40 +1070,6 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
     );
   }
 
-  Widget _miniInfoChip(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: LoginColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: LoginColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: LoginColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: LoginColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _confirmInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -958,31 +1093,6 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _statusChip(String status) {
-    final color = switch (status) {
-      'PAID' => LoginColors.success,
-      'PARTIALLY_PAID' => const Color(0xFFF59E0B),
-      'APPROVED' => const Color(0xFF2563EB),
-      _ => LoginColors.primary,
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
       ),
     );
   }
@@ -1019,5 +1129,38 @@ class _AdminSalaryViewState extends State<_AdminSalaryView> {
     final month = date.month.toString().padLeft(2, '0');
     final day = date.day.toString().padLeft(2, '0');
     return '$year-$month-$day';
+  }
+}
+
+enum _SalaryRecordAction { view, download, approve, delete, recordPayment }
+
+class _SalaryActionLabel extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color? color;
+
+  const _SalaryActionLabel({
+    required this.icon,
+    required this.label,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = color ?? LoginColors.textPrimary;
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: foreground),
+        const SizedBox(width: 10),
+        Text(
+          label,
+          style: TextStyle(
+            color: foreground,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
   }
 }
