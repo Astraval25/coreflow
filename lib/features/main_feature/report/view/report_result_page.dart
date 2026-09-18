@@ -1,4 +1,7 @@
+import '../services/grouped_report.dart';
+
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:coreflow/core/theme/colors.dart';
@@ -384,6 +387,12 @@ class _TableView extends StatelessWidget {
         return _OrderHistoryReportView(entries: vm.orderHistory, vm: vm);
       case ReportType.paymentHistory:
         return _PaymentHistoryReportView(entries: vm.paymentHistory, vm: vm);
+      case ReportType.allSalesBill:
+      case ReportType.allPurchaseBill:
+      case ReportType.salaryByEmployee:
+      case ReportType.salaryByPeriod:
+      case ReportType.salaryOutstanding:
+      case ReportType.salaryDeductions:
       case ReportType.customerItemSales:
       case ReportType.vendorItemPurchases:
       case ReportType.salaryReport:
@@ -1587,6 +1596,68 @@ class _OperationalReportView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (rows.isEmpty) return _empty();
+    if (reportType.hasGroups) {
+      final groups = reportType.groups(rows);
+      if (groups.isEmpty) return _empty();
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: groups.length + 1,
+        itemBuilder: (context, index) {
+          if (index == 0) return _header(vm, reportType.label);
+          final group = groups[index - 1];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  group.title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: LoginColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Table(
+                    defaultColumnWidth: const IntrinsicColumnWidth(),
+                    border: TableBorder.all(
+                      color: LoginColors.border,
+                      width: 0.5,
+                    ),
+                    children: [
+                      TableRow(
+                        decoration: BoxDecoration(
+                          color: LoginColors.surfaceSecondary,
+                        ),
+                        children: group.headers
+                            .map((v) => _cell(v, bold: true))
+                            .toList(),
+                      ),
+                      ...group.rows.map(
+                        (row) => TableRow(
+                          children: row.map((v) => _cell(v)).toList(),
+                        ),
+                      ),
+                      TableRow(
+                        decoration: BoxDecoration(
+                          color: LoginColors.surfaceSecondary,
+                        ),
+                        children: group.total
+                            .map((v) => _cell(v, bold: true))
+                            .toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
     final headers = reportType.operationalHeaders;
     final summary = _summaryValues();
 

@@ -54,6 +54,34 @@ class _ReportDetailView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           const SizedBox(height: 16),
+          if (reportType == ReportType.allSalesBill ||
+              reportType == ReportType.allPurchaseBill)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: Text(
+                'Invoiced and paid orders within the selected order dates.',
+              ),
+            ),
+          if (reportType == ReportType.leaveReport)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: Text(
+                'Employee-wise leave requests and days, including approval status. Monetary leave deductions are shown in Salary reports.',
+              ),
+            ),
+          if (const {
+            ReportType.salaryReport,
+            ReportType.salaryByEmployee,
+            ReportType.salaryByPeriod,
+            ReportType.salaryOutstanding,
+            ReportType.salaryDeductions,
+          }.contains(reportType))
+            const Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: Text(
+                'Includes full salary periods overlapping the selected dates. Paid amounts and balances reflect recorded payments.',
+              ),
+            ),
           _SectionLabel(label: 'Date Range'),
           _DateRangeDropdown(vm: vm),
           const SizedBox(height: 16),

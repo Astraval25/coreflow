@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../../data/repositories/auth_repository/auth_repository.dart';
 import '../../../../domain/model/main_model/analytics/cash_flow.dart';
 import '../../../../domain/model/main_model/analytics/dashboard_kpi.dart';
@@ -15,6 +16,12 @@ import '../../../../domain/model/main_model/analytics/running_amount.dart';
 import '../../../../domain/model/main_model/analytics/sales_summary.dart';
 
 enum ReportType {
+  allSalesBill,
+  allPurchaseBill,
+  salaryByEmployee,
+  salaryByPeriod,
+  salaryOutstanding,
+  salaryDeductions,
   // Dashboard / Financial
   dashboardKpi,
   cashFlow,
@@ -57,6 +64,19 @@ enum ReportType {
 extension ReportTypeLabel on ReportType {
   String get label {
     switch (this) {
+      case ReportType.allSalesBill:
+        return 'All Sales Bill';
+      case ReportType.allPurchaseBill:
+        return 'All Purchase Bill';
+      case ReportType.salaryByEmployee:
+        return 'Salary by Employee';
+      case ReportType.salaryByPeriod:
+        return 'Salary by Period';
+      case ReportType.salaryOutstanding:
+        return 'Outstanding Salary';
+      case ReportType.salaryDeductions:
+        return 'Salary Deductions';
+
       case ReportType.dashboardKpi:
         return 'Dashboard KPI';
       case ReportType.cashFlow:
@@ -132,6 +152,10 @@ extension ReportTypeLabel on ReportType {
         return 'sales/customer-items';
       case ReportType.vendorItemPurchases:
         return 'purchase/vendor-items';
+      case ReportType.salaryByEmployee:
+      case ReportType.salaryByPeriod:
+      case ReportType.salaryOutstanding:
+      case ReportType.salaryDeductions:
       case ReportType.salaryReport:
         return 'employees/salary';
       case ReportType.leaveReport:
@@ -529,6 +553,36 @@ class AnalyticsViewModel extends ChangeNotifier {
         case ReportType.topProfitableItems:
           topProfitableItems = await _repo.getTopProfitableItems(c, s, e);
           break;
+        case ReportType.allSalesBill:
+        case ReportType.allPurchaseBill:
+          final bills = await _repo.getOrderHistory(
+            c,
+            s,
+            e,
+            orderType: type == ReportType.allSalesBill ? 'SALES' : 'PURCHASE',
+            statuses: const [
+              'ORDER_INVOICED',
+              'ORDER_PAYED',
+              'ORDER_PAID',
+              'ORDERPAID',
+            ],
+          );
+          operationalRows = bills
+              .map(
+                (bill) => <String, dynamic>{
+                  'partyName': bill.partyName,
+                  'date': bill.orderDate.toIso8601String().split('T').first,
+                  'number': bill.localOrderNumber.isEmpty
+                      ? '#${bill.orderId}'
+                      : bill.localOrderNumber,
+                  'status': bill.orderStatus,
+                  'totalAmount': bill.totalAmount,
+                  'paidAmount': bill.paidAmount,
+                  'balanceAmount': bill.totalAmount - bill.paidAmount,
+                },
+              )
+              .toList();
+          break;
         case ReportType.orderHistory:
           orderHistory = await _repo.getOrderHistory(c, s, e);
           break;
@@ -537,6 +591,10 @@ class AnalyticsViewModel extends ChangeNotifier {
           break;
         case ReportType.customerItemSales:
         case ReportType.vendorItemPurchases:
+        case ReportType.salaryByEmployee:
+        case ReportType.salaryByPeriod:
+        case ReportType.salaryOutstanding:
+        case ReportType.salaryDeductions:
         case ReportType.salaryReport:
         case ReportType.leaveReport:
         case ReportType.workItemReport:

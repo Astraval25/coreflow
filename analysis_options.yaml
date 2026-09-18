@@ -12,6 +12,10 @@ analyzer:
     empty_constructor_bodies: ignore
     dead_code: ignore
     use_super_parameters: ignore
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
 include: package:flutter_lints/flutter.yaml
 
 linter:

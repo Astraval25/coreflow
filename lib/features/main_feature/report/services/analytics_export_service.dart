@@ -1,4 +1,7 @@
+import 'grouped_report.dart';
+
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -262,6 +265,12 @@ List<String> _headers(ReportType type) {
       ];
     case ReportType.paymentHistory:
       return ['Date', 'Payment No', 'Status', 'Mode', 'Amount'];
+    case ReportType.allSalesBill:
+    case ReportType.allPurchaseBill:
+    case ReportType.salaryByEmployee:
+    case ReportType.salaryByPeriod:
+    case ReportType.salaryOutstanding:
+    case ReportType.salaryDeductions:
     case ReportType.customerItemSales:
     case ReportType.vendorItemPurchases:
     case ReportType.salaryReport:
@@ -269,7 +278,9 @@ List<String> _headers(ReportType type) {
     case ReportType.workItemReport:
     case ReportType.workLogReport:
     case ReportType.expenseSavingsReport:
-      return type.operationalHeaders;
+      return type.hasGroups
+          ? ['Name', ...type.groupHeaders]
+          : type.operationalHeaders;
   }
 }
 
@@ -512,6 +523,12 @@ List<List<String>> _buildRows(AnalyticsViewModel vm, ReportType type) {
             ],
           )
           .toList();
+    case ReportType.allSalesBill:
+    case ReportType.allPurchaseBill:
+    case ReportType.salaryByEmployee:
+    case ReportType.salaryByPeriod:
+    case ReportType.salaryOutstanding:
+    case ReportType.salaryDeductions:
     case ReportType.customerItemSales:
     case ReportType.vendorItemPurchases:
     case ReportType.salaryReport:
@@ -519,6 +536,15 @@ List<List<String>> _buildRows(AnalyticsViewModel vm, ReportType type) {
     case ReportType.workItemReport:
     case ReportType.workLogReport:
     case ReportType.expenseSavingsReport:
+      if (type.hasGroups) {
+        return [
+          for (final group in type.groups(vm.operationalRows)) ...[
+            [group.title, ...List<String>.filled(group.headers.length, '')],
+            ...group.rows.map((row) => ['', ...row]),
+            ['', ...group.total],
+          ],
+        ];
+      }
       return vm.operationalRows.map(type.operationalValues).toList();
   }
 }

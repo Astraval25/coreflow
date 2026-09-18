@@ -78,10 +78,27 @@ class ReportListPage extends StatelessWidget {
             companyId: companyId,
           ),
           _ReportSection(
+            title: 'Bill/Invoice',
+            color: Colors.indigo,
+            items: const [ReportType.allSalesBill, ReportType.allPurchaseBill],
+            companyId: companyId,
+          ),
+          _ReportSection(
+            title: 'Salary',
+            color: Colors.blue,
+            items: const [
+              ReportType.salaryReport,
+              ReportType.salaryByEmployee,
+              ReportType.salaryByPeriod,
+              ReportType.salaryOutstanding,
+              ReportType.salaryDeductions,
+            ],
+            companyId: companyId,
+          ),
+          _ReportSection(
             title: 'Workforce',
             color: Colors.teal,
             items: const [
-              ReportType.salaryReport,
               ReportType.leaveReport,
               ReportType.workItemReport,
               ReportType.workLogReport,
